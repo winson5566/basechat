@@ -13,11 +13,10 @@ export async function GET(
 ) {
   const client = new Ragie({ auth: process.env.RAGIE_API_KEY });
 
-  const payload =
-    await client.connections.createOauthRedirectUrlConnectionsOauthPost({
-      redirectUri: process.env.BASE_URL!,
-      sourceType: params.type,
-    });
+  const payload = await client.connections.createOAuthRedirectUrl({
+    redirectUri: process.env.BASE_URL!,
+    sourceType: params.type,
+  });
 
   return Response.json(payload);
 }
