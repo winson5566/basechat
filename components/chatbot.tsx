@@ -1,6 +1,7 @@
 "use client";
 
 import React, { FormEvent } from "react";
+import { useRouter } from "next/navigation";
 import { Cabin } from "next/font/google";
 import {
   DropdownMenu,
@@ -10,7 +11,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-
 
 const cabin = Cabin();
 
@@ -40,40 +40,57 @@ const AutoResizingTextarea = () => {
   );
 };
 
+const CONNECTOR_LIST = [
+  ["confluence", "Confluence"],
+  ["jira", "Jira"],
+  ["gmail", "Gmail"],
+  ["google_ drive", "Google Drive"],
+  ["notion", "Notion"],
+  ["onedrive", "OneDrive"],
+  ["salesforce", "Salesforce"],
+]
+
 export default function Chatot({company}:{company: string}) {
-  return <main className="flex-grow flex flex-col items-center justify-center h-full min-w-[448px] m-6">
-  <div className="font-semibold text-[15px] mb-4">{company} AI</div>
-  <div className="flex-grow flex flex-col h-full w-full mb-6 bg-white rounded-xl p-4">
-    <div className="flex-grow flex">
-      <div className={`flex-grow flex flex-col items-center justify-center ${cabin.className}`}>
-        <h1 className="text-xl font-bold text-[#286239]">Hi there! I&apos;m {company}&apos;s AI.</h1>
-        <div className="text-[#C79730]">
-          What would you like to know?
+  const router = useRouter();
+
+  const onSelect = async (sourceType: string) => {
+    const res = await fetch(`/api/connect/${sourceType}`)
+    if (res.status < 200 || res.status >= 300) throw new Error("Could not retrieve redirect URL");
+    const {url} = await res.json() as {url: string}
+    router.push(url)
+  }
+
+  return (
+    <main className="flex-grow flex flex-col items-center justify-center h-full min-w-[448px] m-6">
+      <div className="font-semibold text-[15px] mb-4">{company} AI</div>
+      <div className="flex-grow flex flex-col h-full w-full mb-6 bg-white rounded-xl p-4">
+        <div className="flex-grow flex">
+          <div className={`flex-grow flex flex-col items-center justify-center ${cabin.className}`}>
+            <h1 className="text-xl font-bold text-[#286239]">Hi there! I&apos;m {company}&apos;s AI.</h1>
+            <div className="text-[#C79730]">
+              What would you like to know?
+            </div>
+            <DropdownMenu>
+              <DropdownMenuTrigger className="border border-black mt-6 py-1 px-2 rounded">+ Connect</DropdownMenuTrigger>
+              <DropdownMenuContent>
+                <DropdownMenuLabel>Choose a connector</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                {CONNECTOR_LIST.map(([sourceType, name]) => (
+                  <DropdownMenuItem key={sourceType} onSelect={() => onSelect(sourceType)}>{name}</DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
         </div>
-        <DropdownMenu>
-          <DropdownMenuTrigger className="border border-black mt-6 py-1 px-2 rounded">+ Connect</DropdownMenuTrigger>
-          <DropdownMenuContent>
-            <DropdownMenuLabel>Choose a connector</DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem>Confluence</DropdownMenuItem>
-            <DropdownMenuItem>Jira</DropdownMenuItem>
-            <DropdownMenuItem>Gmail</DropdownMenuItem>
-            <DropdownMenuItem>Google Drive</DropdownMenuItem>
-            <DropdownMenuItem>Notion</DropdownMenuItem>
-            <DropdownMenuItem>OneDrive</DropdownMenuItem>
-            <DropdownMenuItem>Salesforce</DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+        <ul className="space-y-2">
+          <li className="rounded-md px-4 py-2 bg-[#D1EFF3]">How does Acme&apos;s occupancy compare to target?</li>
+          <li className="rounded-md px-4 py-2 bg-[#D1EFF3]">Did Acme&apos;s controllable costs increase?</li>
+          <li className="rounded-md px-4 py-2 bg-[#D1EFF3]">Summarize Acme&apos;s performance over time.</li>
+        </ul>
       </div>
-    </div>
-    <ul className="space-y-2">
-      <li className="rounded-md px-4 py-2 bg-[#D1EFF3]">How does Acme&apos;s occupancy compare to target?</li>
-      <li className="rounded-md px-4 py-2 bg-[#D1EFF3]">Did Acme&apos;s controllable costs increase?</li>
-      <li className="rounded-md px-4 py-2 bg-[#D1EFF3]">Summarize Acme&apos;s performance over time.</li>
-    </ul>
-  </div>
-  <div className="w-full flex flex-col items-center p-2 pl-4 rounded-[24px] bg-white">
-    <AutoResizingTextarea />
-  </div>
-</main>
+      <div className="w-full flex flex-col items-center p-2 pl-4 rounded-[24px] bg-white">
+        <AutoResizingTextarea />
+      </div>
+    </main>
+  );
 }
