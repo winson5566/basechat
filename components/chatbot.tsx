@@ -45,7 +45,7 @@ const CONNECTOR_LIST = [
   ["confluence", "Confluence"],
   ["jira", "Jira"],
   ["gmail", "Gmail"],
-  ["google_ drive", "Google Drive"],
+  ["google_drive", "Google Drive"],
   ["notion", "Notion"],
   ["onedrive", "OneDrive"],
   ["salesforce", "Salesforce"],
