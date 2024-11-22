@@ -35,7 +35,7 @@ const AutoResizingTextarea = () => {
         rows={1}
       />
       <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg"  >
-        <path opacity="0.5" d="M32 16C32 7.16344 24.8366 0 16 0C7.16344 0 0 7.16344 0 16C0 24.8366 7.16344 32 16 32C24.8366 32 32 24.8366 32 16ZM17 23C17 23.5523 16.5523 24 16 24C15.4477 24 15 23.5523 15 23V11.4142L10.7071 15.7071C10.3166 16.0976 9.68342 16.0976 9.29289 15.7071C8.90237 15.3166 8.90237 14.6834 9.29289 14.2929L15.2929 8.29289C15.6834 7.90237 16.3166 7.90237 16.7071 8.29289L22.7071 14.2929C23.0976 14.6834 23.0976 15.3166 22.7071 15.7071C22.3166 16.0976 21.6834 16.0976 21.2929 15.7071L17 11.4142V23Z" fill="#00AEC5"/>
+        <path opacity="0.5" d="M32 16C32 7.16344 24.8366 0 16 0C7.16344 0 0 7.16344 0 16C0 24.8366 7.16344 32 16 32C24.8366 32 32 24.8366 32 16ZM17 23C17 23.5523 16.5523 24 16 24C15.4477 24 15 23.5523 15 23V11.4142L10.7071 15.7071C10.3166 16.0976 9.68342 16.0976 9.29289 15.7071C8.90237 15.3166 8.90237 14.6834 9.29289 14.2929L15.2929 8.29289C15.6834 7.90237 16.3166 7.90237 16.7071 8.29289L22.7071 14.2929C23.0976 14.6834 23.0976 15.3166 22.7071 15.7071C22.3166 16.0976 21.6834 16.0976 21.2929 15.7071L17 11.4142V23Z" fill="#00AEC5" />
       </svg>
     </div>
   );
@@ -51,13 +51,13 @@ const CONNECTOR_LIST = [
   ["salesforce", "Salesforce"],
 ]
 
-export default function Chatot({company}:{company: string}) {
+export default function Chatot({ company }: { company: string }) {
   const router = useRouter();
 
   const onSelect = async (sourceType: string) => {
     const res = await fetch(`/api/connect/${sourceType}`)
     if (res.status < 200 || res.status >= 300) throw new Error("Could not retrieve redirect URL");
-    const {url} = await res.json() as {url: string}
+    const { url } = await res.json() as { url: string }
     router.push(url)
   }
 
