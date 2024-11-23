@@ -1,4 +1,3 @@
-import AddConnectorMenu from "@/components/add-connector-menu";
 import Chatbot from "@/components/chatbot";
 import ConnectionList from "@/components/connection-list";
 
