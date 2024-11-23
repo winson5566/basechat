@@ -26,7 +26,7 @@ export default function AddConnectorMenu({ className }: { className?: string }) 
   const router = useRouter();
 
   const onSelect = async (sourceType: string) => {
-    const res = await fetch(`/api/connect/${sourceType}`)
+    const res = await fetch(`/api/ragie/connect/${sourceType}`)
     if (res.status < 200 || res.status >= 300) throw new Error("Could not retrieve redirect URL");
     const { url } = await res.json() as { url: string }
     router.push(url)
