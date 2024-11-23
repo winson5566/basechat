@@ -62,7 +62,7 @@ export default function Chatot({ company }: { company: string }) {
   }
 
   return (
-    <main className="flex-grow flex flex-col items-center justify-center h-full min-w-[448px] m-6">
+    <div className="flex-grow flex flex-col items-center justify-center h-full w-full min-w-[448px]">
       <div className="font-semibold text-[15px] mb-4">{company} AI</div>
       <div className="flex-grow flex flex-col h-full w-full mb-6 bg-white rounded-xl p-4">
         <div className="flex-grow flex">
@@ -92,6 +92,6 @@ export default function Chatot({ company }: { company: string }) {
       <div className="w-full flex flex-col items-center p-2 pl-4 rounded-[24px] bg-white">
         <AutoResizingTextarea />
       </div>
-    </main>
+    </div>
   );
 }
