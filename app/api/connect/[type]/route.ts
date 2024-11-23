@@ -9,13 +9,14 @@ interface Params {
 
 export async function GET(
   _request: NextRequest,
-  { params }: { params: Params }
+  { params }: { params: Promise<Params> }
 ) {
   const client = new Ragie({ auth: process.env.RAGIE_API_KEY });
+  const { type } = await params;
 
   const payload = await client.connections.createOAuthRedirectUrl({
     redirectUri: process.env.BASE_URL!,
-    sourceType: params.type,
+    sourceType: type,
   });
 
   return Response.json(payload);
