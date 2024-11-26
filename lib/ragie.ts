@@ -5,6 +5,7 @@ import { RAGIE_API_KEY, RAGIE_API_BASE_URL } from "./settings";
 const ragieConnectionSchema = z.object({
   id: z.string(),
   source_display_name: z.string(),
+  partition: z.string().nullable(),
 });
 
 // FIXME: Temporary until the ragie clients include this method
