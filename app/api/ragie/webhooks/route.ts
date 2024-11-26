@@ -1,9 +1,8 @@
 import { NextRequest } from "next/server";
 
 import { saveConnection } from "@/lib/service";
+import { RAGIE_WEBHOOK_SECRET } from "@/lib/settings";
 import { validateSignature } from "@/lib/utils";
-
-const RAGIE_WEBHOOK_SECRET = process.env.RAGIE_WEBHOOK_SECRET!;
 
 interface WebhookEvent {
   type: string;
