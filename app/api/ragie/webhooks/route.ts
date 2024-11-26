@@ -1,9 +1,5 @@
-import { eq } from "drizzle-orm";
 import { NextRequest } from "next/server";
 
-import db from "@/lib/db";
-import * as schema from "@/lib/db/schema";
-import { getRagieConnection } from "@/lib/ragie";
 import { saveConnection } from "@/lib/service";
 import { validateSignature } from "@/lib/utils";
 
