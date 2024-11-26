@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { RAGIE_API_KEY } from "./settings";
+import { RAGIE_API_KEY, RAGIE_API_BASE_URL } from "./settings";
 
 const ragieConnectionSchema = z.object({
   id: z.string(),
@@ -9,7 +9,7 @@ const ragieConnectionSchema = z.object({
 
 // FIXME: Temporary until the ragie clients include this method
 export async function getRagieConnection(id: string) {
-  const response = await fetch(`https://api.ragie.ai/connections/${id}`, {
+  const response = await fetch(`${RAGIE_API_BASE_URL}/connections/${id}`, {
     headers: { authorization: `Bearer ${RAGIE_API_KEY}` },
   });
   if (response.status !== 200) {

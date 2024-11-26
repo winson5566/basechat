@@ -9,11 +9,8 @@ interface Params {
   type: string;
 }
 
-export async function GET(
-  _request: NextRequest,
-  { params }: { params: Promise<Params> }
-) {
-  const client = new Ragie({ auth: settings.RAGIE_API_KEY });
+export async function GET(_request: NextRequest, { params }: { params: Promise<Params> }) {
+  const client = new Ragie({ auth: settings.RAGIE_API_KEY, serverURL: settings.RAGIE_API_BASE_URL });
   const { type } = await params;
 
   const payload = await client.connections.createOAuthRedirectUrl({
