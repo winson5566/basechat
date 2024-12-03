@@ -1,9 +1,9 @@
 import Chatbot from "@/components/chatbot";
 import ConnectionList from "@/components/connection-list";
 
-const COMPANY_NAME = "Company"
+const COMPANY_NAME = "Company";
 
-export default function Home() {
+export default async function Home() {
   return (
     <main className="flex min-h-screen p-6 pt-4">
       <ConnectionList />
