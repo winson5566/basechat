@@ -32,7 +32,7 @@ const ChatInput = (props: ChatInputProps) => {
   };
 
   return (
-    <div className="flex w-full">
+    <div className="flex w-full items-end">
       <AutosizeTextarea
         ref={ref}
         placeholder="Send a message"
