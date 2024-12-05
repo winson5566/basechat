@@ -1,5 +1,7 @@
 import assert from "assert";
 
+export const COMPANY_NAME = "Acme Corp";
+
 assert(process.env.BASE_URL);
 export const BASE_URL = process.env.BASE_URL;
 

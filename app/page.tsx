@@ -1,13 +1,12 @@
 import Chatbot from "@/components/chatbot";
 import ConnectionList from "@/components/connection-list";
-
-const COMPANY_NAME = "Company";
+import * as settings from "@/lib/settings";
 
 export default async function Home() {
   return (
     <main className="flex min-h-screen p-6 pt-4">
       <ConnectionList />
-      <Chatbot company={COMPANY_NAME} />
+      <Chatbot company={settings.COMPANY_NAME} />
     </main>
   );
 }

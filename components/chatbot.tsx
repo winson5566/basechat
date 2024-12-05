@@ -1,9 +1,14 @@
 "use client";
 
+import { usePrevious } from "@uidotdev/usehooks";
+import { experimental_useObject as useObject } from "ai/react";
 import { Cabin } from "next/font/google";
-import { KeyboardEvent, useRef, useState } from "react";
+import { KeyboardEvent, useEffect, useRef, useState } from "react";
+import { z } from "zod";
 
 import { AutosizeTextarea, AutosizeTextAreaRef } from "@/components//ui/autosize-textarea";
+import { GenerateRequest, GenerateResponseSchema } from "@/lib/schema";
+import { cn } from "@/lib/utils";
 
 const cabin = Cabin();
 
@@ -56,8 +61,30 @@ const ChatInput = (props: ChatInputProps) => {
   );
 };
 
+type Message = { content: string; role: "system" | "user" };
+
 export default function Chatbot({ company }: { company: string }) {
-  const [messages, setMessages] = useState<string[]>([]);
+  const [messages, setMessages] = useState<Message[]>([]);
+
+  const { isLoading, object, submit } = useObject({
+    api: "/api/generate",
+    schema: GenerateResponseSchema,
+    onError: console.error,
+  });
+
+  const prevIsLoading = usePrevious(isLoading);
+
+  useEffect(() => {
+    if (prevIsLoading === true && isLoading === false && object?.message) {
+      setMessages([...messages, { content: object.message, role: "system" }]);
+    }
+  }, [prevIsLoading, isLoading, object?.message]);
+
+  const handleSubmit = (content: string) => {
+    const message: GenerateRequest = { content };
+    setMessages([...messages, { ...message, role: "user" }]);
+    submit(message);
+  };
 
   return (
     <div className="flex-grow flex flex-col items-center justify-center">
@@ -65,12 +92,19 @@ export default function Chatbot({ company }: { company: string }) {
         <div className="font-semibold text-[15px] h-10">{company} AI</div>
         <div className="flex-grow flex flex-col h-full w-full mb-6 bg-white rounded-xl p-4">
           {messages.length ? (
-            <div className="flex flex-col items-end">
+            <div className="flex flex-col">
               {messages.map((message, i) => (
-                <div key={i} className="mb-6 rounded-md px-4 py-2 bg-[#D1EFF3]">
-                  {message}
+                <div
+                  key={i}
+                  className={cn(
+                    "mb-6 rounded-md px-4 py-2 bg-[#D1EFF3]",
+                    message.role === "user" ? "self-end" : "self-start",
+                  )}
+                >
+                  {message.content}
                 </div>
               ))}
+              {isLoading && <div className="self-start mb-6 rounded-md px-4 py-2 bg-[#D1EFF3]">{object?.message}</div>}
             </div>
           ) : (
             <>
@@ -89,11 +123,7 @@ export default function Chatbot({ company }: { company: string }) {
           )}
         </div>
         <div className="w-full flex flex-col items-center p-2 pl-4 rounded-[24px] bg-white">
-          <ChatInput
-            handleSubmit={(message) => {
-              setMessages([...messages, message]);
-            }}
-          />
+          <ChatInput handleSubmit={handleSubmit} />
         </div>
       </div>
     </div>
