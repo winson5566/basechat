@@ -1,5 +1,9 @@
+import assert from "assert";
+
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
+
+import { auth } from "@/auth";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -34,4 +38,10 @@ export async function validateSignature(
 
   // Use a constant-time comparison to prevent timing attacks
   return Buffer.from(expectedSignature, "utf-8").equals(Buffer.from(receivedSignature, "utf-8"));
+}
+
+export async function requireSession() {
+  const session = await auth();
+  assert(session, "not logged in");
+  return session;
 }

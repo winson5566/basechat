@@ -6,9 +6,15 @@ import authConfig from "./auth.config";
 const { auth } = NextAuth(authConfig);
 
 export default auth((req) => {
-  if (!req.auth && req.nextUrl.pathname !== "/login" && !req.nextUrl.pathname.startsWith("/api/auth/callback")) {
-    const newUrl = new URL("/login", req.nextUrl.origin);
-    return Response.redirect(newUrl);
+  if (!req.auth) {
+    if (req.nextUrl.pathname !== "/login" && !req.nextUrl.pathname.startsWith("/api/auth/callback")) {
+      const newUrl = new URL("/login", req.nextUrl.origin);
+      return Response.redirect(newUrl);
+    }
+  } else if (!req.auth.user.setup) {
+    if (req.nextUrl.pathname !== "/setup") {
+      return Response.redirect(new URL("/setup", req.nextUrl.origin));
+    }
   }
 });
 
