@@ -1,8 +1,9 @@
 import { Inter } from "next/font/google";
+import { redirect } from "next/navigation";
 
-import { requireSession } from "@/lib/utils";
+import { requireSession } from "@/lib/auth-utils";
 
-const inter = Inter();
+const inter = Inter({ subsets: ["latin"] });
 
 const PhotoPlaceholderIconSVG = () => (
   <svg width="21" height="20" viewBox="0 0 21 20" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -15,6 +16,11 @@ const PhotoPlaceholderIconSVG = () => (
   </svg>
 );
 
+async function setup(formData: FormData) {
+  "use server";
+  return redirect("/setup/finish");
+}
+
 export default async function SetupPage() {
   const session = await requireSession();
 
@@ -24,10 +30,15 @@ export default async function SetupPage() {
         <h3 className="text-[24px] font-bold mb-4">Welcome, {session.user.name}!</h3>
         <h2 className="mb-12 text-[52px] font-bold leading-[50px]">Just a few more details below.</h2>
 
-        <form>
+        <form action={setup}>
           <fieldset className="mb-8 flex flex-col">
             <label className="mb-4 font-semibold">Company name</label>
-            <input type="text" placeholder="Company name" className="py-2 px-4 rounded border border-[#F5F5F7]" />
+            <input
+              type="text"
+              placeholder="Company name"
+              name="companyName"
+              className="py-2 px-4 rounded border border-[#F5F5F7]"
+            />
           </fieldset>
           <fieldset className="mb-24 flex flex-col">
             <label className="mb-4 font-semibold">Add logo</label>

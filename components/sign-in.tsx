@@ -2,7 +2,7 @@ import { Roboto } from "next/font/google";
 
 import { signIn } from "@/auth";
 
-const roboto = Roboto({ weight: "400" });
+const roboto = Roboto({ subsets: ["latin"], weight: "400" });
 
 const GoogleMarkSVG = () => (
   <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">

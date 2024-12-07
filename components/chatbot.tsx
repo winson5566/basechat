@@ -10,7 +10,7 @@ import { AutosizeTextarea, AutosizeTextAreaRef } from "@/components//ui/autosize
 import { GenerateRequest, GenerateResponseSchema } from "@/lib/schema";
 import { cn } from "@/lib/utils";
 
-const cabin = Cabin();
+const cabin = Cabin({ subsets: ["latin"] });
 
 interface ChatInputProps {
   handleSubmit?: (text: string) => void;

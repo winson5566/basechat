@@ -9,7 +9,7 @@ const inter_tight = Inter_Tight({
   display: "swap",
 });
 
-const inter = Inter();
+const inter = Inter({ subsets: ["latin"] });
 
 const RagieLogoSVG = () => (
   <svg width="112" height="24" viewBox="0 0 112 24" fill="none" xmlns="http://www.w3.org/2000/svg">

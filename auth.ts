@@ -1,4 +1,7 @@
+import assert from "assert";
+
 import { DrizzleAdapter } from "@auth/drizzle-adapter";
+import assertNever from "assert-never";
 import NextAuth, { DefaultSession } from "next-auth";
 
 import authConfig from "./auth.config";
@@ -35,9 +38,22 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   callbacks: {
     ...authConfig.callbacks,
     authorized: ({ auth }) => !!auth,
-    jwt({ token, user, trigger }) {
-      if (user) {
-        token.setup = false; // TODO: Check if setup is complete
+    async jwt({ token, user, trigger, session: sessionUpdates }) {
+      const test = await db.select().from(schema.connections);
+      switch (trigger) {
+        case "signIn":
+        case "signUp":
+          if (user) {
+            token.setup = false; // TODO: Check if setup is complete
+          }
+          break;
+        case "update":
+          token.setup = true;
+          break;
+        case undefined:
+          break;
+        default:
+          assertNever(trigger);
       }
       return token;
     },
