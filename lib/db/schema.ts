@@ -8,6 +8,16 @@ export const connections = pgTable("connections", {
   status: text().notNull(),
 });
 
+export const tenants = pgTable("tenants", {
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => crypto.randomUUID()),
+  name: text("name"),
+  ownerId: text("owner_id")
+    .references(() => users.id, { onDelete: "restrict" })
+    .notNull(),
+});
+
 /** Based on Auth.js example schema: https://authjs.dev/getting-started/adapters/drizzle */
 
 export const users = pgTable("users", {

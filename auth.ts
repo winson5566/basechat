@@ -14,6 +14,9 @@ declare module "next-auth" {
    */
   interface Session {
     user: {
+      /** User ID should always exist on the session */
+      id: string;
+
       /** Flag indiciating whether or not the user has finished setup */
       setup: boolean;
       /**
@@ -44,6 +47,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         case "signIn":
         case "signUp":
           if (user) {
+            token.id = user.id;
             token.setup = false; // TODO: Check if setup is complete
           }
           break;
