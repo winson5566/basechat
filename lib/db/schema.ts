@@ -1,19 +1,27 @@
-import { boolean, integer, pgTable, primaryKey, text, timestamp } from "drizzle-orm/pg-core";
+import { boolean, integer, pgTable, primaryKey, text, timestamp, uuid } from "drizzle-orm/pg-core";
 import type { AdapterAccountType } from "next-auth/adapters";
 
+const timestampFields = {
+  createdAt: timestamp("created_at", { withTimezone: true, mode: "string" }).defaultNow().notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true, mode: "string" }).defaultNow().notNull(),
+};
+
+const baseFields = {
+  id: uuid("id").primaryKey().notNull().defaultRandom(),
+  ...timestampFields,
+};
+
 export const connections = pgTable("connections", {
-  id: integer().primaryKey().generatedAlwaysAsIdentity(),
+  ...baseFields,
   connectionId: text("connection_id").notNull().unique(),
   name: text().notNull(),
   status: text().notNull(),
 });
 
 export const tenants = pgTable("tenants", {
-  id: text("id")
-    .primaryKey()
-    .$defaultFn(() => crypto.randomUUID()),
-  name: text("name"),
-  ownerId: text("owner_id")
+  ...baseFields,
+  name: text("name").notNull(),
+  ownerId: uuid("owner_id")
     .references(() => users.id, { onDelete: "restrict" })
     .notNull(),
 });
@@ -21,10 +29,7 @@ export const tenants = pgTable("tenants", {
 /** Based on Auth.js example schema: https://authjs.dev/getting-started/adapters/drizzle */
 
 export const users = pgTable("users", {
-  id: text("id")
-    .primaryKey()
-    .$defaultFn(() => crypto.randomUUID())
-    .notNull(),
+  ...baseFields,
   name: text("name"),
   email: text("email").unique(),
   emailVerified: timestamp("email_verified", { mode: "date" }),
@@ -34,7 +39,8 @@ export const users = pgTable("users", {
 export const accounts = pgTable(
   "accounts",
   {
-    userId: text("user_id")
+    ...baseFields,
+    userId: uuid("user_id")
       .notNull()
       .references(() => users.id, { onDelete: "cascade" }),
     type: text("type").$type<AdapterAccountType>().notNull(),
@@ -58,8 +64,9 @@ export const accounts = pgTable(
 );
 
 export const sessions = pgTable("sessions", {
+  ...timestampFields,
   sessionToken: text("session_token").primaryKey(),
-  userId: text("user_id")
+  userId: uuid("user_id")
     .notNull()
     .references(() => users.id, { onDelete: "cascade" }),
   expires: timestamp("expires", { mode: "date" }).notNull(),
@@ -68,6 +75,7 @@ export const sessions = pgTable("sessions", {
 export const verificationTokens = pgTable(
   "verification_tokens",
   {
+    ...baseFields,
     identifier: text("identifier").notNull(),
     token: text("token").notNull(),
     expires: timestamp("expires", { mode: "date" }).notNull(),
@@ -84,8 +92,9 @@ export const verificationTokens = pgTable(
 export const authenticators = pgTable(
   "authenticators",
   {
+    ...baseFields,
     credentialID: text("credential_id").notNull().unique(),
-    userId: text("user_id")
+    userId: uuid("user_id")
       .notNull()
       .references(() => users.id, { onDelete: "cascade" }),
     providerAccountId: text("provider_account_id").notNull(),
