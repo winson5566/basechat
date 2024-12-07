@@ -77,18 +77,6 @@ export default function SetupForm() {
             </FormItem>
           )}
         ></FormField>
-        <fieldset className="mb-24 flex flex-col">
-          <label className="mb-4 font-semibold">Add logo</label>
-          <div className="flex">
-            <div className="rounded-[40px] h-[80px] w-[80px] bg-[#F5F5F7] mr-7 flex items-center justify-center">
-              <PhotoPlaceholderIconSVG />
-            </div>
-            <div className="flex flex-col">
-              <input type="file" className="mb-2.5" />
-              <div className="text-md text-[#86868B]">Recommended 250x250</div>
-            </div>
-          </div>
-        </fieldset>
         <button
           type="submit"
           className="bg-[#D946EF] fond-semibold text-white flex justify-center w-full py-2.5 rounded-[54px]"
