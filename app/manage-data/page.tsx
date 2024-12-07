@@ -3,6 +3,7 @@ import { Inter } from "next/font/google";
 import Image from "next/image";
 
 import { DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { requireSession } from "@/lib/auth-utils";
 import { cn } from "@/lib/utils";
 
 import ChatIcon from "../../public/icons/chat.svg";
@@ -42,7 +43,9 @@ function NavButton({ alt, src, className }: { alt: string; src: any; className?:
   );
 }
 
-export default function ManageDataPage() {
+export default async function ManageDataPage() {
+  const session = await requireSession();
+
   return (
     <div className={`min-h-screen flex flex-col items-center bg-white ${inter.className}`}>
       <header className="w-full flex justify-between p-4 items-center">
@@ -51,7 +54,7 @@ export default function ManageDataPage() {
           <Image src={NewChatIcon} alt="New chat" />
         </div>
         <div className="bg-[#66666E] rounded-[16px] h-[32px] w-[32px] flex items-center justify-center text-[#FEFEFE] font-semibold">
-          B
+          {session.user.name?.trim()[0].toUpperCase()}
         </div>
       </header>
       <div className="flex-grow h-full w-full flex flex-col items-center justify-center max-w-[1140px] p-4">
