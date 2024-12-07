@@ -11,5 +11,5 @@ export async function GET(request: NextRequest) {
 
   await saveConnection(connectionId, "syncing");
 
-  return Response.redirect(settings.BASE_URL);
+  return Response.redirect(new URL("/manage-data", request.nextUrl.origin));
 }
