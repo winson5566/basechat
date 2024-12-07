@@ -2,11 +2,13 @@ import assert from "assert";
 
 import { DrizzleAdapter } from "@auth/drizzle-adapter";
 import assertNever from "assert-never";
+import { eq } from "drizzle-orm";
 import NextAuth, { DefaultSession } from "next-auth";
 
 import authConfig from "./auth.config";
 import db from "./lib/db";
 import * as schema from "./lib/db/schema";
+import { isSetupComplete } from "./lib/service";
 
 declare module "next-auth" {
   /**
@@ -47,12 +49,16 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         case "signIn":
         case "signUp":
           if (user) {
+            assert(user.id, "expected AdapterUser");
             token.id = user.id;
-            token.setup = false; // TODO: Check if setup is complete
+            token.setup = await isSetupComplete(user.id);
           }
           break;
         case "update":
-          token.setup = true;
+          if ("setup" in sessionUpdates) {
+            // FIXME: Validate setup against the database
+            token.setup = !!sessionUpdates.setup;
+          }
           break;
         case undefined:
           break;

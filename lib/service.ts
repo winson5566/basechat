@@ -1,3 +1,5 @@
+import assert from "assert";
+
 import { openai } from "@ai-sdk/openai";
 import { streamObject } from "ai";
 import { eq } from "drizzle-orm";
@@ -22,6 +24,12 @@ export async function saveConnection(id: string, status: string) {
   } else {
     await db.update(schema.connections).set({ status }).where(eq(schema.connections.connectionId, id));
   }
+}
+
+export async function isSetupComplete(userId: string) {
+  const rs = await db.select().from(schema.tenants).where(eq(schema.tenants.ownerId, userId));
+  assert(rs.length === 0 || rs.length === 1, "unexpected result");
+  return rs.length === 1;
 }
 
 function getSystemPrompt(company: string, chunks: string) {
