@@ -10,6 +10,28 @@ import { getRagieClient, getRagieConnection } from "./ragie";
 import { GenerateRequest, GenerateResponseSchema } from "./schema";
 import * as settings from "./settings";
 
+export async function deleteConnection(tenantId: string, id: string) {
+  await db.transaction(async (tx) => {
+    const rs = await tx
+      .select()
+      .from(schema.connections)
+      .where(and(eq(schema.connections.tenantId, tenantId), eq(schema.connections.id, id)));
+
+    assert(rs.length === 1);
+
+    const connection = rs[0];
+
+    await tx
+      .delete(schema.connections)
+      .where(and(eq(schema.connections.tenantId, tenantId), eq(schema.connections.id, connection.id)));
+
+    await getRagieClient().connections.deleteConnection({
+      connectionId: connection.connectionId,
+      deleteConnectionPayload: { keepFiles: false },
+    });
+  });
+}
+
 export async function saveConnection(tenantId: string, connectionId: string, status: string) {
   const qs = await db
     .select()

@@ -78,7 +78,7 @@ export default async function ManageDataPage() {
                       <TableCell>{formatDistanceToNow(connection.createdAt)}</TableCell>
                       <TableCell>{connection.status}</TableCell>
                       <TableCell className="text-right">
-                        <ManageConnectionMenu />
+                        <ManageConnectionMenu id={connection.id} />
                       </TableCell>
                     </TableRow>
                   ))}
