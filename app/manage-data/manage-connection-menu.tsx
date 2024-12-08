@@ -14,9 +14,7 @@ export default function ManageConnectionMenu({ id }: { id: string }) {
 
   async function deleteConnection() {
     const res = await fetch(`/api/connections/${id}`, { method: "DELETE" });
-    if (res.status < 200 || res.status >= 300) {
-      throw new Error("delete failed");
-    }
+    if (!res.ok) throw new Error("delete failed");
     router.refresh();
   }
 
