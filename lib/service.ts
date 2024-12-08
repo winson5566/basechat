@@ -25,6 +25,7 @@ export async function saveConnection(tenantId: string, connectionId: string, sta
       connectionId: connectionId,
       name: ragieConnection.source_display_name,
       status,
+      sourceType: ragieConnection.source_type,
     });
   } else {
     await db

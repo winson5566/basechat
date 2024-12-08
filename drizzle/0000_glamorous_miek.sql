@@ -38,6 +38,7 @@ CREATE TABLE IF NOT EXISTS "connections" (
 	"connection_id" text NOT NULL,
 	"name" text NOT NULL,
 	"status" text NOT NULL,
+	"sourceType" text NOT NULL,
 	CONSTRAINT "connections_connection_id_unique" UNIQUE("connection_id")
 );
 --> statement-breakpoint

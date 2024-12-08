@@ -23,6 +23,7 @@ export const connections = pgTable("connections", {
   connectionId: text("connection_id").notNull().unique(),
   name: text().notNull(),
   status: text().notNull(),
+  sourceType: text().notNull(),
 });
 
 export const tenants = pgTable("tenants", {

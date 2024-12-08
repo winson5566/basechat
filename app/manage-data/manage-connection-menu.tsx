@@ -4,7 +4,6 @@ import { DropdownMenuTrigger } from "@radix-ui/react-dropdown-menu";
 import { MoreHorizontal, Trash } from "lucide-react";
 import { Inter } from "next/font/google";
 
-import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem } from "@/components/ui/dropdown-menu";
 
 const inter = Inter({ subsets: ["latin"] });

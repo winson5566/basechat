@@ -1,16 +1,8 @@
 import { formatDistanceToNow } from "date-fns";
 import { eq } from "drizzle-orm";
-import { MoreHorizontal } from "lucide-react";
 import { Inter } from "next/font/google";
 import Image from "next/image";
 
-import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { requireSession } from "@/lib/auth-utils";
 import db from "@/lib/db";
@@ -26,6 +18,7 @@ import SettingsIcon from "../../public/icons/settings.svg";
 import ManageDataPreviewIcons from "../../public/manage-data-preview-icons.svg";
 
 import AddConnectionMenu from "./add-connection-menu";
+import CONNECTOR_MAP from "./connector-map";
 import ManageConnectionMenu from "./manage-connection-menu";
 
 const inter = Inter({ subsets: ["latin"] });
@@ -74,7 +67,14 @@ export default async function ManageDataPage() {
                 <TableBody>
                   {connections.map((connection) => (
                     <TableRow key={connection.id}>
-                      <TableCell className="font-medium">{connection.name}</TableCell>
+                      <TableCell className="font-medium flex items-center">
+                        <Image
+                          src={CONNECTOR_MAP[connection.sourceType][1]}
+                          alt={CONNECTOR_MAP[connection.sourceType][0]}
+                          className="mr-1"
+                        />
+                        <div>{connection.name}</div>
+                      </TableCell>
                       <TableCell>{formatDistanceToNow(connection.createdAt)}</TableCell>
                       <TableCell>{connection.status}</TableCell>
                       <TableCell className="text-right">

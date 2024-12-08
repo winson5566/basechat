@@ -7,6 +7,7 @@ const ragieConnectionSchema = z.object({
   id: z.string(),
   source_display_name: z.string(),
   partition: z.string().nullable(),
+  source_type: z.string(),
 });
 
 // FIXME: Temporary until the ragie clients include this method

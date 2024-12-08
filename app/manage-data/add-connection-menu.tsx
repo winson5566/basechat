@@ -11,25 +11,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-import ConfluenceIconSVG from "../../public/icons/connectors/confluence.svg";
-import GmailIconSVG from "../../public/icons/connectors/gmail.svg";
-import GoogleDriveIconSVG from "../../public/icons/connectors/google-drive.svg";
-import JiraIconSVG from "../../public/icons/connectors/jira.svg";
-import NotionIconSVG from "../../public/icons/connectors/notion.svg";
-import OnedriveIconSVG from "../../public/icons/connectors/onedrive.svg";
-import SalesforceIconSVG from "../../public/icons/connectors/salesforce.svg";
-import SlackIconSVG from "../../public/icons/connectors/slack.svg";
-
-const CONNECTOR_LIST = [
-  ["confluence", "Confluence", ConfluenceIconSVG],
-  ["jira", "Jira", JiraIconSVG],
-  ["gmail", "Gmail", GmailIconSVG],
-  ["google_drive", "Google Drive", GoogleDriveIconSVG],
-  ["notion", "Notion", NotionIconSVG],
-  ["onedrive", "OneDrive", OnedriveIconSVG],
-  ["salesforce", "Salesforce", SalesforceIconSVG],
-  ["slack", "Slack", SlackIconSVG],
-];
+import CONNECTOR_MAP from "./connector-map";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -67,7 +49,7 @@ export default function AddConnectionMenu({ className }: { className?: string })
         </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="bg-[#F5F5F7] border border-[#D7D7D7] py-4 px-2.5 rounded-[24px] mt-4">
-        {CONNECTOR_LIST.map(([sourceType, name, icon]) => (
+        {Object.entries(CONNECTOR_MAP).map(([sourceType, [name, icon]]) => (
           <DropdownMenuItem
             key={sourceType}
             className="w-[190px] h-[35px] flex items-center mb-2 px-2"

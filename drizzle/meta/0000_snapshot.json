@@ -1,5 +1,5 @@
 {
-  "id": "2669f6bf-b4b5-461d-9e36-1242970da9fc",
+  "id": "cbf58aa3-f273-4973-8637-002f8e333ed0",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -267,6 +267,12 @@
         },
         "status": {
           "name": "status",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "sourceType": {
+          "name": "sourceType",
           "type": "text",
           "primaryKey": false,
           "notNull": true
