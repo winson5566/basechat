@@ -25,10 +25,15 @@ export async function deleteConnection(tenantId: string, id: string) {
       .delete(schema.connections)
       .where(and(eq(schema.connections.tenantId, tenantId), eq(schema.connections.id, connection.id)));
 
-    await getRagieClient().connections.deleteConnection({
-      connectionId: connection.ragieConnectionId,
-      deleteConnectionPayload: { keepFiles: false },
-    });
+    try {
+      await getRagieClient().connections.deleteConnection({
+        connectionId: connection.ragieConnectionId,
+        deleteConnectionPayload: { keepFiles: false },
+      });
+    } catch (e: any) {
+      if (e.rawResponse.status !== 404) throw e;
+      console.warn("connection missing in Ragie");
+    }
   });
 }
 
