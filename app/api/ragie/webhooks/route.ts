@@ -1,5 +1,10 @@
+import assert from "assert";
+
+import { eq } from "drizzle-orm";
 import { NextRequest } from "next/server";
 
+import db from "@/lib/db";
+import * as schema from "@/lib/db/schema";
 import { saveConnection } from "@/lib/service";
 import { RAGIE_WEBHOOK_SECRET } from "@/lib/settings";
 import { validateSignature } from "@/lib/utils";
@@ -36,7 +41,13 @@ export async function POST(request: NextRequest) {
   const status =
     event.type === "connection_sync_started" || event.type === "connection_sync_progress" ? "syncing" : "ready";
 
-  await saveConnection(event.payload.connection_id, status);
+  // FIXME: This fails if we don't already know about the connection
+  const rs = await db
+    .select()
+    .from(schema.connections)
+    .where(eq(schema.connections.connectionId, event.payload.connection_id));
+  assert(rs.length === 1, "failed tenant lookup");
+  await saveConnection(rs[0].tenantId, event.payload.connection_id, status);
 
   return Response.json({ message: "success" });
 }

@@ -1,5 +1,5 @@
 {
-  "id": "3824a1d7-117a-4d0e-8f48-5721026e83e1",
+  "id": "2669f6bf-b4b5-461d-9e36-1242970da9fc",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -247,6 +247,12 @@
           "notNull": true,
           "default": "now()"
         },
+        "tenant_id": {
+          "name": "tenant_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
         "connection_id": {
           "name": "connection_id",
           "type": "text",
@@ -267,7 +273,21 @@
         }
       },
       "indexes": {},
-      "foreignKeys": {},
+      "foreignKeys": {
+        "connections_tenant_id_tenants_id_fk": {
+          "name": "connections_tenant_id_tenants_id_fk",
+          "tableFrom": "connections",
+          "tableTo": "tenants",
+          "columnsFrom": [
+            "tenant_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
       "compositePrimaryKeys": {},
       "uniqueConstraints": {
         "connections_connection_id_unique": {

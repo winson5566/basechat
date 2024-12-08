@@ -2,7 +2,7 @@ import assert from "assert";
 
 import { openai } from "@ai-sdk/openai";
 import { streamObject } from "ai";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 
 import db from "./db";
 import * as schema from "./db/schema";
@@ -10,20 +10,34 @@ import { getRagieClient, getRagieConnection } from "./ragie";
 import { GenerateRequest, GenerateResponseSchema } from "./schema";
 import * as settings from "./settings";
 
-export async function saveConnection(id: string, status: string) {
-  const qs = await db.select().from(schema.connections).where(eq(schema.connections.connectionId, id)).for("update");
+export async function saveConnection(tenantId: string, connectionId: string, status: string) {
+  const qs = await db
+    .select()
+    .from(schema.connections)
+    .where(and(eq(schema.connections.tenantId, tenantId), eq(schema.connections.connectionId, connectionId)))
+    .for("update");
   const connection = qs.length === 1 ? qs[0] : null;
 
   if (!connection) {
-    const ragieConnection = await getRagieConnection(id);
+    const ragieConnection = await getRagieConnection(connectionId);
     await db.insert(schema.connections).values({
-      connectionId: id,
+      tenantId: tenantId,
+      connectionId: connectionId,
       name: ragieConnection.source_display_name,
       status,
     });
   } else {
-    await db.update(schema.connections).set({ status }).where(eq(schema.connections.connectionId, id));
+    await db
+      .update(schema.connections)
+      .set({ status })
+      .where(and(eq(schema.connections.tenantId, tenantId), eq(schema.connections.connectionId, connectionId)));
   }
+}
+
+export async function getTenantIdByUserId(id: string) {
+  const rs = await db.select().from(schema.tenants).where(eq(schema.tenants.ownerId, id));
+  assert(rs.length === 1, "expected single tenant");
+  return rs[0].id;
 }
 
 export async function isSetupComplete(userId: string) {

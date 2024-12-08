@@ -11,8 +11,15 @@ const baseFields = {
   ...timestampFields,
 };
 
-export const connections = pgTable("connections", {
+const baseTenantFields = {
   ...baseFields,
+  tenantId: uuid("tenant_id")
+    .references(() => tenants.id, { onDelete: "cascade" })
+    .notNull(),
+};
+
+export const connections = pgTable("connections", {
+  ...baseTenantFields,
   connectionId: text("connection_id").notNull().unique(),
   name: text().notNull(),
   status: text().notNull(),

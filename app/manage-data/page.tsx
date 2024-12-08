@@ -1,7 +1,13 @@
+import { formatDistanceToNow } from "date-fns";
+import { eq } from "drizzle-orm";
 import { Inter } from "next/font/google";
 import Image from "next/image";
 
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { requireSession } from "@/lib/auth-utils";
+import db from "@/lib/db";
+import * as schema from "@/lib/db/schema";
+import { getTenantIdByUserId } from "@/lib/service";
 import { cn } from "@/lib/utils";
 
 import ChatIcon from "../../public/icons/chat.svg";
@@ -26,6 +32,8 @@ function NavButton({ alt, src, className }: { alt: string; src: any; className?:
 
 export default async function ManageDataPage() {
   const session = await requireSession();
+  const tenantId = await getTenantIdByUserId(session.user.id);
+  const connections = await db.select().from(schema.connections).where(eq(schema.connections.tenantId, tenantId));
 
   return (
     <div className={`min-h-screen flex flex-col items-center bg-white ${inter.className}`}>
@@ -43,11 +51,36 @@ export default async function ManageDataPage() {
           <h1 className="font-bold text-[32px]">Manage data</h1>
           <AddConnectionMenu />
         </div>
-        <div className="flex-grow w-full flex flex-col items-center justify-center">
-          <Image alt="Manage data" src={ManageDataPreviewIcons} />
-          <h1 className="font-bold text-[32px] mb-3">Chat with your own data</h1>
-          <div className="text-[16px]">Click ‘Add data’ above to get started</div>
-        </div>
+        <>
+          {connections.length > 0 ? (
+            <div className="flex-grow w-full flex flex-col items-center mt-10">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Name</TableHead>
+                    <TableHead className="w-[200px]">Date added</TableHead>
+                    <TableHead className="w-[100px]">Status</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {connections.map((connection) => (
+                    <TableRow key={connection.id}>
+                      <TableCell className="font-medium">{connection.name}</TableCell>
+                      <TableCell>{formatDistanceToNow(connection.createdAt)}</TableCell>
+                      <TableCell>{connection.status}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          ) : (
+            <div className="flex-grow w-full flex flex-col items-center justify-center">
+              <Image alt="Manage data" src={ManageDataPreviewIcons} />
+              <h1 className="font-bold text-[32px] mb-3">Chat with your own data</h1>
+              <div className="text-[16px]">Click ‘Add data’ above to get started</div>
+            </div>
+          )}
+        </>
       </div>
       <div className="h-20 w-full bg-[#27272A] flex items-center justify-center">
         <div className="flex">
