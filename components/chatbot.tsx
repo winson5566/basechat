@@ -78,7 +78,7 @@ export default function Chatbot({ company }: { company: string }) {
     if (prevIsLoading === true && isLoading === false && object?.message) {
       setMessages([...messages, { content: object.message, role: "system" }]);
     }
-  }, [prevIsLoading, isLoading, object?.message]);
+  }, [prevIsLoading, isLoading, object?.message, messages]);
 
   const handleSubmit = (content: string) => {
     const message: GenerateRequest = { content };
