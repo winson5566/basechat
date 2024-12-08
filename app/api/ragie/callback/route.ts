@@ -18,5 +18,5 @@ export async function GET(request: NextRequest) {
   assert(rs.length === 1, "failed tenant lookup");
   await saveConnection(rs[0].id, connectionId, "syncing");
 
-  return Response.redirect(new URL("/manage-data", request.nextUrl.origin));
+  return Response.redirect(new URL("data", request.nextUrl.origin));
 }

@@ -32,7 +32,7 @@ function NavButton({ alt, src, className }: { alt: string; src: any; className?:
   );
 }
 
-export default async function ManageDataPage() {
+export default async function DataIndexPage() {
   const session = await requireSession();
   const tenantId = await getTenantIdByUserId(session.user.id);
   const connections = await db.select().from(schema.connections).where(eq(schema.connections.tenantId, tenantId));
