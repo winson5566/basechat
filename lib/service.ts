@@ -26,25 +26,25 @@ export async function deleteConnection(tenantId: string, id: string) {
       .where(and(eq(schema.connections.tenantId, tenantId), eq(schema.connections.id, connection.id)));
 
     await getRagieClient().connections.deleteConnection({
-      connectionId: connection.connectionId,
+      connectionId: connection.ragieConnectionId,
       deleteConnectionPayload: { keepFiles: false },
     });
   });
 }
 
-export async function saveConnection(tenantId: string, connectionId: string, status: string) {
+export async function saveConnection(tenantId: string, ragieConnectionId: string, status: string) {
   const qs = await db
     .select()
     .from(schema.connections)
-    .where(and(eq(schema.connections.tenantId, tenantId), eq(schema.connections.connectionId, connectionId)))
+    .where(and(eq(schema.connections.tenantId, tenantId), eq(schema.connections.ragieConnectionId, ragieConnectionId)))
     .for("update");
   const connection = qs.length === 1 ? qs[0] : null;
 
   if (!connection) {
-    const ragieConnection = await getRagieConnection(connectionId);
+    const ragieConnection = await getRagieConnection(ragieConnectionId);
     await db.insert(schema.connections).values({
       tenantId: tenantId,
-      connectionId: connectionId,
+      ragieConnectionId,
       name: ragieConnection.source_display_name,
       status,
       sourceType: ragieConnection.source_type,
@@ -53,7 +53,9 @@ export async function saveConnection(tenantId: string, connectionId: string, sta
     await db
       .update(schema.connections)
       .set({ status })
-      .where(and(eq(schema.connections.tenantId, tenantId), eq(schema.connections.connectionId, connectionId)));
+      .where(
+        and(eq(schema.connections.tenantId, tenantId), eq(schema.connections.ragieConnectionId, ragieConnectionId)),
+      );
   }
 }
 

@@ -1,5 +1,5 @@
 {
-  "id": "cbf58aa3-f273-4973-8637-002f8e333ed0",
+  "id": "19a21297-7c82-471e-aae7-65c77d96273e",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -253,8 +253,8 @@
           "primaryKey": false,
           "notNull": true
         },
-        "connection_id": {
-          "name": "connection_id",
+        "ragie_connection_id": {
+          "name": "ragie_connection_id",
           "type": "text",
           "primaryKey": false,
           "notNull": true
@@ -296,11 +296,11 @@
       },
       "compositePrimaryKeys": {},
       "uniqueConstraints": {
-        "connections_connection_id_unique": {
-          "name": "connections_connection_id_unique",
+        "connections_ragie_connection_id_unique": {
+          "name": "connections_ragie_connection_id_unique",
           "nullsNotDistinct": false,
           "columns": [
-            "connection_id"
+            "ragie_connection_id"
           ]
         }
       },

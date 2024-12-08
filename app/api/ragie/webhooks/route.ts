@@ -45,7 +45,7 @@ export async function POST(request: NextRequest) {
   const rs = await db
     .select()
     .from(schema.connections)
-    .where(eq(schema.connections.connectionId, event.payload.connection_id));
+    .where(eq(schema.connections.ragieConnectionId, event.payload.connection_id));
   assert(rs.length === 1, "failed tenant lookup");
   await saveConnection(rs[0].tenantId, event.payload.connection_id, status);
 

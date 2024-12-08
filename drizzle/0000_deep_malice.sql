@@ -35,11 +35,11 @@ CREATE TABLE IF NOT EXISTS "connections" (
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"updated_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"tenant_id" uuid NOT NULL,
-	"connection_id" text NOT NULL,
+	"ragie_connection_id" text NOT NULL,
 	"name" text NOT NULL,
 	"status" text NOT NULL,
 	"sourceType" text NOT NULL,
-	CONSTRAINT "connections_connection_id_unique" UNIQUE("connection_id")
+	CONSTRAINT "connections_ragie_connection_id_unique" UNIQUE("ragie_connection_id")
 );
 --> statement-breakpoint
 CREATE TABLE IF NOT EXISTS "sessions" (

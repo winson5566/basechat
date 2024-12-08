@@ -20,7 +20,7 @@ const baseTenantFields = {
 
 export const connections = pgTable("connections", {
   ...baseTenantFields,
-  connectionId: text("connection_id").notNull().unique(),
+  ragieConnectionId: text("ragie_connection_id").notNull().unique(),
   name: text().notNull(),
   status: text().notNull(),
   sourceType: text().notNull(),
