@@ -1,8 +1,16 @@
 import { formatDistanceToNow } from "date-fns";
 import { eq } from "drizzle-orm";
+import { MoreHorizontal } from "lucide-react";
 import { Inter } from "next/font/google";
 import Image from "next/image";
 
+import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { requireSession } from "@/lib/auth-utils";
 import db from "@/lib/db";
@@ -18,6 +26,7 @@ import SettingsIcon from "../../public/icons/settings.svg";
 import ManageDataPreviewIcons from "../../public/manage-data-preview-icons.svg";
 
 import AddConnectionMenu from "./add-connection-menu";
+import ManageConnectionMenu from "./manage-connection-menu";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -59,7 +68,7 @@ export default async function ManageDataPage() {
                   <TableRow>
                     <TableHead>Name</TableHead>
                     <TableHead className="w-[200px]">Date added</TableHead>
-                    <TableHead className="w-[100px]">Status</TableHead>
+                    <TableHead className="w-[50px]">Status</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -68,6 +77,9 @@ export default async function ManageDataPage() {
                       <TableCell className="font-medium">{connection.name}</TableCell>
                       <TableCell>{formatDistanceToNow(connection.createdAt)}</TableCell>
                       <TableCell>{connection.status}</TableCell>
+                      <TableCell className="text-right">
+                        <ManageConnectionMenu />
+                      </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
