@@ -12,10 +12,10 @@ const Citation = ({ source }: { source: SourceMetadata }) => {
   };
 
   return (
-    <div className="rounded-[16px] flex border px-3 py-1.5 mr-3 mb-3">
+    <button className="rounded-[20px] flex items-center border px-3 py-1.5 mr-3 mb-3">
       {connector && <Image src={connector[1]} alt={connector[0]} className="mr-1" />}
       {formatSourceName(source.file_path)}
-    </div>
+    </button>
   );
 };
 
