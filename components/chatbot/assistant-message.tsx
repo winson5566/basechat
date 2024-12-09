@@ -4,12 +4,14 @@ import CONNECTOR_MAP from "@/lib/connector-map";
 
 import { SourceMetadata } from "./types";
 
+const MAX_CITATION_LENGTH = 30;
+
 const Citation = ({ source }: { source: SourceMetadata }) => {
   const connector = CONNECTOR_MAP[source.source_type];
 
   const formatSourceName = (input: string) => {
-    if (input.length <= 15) return input;
-    return "..." + input.slice(-15);
+    if (input.length <= MAX_CITATION_LENGTH) return input;
+    return "..." + input.slice(-1 * MAX_CITATION_LENGTH);
   };
 
   return (
