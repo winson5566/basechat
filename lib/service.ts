@@ -2,7 +2,7 @@ import assert from "assert";
 
 import { openai } from "@ai-sdk/openai";
 import { streamObject } from "ai";
-import { and, eq } from "drizzle-orm";
+import { and, desc, eq } from "drizzle-orm";
 
 import db from "./db";
 import * as schema from "./db/schema";
@@ -94,12 +94,70 @@ IMPORTANT RULES:
 - NEVER include citations in your response`;
 }
 
+function getExpandSystemPrompt() {
+  return `
+The user would like you to provide more information on the the last topic. Please provide a more detailed response. Re-use the information you have already been provided and expand on your previous response. Your response may be longer than typical. You do not need to note the sources you used again.
+`;
+}
+
+async function getLastMessage(tenantId: string) {
+  const rs = await db
+    .select()
+    .from(schema.messages)
+    .where(and(eq(schema.messages.tenantId, tenantId)))
+    .orderBy(desc(schema.messages.createdAt))
+    .limit(1);
+
+  return rs.length === 1 ? rs[0] : null;
+}
+
+async function generateExpand(tenantId: string, lastMessage: typeof schema.messages.$inferSelect) {
+  assert(lastMessage.content, "expected message");
+
+  const ragieResponse = await getRagieClient().retrievals.retrieve({
+    query: lastMessage.content,
+    topK: 6,
+    rerank: true,
+  });
+
+  const rs = await db.insert(schema.messages).values({ content: null, sources: [], tenantId }).returning();
+  assert(rs.length === 1);
+  const persisted = rs[0];
+
+  const completion = streamObject({
+    messages: [
+      {
+        content: getSystemPrompt(settings.COMPANY_NAME, JSON.stringify(ragieResponse)),
+        role: "system",
+      },
+      {
+        content: getExpandSystemPrompt(),
+        role: "system",
+      },
+    ],
+    model: openai("gpt-4o"),
+    temperature: 0.3,
+    schema: GenerateResponseSchema,
+  });
+
+  return completion.toTextStreamResponse({ headers: { "x-message-id": persisted.id, "x-expanded": "1" } });
+}
+
 export async function generate(tenantId: string, { content }: GenerateRequest): Promise<Response> {
+  let expand = content === "Tell me more about this";
+  const lastMessage = await getLastMessage(tenantId);
+
+  if (expand && lastMessage) {
+    return generateExpand(tenantId, lastMessage);
+  }
+
   const ragieResponse = await getRagieClient().retrievals.retrieve({
     query: content,
     topK: 6,
     rerank: true,
   });
+
+  console.log(`ragie response includes ${ragieResponse.scoredChunks.length} chunk(s)`);
 
   const sources = ragieResponse.scoredChunks.map((chunk) => ({
     ...chunk.documentMetadata,
@@ -121,6 +179,14 @@ export async function generate(tenantId: string, { content }: GenerateRequest): 
     model: openai("gpt-4o"),
     temperature: 0.3,
     schema: GenerateResponseSchema,
+    onFinish: async (event) => {
+      if (event.object) {
+        await db
+          .update(schema.messages)
+          .set({ content: event.object.message })
+          .where(and(eq(schema.messages.tenantId, tenantId), eq(schema.messages.id, persisted.id)));
+      }
+    },
   });
 
   return completion.toTextStreamResponse({ headers: { "x-message-id": persisted.id } });

@@ -1,5 +1,7 @@
 "use client";
 
+import assert from "assert";
+
 import { experimental_useObject as useObject } from "ai/react";
 import { Inter } from "next/font/google";
 import { Fragment, useEffect, useMemo, useState } from "react";
@@ -12,7 +14,7 @@ import { SourceMetadata } from "./types";
 
 const inter = Inter({ subsets: ["latin"] });
 
-type AiMessage = { content: string; role: "system"; id?: string; sources: SourceMetadata[] };
+type AiMessage = { content: string; role: "system"; id?: string; expanded: boolean; sources: SourceMetadata[] };
 type UserMessage = { content: string; role: "user" };
 type Message = AiMessage | UserMessage;
 
@@ -28,14 +30,19 @@ interface Props {
 export default function Chatbot({ company, onSelectedDocumentId }: Props) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [sourceCache, setSourceCache] = useState<Record<string, SourceMetadata[]>>({});
-  const [pendingMessageId, setPendingMessageId] = useState<null | string>(null);
+  const [pendingMessage, setPendingMessage] = useState<null | { id: string; expanded: boolean }>(null);
 
   const { isLoading, object, submit } = useObject({
     api: "/api/generate",
     schema: GenerateResponseSchema,
     fetch: async function middleware(input: RequestInfo | URL, init?: RequestInit) {
       const res = await fetch(input, init);
-      setPendingMessageId(res.headers.get("x-message-id"));
+      const id = res.headers.get("x-message-id");
+      const expanded = res.headers.get("x-expanded") ? true : false;
+
+      assert(id);
+
+      setPendingMessage({ id, expanded });
       return res;
     },
     onError: console.error,
@@ -43,7 +50,7 @@ export default function Chatbot({ company, onSelectedDocumentId }: Props) {
       if (!event.object) return;
 
       const content = event.object.message;
-      setMessages((prev) => [...prev, { content: content, role: "system", sources: [] }]);
+      setMessages((prev) => [...prev, { content: content, role: "system", sources: [], expanded: false }]);
     },
   });
 
@@ -54,30 +61,33 @@ export default function Chatbot({ company, onSelectedDocumentId }: Props) {
   };
 
   useEffect(() => {
-    if (!pendingMessageId || isLoading) return;
+    if (!pendingMessage || isLoading) return;
 
     const copy = [...messages];
     const last = copy.pop();
     if (last?.role === "system") {
-      setMessages([...copy, { ...last, id: pendingMessageId }]);
-      setPendingMessageId(null);
+      setMessages([...copy, { ...last, id: pendingMessage.id, expanded: pendingMessage.expanded }]);
+      setPendingMessage(null);
     }
-  }, [pendingMessageId, isLoading, messages]);
+  }, [pendingMessage, isLoading, messages]);
 
   useEffect(() => {
-    if (!pendingMessageId) return;
+    if (!pendingMessage) return;
 
     (async () => {
-      const res = await fetch(`/api/messages/${pendingMessageId}`);
+      const res = await fetch(`/api/messages/${pendingMessage.id}`);
       if (!res.ok) return;
 
       const json = (await res.json()) as { id: string; sources: SourceMetadata[] };
       setSourceCache((prev) => ({ ...prev, [json.id]: json.sources }));
     })();
-  }, [pendingMessageId]);
+  }, [pendingMessage]);
 
   const messagesWithSources = useMemo(
-    () => messages.map((m) => (m.role === "system" && m.id ? { ...m, sources: sourceCache[m.id] } : m)),
+    () =>
+      messages.map((m) =>
+        m.role === "system" && m.id && sourceCache[m.id] ? { ...m, sources: sourceCache[m.id] } : m,
+      ),
     [messages, sourceCache],
   );
 
@@ -96,9 +106,12 @@ export default function Chatbot({ company, onSelectedDocumentId }: Props) {
                   sources={message.sources}
                   onSelectedDocumentId={onSelectedDocumentId}
                 />
-                {i === messages.length - 1 && (
+                {i === messages.length - 1 && messages[i].role === "system" && !messages[i].expanded && (
                   <div className="flex justify-center">
-                    <button className="flex justify-center rounded-[20px] border px-4 py-2.5 mt-8">
+                    <button
+                      className="flex justify-center rounded-[20px] border px-4 py-2.5 mt-8"
+                      onClick={() => handleSubmit("Tell me more about this")}
+                    >
                       Tell me more about this
                     </button>
                   </div>
@@ -109,7 +122,7 @@ export default function Chatbot({ company, onSelectedDocumentId }: Props) {
           {isLoading && (
             <AssistantMessage
               content={object?.message}
-              id={pendingMessageId}
+              id={pendingMessage}
               sources={[]}
               onSelectedDocumentId={onSelectedDocumentId}
             />
