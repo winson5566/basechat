@@ -3,9 +3,16 @@ import Link from "next/link";
 
 import { cn } from "@/lib/utils";
 
-import ChatIcon from "../public/icons/chat.svg";
-import DataIcon from "../public/icons/data.svg";
-import SettingsIcon from "../public/icons/settings.svg";
+import ChatIconOff from "../public/icons/chat-off.svg";
+import ChatIconOn from "../public/icons/chat-on.svg";
+import DataIconOff from "../public/icons/data-off.svg";
+import DataIconOn from "../public/icons/data-on.svg";
+import SettingsIconOff from "../public/icons/settings-off.svg";
+
+export enum AppLocation {
+  CHAT,
+  DATA,
+}
 
 export function NavButton({ alt, src, className }: { alt: string; src: any; className?: string }) {
   return (
@@ -16,17 +23,23 @@ export function NavButton({ alt, src, className }: { alt: string; src: any; clas
   );
 }
 
-export default function Footer() {
+export default function Footer({ appLocation }: { appLocation: AppLocation }) {
+  const chatIcon = appLocation === AppLocation.CHAT ? ChatIconOn : ChatIconOff;
+  const chatClassName = appLocation === AppLocation.CHAT ? "mr-5 font-semibold" : "mr-5";
+
+  const dataIcon = appLocation === AppLocation.DATA ? DataIconOn : DataIconOff;
+  const dataClassName = appLocation === AppLocation.DATA ? "mr-5 font-semibold" : "mr-5";
+
   return (
     <div className="h-20 w-full bg-[#27272A] flex items-center justify-center">
       <div className="flex">
         <Link href="/">
-          <NavButton alt="Chat" src={ChatIcon} className="mr-5" />
+          <NavButton alt="Chat" src={chatIcon} className={chatClassName} />
         </Link>
         <Link href="/data">
-          <NavButton alt="My Data" src={DataIcon} className="mr-5 font-semibold" />
+          <NavButton alt="My Data" src={dataIcon} className={dataClassName} />
         </Link>
-        <NavButton alt="Settings" src={SettingsIcon} />
+        <NavButton alt="Settings" src={SettingsIconOff} />
       </div>
     </div>
   );

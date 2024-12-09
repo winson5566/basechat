@@ -4,7 +4,7 @@ import Chatbot from "@/components/chatbot";
 import { requireSession } from "@/lib/auth-utils";
 import { getTenantByUserId } from "@/lib/service";
 
-import Footer from "./footer";
+import Footer, { AppLocation } from "./footer";
 import Header from "./header";
 
 const inter = Inter({ subsets: ["latin"] });
@@ -21,7 +21,7 @@ export default async function Home() {
           <Chatbot company={tenant.name} />
         </div>
       </div>
-      <Footer />
+      <Footer appLocation={AppLocation.CHAT} />
     </div>
   );
 }

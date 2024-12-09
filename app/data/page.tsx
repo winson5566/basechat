@@ -10,7 +10,7 @@ import * as schema from "@/lib/db/schema";
 import { getTenantByUserId } from "@/lib/service";
 
 import ManageDataPreviewIcons from "../../public/manage-data-preview-icons.svg";
-import Footer from "../footer";
+import Footer, { AppLocation } from "../footer";
 import Header from "../header";
 
 import AddConnectionMenu from "./add-connection-menu";
@@ -73,7 +73,7 @@ export default async function DataIndexPage() {
           )}
         </>
       </div>
-      <Footer />
+      <Footer appLocation={AppLocation.DATA} />
     </div>
   );
 }
