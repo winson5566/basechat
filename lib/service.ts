@@ -101,7 +101,12 @@ export async function generate(tenantId: string, { content }: GenerateRequest): 
     rerank: true,
   });
 
-  const sources = ragieResponse.scoredChunks.map((chunk) => chunk.documentMetadata);
+  const sources = ragieResponse.scoredChunks.map((chunk) => ({
+    ...chunk.documentMetadata,
+    documentId: chunk.documentId,
+    documentName: chunk.documentName,
+  }));
+
   const rs = await db.insert(schema.messages).values({ content: null, sources, tenantId }).returning();
   assert(rs.length === 1);
   const persisted = rs[0];

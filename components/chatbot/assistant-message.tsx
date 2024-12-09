@@ -6,6 +6,7 @@ import { SourceMetadata } from "./types";
 
 const Citation = ({ source }: { source: SourceMetadata }) => {
   const connector = CONNECTOR_MAP[source.source_type];
+
   const formatSourceName = (input: string) => {
     if (input.length <= 15) return input;
     return "..." + input.slice(-15);
@@ -14,7 +15,7 @@ const Citation = ({ source }: { source: SourceMetadata }) => {
   return (
     <button className="rounded-[20px] flex items-center border px-3 py-1.5 mr-3 mb-3">
       {connector && <Image src={connector[1]} alt={connector[0]} className="mr-1" />}
-      {formatSourceName(source.file_path)}
+      {formatSourceName(source.documentName)}
     </button>
   );
 };
@@ -26,6 +27,13 @@ interface Props {
 }
 
 export default function AssistantMessage({ content, sources }: Props) {
+  const dedupe = sources.reduce<Record<string, SourceMetadata>>((acc, v) => {
+    acc[v.documentId] = v;
+    return acc;
+  }, {});
+
+  const dedupedSources = Object.values(dedupe);
+
   return (
     <div className="flex">
       <div>
@@ -36,7 +44,7 @@ export default function AssistantMessage({ content, sources }: Props) {
       <div className="self-start mb-6 rounded-md pt-2 ml-7">
         {content}
         <div className="flex flex-wrap mt-4">
-          {sources.map((source, i) => (
+          {dedupedSources.map((source, i) => (
             <Citation key={i} source={source} />
           ))}
         </div>
