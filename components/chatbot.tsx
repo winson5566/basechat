@@ -1,16 +1,14 @@
 "use client";
 
-import { usePrevious } from "@uidotdev/usehooks";
 import { experimental_useObject as useObject } from "ai/react";
-import { Cabin } from "next/font/google";
-import { KeyboardEvent, useEffect, useRef, useState } from "react";
-import { z } from "zod";
+import { Inter } from "next/font/google";
+import { KeyboardEvent, useRef, useState } from "react";
 
 import { AutosizeTextarea, AutosizeTextAreaRef } from "@/components//ui/autosize-textarea";
 import { GenerateRequest, GenerateResponseSchema } from "@/lib/schema";
 import { cn } from "@/lib/utils";
 
-const cabin = Cabin({ subsets: ["latin"] });
+const inter = Inter({ subsets: ["latin"] });
 
 interface ChatInputProps {
   handleSubmit?: (text: string) => void;
@@ -32,16 +30,16 @@ const ChatInput = (props: ChatInputProps) => {
     if (event.key !== "Enter" || (event.key === "Enter" && event.shiftKey)) return;
 
     event.preventDefault();
-
     handleSubmit(value);
   };
 
   return (
-    <div className="flex w-full items-end">
+    <div className="flex w-full items-end items-center">
       <AutosizeTextarea
+        className="pt-1.5"
         ref={ref}
         placeholder="Send a message"
-        minHeight={8}
+        minHeight={4}
         value={value}
         onKeyDown={handleKeyDown}
         onChange={(event) => {
@@ -49,11 +47,12 @@ const ChatInput = (props: ChatInputProps) => {
         }}
       />
       <button onClick={() => handleSubmit(value)}>
-        <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <svg width="26" height="24" viewBox="0 0 26 24" fill="none" xmlns="http://www.w3.org/2000/svg">
           <path
-            opacity="0.5"
-            d="M32 16C32 7.16344 24.8366 0 16 0C7.16344 0 0 7.16344 0 16C0 24.8366 7.16344 32 16 32C24.8366 32 32 24.8366 32 16ZM17 23C17 23.5523 16.5523 24 16 24C15.4477 24 15 23.5523 15 23V11.4142L10.7071 15.7071C10.3166 16.0976 9.68342 16.0976 9.29289 15.7071C8.90237 15.3166 8.90237 14.6834 9.29289 14.2929L15.2929 8.29289C15.6834 7.90237 16.3166 7.90237 16.7071 8.29289L22.7071 14.2929C23.0976 14.6834 23.0976 15.3166 22.7071 15.7071C22.3166 16.0976 21.6834 16.0976 21.2929 15.7071L17 11.4142V23Z"
-            fill="#00AEC5"
+            d="M24.3125 12L11.6731 12M6.34685 16.1693H3.91254M6.34685 12.1464H1.51254M6.34685 8.12356H3.91254M10.6199 4.59596L23.8753 11.0228C24.6916 11.4186 24.6916 12.5814 23.8753 12.9772L10.6199 19.4041C9.71186 19.8443 8.74666 18.9161 9.15116 17.9915L11.582 12.4353C11.7034 12.1578 11.7034 11.8422 11.582 11.5647L9.15116 6.00848C8.74666 5.08391 9.71186 4.15568 10.6199 4.59596Z"
+            stroke="black"
+            strokeWidth="2"
+            strokeLinecap="round"
           />
         </svg>
       </button>
@@ -70,15 +69,13 @@ export default function Chatbot({ company }: { company: string }) {
     api: "/api/generate",
     schema: GenerateResponseSchema,
     onError: console.error,
+    onFinish: (event) => {
+      if (!event.object) return;
+
+      const content = event.object.message;
+      setMessages((prev) => [...prev, { content: content, role: "system" }]);
+    },
   });
-
-  const prevIsLoading = usePrevious(isLoading);
-
-  useEffect(() => {
-    if (prevIsLoading === true && isLoading === false && object?.message) {
-      setMessages([...messages, { content: object.message, role: "system" }]);
-    }
-  }, [prevIsLoading, isLoading, object?.message, messages]);
 
   const handleSubmit = (content: string) => {
     const message: GenerateRequest = { content };
@@ -87,44 +84,47 @@ export default function Chatbot({ company }: { company: string }) {
   };
 
   return (
-    <div className="flex-grow flex flex-col items-center justify-center">
-      <div className="flex-grow flex flex-col items-center justify-center h-full w-full min-w-[448px]">
-        <div className="font-semibold text-[15px] h-10">{company} AI</div>
-        <div className="flex-grow flex flex-col h-full w-full mb-6 bg-white rounded-xl p-4">
-          {messages.length ? (
-            <div className="flex flex-col">
-              {messages.map((message, i) => (
-                <div
-                  key={i}
-                  className={cn(
-                    "mb-6 rounded-md px-4 py-2 bg-[#D1EFF3]",
-                    message.role === "user" ? "self-end" : "self-start",
-                  )}
-                >
-                  {message.content}
-                </div>
-              ))}
-              {isLoading && <div className="self-start mb-6 rounded-md px-4 py-2 bg-[#D1EFF3]">{object?.message}</div>}
+    <div className="flex-grow flex flex-col h-full w-full bg-white p-4 max-w-[717px]">
+      {messages.length ? (
+        <div className="flex-grow flex flex-col">
+          {messages.map((message, i) => (
+            <div
+              key={i}
+              className={cn(
+                "mb-6 rounded-md px-4 py-2",
+                message.role === "user" ? "self-end bg-[#F5F5F7]" : "self-start",
+              )}
+            >
+              {message.content}
             </div>
-          ) : (
-            <>
-              <div className="flex-grow flex">
-                <div className={`flex-grow flex flex-col items-center justify-center ${cabin.className}`}>
-                  <h1 className="text-xl font-bold text-[#286239]">Hi there! I&apos;m {company}&apos;s AI.</h1>
-                  <div className="text-[#C79730]">What would you like to know?</div>
-                </div>
-              </div>
-              <ul className="space-y-2">
-                <li className="rounded-md px-4 py-2 bg-[#D1EFF3]">How does Acme&apos;s occupancy compare to target?</li>
-                <li className="rounded-md px-4 py-2 bg-[#D1EFF3]">Did Acme&apos;s controllable costs increase?</li>
-                <li className="rounded-md px-4 py-2 bg-[#D1EFF3]">Summarize Acme&apos;s performance over time.</li>
-              </ul>
-            </>
-          )}
+          ))}
+          {isLoading && <div className="self-start mb-6 rounded-md px-4 py-2">{object?.message}</div>}
         </div>
-        <div className="w-full flex flex-col items-center p-2 pl-4 rounded-[24px] bg-white">
-          <ChatInput handleSubmit={handleSubmit} />
+      ) : (
+        <div className={`flex-grow flex flex-col justify-center ${inter.className}`}>
+          <div className="h-[100px] w-[100px] bg-gray-700 rounded-[50px] text-white flex items-center justify-center font-bold text-[32px] mb-8">
+            FS
+          </div>
+          <h1 className="mb-12 text-[40px] font-bold leading-[50px]">
+            Hello, I&apos;m {company}&apos;s AI.
+            <br />
+            What would you like to know?
+          </h1>
+          <div className="flex items-start justify-evenly space-x-2">
+            <div className="rounded-md border p-4 h-full w-1/3">
+              Sample question. Lorem ipsum dolor sit amet consectetur. Sample question.
+            </div>
+            <div className="rounded-md border p-4 h-full w-1/3">
+              Sample question. Lorem ipsum dolor sit amet consectetur. Sample question.
+            </div>
+            <div className="rounded-md border p-4 h-full w-1/3">
+              Sample question. Lorem ipsum dolor sit amet consectetur. Sample question.
+            </div>
+          </div>
         </div>
+      )}
+      <div className="w-full flex flex-col items-center p-2 pl-4 rounded-[24px] border border-[#D7D7D7]">
+        <ChatInput handleSubmit={handleSubmit} />
       </div>
     </div>
   );

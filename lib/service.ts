@@ -64,10 +64,10 @@ export async function saveConnection(tenantId: string, ragieConnectionId: string
   }
 }
 
-export async function getTenantIdByUserId(id: string) {
+export async function getTenantByUserId(id: string) {
   const rs = await db.select().from(schema.tenants).where(eq(schema.tenants.ownerId, id));
   assert(rs.length === 1, "expected single tenant");
-  return rs[0].id;
+  return rs[0];
 }
 
 export async function isSetupComplete(userId: string) {
