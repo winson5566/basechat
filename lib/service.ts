@@ -94,12 +94,17 @@ IMPORTANT RULES:
 - NEVER include citations in your response`;
 }
 
-export async function generate({ content }: GenerateRequest): Promise<Response> {
+export async function generate(tenantId: string, { content }: GenerateRequest): Promise<Response> {
   const ragieResponse = await getRagieClient().retrievals.retrieve({
     query: content,
     topK: 6,
     rerank: true,
   });
+
+  const sources = ragieResponse.scoredChunks.map((chunk) => chunk.documentMetadata);
+  const rs = await db.insert(schema.messages).values({ content: null, sources, tenantId }).returning();
+  assert(rs.length === 1);
+  const persisted = rs[0];
 
   const completion = streamObject({
     messages: [
@@ -113,5 +118,5 @@ export async function generate({ content }: GenerateRequest): Promise<Response> 
     schema: GenerateResponseSchema,
   });
 
-  return completion.toTextStreamResponse();
+  return completion.toTextStreamResponse({ headers: { "x-message-id": persisted.id } });
 }

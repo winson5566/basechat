@@ -1,4 +1,4 @@
-import { boolean, integer, pgTable, primaryKey, text, timestamp, uuid } from "drizzle-orm/pg-core";
+import { boolean, integer, json, pgTable, primaryKey, text, timestamp, uuid } from "drizzle-orm/pg-core";
 import type { AdapterAccountType } from "next-auth/adapters";
 
 const timestampFields = {
@@ -32,6 +32,12 @@ export const tenants = pgTable("tenants", {
   ownerId: uuid("owner_id")
     .references(() => users.id, { onDelete: "restrict" })
     .notNull(),
+});
+
+export const messages = pgTable("messages", {
+  ...baseTenantFields,
+  content: text("content"),
+  sources: json("sources").notNull(),
 });
 
 /** Based on Auth.js example schema: https://authjs.dev/getting-started/adapters/drizzle */
