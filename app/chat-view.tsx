@@ -6,6 +6,7 @@ import Markdown from "react-markdown";
 
 import Chatbot from "@/components/chatbot";
 import CONNECTOR_MAP from "@/lib/connector-map";
+import CloseIcon from "@/public/icons/close.svg";
 import ExternalLinkIcon from "@/public/icons/external-link.svg";
 
 interface Props {
@@ -43,7 +44,10 @@ export default function ChatView({ company }: Props) {
         <Chatbot company={company} onSelectedDocumentId={handleSelectedDocumentId} />
       </div>
       {document && (
-        <div className="max-h-[800px] min-w-[400px] w-[400px] rounded-[24px] p-8 bg-[#F5F5F7] overflow-scroll">
+        <div className="max-h-[800px] min-w-[400px] w-[400px] rounded-[24px] p-8 bg-[#F5F5F7] overflow-scroll relative">
+          <div className="absolute top-4 right-4">
+            <Image className="cursor-pointer" src={CloseIcon} alt="Close" onClick={() => setDocument(null)} />
+          </div>
           {icon && <Image src={icon} alt="test" width={48} />}
           <div className="wrap text-[24px] font-bold mb-4 break-all">{document.name}</div>
           <div className="flex justify-between mb-6">
