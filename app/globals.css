@@ -70,4 +70,25 @@ body {
   body {
     @apply bg-background text-foreground;
   }
+
+  .markdown * {
+    font-size: 12px;
+  }
+
+  .markdown p {
+    @apply mb-4;
+  }
+
+  .markdown ul,
+  .markdown ol {
+    @apply mb-2;
+  }
+
+  .markdown li {
+    @apply mb-1;
+  }
+
+  .markdown strong {
+    @apply font-semibold;
+  }
 }

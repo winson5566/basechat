@@ -20,7 +20,12 @@ const UserMessage = ({ content }: { content: string }) => (
   <div className="mb-6 rounded-md px-4 py-2 self-end bg-[#F5F5F7]">{content}</div>
 );
 
-export default function Chatbot({ company }: { company: string }) {
+interface Props {
+  company: string;
+  onSelectedDocumentId: (id: string) => void;
+}
+
+export default function Chatbot({ company, onSelectedDocumentId }: Props) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [sourceCache, setSourceCache] = useState<Record<string, SourceMetadata[]>>({});
   const [pendingMessageId, setPendingMessageId] = useState<null | string>(null);
@@ -85,7 +90,12 @@ export default function Chatbot({ company }: { company: string }) {
               <UserMessage key={i} content={message.content} />
             ) : (
               <Fragment key={i}>
-                <AssistantMessage content={message.content} id={message.id} sources={message.sources} />
+                <AssistantMessage
+                  content={message.content}
+                  id={message.id}
+                  sources={message.sources}
+                  onSelectedDocumentId={onSelectedDocumentId}
+                />
                 {i === messages.length - 1 && (
                   <div className="flex justify-center">
                     <button className="flex justify-center rounded-[20px] border px-4 py-2.5 mt-8">
@@ -96,7 +106,14 @@ export default function Chatbot({ company }: { company: string }) {
               </Fragment>
             ),
           )}
-          {isLoading && <AssistantMessage content={object?.message} id={pendingMessageId} sources={[]} />}
+          {isLoading && (
+            <AssistantMessage
+              content={object?.message}
+              id={pendingMessageId}
+              sources={[]}
+              onSelectedDocumentId={onSelectedDocumentId}
+            />
+          )}
         </div>
       ) : (
         <div className={`flex-grow flex flex-col justify-center ${inter.className}`}>
