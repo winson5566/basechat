@@ -2,7 +2,7 @@
 
 import { experimental_useObject as useObject } from "ai/react";
 import { Inter } from "next/font/google";
-import { useState } from "react";
+import { Fragment, useState } from "react";
 
 import { GenerateRequest, GenerateResponseSchema } from "@/lib/schema";
 
@@ -56,7 +56,16 @@ export default function Chatbot({ company }: { company: string }) {
             message.role === "user" ? (
               <UserMessage key={i} content={message.content} />
             ) : (
-              <AiMessage key={i} content={message.content} />
+              <Fragment key={i}>
+                <AiMessage content={message.content} />
+                {i === messages.length - 1 && (
+                  <div className="flex justify-center">
+                    <button className="flex justify-center rounded-[20px] border px-4 py-2.5 mt-8">
+                      Tell me more about this
+                    </button>
+                  </div>
+                )}
+              </Fragment>
             ),
           )}
           {isLoading && <AiMessage content={object?.message} />}
