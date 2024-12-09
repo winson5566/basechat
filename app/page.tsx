@@ -3,7 +3,6 @@ import { Inter } from "next/font/google";
 import Chatbot from "@/components/chatbot";
 import { requireSession } from "@/lib/auth-utils";
 import { getTenantByUserId } from "@/lib/service";
-import * as settings from "@/lib/settings";
 
 import Footer from "./footer";
 import Header from "./header";

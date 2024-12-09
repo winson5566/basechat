@@ -12,13 +12,20 @@ const inter = Inter({ subsets: ["latin"] });
 
 type Message = { content: string; role: "system" | "user" };
 
-function AiMessage({ content }: { content: string | undefined }) {
-  return <div className="self-start mb-6 rounded-md px-4 py-2">{content}</div>;
-}
+const AiMessage = ({ content }: { content: string | undefined }) => (
+  <div className="flex">
+    <div>
+      <div className="h-[40px] w-[40px] bg-gray-700 rounded-[50px] text-white flex items-center justify-center font-bold text-[13px] mb-8">
+        FS
+      </div>
+    </div>
+    <div className="self-start mb-6 rounded-md pt-2 ml-7">{content}</div>
+  </div>
+);
 
-function UserMessage({ content }: { content: string }) {
-  return <div className="mb-6 rounded-md px-4 py-2 self-end bg-[#F5F5F7]">{content}</div>;
-}
+const UserMessage = ({ content }: { content: string }) => (
+  <div className="mb-6 rounded-md px-4 py-2 self-end bg-[#F5F5F7]">{content}</div>
+);
 
 export default function Chatbot({ company }: { company: string }) {
   const [messages, setMessages] = useState<Message[]>([]);
