@@ -2,67 +2,19 @@
 
 import { experimental_useObject as useObject } from "ai/react";
 import { Inter } from "next/font/google";
-import Image from "next/image";
 import { Fragment, useEffect, useMemo, useState } from "react";
 
-import CONNECTOR_MAP from "@/app/data/connector-map";
 import { GenerateRequest, GenerateResponseSchema } from "@/lib/schema";
 
+import AssistantMessage from "./assistant-message";
 import ChatInput from "./chat-input";
+import { SourceMetadata } from "./types";
 
 const inter = Inter({ subsets: ["latin"] });
 
 type AiMessage = { content: string; role: "system"; id?: string; sources: SourceMetadata[] };
 type UserMessage = { content: string; role: "user" };
 type Message = AiMessage | UserMessage;
-type SourceMetadata = {
-  source_type: string;
-  file_path: string;
-  source_url: string;
-};
-
-const Citation = ({ source }: { source: SourceMetadata }) => {
-  const connector = CONNECTOR_MAP[source.source_type];
-  const formatSourceName = (input: string) => {
-    if (input.length <= 15) return input;
-    return "..." + input.slice(-15);
-  };
-
-  return (
-    <div className="rounded-[16px] flex border px-3 py-1.5 mr-3 mb-3">
-      {connector && <Image src={connector[1]} alt={connector[0]} className="mr-1" />}
-      {formatSourceName(source.file_path)}
-    </div>
-  );
-};
-
-const AiMessage = ({
-  content,
-  id,
-  sources,
-}: {
-  content: string | undefined;
-  id?: string | null;
-  sources: SourceMetadata[];
-}) => {
-  return (
-    <div className="flex">
-      <div>
-        <div className="h-[40px] w-[40px] bg-gray-700 rounded-[50px] text-white flex items-center justify-center font-bold text-[13px] mb-8">
-          FS
-        </div>
-      </div>
-      <div className="self-start mb-6 rounded-md pt-2 ml-7">
-        {content}
-        <div className="flex flex-wrap mt-4">
-          {sources.map((source, i) => (
-            <Citation key={i} source={source} />
-          ))}
-        </div>
-      </div>
-    </div>
-  );
-};
 
 const UserMessage = ({ content }: { content: string }) => (
   <div className="mb-6 rounded-md px-4 py-2 self-end bg-[#F5F5F7]">{content}</div>
@@ -133,7 +85,7 @@ export default function Chatbot({ company }: { company: string }) {
               <UserMessage key={i} content={message.content} />
             ) : (
               <Fragment key={i}>
-                <AiMessage content={message.content} id={message.id} sources={message.sources} />
+                <AssistantMessage content={message.content} id={message.id} sources={message.sources} />
                 {i === messages.length - 1 && (
                   <div className="flex justify-center">
                     <button className="flex justify-center rounded-[20px] border px-4 py-2.5 mt-8">
@@ -144,7 +96,7 @@ export default function Chatbot({ company }: { company: string }) {
               </Fragment>
             ),
           )}
-          {isLoading && <AiMessage content={object?.message} id={pendingMessageId} sources={[]} />}
+          {isLoading && <AssistantMessage content={object?.message} id={pendingMessageId} sources={[]} />}
         </div>
       ) : (
         <div className={`flex-grow flex flex-col justify-center ${inter.className}`}>
