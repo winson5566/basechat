@@ -122,7 +122,7 @@ export default function Chatbot({ company, onSelectedDocumentId }: Props) {
           {isLoading && (
             <AssistantMessage
               content={object?.message}
-              id={pendingMessage}
+              id={pendingMessage?.id}
               sources={[]}
               onSelectedDocumentId={onSelectedDocumentId}
             />
