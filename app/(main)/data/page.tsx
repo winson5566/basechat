@@ -26,7 +26,7 @@ export default async function DataIndexPage() {
 
   return (
     <Main name={session.user.name} appLocation={AppLocation.DATA}>
-      <div className="max-w-[1140px] w-full p-4 flex-grow">
+      <div className="max-w-[1140px] w-full p-4 flex-grow flex flex-col">
         <div className="flex w-full justify-between items-center pt-2">
           <h1 className="font-bold text-[32px]">Manage data</h1>
           <AddConnectionMenu />

@@ -1,11 +1,8 @@
 "use client";
 
-import Image from "next/image";
-import Link from "next/link";
 import { ReactNode, useState } from "react";
 
-import NewChatIcon from "../../public/icons/new-chat.svg";
-
+import ConversationList from "./conversation-list";
 import Footer, { AppLocation } from "./footer";
 import Header from "./header";
 
@@ -24,33 +21,7 @@ export default function Main({ appLocation, name, children }: Props) {
       <div className="flex-grow flex h-full w-full justify-center">
         {open && (
           <div className="min-w-[258px] h-full flex flex-col">
-            <div className="flex-grow bg-[#F5F5F7] rounded-xl m-4 p-6">
-              <Link href="/">
-                <div className="flex items-center">
-                  <Image src={NewChatIcon} height={24} width={24} alt="New chat" />
-                  <div className="ml-1.5 font-medium">New Chat</div>
-                </div>
-              </Link>
-
-              <div className="font-semibold text-[13px] mt-8">Today</div>
-              <div className="mt-4">Chat title</div>
-              <div className="mt-4">Chat title</div>
-              <div className="mt-4">Chat title</div>
-              <div className="mt-4">Chat title</div>
-              <div className="mt-4">Chat title</div>
-
-              <div className="font-semibold text-[13px] mt-8">November</div>
-              <div className="mt-4">Chat title</div>
-              <div className="mt-4">Chat title</div>
-              <div className="mt-4">Chat title</div>
-
-              <div className="font-semibold text-[13px] mt-8">October</div>
-              <div className="mt-4">Chat title</div>
-              <div className="mt-4">Chat title</div>
-              <div className="mt-4">Chat title</div>
-              <div className="mt-4">Chat title</div>
-              <div className="mt-4">Chat title</div>
-            </div>
+            <ConversationList className="flex-grow bg-[#F5F5F7] rounded-xl m-4 p-6" />
             <div className="h-[80px] bg-[#27272A]" />
           </div>
         )}

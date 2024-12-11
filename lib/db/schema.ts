@@ -28,6 +28,7 @@ export const connections = pgTable("connections", {
 
 export const conversations = pgTable("conversations", {
   ...baseTenantFields,
+  title: text().notNull(),
 });
 
 export const tenants = pgTable("tenants", {

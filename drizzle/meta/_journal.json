@@ -22,6 +22,13 @@
       "when": 1733881256718,
       "tag": "0002_harsh_cassandra_nova",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1733938312804,
+      "tag": "0003_cheerful_shiva",
+      "breakpoints": true
     }
   ]
 }
