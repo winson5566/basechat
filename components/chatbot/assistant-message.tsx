@@ -2,6 +2,7 @@ import Image from "next/image";
 
 import CONNECTOR_MAP from "@/lib/connector-map";
 
+import "./style.css";
 import { SourceMetadata } from "./types";
 
 const MAX_CITATION_LENGTH = 30;
@@ -45,7 +46,7 @@ export default function AssistantMessage({ content, sources, onSelectedDocumentI
         </div>
       </div>
       <div className="self-start mb-6 rounded-md pt-2 ml-7">
-        {content}
+        {content?.length ? content : <div className="dot-pulse mt-1.5" />}
         <div className="flex flex-wrap mt-4">
           {dedupedSources.map((source, i) => (
             <Citation key={i} source={source} onClick={() => onSelectedDocumentId(source.documentId)} />
