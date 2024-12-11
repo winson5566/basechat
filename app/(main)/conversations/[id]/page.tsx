@@ -1,5 +1,5 @@
-import { AppLocation } from "@/app/footer";
-import Main from "@/app/main";
+import { AppLocation } from "@/app/(main)/footer";
+import Main from "@/app/(main)/main";
 import { requireSession } from "@/lib/auth-utils";
 
 import Conversation from "./conversation";

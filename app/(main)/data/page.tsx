@@ -9,8 +9,8 @@ import db from "@/lib/db";
 import * as schema from "@/lib/db/schema";
 import { getTenantByUserId } from "@/lib/service";
 
-import CONNECTOR_MAP from "../../lib/connector-map";
-import ManageDataPreviewIcons from "../../public/manage-data-preview-icons.svg";
+import CONNECTOR_MAP from "../../../lib/connector-map";
+import ManageDataPreviewIcons from "../../../public/manage-data-preview-icons.svg";
 import { AppLocation } from "../footer";
 import Main from "../main";
 

@@ -3,8 +3,8 @@
 import Image from "next/image";
 import Link from "next/link";
 
-import HamburgerIcon from "../public/icons/hamburger.svg";
-import NewChatIcon from "../public/icons/new-chat.svg";
+import HamburgerIcon from "../../public/icons/hamburger.svg";
+import NewChatIcon from "../../public/icons/new-chat.svg";
 
 interface Props {
   name?: string | null;

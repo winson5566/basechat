@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 
-import { useGlobalState } from "@/app/context";
+import { useGlobalState } from "@/app/(main)/context";
 import Chatbot from "@/components/chatbot";
 
 import Summary from "./summary";

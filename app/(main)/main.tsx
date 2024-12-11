@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { ReactNode, useState } from "react";
 
-import NewChatIcon from "../public/icons/new-chat.svg";
+import NewChatIcon from "../../public/icons/new-chat.svg";
 
 import Footer, { AppLocation } from "./footer";
 import Header from "./header";
