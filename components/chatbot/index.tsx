@@ -23,11 +23,12 @@ const UserMessage = ({ content }: { content: string }) => (
 );
 
 interface Props {
-  company: string;
+  conversationId: string;
+  initialMessage?: string;
   onSelectedDocumentId: (id: string) => void;
 }
 
-export default function Chatbot({ company, onSelectedDocumentId }: Props) {
+export default function Chatbot({ conversationId, initialMessage, onSelectedDocumentId }: Props) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [sourceCache, setSourceCache] = useState<Record<string, SourceMetadata[]>>({});
   const [pendingMessage, setPendingMessage] = useState<null | { id: string; expanded: boolean }>(null);
@@ -55,9 +56,9 @@ export default function Chatbot({ company, onSelectedDocumentId }: Props) {
   });
 
   const handleSubmit = (content: string) => {
-    const message: GenerateRequest = { content };
-    setMessages([...messages, { ...message, role: "user" }]);
-    submit(message);
+    const payload: GenerateRequest = { conversationId, content };
+    setMessages([...messages, { content, role: "user" }]);
+    submit(payload);
   };
 
   useEffect(() => {
@@ -83,6 +84,11 @@ export default function Chatbot({ company, onSelectedDocumentId }: Props) {
     })();
   }, [pendingMessage]);
 
+  useEffect(() => {
+    if (!initialMessage) return;
+    handleSubmit(initialMessage);
+  }, []);
+
   const messagesWithSources = useMemo(
     () =>
       messages.map((m) =>
@@ -93,64 +99,40 @@ export default function Chatbot({ company, onSelectedDocumentId }: Props) {
 
   return (
     <div className="flex-grow flex flex-col h-full w-full bg-white p-4 max-w-[717px]">
-      {messages.length ? (
-        <div className="flex-grow flex flex-col">
-          {messagesWithSources.map((message, i) =>
-            message.role === "user" ? (
-              <UserMessage key={i} content={message.content} />
-            ) : (
-              <Fragment key={i}>
-                <AssistantMessage
-                  content={message.content}
-                  id={message.id}
-                  sources={message.sources}
-                  onSelectedDocumentId={onSelectedDocumentId}
-                />
-                {i === messages.length - 1 && messages[i].role === "system" && !messages[i].expanded && (
-                  <div className="flex justify-center">
-                    <button
-                      className="flex justify-center rounded-[20px] border px-4 py-2.5 mt-8"
-                      onClick={() => handleSubmit("Tell me more about this")}
-                    >
-                      Tell me more about this
-                    </button>
-                  </div>
-                )}
-              </Fragment>
-            ),
-          )}
-          {isLoading && (
-            <AssistantMessage
-              content={object?.message}
-              id={pendingMessage?.id}
-              sources={[]}
-              onSelectedDocumentId={onSelectedDocumentId}
-            />
-          )}
-        </div>
-      ) : (
-        <div className={`flex-grow flex flex-col justify-center ${inter.className}`}>
-          <div className="h-[100px] w-[100px] bg-gray-700 rounded-[50px] text-white flex items-center justify-center font-bold text-[32px] mb-8">
-            FS
-          </div>
-          <h1 className="mb-12 text-[40px] font-bold leading-[50px]">
-            Hello, I&apos;m {company}&apos;s AI.
-            <br />
-            What would you like to know?
-          </h1>
-          <div className="flex items-start justify-evenly space-x-2">
-            <div className="rounded-md border p-4 h-full w-1/3">
-              Sample question. Lorem ipsum dolor sit amet consectetur. Sample question.
-            </div>
-            <div className="rounded-md border p-4 h-full w-1/3">
-              Sample question. Lorem ipsum dolor sit amet consectetur. Sample question.
-            </div>
-            <div className="rounded-md border p-4 h-full w-1/3">
-              Sample question. Lorem ipsum dolor sit amet consectetur. Sample question.
-            </div>
-          </div>
-        </div>
-      )}
+      <div className="flex-grow flex flex-col">
+        {messagesWithSources.map((message, i) =>
+          message.role === "user" ? (
+            <UserMessage key={i} content={message.content} />
+          ) : (
+            <Fragment key={i}>
+              <AssistantMessage
+                content={message.content}
+                id={message.id}
+                sources={message.sources}
+                onSelectedDocumentId={onSelectedDocumentId}
+              />
+              {i === messages.length - 1 && messages[i].role === "system" && !messages[i].expanded && (
+                <div className="flex justify-center">
+                  <button
+                    className="flex justify-center rounded-[20px] border px-4 py-2.5 mt-8"
+                    onClick={() => handleSubmit("Tell me more about this")}
+                  >
+                    Tell me more about this
+                  </button>
+                </div>
+              )}
+            </Fragment>
+          ),
+        )}
+        {isLoading && (
+          <AssistantMessage
+            content={object?.message}
+            id={pendingMessage?.id}
+            sources={[]}
+            onSelectedDocumentId={onSelectedDocumentId}
+          />
+        )}
+      </div>
       <div className="w-full flex flex-col items-center p-2 pl-4 rounded-[24px] border border-[#D7D7D7]">
         <ChatInput handleSubmit={handleSubmit} />
       </div>

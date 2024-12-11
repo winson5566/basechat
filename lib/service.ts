@@ -111,7 +111,11 @@ async function getLastMessage(tenantId: string) {
   return rs.length === 1 ? rs[0] : null;
 }
 
-async function generateExpand(tenantId: string, lastMessage: typeof schema.messages.$inferSelect) {
+async function generateExpand(
+  tenantId: string,
+  conversationId: string,
+  lastMessage: typeof schema.messages.$inferSelect,
+) {
   assert(lastMessage.content, "expected message");
 
   const ragieResponse = await getRagieClient().retrievals.retrieve({
@@ -120,7 +124,10 @@ async function generateExpand(tenantId: string, lastMessage: typeof schema.messa
     rerank: true,
   });
 
-  const rs = await db.insert(schema.messages).values({ content: null, sources: [], tenantId }).returning();
+  const rs = await db
+    .insert(schema.messages)
+    .values({ conversationId, content: null, sources: [], tenantId })
+    .returning();
   assert(rs.length === 1);
   const persisted = rs[0];
 
@@ -143,12 +150,12 @@ async function generateExpand(tenantId: string, lastMessage: typeof schema.messa
   return completion.toTextStreamResponse({ headers: { "x-message-id": persisted.id, "x-expanded": "1" } });
 }
 
-export async function generate(tenantId: string, { content }: GenerateRequest): Promise<Response> {
+export async function generate(tenantId: string, { conversationId, content }: GenerateRequest): Promise<Response> {
   let expand = content === "Tell me more about this";
   const lastMessage = await getLastMessage(tenantId);
 
   if (expand && lastMessage) {
-    return generateExpand(tenantId, lastMessage);
+    return generateExpand(tenantId, conversationId, lastMessage);
   }
 
   const ragieResponse = await getRagieClient().retrievals.retrieve({
@@ -165,7 +172,7 @@ export async function generate(tenantId: string, { content }: GenerateRequest): 
     documentName: chunk.documentName,
   }));
 
-  const rs = await db.insert(schema.messages).values({ content: null, sources, tenantId }).returning();
+  const rs = await db.insert(schema.messages).values({ conversationId, content: null, sources, tenantId }).returning();
   assert(rs.length === 1);
   const persisted = rs[0];
 

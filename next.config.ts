@@ -1,7 +1,8 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  // Set to false because strict mode breaks components that call APIs when the component is rendered (like in Conversation)
+  reactStrictMode: false,
 };
 
 export default nextConfig;

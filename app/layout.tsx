@@ -3,6 +3,8 @@ import { Source_Sans_3 } from "next/font/google";
 import "./globals.css";
 import { SessionProvider } from "next-auth/react";
 
+import { GlobalStateProvider } from "./context";
+
 const sourceSans3 = Source_Sans_3({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
@@ -17,9 +19,11 @@ export default function RootLayout({
 }>) {
   return (
     <SessionProvider>
-      <html lang="en">
-        <body className={`${sourceSans3.className} antialiased`}>{children}</body>
-      </html>
+      <GlobalStateProvider>
+        <html lang="en">
+          <body className={`${sourceSans3.className} antialiased`}>{children}</body>
+        </html>
+      </GlobalStateProvider>
     </SessionProvider>
   );
 }

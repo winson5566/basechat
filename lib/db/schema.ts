@@ -26,6 +26,10 @@ export const connections = pgTable("connections", {
   sourceType: text().notNull(),
 });
 
+export const conversations = pgTable("conversations", {
+  ...baseTenantFields,
+});
+
 export const tenants = pgTable("tenants", {
   ...baseFields,
   name: text("name").notNull(),
@@ -38,6 +42,9 @@ export const messages = pgTable("messages", {
   ...baseTenantFields,
   content: text("content"),
   sources: json("sources").notNull(),
+  conversationId: uuid("conversation_id")
+    .references(() => conversations.id, { onDelete: "cascade" })
+    .notNull(),
 });
 
 /** Based on Auth.js example schema: https://authjs.dev/getting-started/adapters/drizzle */

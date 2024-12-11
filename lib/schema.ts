@@ -6,6 +6,7 @@ export const GenerateResponseSchema = z.object({
 });
 
 export const GenerateRequestSchema = z.object({
+  conversationId: z.string(),
   content: z.string().describe("The request message"),
 });
 
