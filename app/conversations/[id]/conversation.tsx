@@ -25,7 +25,7 @@ export default function Conversation({ id }: Props) {
   };
 
   return (
-    <div className="flex-grow flex">
+    <div className="flex-grow flex w-full">
       <div className="flex-grow w-full flex flex-col items-center justify-center">
         <Chatbot conversationId={id} initialMessage={initialMessage} onSelectedDocumentId={handleSelectedDocumentId} />
       </div>
