@@ -26,50 +26,52 @@ export default async function DataIndexPage() {
 
   return (
     <Main name={session.user.name} appLocation={AppLocation.DATA}>
-      <div className="flex w-full justify-between items-center pt-2">
-        <h1 className="font-bold text-[32px]">Manage data</h1>
-        <AddConnectionMenu />
-      </div>
-      <>
-        {connections.length > 0 ? (
-          <div className="flex-grow w-full flex flex-col items-center mt-10">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Name</TableHead>
-                  <TableHead className="w-[200px]">Date added</TableHead>
-                  <TableHead className="w-[50px]">Status</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {connections.map((connection) => (
-                  <TableRow key={connection.id}>
-                    <TableCell className="font-medium flex items-center">
-                      <Image
-                        src={CONNECTOR_MAP[connection.sourceType][1]}
-                        alt={CONNECTOR_MAP[connection.sourceType][0]}
-                        className="mr-1"
-                      />
-                      <div>{connection.name}</div>
-                    </TableCell>
-                    <TableCell>{formatDistanceToNow(connection.createdAt)}</TableCell>
-                    <TableCell>{connection.status}</TableCell>
-                    <TableCell className="text-right">
-                      <ManageConnectionMenu id={connection.id} />
-                    </TableCell>
+      <div className="max-w-[1140px] w-full p-4 flex-grow">
+        <div className="flex w-full justify-between items-center pt-2">
+          <h1 className="font-bold text-[32px]">Manage data</h1>
+          <AddConnectionMenu />
+        </div>
+        <>
+          {connections.length > 0 ? (
+            <div className="flex-grow w-full flex flex-col items-center mt-10">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Name</TableHead>
+                    <TableHead className="w-[200px]">Date added</TableHead>
+                    <TableHead className="w-[50px]">Status</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
-        ) : (
-          <div className="flex-grow w-full flex flex-col items-center justify-center">
-            <Image alt="Manage data" src={ManageDataPreviewIcons} />
-            <h1 className="font-bold text-[32px] mb-3">Chat with your own data</h1>
-            <div className="text-[16px]">Click ‘Add data’ above to get started</div>
-          </div>
-        )}
-      </>
+                </TableHeader>
+                <TableBody>
+                  {connections.map((connection) => (
+                    <TableRow key={connection.id}>
+                      <TableCell className="font-medium flex items-center">
+                        <Image
+                          src={CONNECTOR_MAP[connection.sourceType][1]}
+                          alt={CONNECTOR_MAP[connection.sourceType][0]}
+                          className="mr-1"
+                        />
+                        <div>{connection.name}</div>
+                      </TableCell>
+                      <TableCell>{formatDistanceToNow(connection.createdAt)}</TableCell>
+                      <TableCell>{connection.status}</TableCell>
+                      <TableCell className="text-right">
+                        <ManageConnectionMenu id={connection.id} />
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          ) : (
+            <div className="flex-grow w-full flex flex-col items-center justify-center">
+              <Image alt="Manage data" src={ManageDataPreviewIcons} />
+              <h1 className="font-bold text-[32px] mb-3">Chat with your own data</h1>
+              <div className="text-[16px]">Click ‘Add data’ above to get started</div>
+            </div>
+          )}
+        </>
+      </div>
     </Main>
   );
 }
