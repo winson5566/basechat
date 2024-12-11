@@ -52,7 +52,7 @@ export default function AddConnectionMenu({ className }: { className?: string })
         {Object.entries(CONNECTOR_MAP).map(([sourceType, [name, icon]]) => (
           <DropdownMenuItem
             key={sourceType}
-            className="w-[190px] h-[35px] flex items-center mb-2 px-2"
+            className="w-[190px] h-[35px] flex items-center mb-2 px-2 cursor-pointer"
             onSelect={() => onSelect(sourceType)}
           >
             <Image src={icon} alt={name} className="mr-3" />
