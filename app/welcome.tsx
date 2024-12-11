@@ -12,7 +12,12 @@ const inter = Inter({ subsets: ["latin"] });
 
 const conversationResponseSchema = z.object({ id: z.string() });
 
-export default function Welcome({ company }: { company: string }) {
+interface Props {
+  company: string;
+  className?: string;
+}
+
+export default function Welcome({ company, className }: Props) {
   const router = useRouter();
   const { setInitialMessage } = useGlobalState();
 
@@ -27,7 +32,7 @@ export default function Welcome({ company }: { company: string }) {
   };
 
   return (
-    <div className="flex-grow flex flex-col h-full w-full bg-white p-4 max-w-[717px]">
+    <div className={className}>
       <div className={`flex-grow flex flex-col justify-center ${inter.className}`}>
         <div className="h-[100px] w-[100px] bg-gray-700 rounded-[50px] text-white flex items-center justify-center font-bold text-[32px] mb-8">
           FS

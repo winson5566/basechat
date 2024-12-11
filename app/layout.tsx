@@ -20,8 +20,8 @@ export default function RootLayout({
   return (
     <SessionProvider>
       <GlobalStateProvider>
-        <html lang="en">
-          <body className={`${sourceSans3.className} antialiased`}>{children}</body>
+        <html lang="en" className="h-full w-full">
+          <body className={`${sourceSans3.className} antialiased h-full w-full`}>{children}</body>
         </html>
       </GlobalStateProvider>
     </SessionProvider>

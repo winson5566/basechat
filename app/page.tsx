@@ -3,9 +3,7 @@ import { Inter } from "next/font/google";
 import { requireSession } from "@/lib/auth-utils";
 import { getTenantByUserId } from "@/lib/service";
 
-import Footer, { AppLocation } from "./footer";
-import Header from "./header";
-import Welcome from "./welcome";
+import Main from "./main";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -14,12 +12,8 @@ export default async function Home() {
   const tenant = await getTenantByUserId(session.user.id);
 
   return (
-    <div className={`min-h-screen flex flex-col items-center bg-white ${inter.className}`}>
-      <Header />
-      <div className="flex-grow h-full w-full flex flex-col items-center justify-center max-w-[1140px] p-4">
-        <Welcome company={tenant.name} />
-      </div>
-      <Footer appLocation={AppLocation.CHAT} />
+    <div className={`h-full w-full flex flex-col items-center bg-white ${inter.className}`}>
+      <Main name={session.user.name} company={tenant.name} />
     </div>
   );
 }

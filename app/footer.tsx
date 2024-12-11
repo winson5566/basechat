@@ -23,7 +23,12 @@ export function NavButton({ alt, src, className }: { alt: string; src: any; clas
   );
 }
 
-export default function Footer({ appLocation }: { appLocation: AppLocation }) {
+interface Props {
+  appLocation: AppLocation;
+  className?: string;
+}
+
+export default function Footer({ appLocation, className }: Props) {
   const chatIcon = appLocation === AppLocation.CHAT ? ChatIconOn : ChatIconOff;
   const chatClassName = appLocation === AppLocation.CHAT ? "mr-5 font-semibold" : "mr-5";
 
@@ -31,7 +36,7 @@ export default function Footer({ appLocation }: { appLocation: AppLocation }) {
   const dataClassName = appLocation === AppLocation.DATA ? "mr-5 font-semibold" : "mr-5";
 
   return (
-    <div className="h-20 w-full bg-[#27272A] flex items-center justify-center">
+    <div className={className}>
       <div className="flex">
         <Link href="/">
           <NavButton alt="Chat" src={chatIcon} className={chatClassName} />
