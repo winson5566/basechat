@@ -25,12 +25,12 @@ export default function Main({ name, company }: Props) {
         {open && (
           <div className="min-w-[258px] h-full flex flex-col">
             <div className="flex-grow bg-[#F5F5F7] rounded-xl m-4 p-6">
-              <div className="flex items-center">
-                <Link href="/">
+              <Link href="/">
+                <div className="flex items-center">
                   <Image src={NewChatIcon} height={24} width={24} alt="New chat" />
-                </Link>
-                <div className="ml-1.5 font-medium">New Chat</div>
-              </div>
+                  <div className="ml-1.5 font-medium">New Chat</div>
+                </div>
+              </Link>
 
               <div className="font-semibold text-[13px] mt-8">Today</div>
               <div className="mt-4">Chat title</div>
