@@ -1,4 +1,5 @@
 import Image from "next/image";
+import Link from "next/link";
 
 import { requireSession } from "@/lib/auth-utils";
 
@@ -12,7 +13,9 @@ export default async function Header() {
     <header className="w-full flex justify-between p-4 items-center">
       <div className="flex">
         <Image src={HamburgerIcon} alt="Expand chats" className="mr-2.5" />
-        <Image src={NewChatIcon} alt="New chat" />
+        <Link href="/">
+          <Image src={NewChatIcon} alt="New chat" />
+        </Link>
       </div>
       <div className="bg-[#66666E] rounded-[16px] h-[32px] w-[32px] flex items-center justify-center text-[#FEFEFE] font-semibold">
         {session.user.name?.trim()[0].toUpperCase()}
