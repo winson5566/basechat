@@ -10,11 +10,12 @@ import Footer, { AppLocation } from "./footer";
 import Header from "./header";
 
 interface Props {
+  appLocation: AppLocation;
   name?: string | null;
   children?: ReactNode;
 }
 
-export default function Main({ name, children }: Props) {
+export default function Main({ appLocation, name, children }: Props) {
   const [open, setOpen] = useState(false);
 
   return (
@@ -55,10 +56,7 @@ export default function Main({ name, children }: Props) {
         )}
         <div className="flex-grow h-full w-full flex flex-col items-center justify-center min-w-[500px]">
           {children}
-          <Footer
-            appLocation={AppLocation.CHAT}
-            className="h-[80px] w-full bg-[#27272A] flex items-center justify-center"
-          />
+          <Footer appLocation={appLocation} className="h-[80px] w-full bg-[#27272A] flex items-center justify-center" />
         </div>
       </div>
     </div>
