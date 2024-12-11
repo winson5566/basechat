@@ -2,20 +2,19 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useState } from "react";
+import { ReactNode, useState } from "react";
 
 import NewChatIcon from "../public/icons/new-chat.svg";
 
 import Footer, { AppLocation } from "./footer";
 import Header from "./header";
-import Welcome from "./welcome";
 
 interface Props {
   name?: string | null;
-  company: string;
+  children?: ReactNode;
 }
 
-export default function Main({ name, company }: Props) {
+export default function Main({ name, children }: Props) {
   const [open, setOpen] = useState(false);
 
   return (
@@ -55,7 +54,7 @@ export default function Main({ name, company }: Props) {
           </div>
         )}
         <div className="flex-grow h-full w-full flex flex-col items-center justify-center min-w-[500px]">
-          <Welcome company={company} className="flex-grow flex flex-col w-full bg-white p-4 max-w-[717px]" />
+          {children}
           <Footer
             appLocation={AppLocation.CHAT}
             className="h-[80px] w-full bg-[#27272A] flex items-center justify-center"
