@@ -18,7 +18,7 @@ export default function Main({ name, children }: Props) {
   const [open, setOpen] = useState(false);
 
   return (
-    <>
+    <div className="h-full w-full flex flex-col items-center bg-white">
       <Header name={name} onNavClick={() => setOpen(!open)} />
       <div className="flex-grow flex h-full w-full justify-center">
         {open && (
@@ -61,6 +61,6 @@ export default function Main({ name, children }: Props) {
           />
         </div>
       </div>
-    </>
+    </div>
   );
 }

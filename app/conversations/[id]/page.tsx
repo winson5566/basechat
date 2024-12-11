@@ -8,10 +8,8 @@ export default async function ConversationPage({ params }: { params: Promise<{ i
   const { id } = await params;
 
   return (
-    <div className="h-full w-full flex flex-col items-center bg-white">
-      <Main name={session.user.name}>
-        <Conversation id={id} />
-      </Main>
-    </div>
+    <Main name={session.user.name}>
+      <Conversation id={id} />
+    </Main>
   );
 }

@@ -9,10 +9,8 @@ export default async function Home() {
   const tenant = await getTenantByUserId(session.user.id);
 
   return (
-    <div className="h-full w-full flex flex-col items-center bg-white">
-      <Main name={session.user.name}>
-        <Welcome company={tenant.name} className="flex-grow flex flex-col w-full bg-white p-4 max-w-[717px]" />
-      </Main>
-    </div>
+    <Main name={session.user.name}>
+      <Welcome company={tenant.name} className="flex-grow flex flex-col w-full bg-white p-4 max-w-[717px]" />
+    </Main>
   );
 }
