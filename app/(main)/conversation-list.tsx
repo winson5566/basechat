@@ -3,21 +3,15 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { z } from "zod";
 
+import { conversationListResponseSchema, conversationSchema } from "@/lib/schema";
+
 import NewChatIcon from "../../public/icons/new-chat.svg";
 
 interface Props {
   className?: string;
 }
 
-const conversationSchema = z.object({
-  id: z.string(),
-  title: z.string(),
-  createdAt: z.coerce.date(),
-});
-const conversationListResponseSchema = z.array(conversationSchema);
-
 type Conversation = z.infer<typeof conversationSchema>;
-type ConversationListResponse = z.infer<typeof conversationListResponseSchema>;
 
 export default function ConversationList({ className }: Props) {
   const [conversations, setConversations] = useState<Conversation[]>([]);
@@ -43,7 +37,7 @@ export default function ConversationList({ className }: Props) {
       <div className="font-semibold text-[13px] mt-8">History</div>
       {conversations.map((conversation, i) => (
         <Link key={i} href={`/conversations/${conversation.id}`}>
-          <div className="mt-4">{conversation.title}</div>
+          <div className="mt-4 truncate">{conversation.title}</div>
         </Link>
       ))}
     </div>

@@ -22,7 +22,7 @@ export default function Welcome({ company, className }: Props) {
   const { setInitialMessage } = useGlobalState();
 
   const handleSubmit = async (content: string) => {
-    const res = await fetch("/api/conversations", { method: "POST" });
+    const res = await fetch("/api/conversations", { method: "POST", body: JSON.stringify({ title: content }) });
     if (!res.ok) throw new Error("Could not create conversation");
 
     const json = await res.json();
