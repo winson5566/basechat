@@ -41,7 +41,7 @@ export default function AssistantMessage({ content, sources, onSelectedDocumentI
   return (
     <div className="flex">
       <div>
-        <div className="h-[40px] w-[40px] bg-gray-700 rounded-[50px] text-white flex items-center justify-center font-bold text-[13px] mb-8">
+        <div className="h-[40px] w-[40px] avatar rounded-[50px] text-white flex items-center justify-center font-bold text-[13px] mb-8">
           FS
         </div>
       </div>

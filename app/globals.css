@@ -91,4 +91,12 @@ body {
   .markdown strong {
     @apply font-semibold;
   }
+
+  .avatar {
+    width: 100.41px;
+    height: 100px;
+
+    background: linear-gradient(90deg, #f5c3af 0%, #ea89d7 46.87%, #6767d9 100%);
+    border-radius: 80px;
+  }
 }
