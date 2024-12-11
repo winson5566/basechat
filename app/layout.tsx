@@ -1,11 +1,11 @@
 import type { Metadata } from "next";
-import { Source_Sans_3 } from "next/font/google";
+import { Inter } from "next/font/google";
 import "./globals.css";
 import { SessionProvider } from "next-auth/react";
 
 import { GlobalStateProvider } from "./context";
 
-const sourceSans3 = Source_Sans_3({ subsets: ["latin"] });
+const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
   title: "Chatbot example",
@@ -21,7 +21,7 @@ export default function RootLayout({
     <SessionProvider>
       <GlobalStateProvider>
         <html lang="en" className="h-full w-full">
-          <body className={`${sourceSans3.className} antialiased h-full w-full`}>{children}</body>
+          <body className={`${inter.className} antialiased h-full w-full`}>{children}</body>
         </html>
       </GlobalStateProvider>
     </SessionProvider>
