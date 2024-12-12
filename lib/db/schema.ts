@@ -1,4 +1,4 @@
-import { boolean, integer, json, pgTable, primaryKey, text, timestamp, uuid } from "drizzle-orm/pg-core";
+import { boolean, integer, json, pgEnum, pgTable, primaryKey, text, timestamp, uuid } from "drizzle-orm/pg-core";
 import type { AdapterAccountType } from "next-auth/adapters";
 
 const timestampFields = {
@@ -39,9 +39,12 @@ export const tenants = pgTable("tenants", {
     .notNull(),
 });
 
+export const rolesEnum = pgEnum("roles", ["assistant", "system", "user"]);
+
 export const messages = pgTable("messages", {
   ...baseTenantFields,
   content: text("content"),
+  role: rolesEnum("role").notNull(),
   sources: json("sources").notNull(),
   conversationId: uuid("conversation_id")
     .references(() => conversations.id, { onDelete: "cascade" })

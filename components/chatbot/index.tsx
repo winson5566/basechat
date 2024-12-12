@@ -3,10 +3,11 @@
 import assert from "assert";
 
 import { experimental_useObject as useObject } from "ai/react";
+import { Rss } from "lucide-react";
 import { Inter } from "next/font/google";
 import { Fragment, useEffect, useMemo, useState } from "react";
 
-import { GenerateRequest, GenerateResponseSchema } from "@/lib/schema";
+import { conversationMessagesResponseSchema, GenerateRequest, GenerateResponseSchema } from "@/lib/schema";
 
 import AssistantMessage from "./assistant-message";
 import ChatInput from "./chat-input";
@@ -85,8 +86,17 @@ export default function Chatbot({ conversationId, initialMessage, onSelectedDocu
   }, [pendingMessage]);
 
   useEffect(() => {
-    if (!initialMessage) return;
-    handleSubmit(initialMessage);
+    if (initialMessage) {
+      handleSubmit(initialMessage);
+    } else {
+      (async () => {
+        const res = await fetch(`/api/conversations/${conversationId}/messages`);
+        if (!res.ok) throw new Error("Could not load conversation");
+        const json = await res.json();
+        const messages = conversationMessagesResponseSchema.parse(json);
+        setMessages(messages);
+      })();
+    }
   }, []);
 
   const messagesWithSources = useMemo(

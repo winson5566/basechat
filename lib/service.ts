@@ -2,7 +2,7 @@ import assert from "assert";
 
 import { openai } from "@ai-sdk/openai";
 import { streamObject } from "ai";
-import { and, desc, eq } from "drizzle-orm";
+import { and, asc, desc, eq } from "drizzle-orm";
 
 import db from "./db";
 import * as schema from "./db/schema";
@@ -100,6 +100,29 @@ The user would like you to provide more information on the the last topic. Pleas
 `;
 }
 
+export async function getConversationMessages(tenantId: string, conversationId: string) {
+  return await db
+    .select()
+    .from(schema.messages)
+    .where(and(eq(schema.messages.tenantId, tenantId), eq(schema.messages.conversationId, conversationId)))
+    .orderBy(asc(schema.messages.createdAt));
+}
+
+export async function createMessage(message: typeof schema.messages.$inferInsert) {
+  const rs = await db
+    .insert(schema.messages)
+    .values({
+      tenantId: message.tenantId,
+      role: message.role,
+      conversationId: message.conversationId,
+      content: message.content,
+      sources: message.sources,
+    })
+    .returning();
+  assert(rs.length === 1);
+  return rs[0];
+}
+
 async function getLastMessage(tenantId: string) {
   const rs = await db
     .select()
@@ -124,12 +147,7 @@ async function generateExpand(
     rerank: true,
   });
 
-  const rs = await db
-    .insert(schema.messages)
-    .values({ conversationId, content: null, sources: [], tenantId })
-    .returning();
-  assert(rs.length === 1);
-  const persisted = rs[0];
+  const persisted = await createMessage({ conversationId, role: "system", content: null, sources: [], tenantId });
 
   const completion = streamObject({
     messages: [
@@ -158,6 +176,8 @@ export async function generate(tenantId: string, { conversationId, content }: Ge
     return generateExpand(tenantId, conversationId, lastMessage);
   }
 
+  const userMessage = await createMessage({ conversationId, role: "user", content, sources: [], tenantId });
+
   const ragieResponse = await getRagieClient().retrievals.retrieve({
     query: content,
     topK: 6,
@@ -172,9 +192,7 @@ export async function generate(tenantId: string, { conversationId, content }: Ge
     documentName: chunk.documentName,
   }));
 
-  const rs = await db.insert(schema.messages).values({ conversationId, content: null, sources, tenantId }).returning();
-  assert(rs.length === 1);
-  const persisted = rs[0];
+  const persisted = await createMessage({ conversationId, role: "system", content: null, sources, tenantId });
 
   const completion = streamObject({
     messages: [

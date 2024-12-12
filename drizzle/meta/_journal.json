@@ -5,29 +5,8 @@
     {
       "idx": 0,
       "version": "7",
-      "when": 1733762266999,
-      "tag": "0000_amused_speed_demon",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "7",
-      "when": 1733875022226,
-      "tag": "0001_dry_hellcat",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "7",
-      "when": 1733881256718,
-      "tag": "0002_harsh_cassandra_nova",
-      "breakpoints": true
-    },
-    {
-      "idx": 3,
-      "version": "7",
-      "when": 1733938312804,
-      "tag": "0003_cheerful_shiva",
+      "when": 1733982189480,
+      "tag": "0000_clean_thing",
       "breakpoints": true
     }
   ]

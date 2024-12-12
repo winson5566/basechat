@@ -19,3 +19,20 @@ export const conversationSchema = z.object({
 });
 
 export const conversationListResponseSchema = z.array(conversationSchema);
+
+export const conversationMessagesResponseSchema = z.array(
+  z.union([
+    z.object({
+      id: z.string(),
+      content: z.string(),
+      role: z.literal("system"),
+      sources: z.array(z.any()).default([]),
+      expanded: z.boolean().default(false),
+    }),
+    z.object({
+      id: z.string(),
+      content: z.string(),
+      role: z.literal("user"),
+    }),
+  ]),
+);
