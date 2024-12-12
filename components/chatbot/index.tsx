@@ -3,7 +3,6 @@
 import assert from "assert";
 
 import { experimental_useObject as useObject } from "ai/react";
-import { Rss } from "lucide-react";
 import { Inter } from "next/font/google";
 import { Fragment, useEffect, useMemo, useState } from "react";
 
