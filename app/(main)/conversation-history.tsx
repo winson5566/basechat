@@ -13,7 +13,7 @@ interface Props {
 
 type Conversation = z.infer<typeof conversationSchema>;
 
-export default function ConversationList({ className }: Props) {
+export default function ConversationHistory({ className }: Props) {
   const [conversations, setConversations] = useState<Conversation[]>([]);
 
   useEffect(() => {

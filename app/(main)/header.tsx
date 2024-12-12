@@ -8,7 +8,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import HamburgerIcon from "../../public/icons/hamburger.svg";
 import NewChatIcon from "../../public/icons/new-chat.svg";
 
-import ConversationList from "./conversation-list";
+import ConversationHistory from "./conversation-history";
 
 interface Props {
   name?: string | null;
@@ -24,7 +24,7 @@ export default function Header({ name, onNavClick = () => {} }: Props) {
             <Image src={HamburgerIcon} alt="Expand chats" className="mr-2.5 cursor-pointer" onClick={onNavClick} />
           </PopoverTrigger>
           <PopoverContent className="bg-[#F5F5F7] w-[258px]  border-none shadow-none rounded-xl p-6" align="start">
-            <ConversationList />
+            <ConversationHistory />
           </PopoverContent>
         </Popover>
         <Link href="/">
