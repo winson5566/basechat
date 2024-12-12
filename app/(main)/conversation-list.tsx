@@ -34,12 +34,14 @@ export default function ConversationList({ className }: Props) {
         </div>
       </Link>
 
-      <div className="font-semibold text-[13px] mt-8">History</div>
-      {conversations.map((conversation, i) => (
-        <Link key={i} href={`/conversations/${conversation.id}`}>
-          <div className="mt-4 truncate">{conversation.title}</div>
-        </Link>
-      ))}
+      <div className="max-h-[540px] overflow-y-auto">
+        <div className="font-semibold text-[13px] mt-8">History</div>
+        {conversations.map((conversation, i) => (
+          <Link key={i} href={`/conversations/${conversation.id}`}>
+            <div className="mt-4 truncate">{conversation.title}</div>
+          </Link>
+        ))}
+      </div>
     </div>
   );
 }
