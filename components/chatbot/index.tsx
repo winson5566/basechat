@@ -98,43 +98,47 @@ export default function Chatbot({ conversationId, initialMessage, onSelectedDocu
   );
 
   return (
-    <div className="flex-grow flex flex-col h-full w-full bg-white p-4 max-w-[717px]">
-      <div className="flex-grow flex flex-col">
-        {messagesWithSources.map((message, i) =>
-          message.role === "user" ? (
-            <UserMessage key={i} content={message.content} />
-          ) : (
-            <Fragment key={i}>
-              <AssistantMessage
-                content={message.content}
-                id={message.id}
-                sources={message.sources}
-                onSelectedDocumentId={onSelectedDocumentId}
-              />
-              {i === messages.length - 1 && messages[i].role === "system" && !messages[i].expanded && (
-                <div className="flex justify-center">
-                  <button
-                    className="flex justify-center rounded-[20px] border px-4 py-2.5 mt-8"
-                    onClick={() => handleSubmit("Tell me more about this")}
-                  >
-                    Tell me more about this
-                  </button>
-                </div>
-              )}
-            </Fragment>
-          ),
-        )}
-        {isLoading && (
-          <AssistantMessage
-            content={object?.message}
-            id={pendingMessage?.id}
-            sources={[]}
-            onSelectedDocumentId={onSelectedDocumentId}
-          />
-        )}
+    <div className="flex h-full w-full items-center flex-col">
+      <div className="flex flex-col h-full w-full items-center overflow-y-auto">
+        <div className="flex flex-col h-full w-full p-4 max-w-[717px]">
+          {messagesWithSources.map((message, i) =>
+            message.role === "user" ? (
+              <UserMessage key={i} content={message.content} />
+            ) : (
+              <Fragment key={i}>
+                <AssistantMessage
+                  content={message.content}
+                  id={message.id}
+                  sources={message.sources}
+                  onSelectedDocumentId={onSelectedDocumentId}
+                />
+                {i === messages.length - 1 && messages[i].role === "system" && !messages[i].expanded && (
+                  <div className="flex justify-center">
+                    <button
+                      className="flex justify-center rounded-[20px] border px-4 py-2.5 mt-8"
+                      onClick={() => handleSubmit("Tell me more about this")}
+                    >
+                      Tell me more about this
+                    </button>
+                  </div>
+                )}
+              </Fragment>
+            ),
+          )}
+          {isLoading && (
+            <AssistantMessage
+              content={object?.message}
+              id={pendingMessage?.id}
+              sources={[]}
+              onSelectedDocumentId={onSelectedDocumentId}
+            />
+          )}
+        </div>
       </div>
-      <div className="w-full flex flex-col items-center p-2 pl-4 rounded-[24px] border border-[#D7D7D7]">
-        <ChatInput handleSubmit={handleSubmit} />
+      <div className="p-4 w-full flex justify-center max-w-[717px]">
+        <div className="flex flex-col w-full p-2 pl-4 rounded-[24px] border border-[#D7D7D7]">
+          <ChatInput handleSubmit={handleSubmit} />
+        </div>
       </div>
     </div>
   );

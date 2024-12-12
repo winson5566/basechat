@@ -25,12 +25,11 @@ export default function Conversation({ id }: Props) {
   };
 
   return (
-    <div className="flex-grow flex w-full">
-      <div className="flex-grow w-full flex flex-col items-center justify-center">
-        <Chatbot conversationId={id} initialMessage={initialMessage} onSelectedDocumentId={handleSelectedDocumentId} />
-      </div>
+    <div className="flex h-full w-full">
+      <Chatbot conversationId={id} initialMessage={initialMessage} onSelectedDocumentId={handleSelectedDocumentId} />
       {document && (
         <Summary
+          className="h-full min-w-[400px] w-[400px] rounded-[24px] p-8 bg-[#F5F5F7] overflow-scroll"
           document={document}
           onCloseClick={() => {
             setDocument(null);

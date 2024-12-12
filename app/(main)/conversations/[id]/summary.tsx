@@ -2,24 +2,26 @@ import Image from "next/image";
 import Markdown from "react-markdown";
 
 import CONNECTOR_MAP from "@/lib/connector-map";
+import { cn } from "@/lib/utils";
 import CloseIcon from "@/public/icons/close.svg";
 import ExternalLinkIcon from "@/public/icons/external-link.svg";
 
 import { DocumentResponse } from "./types";
 
 interface Props {
+  className?: string;
   document: DocumentResponse;
   onCloseClick: () => void;
 }
 
-export default function Summary({ document, onCloseClick = () => {} }: Props) {
+export default function Summary({ className, document, onCloseClick = () => {} }: Props) {
   const icon =
     document?.metadata.source_type && CONNECTOR_MAP[document.metadata.source_type]
       ? CONNECTOR_MAP[document.metadata.source_type][1]
       : null;
 
   return (
-    <div className="max-h-[800px] min-w-[400px] w-[400px] rounded-[24px] p-8 bg-[#F5F5F7] overflow-scroll relative">
+    <div className={cn(className, "relative")}>
       <div className="absolute top-4 right-4">
         <Image className="cursor-pointer" src={CloseIcon} alt="Close" onClick={onCloseClick} />
       </div>

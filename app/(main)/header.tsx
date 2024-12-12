@@ -17,7 +17,7 @@ interface Props {
 
 export default function Header({ name, onNavClick = () => {} }: Props) {
   return (
-    <header className="w-full flex justify-between p-4 items-center">
+    <header className="w-full shrink-0 flex justify-between p-4 items-center">
       <div className="flex">
         <Popover>
           <PopoverTrigger asChild>

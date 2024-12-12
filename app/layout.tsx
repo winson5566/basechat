@@ -21,7 +21,7 @@ export default function RootLayout({
     <SessionProvider>
       <GlobalStateProvider>
         <html lang="en" className="h-full w-full">
-          <body className={`${inter.className} antialiased h-full w-full`}>{children}</body>
+          <body className={`${inter.className} antialiased h-full w-full bg-white`}>{children}</body>
         </html>
       </GlobalStateProvider>
     </SessionProvider>
