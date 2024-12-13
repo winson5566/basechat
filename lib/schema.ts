@@ -1,16 +1,16 @@
 import { z } from "zod";
 
-export const GenerateResponseSchema = z.object({
+export const createConversationMessageResponseSchema = z.object({
   usedSourceIndexes: z.array(z.number().describe("The indexes of the sources used in the response")),
   message: z.string().describe("The response message"),
 });
 
-export const GenerateRequestSchema = z.object({
+export const createConversationMessageRequestSchema = z.object({
   conversationId: z.string(),
   content: z.string().describe("The request message"),
 });
 
-export type GenerateRequest = z.infer<typeof GenerateRequestSchema>;
+export type CreateConversationMessageRequest = z.infer<typeof createConversationMessageRequestSchema>;
 
 export const conversationSchema = z.object({
   id: z.string(),

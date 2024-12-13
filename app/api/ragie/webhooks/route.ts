@@ -46,7 +46,7 @@ export async function POST(request: NextRequest) {
     .select()
     .from(schema.connections)
     .where(eq(schema.connections.ragieConnectionId, event.payload.connection_id));
-  assert(rs.length === 1, "failed tenant lookup");
+  assert(rs.length === 1, "failed connection lookup");
   await saveConnection(rs[0].tenantId, event.payload.connection_id, status);
 
   return Response.json({ message: "success" });

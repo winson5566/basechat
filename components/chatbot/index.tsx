@@ -6,7 +6,11 @@ import { experimental_useObject as useObject } from "ai/react";
 import { Inter } from "next/font/google";
 import { Fragment, useEffect, useMemo, useState } from "react";
 
-import { conversationMessagesResponseSchema, GenerateRequest, GenerateResponseSchema } from "@/lib/schema";
+import {
+  conversationMessagesResponseSchema,
+  CreateConversationMessageRequest,
+  createConversationMessageResponseSchema,
+} from "@/lib/schema";
 
 import AssistantMessage from "./assistant-message";
 import ChatInput from "./chat-input";
@@ -34,8 +38,8 @@ export default function Chatbot({ conversationId, initialMessage, onSelectedDocu
   const [pendingMessage, setPendingMessage] = useState<null | { id: string; expanded: boolean }>(null);
 
   const { isLoading, object, submit } = useObject({
-    api: "/api/generate",
-    schema: GenerateResponseSchema,
+    api: `/api/conversations/${conversationId}/messages`,
+    schema: createConversationMessageResponseSchema,
     fetch: async function middleware(input: RequestInfo | URL, init?: RequestInit) {
       const res = await fetch(input, init);
       const id = res.headers.get("x-message-id");
@@ -56,7 +60,7 @@ export default function Chatbot({ conversationId, initialMessage, onSelectedDocu
   });
 
   const handleSubmit = (content: string) => {
-    const payload: GenerateRequest = { conversationId, content };
+    const payload: CreateConversationMessageRequest = { conversationId, content };
     setMessages([...messages, { content, role: "user" }]);
     submit(payload);
   };
@@ -76,7 +80,7 @@ export default function Chatbot({ conversationId, initialMessage, onSelectedDocu
     if (!pendingMessage) return;
 
     (async () => {
-      const res = await fetch(`/api/messages/${pendingMessage.id}`);
+      const res = await fetch(`/api/conversations/${conversationId}/messages/${pendingMessage.id}`);
       if (!res.ok) return;
 
       const json = (await res.json()) as { id: string; sources: SourceMetadata[] };
