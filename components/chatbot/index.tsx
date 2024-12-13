@@ -87,7 +87,7 @@ export default function Chatbot({ conversationId, initMessage, onSelectedDocumen
       const json = (await res.json()) as { id: string; sources: SourceMetadata[] };
       setSourceCache((prev) => ({ ...prev, [json.id]: json.sources }));
     })();
-  }, [pendingMessage]);
+  }, [conversationId, pendingMessage]);
 
   useEffect(() => {
     if (localInitMessage) {
@@ -102,6 +102,7 @@ export default function Chatbot({ conversationId, initMessage, onSelectedDocumen
         setMessages(messages);
       })();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- initentionally run once
   }, []);
 
   const messagesWithSources = useMemo(

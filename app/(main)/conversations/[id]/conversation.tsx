@@ -26,7 +26,7 @@ export default function Conversation({ id }: Props) {
 
   useEffect(() => {
     setInitialMessage("");
-  }, []);
+  }, [setInitialMessage]);
 
   return (
     <div className="flex h-full w-full">
