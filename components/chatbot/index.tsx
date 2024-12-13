@@ -28,11 +28,12 @@ const UserMessage = ({ content }: { content: string }) => (
 
 interface Props {
   conversationId: string;
-  initialMessage?: string;
+  initMessage?: string;
   onSelectedDocumentId: (id: string) => void;
 }
 
-export default function Chatbot({ conversationId, initialMessage, onSelectedDocumentId }: Props) {
+export default function Chatbot({ conversationId, initMessage, onSelectedDocumentId }: Props) {
+  const [localInitMessage, setLocalInitMessage] = useState(initMessage);
   const [messages, setMessages] = useState<Message[]>([]);
   const [sourceCache, setSourceCache] = useState<Record<string, SourceMetadata[]>>({});
   const [pendingMessage, setPendingMessage] = useState<null | { id: string; expanded: boolean }>(null);
@@ -89,8 +90,9 @@ export default function Chatbot({ conversationId, initialMessage, onSelectedDocu
   }, [pendingMessage]);
 
   useEffect(() => {
-    if (initialMessage) {
-      handleSubmit(initialMessage);
+    if (localInitMessage) {
+      handleSubmit(localInitMessage);
+      setLocalInitMessage(undefined);
     } else {
       (async () => {
         const res = await fetch(`/api/conversations/${conversationId}/messages`);

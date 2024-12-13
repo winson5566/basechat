@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import { useGlobalState } from "@/app/(main)/context";
 import Chatbot from "@/components/chatbot";
@@ -14,7 +14,7 @@ interface Props {
 
 export default function Conversation({ id }: Props) {
   const [document, setDocument] = useState<DocumentResponse | null>(null);
-  const { initialMessage } = useGlobalState();
+  const { initialMessage, setInitialMessage } = useGlobalState();
 
   const handleSelectedDocumentId = async (id: string) => {
     const res = await fetch(`/api/documents/${id}`);
@@ -24,9 +24,13 @@ export default function Conversation({ id }: Props) {
     setDocument(json);
   };
 
+  useEffect(() => {
+    setInitialMessage("");
+  }, []);
+
   return (
     <div className="flex h-full w-full">
-      <Chatbot conversationId={id} initialMessage={initialMessage} onSelectedDocumentId={handleSelectedDocumentId} />
+      <Chatbot conversationId={id} initMessage={initialMessage} onSelectedDocumentId={handleSelectedDocumentId} />
       {document && (
         <Summary
           className="flex-1 min-w-[400px] w-[400px] rounded-[24px] p-8 mr-6 mb-4 bg-[#F5F5F7] overflow-y-auto"
