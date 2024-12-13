@@ -25,7 +25,7 @@ export const conversationMessagesResponseSchema = z.array(
     z.object({
       id: z.string(),
       content: z.string(),
-      role: z.literal("system"),
+      role: z.literal("assistant"),
       sources: z.array(z.any()).default([]),
       expanded: z.boolean().default(false),
     }),

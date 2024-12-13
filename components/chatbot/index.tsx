@@ -18,7 +18,7 @@ import { SourceMetadata } from "./types";
 
 const inter = Inter({ subsets: ["latin"] });
 
-type AiMessage = { content: string; role: "system"; id?: string; expanded: boolean; sources: SourceMetadata[] };
+type AiMessage = { content: string; role: "assistant"; id?: string; expanded: boolean; sources: SourceMetadata[] };
 type UserMessage = { content: string; role: "user" };
 type Message = AiMessage | UserMessage;
 
@@ -56,7 +56,7 @@ export default function Chatbot({ conversationId, initMessage, onSelectedDocumen
       if (!event.object) return;
 
       const content = event.object.message;
-      setMessages((prev) => [...prev, { content: content, role: "system", sources: [], expanded: false }]);
+      setMessages((prev) => [...prev, { content: content, role: "assistant", sources: [], expanded: false }]);
     },
   });
 
@@ -71,7 +71,7 @@ export default function Chatbot({ conversationId, initMessage, onSelectedDocumen
 
     const copy = [...messages];
     const last = copy.pop();
-    if (last?.role === "system") {
+    if (last?.role === "assistant") {
       setMessages([...copy, { ...last, id: pendingMessage.id, expanded: pendingMessage.expanded }]);
       setPendingMessage(null);
     }
@@ -108,7 +108,7 @@ export default function Chatbot({ conversationId, initMessage, onSelectedDocumen
   const messagesWithSources = useMemo(
     () =>
       messages.map((m) =>
-        m.role === "system" && m.id && sourceCache[m.id] ? { ...m, sources: sourceCache[m.id] } : m,
+        m.role === "assistant" && m.id && sourceCache[m.id] ? { ...m, sources: sourceCache[m.id] } : m,
       ),
     [messages, sourceCache],
   );
@@ -128,7 +128,7 @@ export default function Chatbot({ conversationId, initMessage, onSelectedDocumen
                   sources={message.sources}
                   onSelectedDocumentId={onSelectedDocumentId}
                 />
-                {i === messages.length - 1 && messages[i].role === "system" && !messages[i].expanded && (
+                {i === messages.length - 1 && messages[i].role === "assistant" && !messages[i].expanded && (
                   <div className="flex justify-center">
                     <button
                       className="flex justify-center rounded-[20px] border px-4 py-2.5 mt-8"

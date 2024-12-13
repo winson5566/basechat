@@ -41,7 +41,7 @@ export async function generate(tenantId: string, conversationId: string, company
   const pendingMessage = await createConversationMessage({
     tenantId,
     conversationId,
-    role: "system",
+    role: "assistant",
     content: null,
     sources: context.sources,
   });
