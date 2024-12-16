@@ -31,7 +31,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     sources: [],
   });
   const messages = await getConversationMessages(tenant.id, conversationId);
-  const context = await retrieveConversationContext(tenant.name, messages);
+  const context = await retrieveConversationContext(tenant.id, tenant.name, messages);
 
   const [stream, messageId] = await generate(tenant.id, conversationId, tenant.name, context);
   return stream.toTextStreamResponse({ headers: { "x-message-id": messageId } });

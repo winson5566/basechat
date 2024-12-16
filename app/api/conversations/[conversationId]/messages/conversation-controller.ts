@@ -12,13 +12,14 @@ import { createConversationMessageResponseSchema } from "@/lib/schema";
 type Message = typeof schema.messages.$inferSelect;
 type GenerateContext = { messages: CoreMessage[]; sources: any[] };
 
-export async function retrieveConversationContext(company: string, messages: Message[]) {
+export async function retrieveConversationContext(tenantId: string, company: string, messages: Message[]) {
   assert(messages.length > 0, "no messages found");
 
   const last = messages[messages.length - 1];
   assert(last.role === "user" && last.content, "unexpected last message");
 
   const response = await getRagieClient().retrievals.retrieve({
+    partition: tenantId,
     query: last.content,
     topK: 6,
     rerank: true,
