@@ -7,6 +7,7 @@ import { requireSession } from "@/lib/auth-utils";
 import db from "@/lib/db";
 import * as schema from "@/lib/db/schema";
 import { saveConnection } from "@/lib/service";
+import * as settings from "@/lib/settings";
 
 export async function GET(request: NextRequest) {
   const session = await requireSession();
@@ -18,5 +19,5 @@ export async function GET(request: NextRequest) {
   assert(rs.length === 1, "failed tenant lookup");
   await saveConnection(rs[0].id, connectionId, "syncing");
 
-  return Response.redirect(new URL("data", request.nextUrl.origin));
+  return Response.redirect(new URL("data", settings.BASE_URL));
 }
