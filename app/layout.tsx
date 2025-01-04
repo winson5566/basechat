@@ -8,8 +8,8 @@ import { GlobalStateProvider } from "./(main)/context";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Chatbot example",
-  description: "Chatbot example using Ragie",
+  title: "Base Chat",
+  description: "Base Chat powered by Ragie",
 };
 
 export default function RootLayout({
