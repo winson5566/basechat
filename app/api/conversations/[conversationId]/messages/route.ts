@@ -1,8 +1,8 @@
 import { NextRequest } from "next/server";
 
-import { requireSession } from "@/lib/auth-utils";
 import { createConversationMessage, getConversationMessages } from "@/lib/data-access/conversation";
 import { conversationMessagesResponseSchema, createConversationMessageRequestSchema } from "@/lib/schema";
+import { requireSession } from "@/lib/server-utils";
 import { getTenantByUserId } from "@/lib/service";
 
 import { generate, retrieveConversationContext } from "./conversation-controller";

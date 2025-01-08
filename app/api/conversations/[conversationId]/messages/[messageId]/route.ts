@@ -1,7 +1,7 @@
 import { NextRequest } from "next/server";
 
-import { requireSession } from "@/lib/auth-utils";
 import { getConversationMessage } from "@/lib/data-access/conversation";
+import { requireSession } from "@/lib/server-utils";
 import { getTenantByUserId } from "@/lib/service";
 
 type Params = { conversationId: string; messageId: string };

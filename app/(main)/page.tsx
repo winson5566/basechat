@@ -1,4 +1,4 @@
-import { requireSession } from "@/lib/auth-utils";
+import { requireSession } from "@/lib/server-utils";
 import { getTenantByUserId } from "@/lib/service";
 
 import { AppLocation } from "./footer";

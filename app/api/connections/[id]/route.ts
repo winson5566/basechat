@@ -1,4 +1,4 @@
-import { requireSession } from "@/lib/auth-utils";
+import { requireSession } from "@/lib/server-utils";
 import { deleteConnection, getTenantByUserId } from "@/lib/service";
 
 export async function DELETE(request: Request, { params }: { params: Promise<{ id: string }> }) {

@@ -1,8 +1,9 @@
 import Image from "next/image";
 
-import CONNECTOR_MAP from "@/lib/connector-map";
-
 import "./style.css";
+import CONNECTOR_MAP from "@/lib/connector-map";
+import { getInitials } from "@/lib/utils";
+
 import { SourceMetadata } from "./types";
 
 const MAX_CITATION_LENGTH = 30;
@@ -26,23 +27,25 @@ const Citation = ({ source, onClick = () => {} }: { source: SourceMetadata; onCl
 interface Props {
   content: string | undefined;
   id?: string | null;
+  name: string;
   sources: SourceMetadata[];
   onSelectedDocumentId: (id: string) => void;
 }
 
-export default function AssistantMessage({ content, sources, onSelectedDocumentId }: Props) {
+export default function AssistantMessage({ name, content, sources, onSelectedDocumentId }: Props) {
   const dedupe = sources.reduce<Record<string, SourceMetadata>>((acc, v) => {
     acc[v.documentId] = v;
     return acc;
   }, {});
 
   const dedupedSources = Object.values(dedupe);
+  const initials = getInitials(name);
 
   return (
     <div className="flex">
       <div>
         <div className="h-[40px] w-[40px] avatar rounded-[50px] text-white flex items-center justify-center font-bold text-[13px] mb-8">
-          FS
+          {initials}
         </div>
       </div>
       <div className="self-start mb-6 rounded-md pt-2 ml-7">

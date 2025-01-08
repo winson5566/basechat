@@ -6,32 +6,19 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 /**
- * Validate the HMAC SHA-256 signature of the payload using WebCrypto APIs.
- *
- * @param secretKey - The shared secret key used for HMAC generation.
- * @param payloadBody - The raw request body as a Buffer.
- * @param receivedSignature - The signature received in the 'X-Signature' header.
- * @returns True if the signature is valid, False otherwise.
+ * Extracts up to two initials from a given title.
+ * @param name - The title to extract initials from.
+ * @returns A string containing up to two initials.
  */
-export async function validateSignature(
-  secretKey: string,
-  payloadBody: ArrayBuffer,
-  receivedSignature: string,
-): Promise<boolean> {
-  // Convert the secret key to a CryptoKey object
-  const key = await crypto.subtle.importKey(
-    "raw",
-    new TextEncoder().encode(secretKey),
-    { name: "HMAC", hash: { name: "SHA-256" } },
-    false,
-    ["sign"],
-  );
+export function getInitials(name: string): string {
+  // Split the title into words and filter out empty strings
+  const words = name.split(/\s+/).filter((word) => word.trim().length > 0);
 
-  // Generate the expected signature
-  const signatureBuffer = await crypto.subtle.sign("HMAC", key, payloadBody);
+  // Get the first character of up to two words
+  const initials = words
+    .slice(0, 2)
+    .map((word) => word.charAt(0).toUpperCase())
+    .join("");
 
-  const expectedSignature = Buffer.from(signatureBuffer).toString("hex");
-
-  // Use a constant-time comparison to prevent timing attacks
-  return Buffer.from(expectedSignature, "utf-8").equals(Buffer.from(receivedSignature, "utf-8"));
+  return initials;
 }

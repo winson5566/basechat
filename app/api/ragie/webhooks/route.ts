@@ -5,9 +5,9 @@ import { NextRequest } from "next/server";
 
 import db from "@/lib/db";
 import * as schema from "@/lib/db/schema";
+import { validateSignature } from "@/lib/server-utils";
 import { saveConnection } from "@/lib/service";
 import { RAGIE_WEBHOOK_SECRET } from "@/lib/settings";
-import { validateSignature } from "@/lib/utils";
 
 interface WebhookEvent {
   type: string;

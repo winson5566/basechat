@@ -10,9 +10,10 @@ import { DocumentResponse } from "./types";
 
 interface Props {
   id: string;
+  tenantName: string;
 }
 
-export default function Conversation({ id }: Props) {
+export default function Conversation({ id, tenantName }: Props) {
   const [document, setDocument] = useState<DocumentResponse | null>(null);
   const { initialMessage, setInitialMessage } = useGlobalState();
 
@@ -30,7 +31,12 @@ export default function Conversation({ id }: Props) {
 
   return (
     <div className="flex h-full w-full">
-      <Chatbot conversationId={id} initMessage={initialMessage} onSelectedDocumentId={handleSelectedDocumentId} />
+      <Chatbot
+        name={tenantName}
+        conversationId={id}
+        initMessage={initialMessage}
+        onSelectedDocumentId={handleSelectedDocumentId}
+      />
       {document && (
         <Summary
           className="flex-1 min-w-[400px] w-[400px] rounded-[24px] p-8 mr-6 mb-4 bg-[#F5F5F7] overflow-y-auto"

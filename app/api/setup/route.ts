@@ -1,9 +1,9 @@
 import { NextRequest } from "next/server";
 import { z } from "zod";
 
-import { requireSession } from "@/lib/auth-utils";
 import db from "@/lib/db";
 import * as schema from "@/lib/db/schema";
+import { requireSession } from "@/lib/server-utils";
 
 const setupSchema = z.object({
   name: z.string().trim().min(1),

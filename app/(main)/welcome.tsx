@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { z } from "zod";
 
 import ChatInput from "@/components/chatbot/chat-input";
+import { getInitials } from "@/lib/utils";
 
 import { useGlobalState } from "./context";
 
@@ -31,11 +32,13 @@ export default function Welcome({ company, className }: Props) {
     router.push(`/conversations/${conversation.id}`);
   };
 
+  const initials = getInitials(company);
+
   return (
     <div className={className}>
       <div className={`h-full flex flex-col justify-center ${inter.className}`}>
         <div className="h-[100px] w-[100px] avatar rounded-[50px] text-white flex items-center justify-center font-bold text-[32px] mb-8">
-          FS
+          {initials}
         </div>
         <h1 className="mb-12 text-[40px] font-bold leading-[50px]">
           Hello, I&apos;m {company}&apos;s AI.

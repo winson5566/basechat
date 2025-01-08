@@ -1,7 +1,7 @@
 import { NextRequest } from "next/server";
 import { Ragie } from "ragie";
 
-import { requireSession } from "@/lib/auth-utils";
+import { requireSession } from "@/lib/server-utils";
 import { getTenantByUserId } from "@/lib/service";
 import * as settings from "@/lib/settings";
 

@@ -28,11 +28,12 @@ const UserMessage = ({ content }: { content: string }) => (
 
 interface Props {
   conversationId: string;
+  name: string;
   initMessage?: string;
   onSelectedDocumentId: (id: string) => void;
 }
 
-export default function Chatbot({ conversationId, initMessage, onSelectedDocumentId }: Props) {
+export default function Chatbot({ name, conversationId, initMessage, onSelectedDocumentId }: Props) {
   const [localInitMessage, setLocalInitMessage] = useState(initMessage);
   const [messages, setMessages] = useState<Message[]>([]);
   const [sourceCache, setSourceCache] = useState<Record<string, SourceMetadata[]>>({});
@@ -123,6 +124,7 @@ export default function Chatbot({ conversationId, initMessage, onSelectedDocumen
             ) : (
               <Fragment key={i}>
                 <AssistantMessage
+                  name={name}
                   content={message.content}
                   id={message.id}
                   sources={message.sources}
@@ -143,6 +145,7 @@ export default function Chatbot({ conversationId, initMessage, onSelectedDocumen
           )}
           {isLoading && (
             <AssistantMessage
+              name={name}
               content={object?.message}
               id={pendingMessage?.id}
               sources={[]}

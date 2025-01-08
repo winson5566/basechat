@@ -3,9 +3,9 @@ import assert from "assert";
 import { eq } from "drizzle-orm";
 import { NextRequest } from "next/server";
 
-import { requireSession } from "@/lib/auth-utils";
 import db from "@/lib/db";
 import * as schema from "@/lib/db/schema";
+import { requireSession } from "@/lib/server-utils";
 import { saveConnection } from "@/lib/service";
 import * as settings from "@/lib/settings";
 

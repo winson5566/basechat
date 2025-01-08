@@ -4,9 +4,9 @@ import { Inter } from "next/font/google";
 import Image from "next/image";
 
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { requireSession } from "@/lib/auth-utils";
 import db from "@/lib/db";
 import * as schema from "@/lib/db/schema";
+import { requireSession } from "@/lib/server-utils";
 import { getTenantByUserId } from "@/lib/service";
 
 import CONNECTOR_MAP from "../../../lib/connector-map";
