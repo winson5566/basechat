@@ -1,6 +1,8 @@
 "use client";
 
+import { Tag, TagInput } from "emblor";
 import { MoreHorizontal, Trash } from "lucide-react";
+import { useState } from "react";
 
 import {
   DropdownMenu,
@@ -11,15 +13,24 @@ import {
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
 export default function UserSettings() {
+  const [tags, setTags] = useState<Tag[]>([]);
+  const [activeTagIndex, setActiveTagIndex] = useState<number | null>(null);
   return (
     <div className="w-full p-4 flex-grow flex flex-col">
       <div className="flex w-full justify-between items-center pt-2">
         <h1 className="font-bold text-[32px]">Users</h1>
         <div className="flex">
-          <input
-            type="text"
-            className="rounded-lg border border-[#9A57F6] bg-[#F5F5F7] w-[360px] px-3 py-2.5"
+          <TagInput
             placeholder="Email address, comma separated"
+            styleClasses={{
+              input: "shadow-none",
+              inlineTagsContainer: "rounded-lg border border-[#9A57F6] bg-[#F5F5F7] w-[360px] px-1 py-1.5",
+              tag: { body: "pl-3 hover:bg-[#ffffff] bg-[#ffffff]" },
+            }}
+            tags={tags}
+            setTags={setTags}
+            activeTagIndex={activeTagIndex}
+            setActiveTagIndex={setActiveTagIndex}
           />
           <button className="font-semibold text-white rounded-lg bg-[#D946EF] px-4 py-2.5 ml-3">Invite</button>
         </div>
