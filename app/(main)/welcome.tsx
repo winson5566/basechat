@@ -35,6 +35,12 @@ export default function Welcome({ tenant, className }: Props) {
 
   const initials = getInitials(tenant.name);
 
+  const questions = [
+    tenant.question1 || "Sample question. Lorem ipsum dolor sit amet consectetur. Sample question.",
+    tenant.question2 || "Sample question. Lorem ipsum dolor sit amet consectetur. Sample question.",
+    tenant.question3 || "Sample question. Lorem ipsum dolor sit amet consectetur. Sample question.",
+  ];
+
   return (
     <div className={className}>
       <div className={`h-full flex flex-col justify-center ${inter.className}`}>
@@ -47,15 +53,15 @@ export default function Welcome({ tenant, className }: Props) {
           What would you like to know?
         </h1>
         <div className="flex items-start justify-evenly space-x-2">
-          <div className="rounded-md border p-4 h-full w-1/3">
-            {tenant.question1 || "Sample question. Lorem ipsum dolor sit amet consectetur. Sample question."}
-          </div>
-          <div className="rounded-md border p-4 h-full w-1/3">
-            {tenant.question2 || "Sample question. Lorem ipsum dolor sit amet consectetur. Sample question."}
-          </div>
-          <div className="rounded-md border p-4 h-full w-1/3">
-            {tenant.question3 || "Sample question. Lorem ipsum dolor sit amet consectetur. Sample question."}
-          </div>
+          {questions.map((question, i) => (
+            <div
+              key={i}
+              className="rounded-md border p-4 h-full w-1/3 cursor-pointer"
+              onClick={() => handleSubmit(question)}
+            >
+              {question}
+            </div>
+          ))}
         </div>
       </div>
       <div className="w-full flex flex-col items-center p-2 pl-4 rounded-[24px] border border-[#D7D7D7]">
