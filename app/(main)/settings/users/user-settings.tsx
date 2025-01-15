@@ -149,12 +149,12 @@ export default function UserSettings({ members: initialMembers }: Props) {
                         <MoreHorizontal />
                       </button>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
+                    {/* <DropdownMenuContent align="end">
                       <DropdownMenuItem onSelect={() => null}>
                         <Trash />
                         Delete
                       </DropdownMenuItem>
-                    </DropdownMenuContent>
+                    </DropdownMenuContent> */}
                   </DropdownMenu>
                 </TableCell>
               </TableRow>
