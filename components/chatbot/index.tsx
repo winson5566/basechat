@@ -20,7 +20,8 @@ const inter = Inter({ subsets: ["latin"] });
 
 type AiMessage = { content: string; role: "assistant"; id?: string; expanded: boolean; sources: SourceMetadata[] };
 type UserMessage = { content: string; role: "user" };
-type Message = AiMessage | UserMessage;
+type SystemMessage = { content: string; role: "system" };
+type Message = AiMessage | UserMessage | SystemMessage;
 
 const UserMessage = ({ content }: { content: string }) => (
   <div className="mb-6 rounded-md px-4 py-2 self-end bg-[#F5F5F7]">{content}</div>
@@ -116,9 +117,9 @@ export default function Chatbot({ name, conversationId, initMessage, onSelectedD
 
   const messagesWithSources = useMemo(
     () =>
-      messages.map((m) =>
-        m.role === "assistant" && m.id && sourceCache[m.id] ? { ...m, sources: sourceCache[m.id] } : m,
-      ),
+      messages
+        .filter((m) => m.role === "user" || m.role === "assistant")
+        .map((m) => (m.role === "assistant" && m.id && sourceCache[m.id] ? { ...m, sources: sourceCache[m.id] } : m)),
     [messages, sourceCache],
   );
 
@@ -138,7 +139,7 @@ export default function Chatbot({ name, conversationId, initMessage, onSelectedD
                   sources={message.sources}
                   onSelectedDocumentId={onSelectedDocumentId}
                 />
-                {isExpandable(messages, i) && (
+                {isExpandable(messagesWithSources, i) && (
                   <div className="flex justify-center">
                     <button
                       className="flex justify-center rounded-[20px] border px-4 py-2.5 mt-8"
