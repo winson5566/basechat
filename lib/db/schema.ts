@@ -42,6 +42,9 @@ export const connections = pgTable("connections", {
 
 export const conversations = pgTable("conversations", {
   ...baseTenantFields,
+  profileId: uuid("profile_id")
+    .references(() => profiles.id, { onDelete: "cascade" })
+    .notNull(),
   title: text().notNull(),
 });
 
@@ -87,12 +90,12 @@ export const rolesEnum = pgEnum("roles", ["assistant", "system", "user"]);
 
 export const messages = pgTable("messages", {
   ...baseTenantFields,
-  content: text("content"),
-  role: rolesEnum("role").notNull(),
-  sources: json("sources").notNull(),
   conversationId: uuid("conversation_id")
     .references(() => conversations.id, { onDelete: "cascade" })
     .notNull(),
+  content: text("content"),
+  role: rolesEnum("role").notNull(),
+  sources: json("sources").notNull(),
 });
 
 /** Based on Auth.js example schema: https://authjs.dev/getting-started/adapters/drizzle */

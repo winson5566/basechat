@@ -9,7 +9,7 @@ type GenerateContext = { messages: CoreMessage[]; sources: any[] };
 
 export const EXPAND_MESSAGE_CONTENT = "Tell me more about this";
 
-export async function generate(tenantId: string, conversationId: string, company: string, context: GenerateContext) {
+export async function generate(tenantId: string, profileId: string, conversationId: string, context: GenerateContext) {
   const pendingMessage = await createConversationMessage({
     tenantId,
     conversationId,
@@ -25,13 +25,19 @@ export async function generate(tenantId: string, conversationId: string, company
     schema: createConversationMessageResponseSchema,
     onFinish: async (event) => {
       if (!event.object) return;
-      await updateConversationMessageContent(tenantId, conversationId, pendingMessage.id, event.object.message);
+      await updateConversationMessageContent(
+        tenantId,
+        profileId,
+        conversationId,
+        pendingMessage.id,
+        event.object.message,
+      );
     },
   });
   return [result, pendingMessage.id] as const;
 }
 
-export async function getRAGSystemPrompt(tenantId: string, name: string, query: string) {
+export async function getRetrievalSystemPrompt(tenantId: string, name: string, query: string) {
   const response = await getRagieClient().retrievals.retrieve({
     partition: tenantId,
     query,

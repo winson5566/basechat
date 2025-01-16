@@ -2,7 +2,7 @@ import { CoreMessage } from "ai";
 import assertNever from "assert-never";
 import { NextRequest } from "next/server";
 
-import { createConversationMessage, getConversationMessages } from "@/lib/data-access/conversation";
+import { createConversationMessage, getConversation, getConversationMessages } from "@/lib/data-access/conversation";
 import { conversationMessagesResponseSchema, createConversationMessageRequestSchema } from "@/lib/schema";
 import { requireAuthContext } from "@/lib/server-utils";
 
@@ -11,30 +11,31 @@ import {
   generate,
   getExpandSystemPrompt,
   getGroundingSystemPrompt,
-  getRAGSystemPrompt,
+  getRetrievalSystemPrompt,
 } from "./utils";
 
 export async function GET(_request: NextRequest, { params }: { params: Promise<{ conversationId: string }> }) {
-  const { tenant } = await requireAuthContext();
+  const { profile, tenant } = await requireAuthContext();
   const { conversationId } = await params;
-  const messages = await getConversationMessages(tenant.id, conversationId);
+  const messages = await getConversationMessages(tenant.id, profile.id, conversationId);
 
   return Response.json(conversationMessagesResponseSchema.parse(messages));
 }
 
 export async function POST(request: NextRequest, { params }: { params: Promise<{ conversationId: string }> }) {
-  const { tenant } = await requireAuthContext();
+  const { profile, tenant } = await requireAuthContext();
   const { conversationId } = await params;
   const json = await request.json();
 
   const { content } = createConversationMessageRequestSchema.parse(json);
 
-  const existing = await getConversationMessages(tenant.id, conversationId);
+  const conversation = await getConversation(tenant.id, profile.id, conversationId);
+  const existing = await getConversationMessages(tenant.id, profile.id, conversation.id);
 
   if (!existing.length) {
     await createConversationMessage({
       tenantId: tenant.id,
-      conversationId,
+      conversationId: conversation.id,
       role: "system",
       content: getGroundingSystemPrompt(tenant.name),
       sources: [],
@@ -43,7 +44,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 
   await createConversationMessage({
     tenantId: tenant.id,
-    conversationId,
+    conversationId: conversation.id,
     role: "user",
     content,
     sources: [],
@@ -52,7 +53,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   let sources: { documentId: string; documentName: string }[] = [];
 
   if (content !== EXPAND_MESSAGE_CONTENT) {
-    const { content: systemMessageContent, sources: ragSources } = await getRAGSystemPrompt(
+    const { content: systemMessageContent, sources: ragSources } = await getRetrievalSystemPrompt(
       tenant.id,
       tenant.name,
       content,
@@ -62,7 +63,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 
     await createConversationMessage({
       tenantId: tenant.id,
-      conversationId,
+      conversationId: conversation.id,
       role: "system",
       content: systemMessageContent,
       sources: [],
@@ -70,14 +71,14 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   } else {
     await createConversationMessage({
       tenantId: tenant.id,
-      conversationId,
+      conversationId: conversation.id,
       role: "system",
       content: getExpandSystemPrompt(),
       sources: [],
     });
   }
 
-  const all = await getConversationMessages(tenant.id, conversationId);
+  const all = await getConversationMessages(tenant.id, profile.id, conversation.id);
   const messages: CoreMessage[] = all.map(({ role, content }) => {
     switch (role) {
       case "assistant":
@@ -91,6 +92,6 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     }
   });
 
-  const [stream, messageId] = await generate(tenant.id, conversationId, tenant.name, { messages, sources });
+  const [stream, messageId] = await generate(tenant.id, profile.id, conversation.id, { messages, sources });
   return stream.toTextStreamResponse({ headers: { "x-message-id": messageId } });
 }

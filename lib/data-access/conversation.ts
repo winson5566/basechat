@@ -22,6 +22,7 @@ export async function createConversationMessage(message: typeof schema.messages.
 
 export async function updateConversationMessageContent(
   tenantId: string,
+  profileId: string,
   conversationId: string,
   messageId: string,
   content: string,
@@ -38,25 +39,55 @@ export async function updateConversationMessageContent(
     );
 }
 
-export async function getConversationMessage(tenantId: string, conversationId: string, messageId: string) {
+export async function getConversation(tenantId: string, profileId: string, conversationId: string) {
   const rs = await db
     .select()
-    .from(schema.messages)
+    .from(schema.conversations)
     .where(
       and(
-        eq(schema.messages.tenantId, tenantId),
-        eq(schema.messages.conversationId, conversationId),
-        eq(schema.messages.id, messageId),
+        eq(schema.conversations.tenantId, tenantId),
+        eq(schema.conversations.profileId, profileId),
+        eq(schema.conversations.id, conversationId),
       ),
     );
   assert(rs.length === 1);
   return rs[0];
 }
 
-export async function getConversationMessages(tenantId: string, conversationId: string) {
-  return await db
+export async function getConversationMessage(
+  tenantId: string,
+  profileId: string,
+  conversationId: string,
+  messageId: string,
+) {
+  const rs = await db
     .select()
     .from(schema.messages)
-    .where(and(eq(schema.messages.tenantId, tenantId), eq(schema.messages.conversationId, conversationId)))
+    .innerJoin(schema.conversations, eq(schema.messages.conversationId, schema.conversations.id))
+    .where(
+      and(
+        eq(schema.messages.tenantId, tenantId),
+        eq(schema.messages.conversationId, conversationId),
+        eq(schema.messages.id, messageId),
+        eq(schema.conversations.profileId, profileId),
+      ),
+    );
+  assert(rs.length === 1);
+  return rs[0];
+}
+
+export async function getConversationMessages(tenantId: string, profileId: string, conversationId: string) {
+  const rs = await db
+    .select()
+    .from(schema.messages)
+    .innerJoin(schema.conversations, eq(schema.messages.conversationId, schema.conversations.id))
+    .where(
+      and(
+        eq(schema.messages.tenantId, tenantId),
+        eq(schema.messages.conversationId, conversationId),
+        eq(schema.conversations.profileId, profileId),
+      ),
+    )
     .orderBy(asc(schema.messages.createdAt));
+  return rs.map((r) => r.messages);
 }

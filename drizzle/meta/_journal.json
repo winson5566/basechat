@@ -57,6 +57,13 @@
       "when": 1736952320686,
       "tag": "0007_greedy_squadron_sinister",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1736997148689,
+      "tag": "0008_late_klaw",
+      "breakpoints": true
     }
   ]
 }
