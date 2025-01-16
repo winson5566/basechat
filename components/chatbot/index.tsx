@@ -4,7 +4,7 @@ import assert from "assert";
 
 import { experimental_useObject as useObject } from "ai/react";
 import { Inter } from "next/font/google";
-import { Fragment, useEffect, useMemo, useState } from "react";
+import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 
 import {
   conversationMessagesResponseSchema,
@@ -115,6 +115,14 @@ export default function Chatbot({ name, conversationId, initMessage, onSelectedD
     // eslint-disable-next-line react-hooks/exhaustive-deps -- initentionally run once
   }, []);
 
+  const container = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    container.current?.scrollTo({
+      top: container.current.scrollHeight,
+      behavior: "smooth",
+    });
+  }, [messages]);
+
   const messagesWithSources = useMemo(
     () =>
       messages
@@ -125,7 +133,7 @@ export default function Chatbot({ name, conversationId, initMessage, onSelectedD
 
   return (
     <div className="flex h-full w-full items-center flex-col">
-      <div className="flex flex-col h-full w-full items-center overflow-y-auto">
+      <div ref={container} className="flex flex-col h-full w-full items-center overflow-y-auto">
         <div className="flex flex-col h-full w-full p-4 max-w-[717px]">
           {messagesWithSources.map((message, i) =>
             message.role === "user" ? (
