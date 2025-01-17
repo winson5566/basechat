@@ -227,3 +227,7 @@ export async function setCurrentProfileId(userId: string, profileId: string) {
     await db.update(schema.users).set({ currentProfileId: profile.id }).where(eq(schema.users.id, userId));
   });
 }
+
+export async function deleteInviteById(tenantId: string, id: string) {
+  await db.delete(schema.invites).where(and(eq(schema.invites.tenantId, tenantId), eq(schema.invites.id, id)));
+}

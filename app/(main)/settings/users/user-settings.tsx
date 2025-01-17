@@ -71,6 +71,17 @@ export default function UserSettings({ members: initialMembers }: Props) {
     form.setValue("emails", emails);
   };
 
+  const handleDeleteInvite = async (id: string) => {
+    const res = await fetch(`/api/invites/${id}`, { method: "DELETE" });
+    if (!res.ok) {
+      toast.error("Could not delete invite");
+      return;
+    }
+
+    toast.info("Invite deleted");
+    setMembers(members.filter((m) => m.role !== "invite" || m.id !== id));
+  };
+
   return (
     <div className="w-full p-4 flex-grow flex flex-col">
       <Form {...form}>
@@ -143,19 +154,21 @@ export default function UserSettings({ members: initialMembers }: Props) {
                 </TableCell>
                 <TableCell className="capitalize">{member.role}</TableCell>
                 <TableCell className="text-right">
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <button>
-                        <MoreHorizontal />
-                      </button>
-                    </DropdownMenuTrigger>
-                    {/* <DropdownMenuContent align="end">
-                      <DropdownMenuItem onSelect={() => null}>
-                        <Trash />
-                        Delete
-                      </DropdownMenuItem>
-                    </DropdownMenuContent> */}
-                  </DropdownMenu>
+                  {member.role === "invite" && (
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <button>
+                          <MoreHorizontal />
+                        </button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem onSelect={() => handleDeleteInvite(member.id)}>
+                          <Trash />
+                          Delete
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  )}
                 </TableCell>
               </TableRow>
             ))}

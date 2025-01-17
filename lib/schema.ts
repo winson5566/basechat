@@ -52,6 +52,7 @@ export type MemberType = "profile" | "invite";
 export type MemberRole = "owner" | "user" | "invite";
 
 export interface Member {
+  id: string;
   email: string | null;
   name: string | null;
   role: MemberRole;
