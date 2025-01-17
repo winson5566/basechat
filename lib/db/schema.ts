@@ -1,4 +1,5 @@
 import {
+  AnyPgColumn,
   boolean,
   integer,
   json,
@@ -106,8 +107,7 @@ export const users = pgTable("users", {
   email: text("email").unique(),
   emailVerified: timestamp("email_verified", { mode: "date" }),
   image: text("image"),
-  currentProfileId: uuid("current_profile_id"),
-  //   .references(() => profiles.id, { onDelete: "set null" })
+  currentProfileId: uuid("current_profile_id").references((): AnyPgColumn => profiles.id, { onDelete: "set null" }),
 });
 
 export const accounts = pgTable(
