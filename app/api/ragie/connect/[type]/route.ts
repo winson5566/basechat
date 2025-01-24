@@ -20,6 +20,7 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<P
     redirectUri: [settings.BASE_URL, "api/ragie/callback"].join("/"),
     sourceType: type,
     partition: tenant.id,
+    theme: "light",
   });
 
   return Response.json(payload);
