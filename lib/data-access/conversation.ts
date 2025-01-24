@@ -73,7 +73,7 @@ export async function getConversationMessage(
       ),
     );
   assert(rs.length === 1);
-  return rs[0];
+  return rs[0].messages;
 }
 
 export async function getConversationMessages(tenantId: string, profileId: string, conversationId: string) {
