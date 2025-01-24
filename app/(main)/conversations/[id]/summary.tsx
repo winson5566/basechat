@@ -1,5 +1,6 @@
+import { format } from "date-fns";
 import Image from "next/image";
-import { Fragment, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import Markdown from "react-markdown";
 
 import { Skeleton } from "@/components/ui/skeleton";
@@ -44,7 +45,7 @@ export default function Summary({ className, documentId, onCloseClick = () => {}
           {icon && <Image src={icon} alt="test" width={48} />}
           <div className="wrap text-[24px] font-bold mb-4 break-all">{document.name}</div>
           <div className="flex justify-between mb-6">
-            <div className="text-[#74747A]">Updated 11/12/2024</div>
+            <div className="text-[#74747A]">Updated {format(document.updatedAt, "MM/dd/yyyy")}</div>
             <a href={document.metadata.source_url} target="_blank" className="text-[#7749F8] flex">
               View in source
               <Image src={ExternalLinkIcon} alt="Open in new window" />

@@ -4,5 +4,6 @@ export interface DocumentResponse {
     source_type: string;
     source_url: string;
   };
+  updatedAt: string;
   summary: string;
 }
