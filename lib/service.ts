@@ -3,6 +3,7 @@ import assert from "assert";
 import { and, eq, sql } from "drizzle-orm";
 import { union } from "drizzle-orm/pg-core";
 import nodemailer from "nodemailer";
+import SMTPConnection from "nodemailer/lib/smtp-connection";
 
 import * as settings from "@/lib/settings";
 
@@ -142,11 +143,15 @@ export async function createInvites(tenantId: string, invitedBy: string, emails:
       ),
   );
 
-  const transporter = nodemailer.createTransport({
+  const options: SMTPConnection.Options = {
     host: settings.SMTP_HOST,
     port: settings.SMTP_PORT,
     secure: settings.SMTP_SECURE,
-  });
+  };
+  if (settings.SMTP_USER && settings.SMTP_PASSWORD) {
+    options.auth = { type: "login", user: settings.SMTP_USER, pass: settings.SMTP_PASSWORD };
+  }
+  const transporter = nodemailer.createTransport(options);
 
   const promises = invites.map((invite) => {
     const inviteLink = settings.BASE_URL + "/invites/accept?invite=" + invite.id;

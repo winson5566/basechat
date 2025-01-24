@@ -19,7 +19,9 @@ export const RAGIE_API_KEY = process.env.RAGIE_API_KEY!;
 // assert(process.env.RAGIE_WEBHOOK_SECRET);
 export const RAGIE_WEBHOOK_SECRET = process.env.RAGIE_WEBHOOK_SECRET!;
 
-export const SMTP_FROM = "noreply@example.com";
+export const SMTP_FROM = process.env.SMTP_FROM!;
 export const SMTP_HOST = process.env.SMTP_HOST!;
 export const SMTP_PORT = Number(process.env.SMTP_PORT!);
 export const SMTP_SECURE = process.env.SMTP_SECURE === "1";
+export const SMTP_USER = process.env.SMTP_USER;
+export const SMTP_PASSWORD = process.env.SMTP_PASSWORD;
