@@ -3,7 +3,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Tag, TagInput } from "emblor";
 import { Loader2, MoreHorizontal, Trash } from "lucide-react";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
@@ -82,6 +82,9 @@ export default function UserSettings({ members: initialMembers }: Props) {
     setMembers(members.filter((m) => m.role !== "invite" || m.id !== id));
   };
 
+  const userCount = useMemo(() => members.filter((m) => m.role !== "invite").length, [members]);
+  const inviteCount = useMemo(() => members.filter((m) => m.role === "invite").length, [members]);
+
   return (
     <div className="w-full p-4 flex-grow flex flex-col">
       <Form {...form}>
@@ -128,8 +131,15 @@ export default function UserSettings({ members: initialMembers }: Props) {
         </form>
       </Form>
       <div className="mt-16">
-        <div className="text-[#74747A] mb-1.5">
-          {members.length} {members.length == 1 ? "user" : "users"}
+        <div className="text-[#74747A] mb-1.5 flex">
+          <div>
+            {userCount} {userCount == 1 ? "user" : "users"}
+          </div>
+          {inviteCount > 0 && (
+            <div className="ml-4">
+              {inviteCount} {inviteCount == 1 ? "invite" : "invites"}
+            </div>
+          )}
         </div>
         <Table>
           <TableHeader>
