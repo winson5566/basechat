@@ -128,7 +128,9 @@ export default function UserSettings({ members: initialMembers }: Props) {
         </form>
       </Form>
       <div className="mt-16">
-        <div className="text-[#74747A] mb-1.5">1 user</div>
+        <div className="text-[#74747A] mb-1.5">
+          {members.length} {members.length == 1 ? "user" : "users"}
+        </div>
         <Table>
           <TableHeader>
             <TableRow>
