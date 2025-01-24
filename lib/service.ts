@@ -159,7 +159,7 @@ export async function createInvites(tenantId: string, invitedBy: string, emails:
     return transporter.sendMail({
       to: invite.email,
       from: settings.SMTP_FROM,
-      subject: "You have been invited to an AI Chatbot",
+      subject: `You have been invited to ${settings.APP_NAME}`,
       text: `Click the link below to accept the invite:\n\n${inviteLink}`,
     });
   });
