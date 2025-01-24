@@ -1,5 +1,3 @@
-import assert from "assert";
-
 export const APP_NAME = "Base Chat";
 
 export const COMPANY_NAME = "Acme Corp";
