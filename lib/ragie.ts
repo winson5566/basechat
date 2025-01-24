@@ -5,9 +5,9 @@ import * as settings from "./settings";
 
 const ragieConnectionSchema = z.object({
   id: z.string(),
-  source_display_name: z.string(),
+  name: z.string(),
   partition: z.string().nullable(),
-  source_type: z.string(),
+  type: z.string(),
 });
 
 // FIXME: Temporary until the ragie clients include this method

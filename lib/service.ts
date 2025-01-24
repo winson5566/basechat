@@ -67,9 +67,9 @@ export async function saveConnection(tenantId: string, ragieConnectionId: string
     await db.insert(schema.connections).values({
       tenantId: tenantId,
       ragieConnectionId,
-      name: ragieConnection.source_display_name,
+      name: ragieConnection.name,
       status,
-      sourceType: ragieConnection.source_type,
+      sourceType: ragieConnection.type,
     });
   } else {
     await db
