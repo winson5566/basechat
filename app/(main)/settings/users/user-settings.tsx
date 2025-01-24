@@ -1,6 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
+import assertNever from "assert-never";
 import { Tag, TagInput } from "emblor";
 import { Loader2, MoreHorizontal, Trash } from "lucide-react";
 import { useMemo, useState } from "react";
@@ -71,15 +72,40 @@ export default function UserSettings({ members: initialMembers }: Props) {
     form.setValue("emails", emails);
   };
 
-  const handleDeleteInvite = async (id: string) => {
+  const deleteInvite = async (id: string) => {
     const res = await fetch(`/api/invites/${id}`, { method: "DELETE" });
     if (!res.ok) {
       toast.error("Could not delete invite");
       return;
     }
 
-    toast.info("Invite deleted");
+    toast.info("Invite was deleted");
     setMembers(members.filter((m) => m.role !== "invite" || m.id !== id));
+  };
+
+  const deleteUser = async (id: string) => {
+    const res = await fetch(`/api/profiles/${id}`, { method: "DELETE" });
+    if (!res.ok) {
+      toast.error("Could not delete user");
+      return;
+    }
+
+    toast.info("User was deleted");
+    setMembers(members.filter((m) => m.role !== "user" || m.id !== id));
+  };
+
+  const handleDelete = (id: string, role: MemberRole) => {
+    switch (role) {
+      case "invite":
+        return deleteInvite(id);
+      case "user":
+        return deleteUser(id);
+      case "owner":
+        toast.info("Cannot delete owner");
+        return;
+      default:
+        return assertNever(role);
+    }
   };
 
   const userCount = useMemo(() => members.filter((m) => m.role !== "invite").length, [members]);
@@ -166,7 +192,7 @@ export default function UserSettings({ members: initialMembers }: Props) {
                 </TableCell>
                 <TableCell className="capitalize">{member.role}</TableCell>
                 <TableCell className="text-right">
-                  {member.role === "invite" && (
+                  {(member.role === "invite" || member.role === "user") && (
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <button>
@@ -174,7 +200,7 @@ export default function UserSettings({ members: initialMembers }: Props) {
                         </button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        <DropdownMenuItem onSelect={() => handleDeleteInvite(member.id)}>
+                        <DropdownMenuItem onSelect={() => handleDelete(member.id, member.role)}>
                           <Trash />
                           Delete
                         </DropdownMenuItem>

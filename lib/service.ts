@@ -237,6 +237,10 @@ export async function deleteInviteById(tenantId: string, id: string) {
   await db.delete(schema.invites).where(and(eq(schema.invites.tenantId, tenantId), eq(schema.invites.id, id)));
 }
 
+export async function deleteProfileById(tenantId: string, id: string) {
+  await db.delete(schema.profiles).where(and(eq(schema.profiles.tenantId, tenantId), eq(schema.profiles.id, id)));
+}
+
 export async function findUserByEmail(email: string) {
   const rs = await db.select().from(schema.users).where(eq(schema.users.email, email));
   assert(rs.length === 1 || rs.length === 0, "unexpected result");
