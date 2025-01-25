@@ -34,8 +34,8 @@ export default function Layout({ children }: Readonly<{ children: React.ReactNod
       <div className="flex-grow h-full flex flex-col items-center justify-center">
         <div className="w-[442px]">
           <div className="flex items-center mb-16">
-            <div className="max-h-[44px] max-w-[44px] avatar mr-3" />
-            <h1 className={cn(inter_tight.className, "text-[40px] font-bold")}>{settings.APP_NAME}</h1>
+            <div className="max-h-[64px] max-w-[64px] avatar mr-3" />
+            <h1 className={cn(inter_tight.className, "text-[75px] font-bold")}>{settings.APP_NAME}</h1>
           </div>
           <div className="flex flex-col items-center">{children}</div>
         </div>
