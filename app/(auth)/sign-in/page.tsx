@@ -9,7 +9,7 @@ import SignIn from "./sign-in";
 
 export default async function SignInPage({ searchParams }: { searchParams: Promise<{ redirectTo?: string }> }) {
   const { redirectTo } = await searchParams;
-  const signUpUrl = new URL("/signup", settings.BASE_URL);
+  const signUpUrl = new URL("/sign-up", settings.BASE_URL);
   if (redirectTo) {
     signUpUrl.searchParams.set("redirectTo", redirectTo);
   }

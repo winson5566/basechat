@@ -16,7 +16,7 @@ export default function ResetPage() {
 
       <Reset />
 
-      <Link href="/signin" className="mt-6 text-[16px] text-[#74747A] hover:underline">
+      <Link href="/sign-in" className="mt-6 text-[16px] text-[#74747A] hover:underline">
         Back to sign in
       </Link>
     </>
