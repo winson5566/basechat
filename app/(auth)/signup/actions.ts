@@ -1,12 +1,11 @@
 "use server";
 
-import { redirect } from "next/navigation";
 import { z, ZodError } from "zod";
 
+import { signIn } from "@/auth";
 import db from "@/lib/db";
 import * as schema from "@/lib/db/schema";
 import { hashPassword } from "@/lib/server-utils";
-import * as settings from "@/lib/settings";
 
 import { extendPasswordSchema } from "../utils";
 
@@ -49,11 +48,13 @@ export async function handleSignUp(prevState: SignUpFormState, formData: FormDat
     };
   }
 
-  const signInUrl = new URL("/signin", settings.BASE_URL);
-  signInUrl.searchParams.set("registered", "1");
-  if (values.redirectTo) {
-    signInUrl.searchParams.set("redirectTo", values.redirectTo);
-  }
+  const redirectTo = values.redirectTo ? values.redirectTo.toString() : "/start";
 
-  redirect(signInUrl.toString());
+  await signIn("credentials", {
+    email: values.email,
+    password: values.password,
+    redirectTo,
+  });
+
+  return null;
 }

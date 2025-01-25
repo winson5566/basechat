@@ -7,12 +7,8 @@ import GoogleSignIn from "../google-sign-in";
 
 import SignIn from "./sign-in";
 
-export default async function SignInPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ registered?: number; redirectTo?: string }>;
-}) {
-  const { registered, redirectTo } = await searchParams;
+export default async function SignInPage({ searchParams }: { searchParams: Promise<{ redirectTo?: string }> }) {
+  const { redirectTo } = await searchParams;
   const signUpUrl = new URL("/signup", settings.BASE_URL);
   if (redirectTo) {
     signUpUrl.searchParams.set("redirectTo", redirectTo);
@@ -34,8 +30,6 @@ export default async function SignInPage({
         <hr className="w-full" />
         <div className="absolute top-[-24px] bg-white p-3 text-center text-[#74747A]">or</div>
       </div>
-
-      {registered && <div className="mb-6 text-green-600">Thank you for registering your account. Please sign in.</div>}
 
       <SignIn redirectTo={redirectTo} />
 
