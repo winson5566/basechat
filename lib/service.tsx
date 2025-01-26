@@ -11,7 +11,7 @@ import * as settings from "@/lib/settings";
 
 import db from "./db";
 import * as schema from "./db/schema";
-import { ResetPasswordHtml } from "./mail";
+import { InviteHtml, ResetPasswordHtml } from "./mail";
 import { getRagieClient } from "./ragie";
 import { Member, MemberRole, MemberType } from "./schema";
 import { hashPassword } from "./server-utils";
@@ -156,7 +156,7 @@ export async function createInvites(tenantId: string, invitedBy: string, emails:
     options.auth = { type: "login", user: settings.SMTP_USER, pass: settings.SMTP_PASSWORD };
   }
 
-  const promises = invites.map((invite) => {
+  const promises = invites.map(async (invite) => {
     const inviteLink = settings.BASE_URL + "/invites/accept?invite=" + invite.id;
 
     return sendMail({
@@ -164,6 +164,7 @@ export async function createInvites(tenantId: string, invitedBy: string, emails:
       from: settings.SMTP_FROM,
       subject: `You have been invited to ${settings.APP_NAME}`,
       text: `Click the link below to accept the invite:\n\n${inviteLink}`,
+      html: await render(<InviteHtml name={null} link={inviteLink} />),
     });
   });
 

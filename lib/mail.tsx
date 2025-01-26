@@ -65,3 +65,23 @@ export const ResetPasswordHtml = ({ name, link }: { name: string | null; link: s
     </Layout>
   );
 };
+
+export const InviteHtml = ({ name, link }: { name: string | null; link: string }) => {
+  return (
+    <Layout preview={`You have been invite to join ${settings.APP_NAME}`}>
+      <Section>
+        <Text className="text-[#1D1D1F] text-[24px] mb-8 font-bold">
+          {name ? `${name} has` : "You have been"} invited to join {settings.APP_NAME}!
+        </Text>
+        <Text className="text-[#1D1D1F] text-[18px]">Accept your invitation to start your chat experience.</Text>
+
+        <Button
+          href={link}
+          className="w-full text-center mt-8 rounded-[54px] bg-[#D946EF] py-2.5 text-white font-semibold"
+        >
+          Accept invite
+        </Button>
+      </Section>
+    </Layout>
+  );
+};
