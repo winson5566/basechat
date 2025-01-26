@@ -10,7 +10,7 @@ import * as settings from "@/lib/settings";
 
 import db from "./db";
 import * as schema from "./db/schema";
-import { getRagieClient, getRagieConnection } from "./ragie";
+import { getRagieClient } from "./ragie";
 import { Member, MemberRole, MemberType } from "./schema";
 import { hashPassword } from "./server-utils";
 
@@ -65,7 +65,7 @@ export async function saveConnection(tenantId: string, ragieConnectionId: string
   const connection = qs.length === 1 ? qs[0] : null;
 
   if (!connection) {
-    const ragieConnection = await getRagieConnection(ragieConnectionId);
+    const ragieConnection = await getRagieClient().connections.getConnection({ connectionId: ragieConnectionId });
     await db.insert(schema.connections).values({
       tenantId: tenantId,
       ragieConnectionId,
