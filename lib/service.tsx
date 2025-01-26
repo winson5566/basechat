@@ -1,5 +1,6 @@
 import assert from "assert";
 
+import { render } from "@react-email/components";
 import { and, eq, sql } from "drizzle-orm";
 import { union } from "drizzle-orm/pg-core";
 import jwt from "jsonwebtoken";
@@ -10,6 +11,7 @@ import * as settings from "@/lib/settings";
 
 import db from "./db";
 import * as schema from "./db/schema";
+import { ResetPasswordHtml } from "./mail";
 import { getRagieClient } from "./ragie";
 import { Member, MemberRole, MemberType } from "./schema";
 import { hashPassword } from "./server-utils";
@@ -266,6 +268,7 @@ export async function sendResetPasswordVerification(email: string) {
     to: email,
     subject: "Reset password verification",
     text: `Click the link below to reset your password:\n\n${link}`,
+    html: await render(<ResetPasswordHtml name={user.name} link={link} />),
   });
   return true;
 }
@@ -280,11 +283,13 @@ export async function changePassword(email: string, newPassword: string) {
 export async function sendMail({
   to,
   subject,
+  html,
   text,
   from = settings.SMTP_FROM,
 }: {
   to: string;
   subject: string;
+  html?: string;
   text: string;
   from?: string;
 }) {
@@ -297,5 +302,5 @@ export async function sendMail({
     options.auth = { type: "login", user: settings.SMTP_USER, pass: settings.SMTP_PASSWORD };
   }
   const transporter = nodemailer.createTransport(options);
-  return transporter.sendMail({ to, from, subject, text });
+  return transporter.sendMail({ to, from, subject, html, text });
 }
