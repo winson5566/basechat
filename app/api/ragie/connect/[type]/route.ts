@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
-import { Ragie } from "ragie";
+import { ConnectorSource } from "ragie/models/components";
 
+import { getRagieClient } from "@/lib/ragie";
 import { requireAuthContext } from "@/lib/server-utils";
 import * as settings from "@/lib/settings";
 
@@ -13,12 +14,12 @@ interface Params {
 export async function GET(_request: NextRequest, { params }: { params: Promise<Params> }) {
   const { tenant } = await requireAuthContext();
 
-  const client = new Ragie({ auth: settings.RAGIE_API_KEY, serverURL: settings.RAGIE_API_BASE_URL });
+  const client = getRagieClient();
   const { type } = await params;
 
   const payload = await client.connections.createOAuthRedirectUrl({
     redirectUri: [settings.BASE_URL, "api/ragie/callback"].join("/"),
-    sourceType: type,
+    sourceType: type as ConnectorSource | undefined,
     partition: tenant.id,
     theme: "light",
   });

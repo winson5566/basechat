@@ -1,5 +1,6 @@
 import ConfluenceIconSVG from "../public/icons/connectors/confluence.svg";
 import DropboxIconSVG from "../public/icons/connectors/dropbox.svg";
+import FreshdeskIconSVG from "../public/icons/connectors/freshdesk.svg";
 import GoogleCloudStorageIconSVG from "../public/icons/connectors/gcs.svg";
 import GmailIconSVG from "../public/icons/connectors/gmail.svg";
 import GoogleDriveIconSVG from "../public/icons/connectors/google-drive.svg";
@@ -15,6 +16,7 @@ export const CONNECTOR_MAP: Record<string, string[]> = {
   s3: ["Amazon S3", S3IconSVG],
   confluence: ["Confluence", ConfluenceIconSVG],
   dropbox: ["Dropbox", DropboxIconSVG],
+  freshdesk: ["Freshdesk", FreshdeskIconSVG],
   jira: ["Jira", JiraIconSVG],
   gcs: ["Google Cloud Storage", GoogleCloudStorageIconSVG],
   gmail: ["Gmail", GmailIconSVG],
