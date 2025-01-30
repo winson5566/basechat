@@ -45,7 +45,7 @@ export async function deleteConnection(tenantId: string, id: string) {
       .where(and(eq(schema.connections.tenantId, tenantId), eq(schema.connections.id, connection.id)));
 
     try {
-      await getRagieClient().connections.deleteConnection({
+      await getRagieClient().connections.delete({
         connectionId: connection.ragieConnectionId,
         deleteConnectionPayload: { keepFiles: false },
       });
@@ -65,7 +65,7 @@ export async function saveConnection(tenantId: string, ragieConnectionId: string
   const connection = qs.length === 1 ? qs[0] : null;
 
   if (!connection) {
-    const ragieConnection = await getRagieClient().connections.getConnection({ connectionId: ragieConnectionId });
+    const ragieConnection = await getRagieClient().connections.get({ connectionId: ragieConnectionId });
     await db.insert(schema.connections).values({
       tenantId: tenantId,
       ragieConnectionId,
