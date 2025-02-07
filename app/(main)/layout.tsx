@@ -9,7 +9,7 @@ interface Props {
   children?: ReactNode;
 }
 
-export default async function AppLayout({ children }: Props) {
+export default async function MainLayout({ children }: Props) {
   const { tenant, profile } = await authOrRedirect();
 
   return (
