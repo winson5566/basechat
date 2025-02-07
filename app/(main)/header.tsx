@@ -111,7 +111,7 @@ export default function Header({ name, currentTenantId, onNavClick = () => {} }:
           <hr className="my-4 bg-black border-none h-[1px] opacity-10" />
 
           <Link className="flex cursor-pointer" href="/setup">
-            <Image src={PlusIcon} alt="Log out" className="mr-3" />
+            <Image src={PlusIcon} alt="New Chatbot" className="mr-3" />
             New Chatbot
           </Link>
 
