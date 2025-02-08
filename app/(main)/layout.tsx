@@ -14,7 +14,7 @@ export default async function MainLayout({ children }: Props) {
 
   return (
     <div className="h-full w-full flex flex-col items-center bg-white">
-      <Header currentTenantId={tenant.id} name={tenant.name} />
+      <Header currentProfileId={profile.id} name={tenant.name} />
       <div className="h-full w-full flex-1 flex justify-center overflow-auto">
         <div className="h-full w-full flex flex-col items-center justify-center min-w-[500px]">{children}</div>
       </div>

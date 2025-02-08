@@ -20,7 +20,7 @@ import PlusIcon from "../../public/icons/plus.svg";
 import ConversationHistory from "./conversation-history";
 
 interface Props {
-  currentTenantId: string;
+  currentProfileId: string;
   className?: string;
   name?: string | null;
   onNavClick?: () => void;
@@ -43,10 +43,11 @@ const HeaderPopoverContent = ({
   </PopoverContent>
 );
 
-export default function Header({ name, currentTenantId, onNavClick = () => {} }: Props) {
+export default function Header({ name, currentProfileId, onNavClick = () => {} }: Props) {
   const router = useRouter();
 
   const [tenants, setTenants] = useState<z.infer<typeof tenantListResponseSchema>>([]);
+  const [selectedProfileId, setSelectedProfileId] = useState(currentProfileId);
 
   useEffect(() => {
     (async () => {
@@ -58,7 +59,7 @@ export default function Header({ name, currentTenantId, onNavClick = () => {} }:
 
   const handleLogOutClick = async () => await signOut();
 
-  const handleTenantClick = async (profileId: string) => {
+  const handleProfileClick = async (profileId: string) => {
     await fetch("/api/profiles", {
       method: "POST",
       body: JSON.stringify(
@@ -67,6 +68,7 @@ export default function Header({ name, currentTenantId, onNavClick = () => {} }:
         }),
       ),
     });
+    setSelectedProfileId(profileId);
     router.push("/");
   };
 
@@ -97,10 +99,12 @@ export default function Header({ name, currentTenantId, onNavClick = () => {} }:
               <li
                 key={i}
                 className="hover:bg-black hover:bg-opacity-5 px-4 py-3 rounded-lg cursor-pointer"
-                onClick={() => handleTenantClick(tenant.profileId)}
+                onClick={() => handleProfileClick(tenant.profileId)}
               >
                 <div className="flex items-center mb-1">
-                  <div className="w-4">{currentTenantId === tenant.id && <Image src={CheckIcon} alt="selected" />}</div>
+                  <div className="w-4">
+                    {selectedProfileId === tenant.profileId && <Image src={CheckIcon} alt="selected" />}
+                  </div>
                   <TenantLogo name={tenant.name} className="ml-3" />
                   <div className="ml-4">{tenant.name}</div>
                 </div>
