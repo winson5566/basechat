@@ -13,7 +13,7 @@ import {
 } from "@react-email/components";
 import * as React from "react";
 
-import * as settings from "@/lib/settings";
+import * as settings from "@/lib/server/settings";
 
 const Layout = ({ children, preview }: { children: React.ReactElement; preview: string }) => (
   <Html>

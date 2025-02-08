@@ -1,20 +1,23 @@
 import assert from "assert";
 
 import { render } from "@react-email/components";
-import { and, eq, sql } from "drizzle-orm";
+import { asc, and, eq, sql } from "drizzle-orm";
 import { union } from "drizzle-orm/pg-core";
 import jwt from "jsonwebtoken";
 import nodemailer from "nodemailer";
 import SMTPConnection from "nodemailer/lib/smtp-connection";
 
-import * as settings from "@/lib/settings";
+import { Member, MemberType } from "@/lib/api";
+import * as settings from "@/lib/server/settings";
+
+import { InviteHtml, ResetPasswordHtml } from "../mail";
 
 import db from "./db";
 import * as schema from "./db/schema";
-import { InviteHtml, ResetPasswordHtml } from "./mail";
 import { getRagieClient } from "./ragie";
-import { Member, MemberRole, MemberType } from "./schema";
-import { hashPassword } from "./server-utils";
+import { hashPassword } from "./utils";
+
+type Role = (typeof schema.rolesEnum.enumValues)[number];
 
 export async function createTenant(userId: string, name: string) {
   const tenants = await db
@@ -24,7 +27,10 @@ export async function createTenant(userId: string, name: string) {
   assert(tenants.length === 1);
   const tenantId = tenants[0].id;
 
-  const profiles = await db.insert(schema.profiles).values({ tenantId, userId }).returning({ id: schema.profiles.id });
+  const profiles = await db
+    .insert(schema.profiles)
+    .values({ tenantId, userId, role: "admin" })
+    .returning({ id: schema.profiles.id });
   assert(profiles.length === 1);
   const profileId = profiles[0].id;
 
@@ -47,7 +53,7 @@ export async function deleteConnection(tenantId: string, id: string) {
       .where(and(eq(schema.connections.tenantId, tenantId), eq(schema.connections.id, connection.id)));
 
     try {
-      await getRagieClient().connections.deleteConnection({
+      await getRagieClient().connections.delete({
         connectionId: connection.ragieConnectionId,
         deleteConnectionPayload: { keepFiles: false },
       });
@@ -67,7 +73,7 @@ export async function saveConnection(tenantId: string, ragieConnectionId: string
   const connection = qs.length === 1 ? qs[0] : null;
 
   if (!connection) {
-    const ragieConnection = await getRagieClient().connections.getConnection({ connectionId: ragieConnectionId });
+    const ragieConnection = await getRagieClient().connections.get({ connectionId: ragieConnectionId });
     await db.insert(schema.connections).values({
       tenantId: tenantId,
       ragieConnectionId,
@@ -93,12 +99,7 @@ export async function getMembersByTenantId(tenantId: string): Promise<Member[]> 
         email: schema.users.email,
         name: schema.users.name,
         type: sql<MemberType>`'profile'`.as("type"),
-        role: sql<MemberRole>`
-          case
-            when ${schema.tenants.ownerId} = ${schema.users.id} then 'owner'
-            else 'user'
-          end
-        `.as("role"),
+        role: schema.profiles.role,
       })
       .from(schema.profiles)
       .innerJoin(schema.users, eq(schema.profiles.userId, schema.users.id))
@@ -110,7 +111,7 @@ export async function getMembersByTenantId(tenantId: string): Promise<Member[]> 
         email: schema.invites.email,
         name: schema.invites.email,
         type: sql<MemberType>`'invite'`.as("type"),
-        role: sql<MemberRole>`'invite'`.as("role"),
+        role: schema.invites.role,
       })
       .from(schema.invites)
       .where(eq(schema.invites.tenantId, tenantId)),
@@ -126,14 +127,14 @@ export async function getFirstTenantByUserId(id: string) {
   return rs.length > 0 ? rs[0].tenants : null;
 }
 
-export async function createInvites(tenantId: string, invitedBy: string, emails: string[]) {
+export async function createInvites(tenantId: string, invitedBy: string, emails: string[], role: Role) {
   const invites = await db.transaction(
     async (tx) =>
       await Promise.all(
         emails.map(async (email) => {
           const rs = await tx
             .insert(schema.invites)
-            .values({ tenantId, invitedBy, email })
+            .values({ tenantId, invitedBy, email, role })
             .onConflictDoUpdate({
               target: [schema.invites.tenantId, schema.invites.email],
               set: { invitedBy, updatedAt: new Date().toISOString() },
@@ -207,7 +208,10 @@ export async function acceptInvite(userId: string, inviteId: string) {
   const invite = await getInviteById(inviteId);
 
   const profile = await db.transaction(async (tx) => {
-    const rs = await tx.insert(schema.profiles).values({ tenantId: invite.tenantId, userId }).returning();
+    const rs = await tx
+      .insert(schema.profiles)
+      .values({ tenantId: invite.tenantId, userId, role: invite.role })
+      .returning();
     await tx.delete(schema.invites).where(eq(schema.invites.id, inviteId));
     assert(rs.length === 1, "expected new profile");
     return rs[0];
@@ -304,4 +308,107 @@ export async function sendMail({
   }
   const transporter = nodemailer.createTransport(options);
   return transporter.sendMail({ to, from, subject, html, text });
+}
+
+export async function updateProfileRoleById(tenantId: string, profileId: string, newRole: Role) {
+  await db
+    .update(schema.profiles)
+    .set({ role: newRole })
+    .where(and(eq(schema.profiles.tenantId, tenantId), eq(schema.profiles.id, profileId)));
+  return;
+}
+
+export async function updateInviteRoleById(tenantId: string, inviteId: string, newRole: Role) {
+  await db
+    .update(schema.invites)
+    .set({ role: newRole })
+    .where(and(eq(schema.invites.tenantId, tenantId), eq(schema.invites.id, inviteId)));
+  return;
+}
+
+export async function createConversationMessage(message: typeof schema.messages.$inferInsert) {
+  const rs = await db
+    .insert(schema.messages)
+    .values({
+      tenantId: message.tenantId,
+      role: message.role,
+      conversationId: message.conversationId,
+      content: message.content,
+      sources: message.sources,
+    })
+    .returning();
+  assert(rs.length === 1);
+  return rs[0];
+}
+
+export async function updateConversationMessageContent(
+  tenantId: string,
+  profileId: string,
+  conversationId: string,
+  messageId: string,
+  content: string,
+) {
+  return await db
+    .update(schema.messages)
+    .set({ content })
+    .where(
+      and(
+        eq(schema.messages.tenantId, tenantId),
+        eq(schema.messages.conversationId, conversationId),
+        eq(schema.messages.id, messageId),
+      ),
+    );
+}
+
+export async function getConversation(tenantId: string, profileId: string, conversationId: string) {
+  const rs = await db
+    .select()
+    .from(schema.conversations)
+    .where(
+      and(
+        eq(schema.conversations.tenantId, tenantId),
+        eq(schema.conversations.profileId, profileId),
+        eq(schema.conversations.id, conversationId),
+      ),
+    );
+  assert(rs.length === 1);
+  return rs[0];
+}
+
+export async function getConversationMessage(
+  tenantId: string,
+  profileId: string,
+  conversationId: string,
+  messageId: string,
+) {
+  const rs = await db
+    .select()
+    .from(schema.messages)
+    .innerJoin(schema.conversations, eq(schema.messages.conversationId, schema.conversations.id))
+    .where(
+      and(
+        eq(schema.messages.tenantId, tenantId),
+        eq(schema.messages.conversationId, conversationId),
+        eq(schema.messages.id, messageId),
+        eq(schema.conversations.profileId, profileId),
+      ),
+    );
+  assert(rs.length === 1);
+  return rs[0].messages;
+}
+
+export async function getConversationMessages(tenantId: string, profileId: string, conversationId: string) {
+  const rs = await db
+    .select()
+    .from(schema.messages)
+    .innerJoin(schema.conversations, eq(schema.messages.conversationId, schema.conversations.id))
+    .where(
+      and(
+        eq(schema.messages.tenantId, tenantId),
+        eq(schema.messages.conversationId, conversationId),
+        eq(schema.conversations.profileId, profileId),
+      ),
+    )
+    .orderBy(asc(schema.messages.createdAt));
+  return rs.map((r) => r.messages);
 }

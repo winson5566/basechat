@@ -2,7 +2,7 @@ import assert from "assert";
 import { randomBytes } from "crypto";
 
 import argon2 from "argon2";
-import { redirect } from "next/navigation";
+import { redirect, unauthorized } from "next/navigation";
 
 import { auth } from "@/auth";
 
@@ -20,11 +20,25 @@ export async function requireAuthContext() {
   return { profile, tenant, session };
 }
 
+export async function requireAdminContext() {
+  const context = await requireAuthContext();
+  if (context.profile.role !== "admin") unauthorized();
+  return context;
+}
+
 export async function authOrRedirect() {
   try {
     return await requireAuthContext();
   } catch (e) {
     return redirect("/sign-in");
+  }
+}
+
+export async function adminOrRedirect() {
+  try {
+    return await requireAdminContext();
+  } catch (e) {
+    return redirect("/");
   }
 }
 

@@ -60,6 +60,8 @@ export const tenants = pgTable("tenants", {
   question3: text("question3"),
 });
 
+export const rolesEnum = pgEnum("roles", ["admin", "user"]);
+
 export const invites = pgTable(
   "invites",
   {
@@ -68,6 +70,7 @@ export const invites = pgTable(
       .references(() => profiles.id, { onDelete: "cascade" })
       .notNull(),
     email: text("email").notNull(),
+    role: rolesEnum("role").notNull(),
   },
   (t) => ({
     unique_tenant_id_email: unique().on(t.tenantId, t.email),
@@ -81,13 +84,14 @@ export const profiles = pgTable(
     userId: uuid("user_id")
       .references(() => users.id, { onDelete: "cascade" })
       .notNull(),
+    role: rolesEnum("role").notNull(),
   },
   (t) => ({
     unique_tenant_id_user_id: unique().on(t.tenantId, t.userId),
   }),
 );
 
-export const rolesEnum = pgEnum("roles", ["assistant", "system", "user"]);
+export const messageRolesEnum = pgEnum("message_roles", ["assistant", "system", "user"]);
 
 export const messages = pgTable("messages", {
   ...baseTenantFields,
@@ -95,7 +99,7 @@ export const messages = pgTable("messages", {
     .references(() => conversations.id, { onDelete: "cascade" })
     .notNull(),
   content: text("content"),
-  role: rolesEnum("role").notNull(),
+  role: messageRolesEnum("role").notNull(),
   sources: json("sources").notNull(),
 });
 

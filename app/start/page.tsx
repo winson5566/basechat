@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 
-import { requireSession } from "@/lib/server-utils";
-import { getFirstTenantByUserId } from "@/lib/service";
+import { getFirstTenantByUserId } from "@/lib/server/service";
+import { requireSession } from "@/lib/server/utils";
 
 export default async function StartPage() {
   const session = await requireSession();
