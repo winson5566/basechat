@@ -21,6 +21,7 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<P
     redirectUri: [settings.BASE_URL, "api/ragie/callback"].join("/"),
     sourceType: type as ConnectorSource | undefined,
     partition: tenant.id,
+    mode: "hi_res",
     theme: "light",
   });
 
