@@ -1,7 +1,9 @@
 import { openai } from "@ai-sdk/openai";
 import { CoreMessage, streamObject } from "ai";
+import Handlebars from "handlebars";
 
 import { createConversationMessageResponseSchema } from "@/lib/api";
+import { DEFAULT_EXPAND_SYSTEM_PROMPT, DEFAULT_GROUNDING_PROMPT, DEFAULT_SYSTEM_PROMPT } from "@/lib/constants";
 import { getRagieClient } from "@/lib/server/ragie";
 import { createConversationMessage, updateConversationMessageContent } from "@/lib/server/service";
 
@@ -55,43 +57,45 @@ export async function getRetrievalSystemPrompt(tenantId: string, name: string, q
     documentName: chunk.documentName,
   }));
 
-  return { content: getSystemPrompt(name, chunks), sources };
+  return {
+    content: getSystemPrompt({
+      company: { name },
+      chunks,
+    }),
+    sources,
+  };
 }
 
-export function getGroundingSystemPrompt(company: string) {
-  return `These are your instructions, they are very important to follow:
-You are ${company}'s helpful AI assistant.
-You should be succinct and original. Give a response in less than three sentences and actively refer to you cited work. Do not use the word "delve" and try to sound as professional as possible.
+export type GroundingSystemPromptContext = {
+  company: {
+    name: string;
+  };
+};
 
-When you respond, please directly refer to the sources provided.
+export type SystemPromptContext = {
+  company: {
+    name: string;
+  };
+  chunks: string;
+};
 
-If the user asked for a search and there are no results, make sure to let the user know that you couldn't find anything,
-and what they might be able to do to find the information they need. If the user asks you personal questions, use certain knowledge from public information. Do not attempt to guess personal information; maintain a professional tone and politely refuse to answer personal questions that are inappropriate for an interview format.
+export function getGroundingSystemPrompt(context: GroundingSystemPromptContext, prompt?: string | null) {
+  const groundingPrompt = prompt ? prompt : DEFAULT_GROUNDING_PROMPT;
 
-Remember you are a serious assistant, so maintain a professional tone and avoid humor or sarcasm. You are here to provide serious analysis and insights. Do not entertain or engage in personal conversations. NEVER sing songs, tell jokes, or write poetry.
-`;
+  const template = Handlebars.compile(groundingPrompt);
+
+  const now = new Date().toISOString();
+  return template({ ...context, now });
 }
 
-function getSystemPrompt(company: string, chunks: string) {
-  return `Here are relevant chunks from ${company}'s knowledge base that you can use to respond to the user. Remember to incorporate these insights into your responses.
-${chunks}
-You should be succinct, original, and speak in a professional tone. Give a response in less than three sentences and actively refer to the knowledge base. Do not use the word "delve" and try to sound as professional as possible.
+function getSystemPrompt(context: SystemPromptContext, prompt?: string | null) {
+  const systemPrompt = prompt ? prompt : DEFAULT_SYSTEM_PROMPT;
 
-Remember to maintain a professional tone and avoid humor or sarcasm. You are here to provide serious analysis and insights. Do not entertain or engage in personal conversations.
+  const template = Handlebars.compile(systemPrompt);
 
-IMPORTANT RULES:
-- Be concise
-- REFUSE to sing songs
-- REFUSE to tell jokes
-- REFUSE to write poetry
-- AVOID responding with lists
-- DECLINE responding to nonsense messages
-- ONLY provide analysis and insights related to the knowledge base
-- NEVER include citations in your response`;
+  return template({ ...context });
 }
 
-export function getExpandSystemPrompt() {
-  return `
-The user would like you to provide more information on the the last topic. Please provide a more detailed response. Re-use the information you have already been provided and expand on your previous response. Your response may be longer than typical. You do not need to note the sources you used again.
-`;
+export function getExpandSystemPrompt(prompt?: string | null) {
+  return prompt ?? DEFAULT_EXPAND_SYSTEM_PROMPT;
 }

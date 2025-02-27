@@ -37,7 +37,14 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       tenantId: tenant.id,
       conversationId: conversation.id,
       role: "system",
-      content: getGroundingSystemPrompt(tenant.name),
+      content: getGroundingSystemPrompt(
+        {
+          company: {
+            name: tenant.name,
+          },
+        },
+        tenant.groundingPrompt,
+      ),
       sources: [],
     });
   }
