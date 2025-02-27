@@ -112,7 +112,7 @@ export default function Chatbot({ name, conversationId, initMessage, onSelectedD
         setMessages(messages);
       })();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- initentionally run once
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- intentionally run once
   }, []);
 
   const container = useRef<HTMLDivElement>(null);
