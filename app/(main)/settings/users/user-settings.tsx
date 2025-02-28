@@ -203,6 +203,8 @@ export default function UserSettings({ members: initialMembers }: Props) {
                         <FormItem>
                           <FormMessage>Must use valid email addresses</FormMessage>
                           <FormControl>
+                            {/* The TagInput type is incorrect, but it is functional. */}
+                            {/* @ts-expect-error */}
                             <TagInput
                               placeholder="Email address, comma separated"
                               styleClasses={{
