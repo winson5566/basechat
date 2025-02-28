@@ -11,11 +11,10 @@ import { AutosizeTextarea } from "@/components/ui/autosize-textarea";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { updateTenantSchema } from "@/lib/api";
-import { DEFAULT_EXPAND_SYSTEM_PROMPT, DEFAULT_GROUNDING_PROMPT, DEFAULT_SYSTEM_PROMPT } from "@/lib/constants";
+import { DEFAULT_GROUNDING_PROMPT, DEFAULT_SYSTEM_PROMPT } from "@/lib/constants";
 import * as schema from "@/lib/server/db/schema";
 import { cn } from "@/lib/utils";
 
-import { HelpExpandSystemPromptDialog } from "./help-expand-system-prompt-dialog";
 import { HelpGroundingPromptDialog } from "./help-grounding-prompt-dialog";
 import { HelpSystemPromptDialog } from "./help-system-prompt-dialog";
 
@@ -28,7 +27,6 @@ const formSchema = z.object({
   question3: z.string().nullable().transform(nullToEmptyString),
   groundingPrompt: z.string().nullable().default(DEFAULT_GROUNDING_PROMPT).transform(nullToEmptyString),
   systemPrompt: z.string().nullable().default(DEFAULT_SYSTEM_PROMPT).transform(nullToEmptyString),
-  expandSystemPrompt: z.string().nullable().default(DEFAULT_EXPAND_SYSTEM_PROMPT).transform(nullToEmptyString),
 });
 
 type QuestionFieldProps = {
@@ -94,14 +92,13 @@ export default function GeneralSettings({ tenant }: Props) {
   const [isLoading, setLoading] = useState(false);
 
   const formattedTenant = useMemo(() => {
-    const { groundingPrompt, systemPrompt, expandSystemPrompt, ...otherFields } = tenant;
+    const { groundingPrompt, systemPrompt, ...otherFields } = tenant;
 
     // Zod only uses default values when the value is undefined. They come in as null
     // Change fields you want to have defaults to undefined.
     return {
       groundingPrompt: groundingPrompt ? groundingPrompt : undefined,
       systemPrompt: systemPrompt ? systemPrompt : undefined,
-      expandSystemPrompt: expandSystemPrompt ? expandSystemPrompt : undefined,
       ...otherFields,
     };
   }, [tenant]);
@@ -127,7 +124,6 @@ export default function GeneralSettings({ tenant }: Props) {
       ...values,
       groundingPrompt: values.groundingPrompt.length ? values.groundingPrompt : undefined,
       systemPrompt: values.systemPrompt.length ? values.systemPrompt : undefined,
-      expandSystemPrompt: values.expandSystemPrompt.length ? values.expandSystemPrompt : undefined,
     });
   }
 
@@ -182,14 +178,6 @@ export default function GeneralSettings({ tenant }: Props) {
               label="System Prompt"
               help={<HelpSystemPromptDialog />}
               className="mt-8"
-            />
-
-            <TextAreaField
-              form={form}
-              name="expandSystemPrompt"
-              label="Expand System Prompt"
-              help={<HelpExpandSystemPromptDialog />}
-              className="my-8"
             />
           </div>
         </form>

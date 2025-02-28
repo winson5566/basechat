@@ -782,12 +782,6 @@
           "type": "text",
           "primaryKey": false,
           "notNull": false
-        },
-        "expand_system_prompt": {
-          "name": "expand_system_prompt",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
         }
       },
       "indexes": {},

@@ -6,13 +6,7 @@ import { conversationMessagesResponseSchema, createConversationMessageRequestSch
 import { createConversationMessage, getConversation, getConversationMessages } from "@/lib/server/service";
 import { requireAuthContext } from "@/lib/server/utils";
 
-import {
-  EXPAND_MESSAGE_CONTENT,
-  generate,
-  getExpandSystemPrompt,
-  getGroundingSystemPrompt,
-  getRetrievalSystemPrompt,
-} from "./utils";
+import { generate, getGroundingSystemPrompt, getRetrievalSystemPrompt } from "./utils";
 
 export async function GET(_request: NextRequest, { params }: { params: Promise<{ conversationId: string }> }) {
   const { profile, tenant } = await requireAuthContext();
@@ -59,31 +53,21 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 
   let sources: { documentId: string; documentName: string }[] = [];
 
-  if (content !== EXPAND_MESSAGE_CONTENT) {
-    const { content: systemMessageContent, sources: ragSources } = await getRetrievalSystemPrompt(
-      tenant.id,
-      tenant.name,
-      content,
-    );
+  const { content: systemMessageContent, sources: ragSources } = await getRetrievalSystemPrompt(
+    tenant.id,
+    tenant.name,
+    content,
+  );
 
-    sources = ragSources;
+  sources = ragSources;
 
-    await createConversationMessage({
-      tenantId: tenant.id,
-      conversationId: conversation.id,
-      role: "system",
-      content: systemMessageContent,
-      sources: [],
-    });
-  } else {
-    await createConversationMessage({
-      tenantId: tenant.id,
-      conversationId: conversation.id,
-      role: "system",
-      content: getExpandSystemPrompt(),
-      sources: [],
-    });
-  }
+  await createConversationMessage({
+    tenantId: tenant.id,
+    conversationId: conversation.id,
+    role: "system",
+    content: systemMessageContent,
+    sources: [],
+  });
 
   const all = await getConversationMessages(tenant.id, profile.id, conversation.id);
   const messages: CoreMessage[] = all.map(({ role, content }) => {

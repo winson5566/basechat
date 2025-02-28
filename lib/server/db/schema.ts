@@ -57,7 +57,6 @@ export const tenants = pgTable("tenants", {
   question3: text("question3"),
   groundingPrompt: text("grounding_prompt"),
   systemPrompt: text("system_prompt"),
-  expandSystemPrompt: text("expand_system_prompt"),
 });
 
 export const rolesEnum = pgEnum("roles", ["admin", "user"]);

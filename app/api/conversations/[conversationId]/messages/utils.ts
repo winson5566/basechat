@@ -3,13 +3,11 @@ import { CoreMessage, streamObject } from "ai";
 import Handlebars from "handlebars";
 
 import { createConversationMessageResponseSchema } from "@/lib/api";
-import { DEFAULT_EXPAND_SYSTEM_PROMPT, DEFAULT_GROUNDING_PROMPT, DEFAULT_SYSTEM_PROMPT } from "@/lib/constants";
+import { DEFAULT_GROUNDING_PROMPT, DEFAULT_SYSTEM_PROMPT } from "@/lib/constants";
 import { getRagieClient } from "@/lib/server/ragie";
 import { createConversationMessage, updateConversationMessageContent } from "@/lib/server/service";
 
 type GenerateContext = { messages: CoreMessage[]; sources: any[] };
-
-export const EXPAND_MESSAGE_CONTENT = "Tell me more about this";
 
 export async function generate(tenantId: string, profileId: string, conversationId: string, context: GenerateContext) {
   const pendingMessage = await createConversationMessage({
@@ -94,8 +92,4 @@ function getSystemPrompt(context: SystemPromptContext, prompt?: string | null) {
   const template = Handlebars.compile(systemPrompt);
 
   return template({ ...context });
-}
-
-export function getExpandSystemPrompt(prompt?: string | null) {
-  return prompt ?? DEFAULT_EXPAND_SYSTEM_PROMPT;
 }
