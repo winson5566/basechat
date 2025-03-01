@@ -7,9 +7,11 @@ export default async function SettingsIndexPage() {
   const { tenant } = await adminOrRedirect();
 
   return (
-    <div className="max-w-[1140px] w-full p-4 flex-grow flex">
-      <SettingsNav />
-      <GeneralSettings tenant={tenant} />
+    <div className="flex justify-center overflow-auto w-full">
+      <div className="max-w-[1140px] w-full p-4 flex-grow flex">
+        <SettingsNav />
+        <GeneralSettings tenant={tenant} />
+      </div>
     </div>
   );
 }

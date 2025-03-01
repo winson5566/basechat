@@ -18,7 +18,7 @@ import { SourceMetadata } from "./types";
 
 const inter = Inter({ subsets: ["latin"] });
 
-type AiMessage = { content: string; role: "assistant"; id?: string; expanded: boolean; sources: SourceMetadata[] };
+type AiMessage = { content: string; role: "assistant"; id?: string; sources: SourceMetadata[] };
 type UserMessage = { content: string; role: "user" };
 type SystemMessage = { content: string; role: "system" };
 type Message = AiMessage | UserMessage | SystemMessage;
@@ -34,19 +34,11 @@ interface Props {
   onSelectedDocumentId: (id: string) => void;
 }
 
-function isExpandable(messages: Message[], i: number) {
-  return (
-    i === messages.length - 1 &&
-    (messages.length <= 2 ||
-      (messages.length - 2 > 0 && messages[messages.length - 2].content != "Tell me more about this"))
-  );
-}
-
 export default function Chatbot({ name, conversationId, initMessage, onSelectedDocumentId }: Props) {
   const [localInitMessage, setLocalInitMessage] = useState(initMessage);
   const [messages, setMessages] = useState<Message[]>([]);
   const [sourceCache, setSourceCache] = useState<Record<string, SourceMetadata[]>>({});
-  const [pendingMessage, setPendingMessage] = useState<null | { id: string; expanded: boolean }>(null);
+  const [pendingMessage, setPendingMessage] = useState<null | { id: string }>(null);
 
   const { isLoading, object, submit } = useObject({
     api: `/api/conversations/${conversationId}/messages`,
@@ -54,11 +46,10 @@ export default function Chatbot({ name, conversationId, initMessage, onSelectedD
     fetch: async function middleware(input: RequestInfo | URL, init?: RequestInit) {
       const res = await fetch(input, init);
       const id = res.headers.get("x-message-id");
-      const expanded = res.headers.get("x-expanded") ? true : false;
 
       assert(id);
 
-      setPendingMessage({ id, expanded });
+      setPendingMessage({ id });
       return res;
     },
     onError: console.error,
@@ -66,7 +57,7 @@ export default function Chatbot({ name, conversationId, initMessage, onSelectedD
       if (!event.object) return;
 
       const content = event.object.message;
-      setMessages((prev) => [...prev, { content: content, role: "assistant", sources: [], expanded: false }]);
+      setMessages((prev) => [...prev, { content: content, role: "assistant", sources: [] }]);
     },
   });
 
@@ -82,7 +73,7 @@ export default function Chatbot({ name, conversationId, initMessage, onSelectedD
     const copy = [...messages];
     const last = copy.pop();
     if (last?.role === "assistant") {
-      setMessages([...copy, { ...last, id: pendingMessage.id, expanded: pendingMessage.expanded }]);
+      setMessages([...copy, { ...last, id: pendingMessage.id }]);
       setPendingMessage(null);
     }
   }, [pendingMessage, isLoading, messages]);
@@ -112,7 +103,7 @@ export default function Chatbot({ name, conversationId, initMessage, onSelectedD
         setMessages(messages);
       })();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- initentionally run once
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- intentionally run once
   }, []);
 
   const container = useRef<HTMLDivElement>(null);
@@ -147,16 +138,6 @@ export default function Chatbot({ name, conversationId, initMessage, onSelectedD
                   sources={message.sources}
                   onSelectedDocumentId={onSelectedDocumentId}
                 />
-                {isExpandable(messagesWithSources, i) && (
-                  <div className="flex justify-center">
-                    <button
-                      className="flex justify-center rounded-[20px] border px-4 py-2.5 mt-8"
-                      onClick={() => handleSubmit("Tell me more about this")}
-                    >
-                      Tell me more about this
-                    </button>
-                  </div>
-                )}
               </Fragment>
             ),
           )}

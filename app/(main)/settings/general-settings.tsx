@@ -1,16 +1,22 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Loader2 } from "lucide-react";
-import { useState } from "react";
+import { CircleHelp, Loader2 } from "lucide-react";
+import { useMemo, useState } from "react";
 import { useForm, UseFormReturn } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 
+import { AutosizeTextarea } from "@/components/ui/autosize-textarea";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { updateTenantSchema } from "@/lib/api";
+import { DEFAULT_GROUNDING_PROMPT, DEFAULT_SYSTEM_PROMPT } from "@/lib/constants";
 import * as schema from "@/lib/server/db/schema";
+import { cn } from "@/lib/utils";
+
+import { HelpGroundingPromptDialog } from "./help-grounding-prompt-dialog";
+import { HelpSystemPromptDialog } from "./help-system-prompt-dialog";
 
 // Transform null to empty string for form field handling
 const nullToEmptyString = (v: string | null) => v ?? "";
@@ -19,6 +25,8 @@ const formSchema = z.object({
   question1: z.string().nullable().transform(nullToEmptyString),
   question2: z.string().nullable().transform(nullToEmptyString),
   question3: z.string().nullable().transform(nullToEmptyString),
+  groundingPrompt: z.string().nullable().default(DEFAULT_GROUNDING_PROMPT).transform(nullToEmptyString),
+  systemPrompt: z.string().nullable().default(DEFAULT_SYSTEM_PROMPT).transform(nullToEmptyString),
 });
 
 type QuestionFieldProps = {
@@ -48,6 +56,34 @@ const QuestionField = ({ form, name, label }: QuestionFieldProps) => (
   />
 );
 
+type TextAreaFieldProps = {
+  name: keyof z.infer<typeof formSchema>;
+  label: string;
+  form: UseFormReturn<z.infer<typeof formSchema>, any, undefined>;
+  help?: React.ReactNode;
+  className?: string;
+};
+
+const TextAreaField = ({ form, name, label, className, help }: TextAreaFieldProps) => (
+  <FormField
+    control={form.control}
+    name={name}
+    render={({ field }) => (
+      <FormItem className={cn("flex flex-col", className)}>
+        <FormLabel className="font-semibold text-[16px] mb-3 flex items-center gap-2">
+          {label} {help}
+        </FormLabel>
+        <FormControl>
+          <div className="rounded-md border border-input bg-transparent px-3 py-1 text-base shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 md:text-sm">
+            <AutosizeTextarea className="pt-1.5" minHeight={80} {...field} />
+          </div>
+        </FormControl>
+        <FormMessage />
+      </FormItem>
+    )}
+  />
+);
+
 type Props = {
   tenant: typeof schema.tenants.$inferSelect;
 };
@@ -55,9 +91,21 @@ type Props = {
 export default function GeneralSettings({ tenant }: Props) {
   const [isLoading, setLoading] = useState(false);
 
+  const formattedTenant = useMemo(() => {
+    const { groundingPrompt, systemPrompt, ...otherFields } = tenant;
+
+    // Zod only uses default values when the value is undefined. They come in as null
+    // Change fields you want to have defaults to undefined.
+    return {
+      groundingPrompt: groundingPrompt ? groundingPrompt : undefined,
+      systemPrompt: systemPrompt ? systemPrompt : undefined,
+      ...otherFields,
+    };
+  }, [tenant]);
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
-    defaultValues: formSchema.parse(tenant),
+    defaultValues: formSchema.parse(formattedTenant),
   });
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
@@ -70,7 +118,13 @@ export default function GeneralSettings({ tenant }: Props) {
     if (res.status !== 200) throw new Error("Failed to save");
 
     toast.success("Changes saved");
-    form.reset(values);
+
+    // If the prompts are empty strings, set them to undefined so we get the default value from the schema.
+    form.reset({
+      ...values,
+      groundingPrompt: values.groundingPrompt.length ? values.groundingPrompt : undefined,
+      systemPrompt: values.systemPrompt.length ? values.systemPrompt : undefined,
+    });
   }
 
   async function handleCancel() {
@@ -83,15 +137,7 @@ export default function GeneralSettings({ tenant }: Props) {
         <form onSubmit={form.handleSubmit(onSubmit)}>
           <div className="flex w-full justify-between items-center pt-2">
             <h1 className="font-bold text-[32px]">Settings</h1>
-          </div>
-          <div className="mt-16">
-            <h3 className="font-semibold text-[16px]">Add sample questions to help your users get started</h3>
-
-            <QuestionField form={form} name="question1" label="Question 1" />
-            <QuestionField form={form} name="question2" label="Question 2" />
-            <QuestionField form={form} name="question3" label="Question 3" />
-
-            <div className="flex mt-8 justify-end">
+            <div className="flex justify-end">
               <button
                 type="reset"
                 className="rounded-lg disabled:opacity-[55%] px-4 py-2.5 mr-3"
@@ -109,6 +155,30 @@ export default function GeneralSettings({ tenant }: Props) {
                 {isLoading && <Loader2 size={18} className="ml-2 animate-spin" />}
               </button>
             </div>
+          </div>
+          <div className="mt-16">
+            <h3 className="font-semibold text-[16px]">Example questions to help your users get started</h3>
+
+            <QuestionField form={form} name="question1" label="Question 1" />
+            <QuestionField form={form} name="question2" label="Question 2" />
+            <QuestionField form={form} name="question3" label="Question 3" />
+
+            <hr className="w-full my-8" />
+
+            <TextAreaField
+              form={form}
+              name="groundingPrompt"
+              label="Grounding Prompt"
+              help={<HelpGroundingPromptDialog />}
+            />
+
+            <TextAreaField
+              form={form}
+              name="systemPrompt"
+              label="System Prompt"
+              help={<HelpSystemPromptDialog />}
+              className="mt-8"
+            />
           </div>
         </form>
       </Form>
