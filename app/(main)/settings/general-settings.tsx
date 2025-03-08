@@ -152,9 +152,10 @@ export default function GeneralSettings({ tenant, canUploadLogo }: Props) {
             Cancel
           </button>
           <button
-            type="submit"
+            type="button"
             className="rounded-lg bg-[#D946EF] text-white disabled:opacity-[55%] px-4 py-2.5 flex items-center"
             disabled={!form.formState.isDirty || isLoading}
+            onClick={form.handleSubmit(onSubmit)}
           >
             Save
             {isLoading && <Loader2 size={18} className="ml-2 animate-spin" />}
