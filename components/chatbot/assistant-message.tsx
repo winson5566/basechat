@@ -2,7 +2,8 @@ import Image from "next/image";
 
 import "./style.css";
 import CONNECTOR_MAP from "@/lib/connector-map";
-import { getInitials } from "@/lib/utils";
+
+import Logo from "../tenant/logo/logo";
 
 import { SourceMetadata } from "./types";
 
@@ -28,27 +29,25 @@ interface Props {
   content: string | undefined;
   id?: string | null;
   name: string;
+  logoUrl?: string | null;
   sources: SourceMetadata[];
   onSelectedDocumentId: (id: string) => void;
 }
 
-export default function AssistantMessage({ name, content, sources, onSelectedDocumentId }: Props) {
+export default function AssistantMessage({ name, logoUrl, content, sources, onSelectedDocumentId }: Props) {
   const dedupe = sources.reduce<Record<string, SourceMetadata>>((acc, v) => {
     acc[v.documentId] = v;
     return acc;
   }, {});
 
   const dedupedSources = Object.values(dedupe);
-  const initials = getInitials(name);
 
   return (
     <div className="flex">
-      <div>
-        <div className="h-[40px] w-[40px] avatar rounded-[50px] text-white flex items-center justify-center font-bold text-[13px] mb-8">
-          {initials}
-        </div>
+      <div className="mb-8 shrink-0">
+        <Logo name={name} url={logoUrl} width={40} height={40} />
       </div>
-      <div className="self-start mb-6 rounded-md pt-2 ml-7">
+      <div className="self-start mb-6 rounded-md ml-7">
         {content?.length ? content : <div className="dot-pulse mt-1.5" />}
         <div className="flex flex-wrap mt-4">
           {dedupedSources.map((source, i) => (

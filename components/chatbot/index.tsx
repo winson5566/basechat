@@ -30,11 +30,12 @@ const UserMessage = ({ content }: { content: string }) => (
 interface Props {
   conversationId: string;
   name: string;
+  logoUrl?: string | null;
   initMessage?: string;
   onSelectedDocumentId: (id: string) => void;
 }
 
-export default function Chatbot({ name, conversationId, initMessage, onSelectedDocumentId }: Props) {
+export default function Chatbot({ name, logoUrl, conversationId, initMessage, onSelectedDocumentId }: Props) {
   const [localInitMessage, setLocalInitMessage] = useState(initMessage);
   const [messages, setMessages] = useState<Message[]>([]);
   const [sourceCache, setSourceCache] = useState<Record<string, SourceMetadata[]>>({});
@@ -133,6 +134,7 @@ export default function Chatbot({ name, conversationId, initMessage, onSelectedD
               <Fragment key={i}>
                 <AssistantMessage
                   name={name}
+                  logoUrl={logoUrl}
                   content={message.content}
                   id={message.id}
                   sources={message.sources}
@@ -144,6 +146,7 @@ export default function Chatbot({ name, conversationId, initMessage, onSelectedD
           {isLoading && (
             <AssistantMessage
               name={name}
+              logoUrl={logoUrl}
               content={object?.message}
               id={pendingMessage?.id}
               sources={[]}
