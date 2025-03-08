@@ -17,10 +17,7 @@ export default function Logo({ name, url, width, height, className }: Props) {
   if (!url) {
     return (
       <div
-        className={cn(
-          "avatar rounded-full text-white flex items-center justify-center font-bold text-[32px]",
-          className,
-        )}
+        className={cn("rounded-full text-white flex items-center justify-center font-bold text-[32px]", className)}
         style={{ height, width }}
       >
         {formattedName}

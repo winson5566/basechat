@@ -42,7 +42,7 @@ export default function Welcome({ tenant, className }: Props) {
   return (
     <div className={className}>
       <div className={`h-full flex flex-col justify-center ${inter.className}`}>
-        <Logo name={tenant.name} url={tenant.logoUrl} width={100} height={100} className="mb-8" />
+        <Logo name={tenant.name} url={tenant.logoUrl} width={100} height={100} className="avatar mb-8" />
         <h1 className="mb-12 text-[40px] font-bold leading-[50px]">
           Hello, I&apos;m {tenant.name}&apos;s AI.
           <br />

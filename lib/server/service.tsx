@@ -208,7 +208,12 @@ export async function acceptInvite(userId: string, inviteId: string) {
 
 export async function getTenantsByUserId(userId: string) {
   return db
-    .select({ id: schema.tenants.id, name: schema.tenants.name, profileId: schema.profiles.id })
+    .select({
+      id: schema.tenants.id,
+      name: schema.tenants.name,
+      logoUrl: schema.tenants.logoUrl,
+      profileId: schema.profiles.id,
+    })
     .from(schema.tenants)
     .innerJoin(schema.profiles, eq(schema.tenants.id, schema.profiles.tenantId))
     .where(eq(schema.profiles.userId, userId));
