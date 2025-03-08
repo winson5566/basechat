@@ -1,5 +1,5 @@
 {
-  "id": "4c0d7620-5bcc-40d0-8d49-b1e30834aba4",
+  "id": "2f14bcdd-5804-43d9-bc6e-1dea53dce87e",
   "prevId": "af880ac6-183e-40ee-950f-14606b7f0cc8",
   "version": "7",
   "dialect": "postgresql",
@@ -779,6 +779,12 @@
         },
         "system_prompt": {
           "name": "system_prompt",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "logo_file_name": {
+          "name": "logo_file_name",
           "type": "text",
           "primaryKey": false,
           "notNull": false
