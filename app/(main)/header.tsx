@@ -118,7 +118,7 @@ export default function Header({ name, logoUrl, currentProfileId, onNavClick = (
                     url={tenant.logoUrl}
                     width={40}
                     height={40}
-                    className="ml-3 text-[16px] avatar"
+                    className="ml-3 text-[16px] avatar w-[40px] h-[40px]"
                   />
                   <div className="ml-4">{tenant.name}</div>
                 </div>
