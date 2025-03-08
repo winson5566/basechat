@@ -5,8 +5,8 @@ import { useRouter } from "next/navigation";
 import { z } from "zod";
 
 import ChatInput from "@/components/chatbot/chat-input";
+import Logo from "@/components/tenant/logo/logo";
 import * as schema from "@/lib/server/db/schema";
-import { getInitials } from "@/lib/utils";
 
 import { useGlobalState } from "./context";
 
@@ -33,8 +33,6 @@ export default function Welcome({ tenant, className }: Props) {
     router.push(`/conversations/${conversation.id}`);
   };
 
-  const initials = getInitials(tenant.name);
-
   const questions = [
     tenant.question1 || "Sample question. Lorem ipsum dolor sit amet consectetur. Sample question.",
     tenant.question2 || "Sample question. Lorem ipsum dolor sit amet consectetur. Sample question.",
@@ -44,9 +42,7 @@ export default function Welcome({ tenant, className }: Props) {
   return (
     <div className={className}>
       <div className={`h-full flex flex-col justify-center ${inter.className}`}>
-        <div className="h-[100px] w-[100px] avatar rounded-[50px] text-white flex items-center justify-center font-bold text-[32px] mb-8">
-          {initials}
-        </div>
+        <Logo name={tenant.name} url={tenant.logoUrl} className="mb-8" />
         <h1 className="mb-12 text-[40px] font-bold leading-[50px]">
           Hello, I&apos;m {tenant.name}&apos;s AI.
           <br />

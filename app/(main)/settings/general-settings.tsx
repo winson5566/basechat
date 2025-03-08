@@ -1,15 +1,17 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { CircleHelp, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useForm, UseFormReturn } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 
+import LogoChanger from "@/components/tenant/logo/logo-changer";
 import { AutosizeTextarea } from "@/components/ui/autosize-textarea";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { updateTenantSchema } from "@/lib/api";
 import { DEFAULT_GROUNDING_PROMPT, DEFAULT_SYSTEM_PROMPT } from "@/lib/constants";
 import * as schema from "@/lib/server/db/schema";
@@ -86,9 +88,10 @@ const TextAreaField = ({ form, name, label, className, help }: TextAreaFieldProp
 
 type Props = {
   tenant: typeof schema.tenants.$inferSelect;
+  canUploadLogo?: boolean;
 };
 
-export default function GeneralSettings({ tenant }: Props) {
+export default function GeneralSettings({ tenant, canUploadLogo }: Props) {
   const [isLoading, setLoading] = useState(false);
 
   const formattedTenant = useMemo(() => {
@@ -133,30 +136,43 @@ export default function GeneralSettings({ tenant }: Props) {
 
   return (
     <div className="w-full p-4 flex-grow flex flex-col">
+      <div
+        className={cn("flex w-full justify-between items-center", {
+          "mb-8": !canUploadLogo,
+        })}
+      >
+        <h1 className="font-bold text-[32px]">Settings</h1>
+        <div className="flex justify-end">
+          <button
+            type="reset"
+            className="rounded-lg disabled:opacity-[55%] px-4 py-2.5 mr-3"
+            disabled={!form.formState.isDirty}
+            onClick={handleCancel}
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            className="rounded-lg bg-[#D946EF] text-white disabled:opacity-[55%] px-4 py-2.5 flex items-center"
+            disabled={!form.formState.isDirty || isLoading}
+          >
+            Save
+            {isLoading && <Loader2 size={18} className="ml-2 animate-spin" />}
+          </button>
+        </div>
+      </div>
+      {canUploadLogo && (
+        <div>
+          <div className="mb-2">
+            <Label className="font-semibold text-[16px]">Avatar</Label>
+          </div>
+          <LogoChanger name={tenant.name} logoUrl={tenant.logoUrl} logoName={tenant.logoFileName} />
+          <hr className="w-full my-8" />
+        </div>
+      )}
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)}>
-          <div className="flex w-full justify-between items-center pt-2">
-            <h1 className="font-bold text-[32px]">Settings</h1>
-            <div className="flex justify-end">
-              <button
-                type="reset"
-                className="rounded-lg disabled:opacity-[55%] px-4 py-2.5 mr-3"
-                disabled={!form.formState.isDirty}
-                onClick={handleCancel}
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                className="rounded-lg bg-[#D946EF] text-white disabled:opacity-[55%] px-4 py-2.5 flex items-center"
-                disabled={!form.formState.isDirty || isLoading}
-              >
-                Save
-                {isLoading && <Loader2 size={18} className="ml-2 animate-spin" />}
-              </button>
-            </div>
-          </div>
-          <div className="mt-16">
+          <div>
             <h3 className="font-semibold text-[16px]">Example questions to help your users get started</h3>
 
             <QuestionField form={form} name="question1" label="Question 1" />
