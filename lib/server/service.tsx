@@ -432,3 +432,14 @@ export async function getConversationMessages(tenantId: string, profileId: strin
     .orderBy(asc(schema.messages.createdAt));
   return rs.map((r) => r.messages);
 }
+
+export async function setTenantLogo(tenantId: string, logoFileName: string, logoObjectName: string, logoUrl: string) {
+  await db.update(schema.tenants).set({ logoUrl, logoObjectName, logoFileName }).where(eq(schema.tenants.id, tenantId));
+}
+
+export async function deleteTenantLogo(tenantId: string) {
+  await db
+    .update(schema.tenants)
+    .set({ logoUrl: null, logoObjectName: null, logoFileName: null })
+    .where(eq(schema.tenants.id, tenantId));
+}
