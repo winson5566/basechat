@@ -64,7 +64,7 @@ function CreateLogoForm({
   onCancel,
 }: {
   image: string;
-  imageName: string;
+  imageName: string | null | undefined;
   formState: CreateLogoState;
   formAction: (payload: FormData) => void;
   onCancel?: () => void;
