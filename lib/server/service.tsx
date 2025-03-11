@@ -208,7 +208,12 @@ export async function acceptInvite(userId: string, inviteId: string) {
 
 export async function getTenantsByUserId(userId: string) {
   return db
-    .select({ id: schema.tenants.id, name: schema.tenants.name, profileId: schema.profiles.id })
+    .select({
+      id: schema.tenants.id,
+      name: schema.tenants.name,
+      logoUrl: schema.tenants.logoUrl,
+      profileId: schema.profiles.id,
+    })
     .from(schema.tenants)
     .innerJoin(schema.profiles, eq(schema.tenants.id, schema.profiles.tenantId))
     .where(eq(schema.profiles.userId, userId));
@@ -431,4 +436,15 @@ export async function getConversationMessages(tenantId: string, profileId: strin
     )
     .orderBy(asc(schema.messages.createdAt));
   return rs.map((r) => r.messages);
+}
+
+export async function setTenantLogo(tenantId: string, logoFileName: string, logoObjectName: string, logoUrl: string) {
+  await db.update(schema.tenants).set({ logoUrl, logoObjectName, logoFileName }).where(eq(schema.tenants.id, tenantId));
+}
+
+export async function deleteTenantLogo(tenantId: string) {
+  await db
+    .update(schema.tenants)
+    .set({ logoUrl: null, logoObjectName: null, logoFileName: null })
+    .where(eq(schema.tenants.id, tenantId));
 }

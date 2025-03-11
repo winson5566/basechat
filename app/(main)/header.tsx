@@ -7,6 +7,7 @@ import { signOut } from "next-auth/react";
 import { ReactNode, useEffect, useState } from "react";
 import { z } from "zod";
 
+import Logo from "@/components/tenant/logo/logo";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { tenantListResponseSchema, updateCurrentProfileSchema } from "@/lib/api";
 import { cn, getInitials } from "@/lib/utils";
@@ -23,6 +24,7 @@ interface Props {
   currentProfileId: string;
   className?: string;
   name?: string | null;
+  logoUrl?: string | null;
   onNavClick?: () => void;
 }
 
@@ -43,7 +45,7 @@ const HeaderPopoverContent = ({
   </PopoverContent>
 );
 
-export default function Header({ name, currentProfileId, onNavClick = () => {} }: Props) {
+export default function Header({ name, logoUrl, currentProfileId, onNavClick = () => {} }: Props) {
   const router = useRouter();
 
   const [tenants, setTenants] = useState<z.infer<typeof tenantListResponseSchema>>([]);
@@ -89,8 +91,14 @@ export default function Header({ name, currentProfileId, onNavClick = () => {} }
       </div>
       <Popover>
         <PopoverTrigger asChild>
-          <div className="bg-[#66666E] rounded-[16px] h-[32px] w-[32px] flex items-center justify-center text-[#FEFEFE] font-semibold cursor-pointer">
-            {name?.trim()[0].toUpperCase()}
+          <div>
+            <Logo
+              name={name ?? ""}
+              url={logoUrl}
+              width={32}
+              height={32}
+              className="bg-[#66666E] font-semibold text-[16px] cursor-pointer"
+            />
           </div>
         </PopoverTrigger>
         <HeaderPopoverContent align="end" className="p-4 w-[332px]">
@@ -105,7 +113,13 @@ export default function Header({ name, currentProfileId, onNavClick = () => {} }
                   <div className="w-4">
                     {selectedProfileId === tenant.profileId && <Image src={CheckIcon} alt="selected" />}
                   </div>
-                  <TenantLogo name={tenant.name} className="ml-3" />
+                  <Logo
+                    name={tenant.name}
+                    url={tenant.logoUrl}
+                    width={40}
+                    height={40}
+                    className="ml-3 text-[16px] avatar w-[40px] h-[40px]"
+                  />
                   <div className="ml-4">{tenant.name}</div>
                 </div>
               </li>
@@ -128,20 +142,5 @@ export default function Header({ name, currentProfileId, onNavClick = () => {} }
         </HeaderPopoverContent>
       </Popover>
     </header>
-  );
-}
-
-function TenantLogo({ name, className }: { name: string; className?: string }) {
-  const initials = getInitials(name);
-
-  return (
-    <div
-      className={cn(
-        "h-[40px] w-[40px] avatar rounded-[20px] text-white flex items-center justify-center font-bold text-[16px]",
-        className,
-      )}
-    >
-      {initials}
-    </div>
   );
 }
