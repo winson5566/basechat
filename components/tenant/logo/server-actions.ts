@@ -124,6 +124,8 @@ export async function createLogo(prevState: CreateLogoState, formData: FormData)
   const { tenant } = await requireAuthContext();
 
   assert(process.env.STORAGE_BUCKET);
+
+  const prefix = process.env.STORAGE_PREFIX;
   const bucket = process.env.STORAGE_BUCKET;
 
   const fileData = formData.get("file");
@@ -147,11 +149,13 @@ export async function createLogo(prevState: CreateLogoState, formData: FormData)
 
   try {
     const readable = fileToReadable(fileData);
-    const uploadObjectName = `${tenant.id}/${objectName}`;
-    console.log("Try8ng to put object");
+    let uploadObjectName = `${tenant.id}/${objectName}`;
+    if (prefix) {
+      uploadObjectName = `${prefix}/${uploadObjectName}`;
+    }
+
     await minioClient.putObject(bucket, uploadObjectName, readable);
 
-    console.log("Try8ng to get object url");
     const objectUrl = getObjectUrl(uploadObjectName);
     await setTenantLogo(tenant.id, fileData.name, objectName, objectUrl);
 
