@@ -25,7 +25,7 @@ export default function UploadableLogo({ imageName, imageUrl, onChange }: Props)
     if (e.target.files && e.target.files.length > 0) {
       const file = e.target.files[0];
       let imageDataUrl = await readFile(file);
-      console.log({ fileName: file.name });
+
       if (imageDataUrl) {
         onChange?.({
           action: "create",
