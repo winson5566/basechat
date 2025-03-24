@@ -4,10 +4,11 @@ import Handlebars from "handlebars";
 
 import { createConversationMessageResponseSchema } from "@/lib/api";
 import { DEFAULT_GROUNDING_PROMPT, DEFAULT_SYSTEM_PROMPT } from "@/lib/constants";
+import { LLMModel, DEFAULT_MODEL, DEFAULT_PROVIDER } from "@/lib/llm/types";
 import { getRagieClient } from "@/lib/server/ragie";
 import { createConversationMessage, updateConversationMessageContent } from "@/lib/server/service";
 
-type GenerateContext = { messages: CoreMessage[]; sources: any[] };
+type GenerateContext = { messages: CoreMessage[]; sources: any[]; model: LLMModel };
 
 export async function generate(tenantId: string, profileId: string, conversationId: string, context: GenerateContext) {
   const pendingMessage = await createConversationMessage({
@@ -16,11 +17,13 @@ export async function generate(tenantId: string, profileId: string, conversation
     role: "assistant",
     content: null,
     sources: context.sources,
+    model: context.model,
+    provider: DEFAULT_PROVIDER, // for now, only openai TODO
   });
 
   const result = streamObject({
     messages: context.messages,
-    model: openai("gpt-4o"),
+    model: openai(context.model),
     temperature: 0.3,
     schema: createConversationMessageResponseSchema,
     onFinish: async (event) => {

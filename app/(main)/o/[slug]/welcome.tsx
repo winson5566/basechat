@@ -7,6 +7,7 @@ import { z } from "zod";
 import ChatInput from "@/components/chatbot/chat-input";
 import Logo from "@/components/tenant/logo/logo";
 import { getConversationPath } from "@/lib/paths";
+import { DEFAULT_MODEL } from "@/lib/llm/types";
 import * as schema from "@/lib/server/db/schema";
 
 import { useGlobalState } from "./context";
@@ -24,10 +25,13 @@ export default function Welcome({ tenant, className }: Props) {
   const router = useRouter();
   const { setInitialMessage } = useGlobalState();
 
-  const handleSubmit = async (content: string) => {
+  const handleSubmit = async (content: string, model: string = DEFAULT_MODEL) => {
     const res = await fetch("/api/conversations", {
       method: "POST",
-      body: JSON.stringify({ title: content }),
+      body: JSON.stringify({
+        title: content,
+        initialModel: model,
+      }),
       headers: {
         tenant: tenant.slug,
       },

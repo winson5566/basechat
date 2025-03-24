@@ -4,16 +4,20 @@ import { and, desc, eq } from "drizzle-orm";
 import { NextRequest } from "next/server";
 import { z } from "zod";
 
+import { ALL_VALID_MODELS, DEFAULT_MODEL } from "@/lib/llm/types";
 import db from "@/lib/server/db";
 import * as schema from "@/lib/server/db/schema";
 import { requireAuthContextFromRequest } from "@/lib/server/utils";
 
-const createConversationRequest = z.object({ title: z.string() });
+const createConversationRequest = z.object({
+  title: z.string(),
+  initialModel: z.enum(ALL_VALID_MODELS as [string, ...string[]]).default(DEFAULT_MODEL),
+});
 
 export async function POST(request: NextRequest) {
   const { profile, tenant } = await requireAuthContextFromRequest(request);
   const json = await request.json();
-  const { title } = createConversationRequest.parse(json);
+  const { title, initialModel } = createConversationRequest.parse(json);
 
   const rs = await db
     .insert(schema.conversations)

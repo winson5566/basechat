@@ -11,6 +11,8 @@ import {
   CreateConversationMessageRequest,
   createConversationMessageResponseSchema,
 } from "@/lib/api";
+import { LLMModel } from "@/lib/llm/types";
+import { DEFAULT_MODEL, DEFAULT_PROVIDER } from "@/lib/llm/types";
 
 import AssistantMessage from "./assistant-message";
 import ChatInput from "./chat-input";
@@ -18,7 +20,7 @@ import { SourceMetadata } from "./types";
 
 const inter = Inter({ subsets: ["latin"] });
 
-type AiMessage = { content: string; role: "assistant"; id?: string; sources: SourceMetadata[] };
+type AiMessage = { content: string; role: "assistant"; id?: string; sources: SourceMetadata[]; model?: LLMModel };
 type UserMessage = { content: string; role: "user" };
 type SystemMessage = { content: string; role: "system" };
 type Message = AiMessage | UserMessage | SystemMessage;
@@ -64,12 +66,18 @@ export default function Chatbot({ tenant, conversationId, initMessage, onSelecte
       if (!event.object) return;
 
       const content = event.object.message;
-      setMessages((prev) => [...prev, { content: content, role: "assistant", sources: [] }]);
+      const model = event.object.model;
+      setMessages((prev) => [...prev, { content: content, role: "assistant", sources: [], model }]);
     },
   });
 
-  const handleSubmit = (content: string) => {
-    const payload: CreateConversationMessageRequest = { conversationId, content };
+  const handleSubmit = (content: string, model: LLMModel) => {
+    const payload: CreateConversationMessageRequest = {
+      conversationId,
+      content,
+      model,
+      provider: DEFAULT_PROVIDER, // TODO: For now, we're only supporting OpenAI
+    };
     setMessages([...messages, { content, role: "user" }]);
     submit(payload);
   };
@@ -101,7 +109,7 @@ export default function Chatbot({ tenant, conversationId, initMessage, onSelecte
 
   useEffect(() => {
     if (localInitMessage) {
-      handleSubmit(localInitMessage);
+      handleSubmit(localInitMessage, DEFAULT_MODEL); // TODO: make configuralbe?
       setLocalInitMessage(undefined);
     } else {
       (async () => {
@@ -149,6 +157,7 @@ export default function Chatbot({ tenant, conversationId, initMessage, onSelecte
                   id={message.id}
                   sources={message.sources}
                   onSelectedDocumentId={onSelectedDocumentId}
+                  model={message.model || DEFAULT_MODEL}
                 />
               </Fragment>
             ),
@@ -161,12 +170,13 @@ export default function Chatbot({ tenant, conversationId, initMessage, onSelecte
               id={pendingMessage?.id}
               sources={[]}
               onSelectedDocumentId={onSelectedDocumentId}
+              model={object?.model || DEFAULT_MODEL}
             />
           )}
         </div>
       </div>
       <div className="p-4 w-full flex justify-center max-w-[717px]">
-        <div className="flex flex-col w-full p-2 pl-4 rounded-[24px] border border-[#D7D7D7]">
+        <div className="flex flex-col w-full p-2 pl-4 rounded-[16px] border border-[#D7D7D7]">
           <ChatInput handleSubmit={handleSubmit} />
         </div>
       </div>
