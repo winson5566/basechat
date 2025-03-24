@@ -6,6 +6,7 @@ import { experimental_useObject as useObject } from "ai/react";
 import { Inter } from "next/font/google";
 import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 
+import { useGlobalState } from "@/app/(main)/context";
 import {
   conversationMessagesResponseSchema,
   CreateConversationMessageRequest,
@@ -47,7 +48,8 @@ export default function Chatbot({ tenant, conversationId, initMessage, onSelecte
   const [pendingMessage, setPendingMessage] = useState<null | { id: string; model: LLMModel }>(null);
   const pendingMessageRef = useRef<null | { id: string; model: LLMModel }>(null);
   pendingMessageRef.current = pendingMessage;
-  const [selectedModel, setSelectedModel] = useState<string>("mynewmodel");
+  const { initialModel } = useGlobalState();
+  const [selectedModel, setSelectedModel] = useState<LLMModel>(initialModel);
 
   const { isLoading, object, submit } = useObject({
     api: `/api/conversations/${conversationId}/messages`,
@@ -61,19 +63,17 @@ export default function Chatbot({ tenant, conversationId, initMessage, onSelecte
       const model = res.headers.get("x-model");
 
       assert(id);
-      // assert model
+      // assert model ?
 
       setPendingMessage({ id, model: model as LLMModel });
       return res;
     },
     onError: console.error,
-    onFinish: (event, ...args) => {
-      console.log("onFinish", event, args);
+    onFinish: (event) => {
       if (!event.object) return;
 
       const content = event.object.message;
       const model = pendingMessageRef.current?.model;
-      console.log("model", model);
       setMessages((prev) => [...prev, { content: content, role: "assistant", sources: [], model }]);
     },
   });
@@ -116,7 +116,7 @@ export default function Chatbot({ tenant, conversationId, initMessage, onSelecte
 
   useEffect(() => {
     if (localInitMessage) {
-      handleSubmit(localInitMessage, DEFAULT_MODEL); // TODO: make configuralbe?
+      handleSubmit(localInitMessage, selectedModel);
       setLocalInitMessage(undefined);
     } else {
       (async () => {
@@ -148,8 +148,6 @@ export default function Chatbot({ tenant, conversationId, initMessage, onSelecte
     [messages, sourceCache],
   );
 
-  console.log("messagesWithSources", messagesWithSources);
-
   return (
     <div className="flex h-full w-full items-center flex-col">
       <div ref={container} className="flex flex-col h-full w-full items-center overflow-y-auto">
@@ -166,7 +164,7 @@ export default function Chatbot({ tenant, conversationId, initMessage, onSelecte
                   id={message.id}
                   sources={message.sources}
                   onSelectedDocumentId={onSelectedDocumentId}
-                  model={message.model || DEFAULT_MODEL}
+                  model={message.model || selectedModel}
                 />
               </Fragment>
             ),
@@ -186,7 +184,7 @@ export default function Chatbot({ tenant, conversationId, initMessage, onSelecte
       </div>
       <div className="p-4 w-full flex justify-center max-w-[717px]">
         <div className="flex flex-col w-full p-2 pl-4 rounded-[16px] border border-[#D7D7D7]">
-          <ChatInput handleSubmit={handleSubmit} />
+          <ChatInput handleSubmit={handleSubmit} selectedModel={selectedModel} onModelChange={setSelectedModel} />
         </div>
       </div>
     </div>

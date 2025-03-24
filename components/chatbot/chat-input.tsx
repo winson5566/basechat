@@ -11,6 +11,8 @@ import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
 
 interface ChatInputProps {
   handleSubmit?: (text: string, model: LLMModel) => void;
+  selectedModel: LLMModel;
+  onModelChange: (model: LLMModel) => void;
 }
 
 const ModelPopoverContent = ({ children }: { children: React.ReactNode }) => (
@@ -21,14 +23,13 @@ const ModelPopoverContent = ({ children }: { children: React.ReactNode }) => (
 
 export default function ChatInput(props: ChatInputProps) {
   const [value, setValue] = useState("");
-  const [selectedModel, setSelectedModel] = useState<LLMModel>(DEFAULT_MODEL);
   const ref = useRef<AutosizeTextAreaRef>(null);
 
   const handleSubmit = (value: string) => {
     setValue("");
 
     const v = value.trim();
-    v && props.handleSubmit && props.handleSubmit(v, selectedModel);
+    v && props.handleSubmit && props.handleSubmit(v, props.selectedModel);
     ref.current?.textArea.focus();
   };
 
@@ -66,7 +67,7 @@ export default function ChatInput(props: ChatInputProps) {
       </div>
       <Popover>
         <PopoverTrigger className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
-          {selectedModel}
+          {props.selectedModel}
           <ChevronDown className="h-4 w-4" />
         </PopoverTrigger>
         <ModelPopoverContent>
@@ -77,9 +78,9 @@ export default function ChatInput(props: ChatInputProps) {
                 <button
                   key={model}
                   className="flex items-center rounded-sm px-4 py-3 text-sm text-left hover:bg-black hover:bg-opacity-5"
-                  onClick={() => setSelectedModel(model)}
+                  onClick={() => props.onModelChange(model)}
                 >
-                  <div className="w-4">{selectedModel === model && <Image src={CheckIcon} alt="selected" />}</div>
+                  <div className="w-4">{props.selectedModel === model && <Image src={CheckIcon} alt="selected" />}</div>
                   <div className="flex items-center ml-3">
                     <Image src={logoPath} alt={displayName} width={16} height={16} className="mr-2" />
                     <span>{model}</span>

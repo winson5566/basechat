@@ -2,12 +2,13 @@
 
 import { Inter } from "next/font/google";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
 import { z } from "zod";
 
 import ChatInput from "@/components/chatbot/chat-input";
 import Logo from "@/components/tenant/logo/logo";
 import { getConversationPath } from "@/lib/paths";
-import { DEFAULT_MODEL } from "@/lib/llm/types";
+import { DEFAULT_MODEL, LLMModel } from "@/lib/llm/types";
 import * as schema from "@/lib/server/db/schema";
 
 import { useGlobalState } from "./context";
@@ -23,9 +24,10 @@ interface Props {
 
 export default function Welcome({ tenant, className }: Props) {
   const router = useRouter();
-  const { setInitialMessage } = useGlobalState();
+  const { setInitialMessage, setInitialModel } = useGlobalState();
+  const [selectedModel, setSelectedModel] = useState<LLMModel>(DEFAULT_MODEL);
 
-  const handleSubmit = async (content: string, model: string = DEFAULT_MODEL) => {
+  const handleSubmit = async (content: string, model: LLMModel = DEFAULT_MODEL) => {
     const res = await fetch("/api/conversations", {
       method: "POST",
       body: JSON.stringify({
@@ -41,7 +43,9 @@ export default function Welcome({ tenant, className }: Props) {
     const json = await res.json();
     const conversation = conversationResponseSchema.parse(json);
     setInitialMessage(content);
+    setInitialModel(model);
     router.push(getConversationPath(tenant.slug, conversation.id));
+
   };
 
   const questions = [tenant.question1, tenant.question2, tenant.question3].filter((question) => question !== null);
@@ -55,23 +59,25 @@ export default function Welcome({ tenant, className }: Props) {
           <br />
           What would you like to know?
         </h1>
-        {questions.length > 0 && (
-          <div className="flex items-start justify-evenly space-x-2">
-            {questions.map((question, i) => (
-              <div
-                key={i}
-                className="rounded-md border p-4 h-full w-1/3 cursor-pointer"
-                onClick={() => handleSubmit(question)}
-              >
-                {question}
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
+        {
+          questions.length > 0 && (
+            <div className="flex items-start justify-evenly space-x-2">
+              {questions.map((question, i) => (
+                <div
+                  key={i}
+                  className="rounded-md border p-4 h-full w-1/3 cursor-pointer"
+                  onClick={() => handleSubmit(question, selectedModel)}
+                >
+                  {question}
+                </div>
+              ))}
+            </div>
+          )
+        }
+      </div >
       <div className="w-full flex flex-col items-center p-2 pl-4 rounded-[24px] border border-[#D7D7D7]">
-        <ChatInput handleSubmit={handleSubmit} />
+        <ChatInput handleSubmit={handleSubmit} selectedModel={selectedModel} onModelChange={setSelectedModel} />
       </div>
-    </div>
+    </div >
   );
 }
