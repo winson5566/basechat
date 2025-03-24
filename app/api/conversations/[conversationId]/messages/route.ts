@@ -91,5 +91,5 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   });
 
   const [stream, messageId] = await generate(tenant.id, profile.id, conversation.id, { messages, sources, model });
-  return stream.toTextStreamResponse({ headers: { "x-message-id": messageId } });
+  return stream.toTextStreamResponse({ headers: { "x-message-id": messageId, "x-model": model } });
 }

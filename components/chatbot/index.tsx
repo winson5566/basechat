@@ -44,7 +44,10 @@ export default function Chatbot({ tenant, conversationId, initMessage, onSelecte
   const [localInitMessage, setLocalInitMessage] = useState(initMessage);
   const [messages, setMessages] = useState<Message[]>([]);
   const [sourceCache, setSourceCache] = useState<Record<string, SourceMetadata[]>>({});
-  const [pendingMessage, setPendingMessage] = useState<null | { id: string }>(null);
+  const [pendingMessage, setPendingMessage] = useState<null | { id: string; model: LLMModel }>(null);
+  const pendingMessageRef = useRef<null | { id: string; model: LLMModel }>(null);
+  pendingMessageRef.current = pendingMessage;
+  const [selectedModel, setSelectedModel] = useState<string>("mynewmodel");
 
   const { isLoading, object, submit } = useObject({
     api: `/api/conversations/${conversationId}/messages`,
@@ -55,18 +58,22 @@ export default function Chatbot({ tenant, conversationId, initMessage, onSelecte
         headers: { ...init?.headers, tenant: tenant.slug },
       });
       const id = res.headers.get("x-message-id");
+      const model = res.headers.get("x-model");
 
       assert(id);
+      // assert model
 
-      setPendingMessage({ id });
+      setPendingMessage({ id, model: model as LLMModel });
       return res;
     },
     onError: console.error,
-    onFinish: (event) => {
+    onFinish: (event, ...args) => {
+      console.log("onFinish", event, args);
       if (!event.object) return;
 
       const content = event.object.message;
-      const model = event.object.model;
+      const model = pendingMessageRef.current?.model;
+      console.log("model", model);
       setMessages((prev) => [...prev, { content: content, role: "assistant", sources: [], model }]);
     },
   });
@@ -141,6 +148,8 @@ export default function Chatbot({ tenant, conversationId, initMessage, onSelecte
     [messages, sourceCache],
   );
 
+  console.log("messagesWithSources", messagesWithSources);
+
   return (
     <div className="flex h-full w-full items-center flex-col">
       <div ref={container} className="flex flex-col h-full w-full items-center overflow-y-auto">
@@ -170,7 +179,7 @@ export default function Chatbot({ tenant, conversationId, initMessage, onSelecte
               id={pendingMessage?.id}
               sources={[]}
               onSelectedDocumentId={onSelectedDocumentId}
-              model={object?.model || DEFAULT_MODEL}
+              model={pendingMessage?.model || selectedModel}
             />
           )}
         </div>

@@ -13,7 +13,6 @@ import {
 export const createConversationMessageResponseSchema = z.object({
   usedSourceIndexes: z.array(z.number().describe("The indexes of the sources used in the response")),
   message: z.string().describe("The response message"),
-  model: z.enum(ALL_VALID_MODELS as [LLMModel, ...LLMModel[]]).describe("The LLM model used"),
 });
 
 export const createConversationMessageRequestSchema = z.object({

@@ -21,6 +21,7 @@ export async function generate(tenantId: string, profileId: string, conversation
     provider: DEFAULT_PROVIDER, // for now, only openai TODO
   });
 
+  console.log("context.model", context.model);
   const result = streamObject({
     messages: context.messages,
     model: openai(context.model),
@@ -28,6 +29,8 @@ export async function generate(tenantId: string, profileId: string, conversation
     schema: createConversationMessageResponseSchema,
     onFinish: async (event) => {
       if (!event.object) return;
+      console.log("event.object", event.object);
+      event.object.model = context.model;
       await updateConversationMessageContent(
         tenantId,
         profileId,
@@ -37,6 +40,7 @@ export async function generate(tenantId: string, profileId: string, conversation
       );
     },
   });
+  console.log("result", result.outputStrategy.jsonSchema.properties);
   return [result, pendingMessage.id] as const;
 }
 
