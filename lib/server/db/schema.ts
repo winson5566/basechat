@@ -97,6 +97,8 @@ export const profiles = pgTable(
 
 export const messageRolesEnum = pgEnum("message_roles", ["assistant", "system", "user"]);
 
+export const llmProviderEnum = pgEnum("llm_provider", ["openai", "google", "anthropic"]);
+
 export const messages = pgTable("messages", {
   ...baseTenantFields,
   conversationId: uuid("conversation_id")
@@ -105,6 +107,8 @@ export const messages = pgTable("messages", {
   content: text("content"),
   role: messageRolesEnum("role").notNull(),
   sources: json("sources").notNull(),
+  provider: llmProviderEnum("provider").notNull().default("openai"),
+  model: text("model").notNull().default("gpt-4o"),
 });
 
 /** Based on Auth.js example schema: https://authjs.dev/getting-started/adapters/drizzle */

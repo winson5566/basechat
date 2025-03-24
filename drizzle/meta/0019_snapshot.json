@@ -1,5 +1,9 @@
 {
+<<<<<<< HEAD
   "id": "f1994391-7c8f-4d7e-beec-69941603c228",
+=======
+  "id": "258e9eb8-51b6-48fd-8094-4b9407900acd",
+>>>>>>> dda43fe (add model and provider to schema)
   "prevId": "2f14bcdd-5804-43d9-bc6e-1dea53dce87e",
   "version": "7",
   "dialect": "postgresql",
@@ -537,6 +541,24 @@
           "type": "json",
           "primaryKey": false,
           "notNull": true
+<<<<<<< HEAD
+=======
+        },
+        "provider": {
+          "name": "provider",
+          "type": "llm_provider",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'openai'"
+        },
+        "model": {
+          "name": "model",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'gpt-4o'"
+>>>>>>> dda43fe (add model and provider to schema)
         }
       },
       "indexes": {},
@@ -753,12 +775,15 @@
           "primaryKey": false,
           "notNull": true
         },
+<<<<<<< HEAD
         "slug": {
           "name": "slug",
           "type": "text",
           "primaryKey": false,
           "notNull": false
         },
+=======
+>>>>>>> dda43fe (add model and provider to schema)
         "question1": {
           "name": "question1",
           "type": "text",
@@ -811,6 +836,7 @@
       "indexes": {},
       "foreignKeys": {},
       "compositePrimaryKeys": {},
+<<<<<<< HEAD
       "uniqueConstraints": {
         "tenants_slug_unique": {
           "name": "tenants_slug_unique",
@@ -820,6 +846,9 @@
           ]
         }
       },
+=======
+      "uniqueConstraints": {},
+>>>>>>> dda43fe (add model and provider to schema)
       "policies": {},
       "checkConstraints": {},
       "isRLSEnabled": false
@@ -970,6 +999,18 @@
     }
   },
   "enums": {
+<<<<<<< HEAD
+=======
+    "public.llm_provider": {
+      "name": "llm_provider",
+      "schema": "public",
+      "values": [
+        "openai",
+        "google",
+        "anthropic"
+      ]
+    },
+>>>>>>> dda43fe (add model and provider to schema)
     "public.message_roles": {
       "name": "message_roles",
       "schema": "public",
