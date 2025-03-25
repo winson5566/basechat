@@ -3,14 +3,26 @@ export const PROVIDER_CONFIG = {
   openai: {
     models: ["gpt-4o", "gpt-3.5-turbo"] as const,
     logo: "/openai.svg",
+    displayNames: {
+      "gpt-4o": "GPT-4",
+      "gpt-3.5-turbo": "GPT-3.5 Turbo",
+    } as const,
   },
   google: {
     models: ["gemini-2.0-flash", "gemini-1.5-pro"] as const,
     logo: "/gemini.svg",
+    displayNames: {
+      "gemini-2.0-flash": "Gemini 2.0 Flash",
+      "gemini-1.5-pro": "Gemini 1.5 Pro",
+    } as const,
   },
   anthropic: {
     models: ["claude-3-7-sonnet-latest", "claude-3-5-haiku-latest"] as const,
     logo: "/anthropic.svg",
+    displayNames: {
+      "claude-3-7-sonnet-latest": "Claude 3 Sonnet",
+      "claude-3-5-haiku-latest": "Claude 3 Haiku",
+    } as const,
   },
 } as const;
 
@@ -50,3 +62,14 @@ export function getProviderForModel(model: LLMModel): LLMProvider | null {
 export const LLM_LOGO_MAP = Object.fromEntries(
   ALL_VALID_MODELS.map((model) => [model, [model, PROVIDER_CONFIG[getProviderForModel(model)!].logo]]),
 ) as Record<LLMModel, [string, string]>;
+
+// Display name mapping
+export const LLM_DISPLAY_NAMES = Object.fromEntries(
+  ALL_VALID_MODELS.map((model) => {
+    const provider = getProviderForModel(model)!;
+    return [
+      model,
+      PROVIDER_CONFIG[provider].displayNames[model as keyof (typeof PROVIDER_CONFIG)[typeof provider]["displayNames"]],
+    ];
+  }),
+) as unknown as Record<LLMModel, string>;
