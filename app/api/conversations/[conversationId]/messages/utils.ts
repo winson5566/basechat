@@ -12,6 +12,17 @@ import { createConversationMessage, updateConversationMessageContent } from "@/l
 
 type GenerateContext = { messages: CoreMessage[]; sources: any[]; model: LLMModel };
 
+const FAILED_MESSAGE_CONTENT = `Failed to generate message from the model, please try again.`;
+
+// Filter out messages with empty content
+function filterEmptyMessages(messages: CoreMessage[]): CoreMessage[] {
+  return messages.filter((msg) => {
+    if (!msg.content) return false;
+    if (typeof msg.content === "string" && msg.content.trim() === "") return false;
+    return true;
+  });
+}
+
 export async function generate(tenantId: string, profileId: string, conversationId: string, context: GenerateContext) {
   // get provider given the model
   let provider = getProviderForModel(context.model);
@@ -35,6 +46,9 @@ export async function generate(tenantId: string, profileId: string, conversation
   const systemMessages = context.messages.filter((msg) => msg.role === "system");
   const nonSystemMessages = context.messages.filter((msg) => msg.role !== "system");
   context.messages = [...systemMessages, ...nonSystemMessages];
+
+  // Filter out empty messages before sending to API
+  context.messages = filterEmptyMessages(context.messages);
 
   let model;
   switch (provider) {
@@ -61,6 +75,13 @@ export async function generate(tenantId: string, profileId: string, conversation
       onFinish: async (event) => {
         if (!event.object) {
           console.log("No object in event");
+          await updateConversationMessageContent(
+            tenantId,
+            profileId,
+            conversationId,
+            pendingMessage.id,
+            FAILED_MESSAGE_CONTENT,
+          );
           return;
         }
 
@@ -74,6 +95,7 @@ export async function generate(tenantId: string, profileId: string, conversation
       },
       onError: (error) => {
         console.error("Stream error:", error);
+        // handle the error in the catch block instead
       },
     });
   } catch (error) {
@@ -84,7 +106,16 @@ export async function generate(tenantId: string, profileId: string, conversation
         stack: error.stack,
       });
     }
-    throw error;
+    // Update message content with failure message
+    await updateConversationMessageContent(
+      tenantId,
+      profileId,
+      conversationId,
+      pendingMessage.id,
+      FAILED_MESSAGE_CONTENT,
+    );
+    // Instead of throwing, return a tuple with null result and the message ID
+    return [null, pendingMessage.id] as const;
   }
   return [result, pendingMessage.id] as const;
 }
