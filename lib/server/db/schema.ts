@@ -13,6 +13,8 @@ import {
 } from "drizzle-orm/pg-core";
 import type { AdapterAccountType } from "next-auth/adapters";
 
+import { DEFAULT_MODEL } from "@/lib/llm/types";
+
 const timestampFields = {
   createdAt: timestamp("created_at", { withTimezone: true, mode: "string" }).defaultNow().notNull(),
   updatedAt: timestamp("updated_at", { withTimezone: true, mode: "string" })
@@ -105,6 +107,7 @@ export const messages = pgTable("messages", {
   content: text("content"),
   role: messageRolesEnum("role").notNull(),
   sources: json("sources").notNull(),
+  model: text("model").notNull().default(DEFAULT_MODEL),
 });
 
 /** Based on Auth.js example schema: https://authjs.dev/getting-started/adapters/drizzle */

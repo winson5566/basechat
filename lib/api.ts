@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { LLMModel, ALL_VALID_MODELS } from "@/lib/llm/types";
+
 export const createConversationMessageResponseSchema = z.object({
   usedSourceIndexes: z.array(z.number().describe("The indexes of the sources used in the response")),
   message: z.string().describe("The response message"),
@@ -8,6 +10,7 @@ export const createConversationMessageResponseSchema = z.object({
 export const createConversationMessageRequestSchema = z.object({
   conversationId: z.string(),
   content: z.string().describe("The request message"),
+  model: z.enum(ALL_VALID_MODELS as [LLMModel, ...LLMModel[]]).describe("The LLM model to use"),
 });
 
 export type CreateConversationMessageRequest = z.infer<typeof createConversationMessageRequestSchema>;
@@ -28,6 +31,7 @@ export const conversationMessagesResponseSchema = z.array(
       role: z.literal("assistant"),
       sources: z.array(z.any()).default([]),
       expanded: z.boolean().default(false),
+      model: z.enum(ALL_VALID_MODELS as [LLMModel, ...LLMModel[]]),
     }),
     z.object({
       id: z.string(),

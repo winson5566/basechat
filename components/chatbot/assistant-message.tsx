@@ -2,6 +2,7 @@ import Image from "next/image";
 
 import "./style.css";
 import CONNECTOR_MAP from "@/lib/connector-map";
+import { LLMModel, LLM_DISPLAY_NAMES } from "@/lib/llm/types";
 
 import Logo from "../tenant/logo/logo";
 
@@ -32,9 +33,10 @@ interface Props {
   logoUrl?: string | null;
   sources: SourceMetadata[];
   onSelectedDocumentId: (id: string) => void;
+  model: LLMModel;
 }
 
-export default function AssistantMessage({ name, logoUrl, content, sources, onSelectedDocumentId }: Props) {
+export default function AssistantMessage({ name, logoUrl, content, sources, onSelectedDocumentId, model }: Props) {
   const dedupe = sources.reduce<Record<string, SourceMetadata>>((acc, v) => {
     acc[v.documentId] = v;
     return acc;
@@ -54,6 +56,7 @@ export default function AssistantMessage({ name, logoUrl, content, sources, onSe
             <Citation key={i} source={source} onClick={() => onSelectedDocumentId(source.documentId)} />
           ))}
         </div>
+        <div className="text-xs text-muted-foreground">Generated with {LLM_DISPLAY_NAMES[model]}</div>
       </div>
     </div>
   );

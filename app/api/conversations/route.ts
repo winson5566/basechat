@@ -8,7 +8,9 @@ import db from "@/lib/server/db";
 import * as schema from "@/lib/server/db/schema";
 import { requireAuthContextFromRequest } from "@/lib/server/utils";
 
-const createConversationRequest = z.object({ title: z.string() });
+const createConversationRequest = z.object({
+  title: z.string(),
+});
 
 export async function POST(request: NextRequest) {
   const { profile, tenant } = await requireAuthContextFromRequest(request);
