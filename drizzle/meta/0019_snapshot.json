@@ -1,9 +1,13 @@
 {
 <<<<<<< HEAD
+<<<<<<< HEAD
   "id": "f1994391-7c8f-4d7e-beec-69941603c228",
 =======
   "id": "258e9eb8-51b6-48fd-8094-4b9407900acd",
 >>>>>>> dda43fe (add model and provider to schema)
+=======
+  "id": "1cdd642b-1f39-46b8-9306-88677862f993",
+>>>>>>> fbd378b (add model only to messages table in drizzle)
   "prevId": "2f14bcdd-5804-43d9-bc6e-1dea53dce87e",
   "version": "7",
   "dialect": "postgresql",
@@ -544,14 +548,6 @@
 <<<<<<< HEAD
 =======
         },
-        "provider": {
-          "name": "provider",
-          "type": "llm_provider",
-          "typeSchema": "public",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "'openai'"
-        },
         "model": {
           "name": "model",
           "type": "text",
@@ -1000,6 +996,7 @@
   },
   "enums": {
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
     "public.llm_provider": {
       "name": "llm_provider",
@@ -1011,6 +1008,8 @@
       ]
     },
 >>>>>>> dda43fe (add model and provider to schema)
+=======
+>>>>>>> fbd378b (add model only to messages table in drizzle)
     "public.message_roles": {
       "name": "message_roles",
       "schema": "public",
