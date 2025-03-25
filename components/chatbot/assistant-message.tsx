@@ -56,7 +56,7 @@ export default function AssistantMessage({ name, logoUrl, content, sources, onSe
             <Citation key={i} source={source} onClick={() => onSelectedDocumentId(source.documentId)} />
           ))}
         </div>
-        <div className="text-xs text-muted-foreground mt-2">Generated with {LLM_DISPLAY_NAMES[model]}</div>
+        <div className="text-xs text-muted-foreground">Generated with {LLM_DISPLAY_NAMES[model]}</div>
       </div>
     </div>
   );

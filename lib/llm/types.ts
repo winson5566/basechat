@@ -4,7 +4,7 @@ export const PROVIDER_CONFIG = {
     models: ["gpt-4o", "gpt-3.5-turbo"] as const,
     logo: "/openai.svg",
     displayNames: {
-      "gpt-4o": "GPT-4",
+      "gpt-4o": "GPT-4o",
       "gpt-3.5-turbo": "GPT-3.5 Turbo",
     } as const,
   },
@@ -20,8 +20,8 @@ export const PROVIDER_CONFIG = {
     models: ["claude-3-7-sonnet-latest", "claude-3-5-haiku-latest"] as const,
     logo: "/anthropic.svg",
     displayNames: {
-      "claude-3-7-sonnet-latest": "Claude 3 Sonnet",
-      "claude-3-5-haiku-latest": "Claude 3 Haiku",
+      "claude-3-7-sonnet-latest": "Claude 3.7 Sonnet",
+      "claude-3-5-haiku-latest": "Claude 3.5 Haiku",
     } as const,
   },
 } as const;
@@ -43,11 +43,6 @@ export const PROVIDER_MODELS = {
 } as const;
 
 export const ALL_VALID_MODELS = Object.values(PROVIDER_CONFIG).flatMap((config) => config.models) as LLMModel[];
-
-// Helper functions
-export function isModelSupportedByProvider(model: LLMModel, provider: LLMProvider): boolean {
-  return (PROVIDER_CONFIG[provider].models as readonly string[]).includes(model);
-}
 
 export function getProviderForModel(model: LLMModel): LLMProvider | null {
   for (const [provider, config] of Object.entries(PROVIDER_CONFIG)) {
