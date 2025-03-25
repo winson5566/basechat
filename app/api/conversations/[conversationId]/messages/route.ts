@@ -3,7 +3,7 @@ import assertNever from "assert-never";
 import { NextRequest } from "next/server";
 
 import { conversationMessagesResponseSchema, createConversationMessageRequestSchema } from "@/lib/api";
-import { DEFAULT_MODEL, DEFAULT_PROVIDER } from "@/lib/llm/types";
+import { DEFAULT_MODEL, DEFAULT_PROVIDER, getProviderForModel } from "@/lib/llm/types";
 import { createConversationMessage, getConversation, getConversationMessages } from "@/lib/server/service";
 import { requireAuthContextFromRequest } from "@/lib/server/utils";
 
@@ -22,7 +22,15 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   const { conversationId } = await params;
   const json = await request.json();
 
-  const { content, model, provider } = createConversationMessageRequestSchema.parse(json);
+  const { content, model: modelInJson } = createConversationMessageRequestSchema.parse(json);
+
+  let provider = getProviderForModel(modelInJson);
+  let model = modelInJson;
+  if (!provider) {
+    console.log(`Provider not found for model ${model}`);
+    provider = DEFAULT_PROVIDER;
+    model = DEFAULT_MODEL;
+  }
 
   const conversation = await getConversation(tenant.id, profile.id, conversationId);
   const existing = await getConversationMessages(tenant.id, profile.id, conversation.id);
@@ -41,8 +49,8 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
         tenant.groundingPrompt,
       ),
       sources: [],
-      model,
-      provider,
+      model: model,
+      provider: provider,
     });
   }
 
@@ -52,8 +60,8 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     role: "user",
     content,
     sources: [],
-    model,
-    provider,
+    model: model,
+    provider: provider,
   });
 
   let sources: { documentId: string; documentName: string }[] = [];
@@ -72,8 +80,8 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     role: "system",
     content: systemMessageContent,
     sources: [],
-    model,
-    provider,
+    model: model,
+    provider: provider,
   });
 
   const all = await getConversationMessages(tenant.id, profile.id, conversation.id);
@@ -90,6 +98,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     }
   });
 
+  // not passing provider to generate right now, just model
   const [stream, messageId] = await generate(tenant.id, profile.id, conversation.id, { messages, sources, model });
   return stream.toTextStreamResponse({ headers: { "x-message-id": messageId, "x-model": model } });
 }

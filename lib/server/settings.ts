@@ -19,8 +19,8 @@ export const RAGIE_API_KEY = process.env.RAGIE_API_KEY!;
 // assert(process.env.OPENAI_API_KEY);
 export const OPENAI_API_KEY = process.env.OPENAI_API_KEY!;
 
-// assert(process.env.GOOGLE_API_KEY);
-export const GOOGLE_API_KEY = process.env.GOOGLE_API_KEY!;
+// assert(process.env.GOOGLE_GENERATIVE_AI_API_KEY);
+export const GOOGLE_GENERATIVE_AI_API_KEY = process.env.GOOGLE_GENERATIVE_AI_API_KEY!;
 
 // assert(process.env.ANTHROPIC_API_KEY);
 export const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY!;
