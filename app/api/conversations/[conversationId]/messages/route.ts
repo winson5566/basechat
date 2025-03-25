@@ -22,7 +22,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   const { conversationId } = await params;
   const json = await request.json();
 
-  const { content, model } = createConversationMessageRequestSchema.parse(json);
+  const { content, model, provider } = createConversationMessageRequestSchema.parse(json);
 
   const conversation = await getConversation(tenant.id, profile.id, conversationId);
   const existing = await getConversationMessages(tenant.id, profile.id, conversation.id);
@@ -42,7 +42,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       ),
       sources: [],
       model,
-      provider: DEFAULT_PROVIDER, // For now, we're only supporting OpenAI
+      provider,
     });
   }
 
@@ -53,7 +53,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     content,
     sources: [],
     model,
-    provider: DEFAULT_PROVIDER, // For now, we're only supporting OpenAI
+    provider,
   });
 
   let sources: { documentId: string; documentName: string }[] = [];
@@ -73,7 +73,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     content: systemMessageContent,
     sources: [],
     model,
-    provider: DEFAULT_PROVIDER, // For now, we're only supporting OpenAI
+    provider,
   });
 
   const all = await getConversationMessages(tenant.id, profile.id, conversation.id);

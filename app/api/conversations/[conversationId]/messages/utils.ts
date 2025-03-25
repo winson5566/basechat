@@ -20,6 +20,8 @@ export async function generate(tenantId: string, profileId: string, conversation
     provider = DEFAULT_PROVIDER;
   }
 
+  console.log(`Using provider: ${provider} with model: ${context.model}`);
+
   const pendingMessage = await createConversationMessage({
     tenantId,
     conversationId,
@@ -27,7 +29,7 @@ export async function generate(tenantId: string, profileId: string, conversation
     content: null,
     sources: context.sources,
     model: context.model,
-    provider,
+    provider: provider,
   });
 
   let model;
@@ -37,9 +39,11 @@ export async function generate(tenantId: string, profileId: string, conversation
       break;
     case "google":
       model = google(context.model);
+      console.log("Initialized Google model:", model);
       break;
     case "anthropic":
       model = anthropic(context.model);
+      console.log("Initialized Anthropic model:", model);
       break;
     default:
       model = openai(context.model);
@@ -52,7 +56,10 @@ export async function generate(tenantId: string, profileId: string, conversation
     temperature: 0.3,
     schema: createConversationMessageResponseSchema,
     onFinish: async (event) => {
+      console.log("event", event);
       if (!event.object) return;
+
+      console.log("event.object", event.object);
       await updateConversationMessageContent(
         tenantId,
         profileId,
@@ -62,7 +69,7 @@ export async function generate(tenantId: string, profileId: string, conversation
       );
     },
   });
-
+  console.log("result", result);
   return [result, pendingMessage.id] as const;
 }
 

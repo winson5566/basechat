@@ -12,7 +12,7 @@ import {
   CreateConversationMessageRequest,
   createConversationMessageResponseSchema,
 } from "@/lib/api";
-import { LLMModel } from "@/lib/llm/types";
+import { LLMModel, getProviderForModel } from "@/lib/llm/types";
 import { DEFAULT_MODEL, DEFAULT_PROVIDER } from "@/lib/llm/types";
 
 import AssistantMessage from "./assistant-message";
@@ -79,11 +79,17 @@ export default function Chatbot({ tenant, conversationId, initMessage, onSelecte
   });
 
   const handleSubmit = (content: string, model: LLMModel) => {
+    const provider = getProviderForModel(model);
+    if (!provider) {
+      console.error(`No provider found for model ${model}`);
+      return;
+    }
+
     const payload: CreateConversationMessageRequest = {
       conversationId,
       content,
       model,
-      provider: DEFAULT_PROVIDER, // TODO: For now, we're only supporting OpenAI
+      provider,
     };
     setMessages([...messages, { content, role: "user" }]);
     submit(payload);
