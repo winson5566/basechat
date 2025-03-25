@@ -41,7 +41,6 @@ export const conversationMessagesResponseSchema = z.array(
       sources: z.array(z.any()).default([]),
       expanded: z.boolean().default(false),
       model: z.enum(ALL_VALID_MODELS as [LLMModel, ...LLMModel[]]),
-      provider: z.enum(Object.keys(PROVIDER_CONFIG) as [LLMProvider, ...LLMProvider[]]),
     }),
     z.object({
       id: z.string(),

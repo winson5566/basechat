@@ -13,6 +13,8 @@ import {
 } from "drizzle-orm/pg-core";
 import type { AdapterAccountType } from "next-auth/adapters";
 
+import { DEFAULT_MODEL } from "@/lib/llm/types";
+
 const timestampFields = {
   createdAt: timestamp("created_at", { withTimezone: true, mode: "string" }).defaultNow().notNull(),
   updatedAt: timestamp("updated_at", { withTimezone: true, mode: "string" })
@@ -97,8 +99,6 @@ export const profiles = pgTable(
 
 export const messageRolesEnum = pgEnum("message_roles", ["assistant", "system", "user"]);
 
-export const llmProviderEnum = pgEnum("llm_provider", ["openai", "google", "anthropic"]);
-
 export const messages = pgTable("messages", {
   ...baseTenantFields,
   conversationId: uuid("conversation_id")
@@ -107,8 +107,7 @@ export const messages = pgTable("messages", {
   content: text("content"),
   role: messageRolesEnum("role").notNull(),
   sources: json("sources").notNull(),
-  provider: llmProviderEnum("provider").notNull().default("openai"),
-  model: text("model").notNull().default("gpt-4o"),
+  model: text("model").notNull().default(DEFAULT_MODEL),
 });
 
 /** Based on Auth.js example schema: https://authjs.dev/getting-started/adapters/drizzle */
