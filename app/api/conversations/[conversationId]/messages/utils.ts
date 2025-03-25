@@ -17,10 +17,10 @@ export async function generate(tenantId: string, profileId: string, conversation
   let provider = getProviderForModel(context.model);
   if (!provider) {
     console.log(`Provider not found for model ${context.model}`);
+    console.log(`Using default provider: ${DEFAULT_PROVIDER} and default model: ${DEFAULT_MODEL}`);
     provider = DEFAULT_PROVIDER;
+    context.model = DEFAULT_MODEL;
   }
-
-  console.log(`Using provider: ${provider} with model: ${context.model}`);
 
   const pendingMessage = await createConversationMessage({
     tenantId,
@@ -32,6 +32,11 @@ export async function generate(tenantId: string, profileId: string, conversation
     provider: provider,
   });
 
+  // Move system messages to the beginning for providers that require it
+  const systemMessages = context.messages.filter((msg) => msg.role === "system");
+  const nonSystemMessages = context.messages.filter((msg) => msg.role !== "system");
+  context.messages = [...systemMessages, ...nonSystemMessages];
+
   let model;
   switch (provider) {
     case "openai":
@@ -39,43 +44,27 @@ export async function generate(tenantId: string, profileId: string, conversation
       break;
     case "google":
       model = google(context.model);
-
-      // Move system messages to the beginning for Google models
-      const systemMessages = context.messages.filter((msg) => msg.role === "system");
-      const nonSystemMessages = context.messages.filter((msg) => msg.role !== "system");
-      context.messages = [...systemMessages, ...nonSystemMessages];
       break;
     case "anthropic":
       model = anthropic(context.model);
-      console.log("Initialized Anthropic model:", model);
       break;
     default:
-      model = openai(context.model);
+      model = openai(DEFAULT_MODEL);
   }
 
-  console.log(model);
   let result;
   try {
-    console.log("Starting streamObject with model:", {
-      provider,
-      model: context.model,
-      messageCount: context.messages.length,
-      temperature: 0.3,
-      messageTypes: context.messages.map((m) => m.role),
-    });
     result = await streamObject({
       messages: context.messages,
       model,
       temperature: 0.3,
       schema: createConversationMessageResponseSchema,
       onFinish: async (event) => {
-        console.log("Stream finished with event:", event);
         if (!event.object) {
           console.log("No object in event");
           return;
         }
 
-        console.log("Event object:", event.object);
         await updateConversationMessageContent(
           tenantId,
           profileId,
@@ -89,8 +78,6 @@ export async function generate(tenantId: string, profileId: string, conversation
       },
     });
   } catch (error) {
-    console.error("Error streaming object:", error);
-    // Log more details about the error
     if (error instanceof Error) {
       console.error("Error details:", {
         name: error.name,
@@ -100,8 +87,6 @@ export async function generate(tenantId: string, profileId: string, conversation
     }
     throw error;
   }
-
-  console.log("result", result);
   return [result, pendingMessage.id] as const;
 }
 
