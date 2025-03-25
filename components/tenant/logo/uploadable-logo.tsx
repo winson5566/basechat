@@ -95,7 +95,7 @@ function readFile(file: File): Promise<string | null> {
 
 function Logo({ url }: { url?: string | null }) {
   if (url) {
-    return <img src={url} className="rounded" height={80} width={80} />;
+    return <img src={url} className="rounded" height={80} width={80} alt="Logo" />;
   }
 
   return (

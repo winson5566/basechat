@@ -6,7 +6,7 @@ import { experimental_useObject as useObject } from "ai/react";
 import { Inter } from "next/font/google";
 import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 
-import { useGlobalState } from "@/app/(main)/context";
+import { useGlobalState } from "@/app/(main)/o/[slug]/context";
 import {
   conversationMessagesResponseSchema,
   CreateConversationMessageRequest,

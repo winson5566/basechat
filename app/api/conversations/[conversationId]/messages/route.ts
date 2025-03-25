@@ -96,5 +96,14 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   });
 
   const [stream, messageId] = await generate(tenant.id, profile.id, conversation.id, { messages, sources, model });
+  if (!stream) {
+    return new Response("Failed to generate response", {
+      status: 500,
+      headers: {
+        "x-message-id": messageId,
+        "x-model": model,
+      },
+    });
+  }
   return stream.toTextStreamResponse({ headers: { "x-message-id": messageId, "x-model": model } });
 }
