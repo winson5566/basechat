@@ -1,16 +1,25 @@
+import { anthropic } from "@ai-sdk/anthropic";
+import { google } from "@ai-sdk/google";
 import { openai } from "@ai-sdk/openai";
 import { CoreMessage, streamObject } from "ai";
 import Handlebars from "handlebars";
 
 import { createConversationMessageResponseSchema } from "@/lib/api";
 import { DEFAULT_GROUNDING_PROMPT, DEFAULT_SYSTEM_PROMPT } from "@/lib/constants";
-import { LLMModel, DEFAULT_MODEL, DEFAULT_PROVIDER } from "@/lib/llm/types";
+import { LLMModel, DEFAULT_MODEL, DEFAULT_PROVIDER, getProviderForModel } from "@/lib/llm/types";
 import { getRagieClient } from "@/lib/server/ragie";
 import { createConversationMessage, updateConversationMessageContent } from "@/lib/server/service";
 
 type GenerateContext = { messages: CoreMessage[]; sources: any[]; model: LLMModel };
 
 export async function generate(tenantId: string, profileId: string, conversationId: string, context: GenerateContext) {
+  // get provider given the model
+  let provider = getProviderForModel(context.model);
+  if (!provider) {
+    console.log(`Provider not found for model ${context.model}`);
+    provider = DEFAULT_PROVIDER;
+  }
+
   const pendingMessage = await createConversationMessage({
     tenantId,
     conversationId,
@@ -18,12 +27,28 @@ export async function generate(tenantId: string, profileId: string, conversation
     content: null,
     sources: context.sources,
     model: context.model,
-    provider: DEFAULT_PROVIDER, // for now, only openai TODO
+    provider,
   });
 
+  let model;
+  switch (provider) {
+    case "openai":
+      model = openai(context.model);
+      break;
+    case "google":
+      model = google(context.model);
+      break;
+    case "anthropic":
+      model = anthropic(context.model);
+      break;
+    default:
+      model = openai(context.model);
+  }
+
+  console.log(model);
   const result = streamObject({
     messages: context.messages,
-    model: openai(context.model),
+    model,
     temperature: 0.3,
     schema: createConversationMessageResponseSchema,
     onFinish: async (event) => {
@@ -37,6 +62,7 @@ export async function generate(tenantId: string, profileId: string, conversation
       );
     },
   });
+
   return [result, pendingMessage.id] as const;
 }
 

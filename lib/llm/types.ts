@@ -5,11 +5,11 @@ export const PROVIDER_CONFIG = {
     logo: "/openai.svg",
   },
   google: {
-    models: ["gemini-flash-2.0", "gemini-pro"] as const,
+    models: ["gemini-2.0-flash", "gemini-1.5-pro"] as const,
     logo: "/gemini.svg",
   },
   anthropic: {
-    models: ["claude-sonnet-3.7", "claude-opus-3"] as const,
+    models: ["claude-3-7-sonnet-latest", "claude-3-5-haiku-latest"] as const,
     logo: "/anthropic.svg",
   },
 } as const;
