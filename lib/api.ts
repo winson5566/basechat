@@ -1,14 +1,6 @@
 import { z } from "zod";
 
-import {
-  LLMModel,
-  LLMProvider,
-  PROVIDER_MODELS,
-  ALL_VALID_MODELS,
-  DEFAULT_MODEL,
-  DEFAULT_PROVIDER,
-  PROVIDER_CONFIG,
-} from "@/lib/llm/types";
+import { LLMModel, ALL_VALID_MODELS } from "@/lib/llm/types";
 
 export const createConversationMessageResponseSchema = z.object({
   usedSourceIndexes: z.array(z.number().describe("The indexes of the sources used in the response")),
@@ -19,7 +11,6 @@ export const createConversationMessageRequestSchema = z.object({
   conversationId: z.string(),
   content: z.string().describe("The request message"),
   model: z.enum(ALL_VALID_MODELS as [LLMModel, ...LLMModel[]]).describe("The LLM model to use"),
-  provider: z.enum(Object.keys(PROVIDER_CONFIG) as [LLMProvider, ...LLMProvider[]]).describe("The LLM provider to use"),
 });
 
 export type CreateConversationMessageRequest = z.infer<typeof createConversationMessageRequestSchema>;

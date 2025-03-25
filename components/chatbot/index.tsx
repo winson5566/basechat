@@ -63,7 +63,6 @@ export default function Chatbot({ tenant, conversationId, initMessage, onSelecte
       const model = res.headers.get("x-model");
 
       assert(id);
-      // assert model ?
 
       setPendingMessage({ id, model: model as LLMModel });
       return res;
@@ -89,7 +88,6 @@ export default function Chatbot({ tenant, conversationId, initMessage, onSelecte
       conversationId,
       content,
       model,
-      provider,
     };
     setMessages([...messages, { content, role: "user" }]);
     submit(payload);

@@ -50,7 +50,6 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       ),
       sources: [],
       model: model,
-      provider: provider,
     });
   }
 
@@ -61,7 +60,6 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     content,
     sources: [],
     model: model,
-    provider: provider,
   });
 
   let sources: { documentId: string; documentName: string }[] = [];
@@ -81,7 +79,6 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     content: systemMessageContent,
     sources: [],
     model: model,
-    provider: provider,
   });
 
   const all = await getConversationMessages(tenant.id, profile.id, conversation.id);
@@ -98,7 +95,6 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     }
   });
 
-  // not passing provider to generate right now, just model
   const [stream, messageId] = await generate(tenant.id, profile.id, conversation.id, { messages, sources, model });
   return stream.toTextStreamResponse({ headers: { "x-message-id": messageId, "x-model": model } });
 }

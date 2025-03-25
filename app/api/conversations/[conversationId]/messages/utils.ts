@@ -29,7 +29,6 @@ export async function generate(tenantId: string, profileId: string, conversation
     content: null,
     sources: context.sources,
     model: context.model,
-    provider: provider,
   });
 
   // Move system messages to the beginning for providers that require it

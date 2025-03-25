@@ -403,7 +403,6 @@ export async function createConversationMessage(message: typeof schema.messages.
       content: message.content,
       sources: message.sources,
       model: message.model,
-      provider: message.provider,
     })
     .returning();
   assert(rs.length === 1);
