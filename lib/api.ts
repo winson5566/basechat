@@ -11,6 +11,9 @@ export const createConversationMessageRequestSchema = z.object({
   conversationId: z.string(),
   content: z.string().describe("The request message"),
   model: z.enum(ALL_VALID_MODELS as [LLMModel, ...LLMModel[]]).describe("The LLM model to use"),
+  isBreadth: z.boolean().describe("Whether to use breadth-first search"),
+  rerankEnabled: z.boolean().describe("Whether to rerank results"),
+  prioritizeRecent: z.boolean().describe("Whether to prioritize recent data"),
 });
 
 export type CreateConversationMessageRequest = z.infer<typeof createConversationMessageRequestSchema>;

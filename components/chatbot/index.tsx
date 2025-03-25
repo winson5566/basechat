@@ -50,6 +50,9 @@ export default function Chatbot({ tenant, conversationId, initMessage, onSelecte
   pendingMessageRef.current = pendingMessage;
   const { initialModel } = useGlobalState();
   const [selectedModel, setSelectedModel] = useState<LLMModel>(initialModel);
+  const [isBreadth, setIsBreadth] = useState(true);
+  const [rerankEnabled, setRerankEnabled] = useState(false);
+  const [prioritizeRecent, setPrioritizeRecent] = useState(false);
 
   const { isLoading, object, submit } = useObject({
     api: `/api/conversations/${conversationId}/messages`,
@@ -88,6 +91,9 @@ export default function Chatbot({ tenant, conversationId, initMessage, onSelecte
       conversationId,
       content,
       model,
+      isBreadth,
+      rerankEnabled,
+      prioritizeRecent,
     };
     setMessages([...messages, { content, role: "user" }]);
     submit(payload);
@@ -188,7 +194,17 @@ export default function Chatbot({ tenant, conversationId, initMessage, onSelecte
       </div>
       <div className="p-4 w-full flex justify-center max-w-[717px]">
         <div className="flex flex-col w-full p-2 pl-4 rounded-[16px] border border-[#D7D7D7]">
-          <ChatInput handleSubmit={handleSubmit} selectedModel={selectedModel} onModelChange={setSelectedModel} />
+          <ChatInput
+            handleSubmit={handleSubmit}
+            selectedModel={selectedModel}
+            onModelChange={setSelectedModel}
+            isBreadth={isBreadth}
+            onBreadthChange={setIsBreadth}
+            rerankEnabled={rerankEnabled}
+            onRerankChange={setRerankEnabled}
+            prioritizeRecent={prioritizeRecent}
+            onPrioritizeRecentChange={setPrioritizeRecent}
+          />
         </div>
       </div>
     </div>
