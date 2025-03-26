@@ -144,7 +144,7 @@ export async function getRetrievalSystemPrompt(
     topK: isBreadth ? 32 : 6,
     rerank: rerankEnabled,
     recencyBias: prioritizeRecent,
-    maxChunksPerDocument: 4,
+    ...(isBreadth ? { maxChunksPerDocument: 4 } : {}),
   });
 
   console.log(`ragie response includes ${response.scoredChunks.length} chunk(s)`);
