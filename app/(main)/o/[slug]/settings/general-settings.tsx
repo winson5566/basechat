@@ -66,27 +66,62 @@ type TextAreaFieldProps = {
   form: UseFormReturn<z.infer<typeof formSchema>, any, undefined>;
   help?: React.ReactNode;
   className?: string;
+  hasDefault?: boolean;
 };
 
-const TextAreaField = ({ form, name, label, className, help }: TextAreaFieldProps) => (
-  <FormField
-    control={form.control}
-    name={name}
-    render={({ field }) => (
-      <FormItem className={cn("flex flex-col", className)}>
-        <FormLabel className="font-semibold text-[16px] mb-3 flex items-center gap-2">
-          {label} {help}
-        </FormLabel>
-        <FormControl>
-          <div className="rounded-md border border-input bg-transparent px-3 py-1 text-base shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 md:text-sm">
-            <AutosizeTextarea className="pt-1.5" minHeight={80} {...field} />
-          </div>
-        </FormControl>
-        <FormMessage />
-      </FormItem>
-    )}
-  />
-);
+const TextAreaField = ({ form, name, label, className, help, hasDefault }: TextAreaFieldProps) => {
+  const getDefaultValue = () => {
+    switch (name) {
+      case "systemPrompt":
+        return DEFAULT_SYSTEM_PROMPT;
+      case "groundingPrompt":
+        return DEFAULT_GROUNDING_PROMPT;
+      case "welcomeMessage":
+        return DEFAULT_WELCOME_MESSAGE;
+      default:
+        return "";
+    }
+  };
+
+  const handleReset = () => {
+    form.setValue(name, getDefaultValue(), {
+      shouldDirty: true,
+      shouldTouch: true,
+      shouldValidate: true,
+    });
+  };
+
+  return (
+    <FormField
+      control={form.control}
+      name={name}
+      render={({ field }) => (
+        <FormItem className={cn("flex flex-col", className)}>
+          <FormLabel className="font-semibold text-[16px] mb-3 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              {label} {help}
+            </div>
+            {hasDefault && (
+              <button
+                type="button"
+                onClick={handleReset}
+                className="text-sm text-[#D946EF] hover:text-foreground transition-colors"
+              >
+                Reset
+              </button>
+            )}
+          </FormLabel>
+          <FormControl>
+            <div className="rounded-md border border-input bg-transparent px-3 py-1 text-base shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 md:text-sm">
+              <AutosizeTextarea className="pt-1.5" minHeight={80} {...field} />
+            </div>
+          </FormControl>
+          <FormMessage />
+        </FormItem>
+      )}
+    />
+  );
+};
 
 type Props = {
   tenant: typeof schema.tenants.$inferSelect;
@@ -182,6 +217,17 @@ export default function GeneralSettings({ tenant, canUploadLogo }: Props) {
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)}>
           <div>
+            <TextAreaField
+              form={form}
+              name="welcomeMessage"
+              label="Welcome Message"
+              help={<HelpWelcomeMessageDialog />}
+              className="mt-8 mb-4"
+              hasDefault={true}
+            />
+
+            <hr className="w-full my-8" />
+
             <h3 className="font-semibold text-[16px]">Example questions to help your users get started</h3>
 
             <QuestionField form={form} name="question1" label="Question 1" />
@@ -192,17 +238,10 @@ export default function GeneralSettings({ tenant, canUploadLogo }: Props) {
 
             <TextAreaField
               form={form}
-              name="welcomeMessage"
-              label="Welcome Message"
-              help={<HelpWelcomeMessageDialog />}
-              className="mt-8 mb-4"
-            />
-
-            <TextAreaField
-              form={form}
               name="groundingPrompt"
               label="Grounding Prompt"
               help={<HelpGroundingPromptDialog />}
+              hasDefault={true}
             />
 
             <TextAreaField
@@ -210,7 +249,8 @@ export default function GeneralSettings({ tenant, canUploadLogo }: Props) {
               name="systemPrompt"
               label="System Prompt"
               help={<HelpSystemPromptDialog />}
-              className="mt-8"
+              className="mt-8 mb-4"
+              hasDefault={true}
             />
           </div>
         </form>
