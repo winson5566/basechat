@@ -108,17 +108,17 @@ export default function Welcome({ tenant, className }: Props) {
     <div className={className}>
       <div className={`h-full flex flex-col justify-center ${inter.className}`}>
         <Logo name={tenant.name} url={tenant.logoUrl} width={100} height={100} className="avatar mb-8" />
-        <h1 className="mb-12 text-[40px] font-bold leading-[50px]">
+        <h1 className="mb-12 text-3xl lg:text-[40px] font-bold leading-[50px]">
           Hello, I&apos;m {tenant.name}&apos;s AI.
-          <br />
+          <br className="hidden lg:block" />
           What would you like to know?
         </h1>
         {questions.length > 0 && (
-          <div className="flex items-start justify-evenly space-x-2">
+          <div className="flex flex-col md:flex-row items-start justify-evenly space-y-4 md:space-y-0 md:space-x-2 w-full">
             {questions.map((question, i) => (
               <div
                 key={i}
-                className="rounded-md border p-4 h-full w-1/3 cursor-pointer"
+                className="rounded-md border p-4 w-full md:w-1/3 cursor-pointer"
                 onClick={() => handleSubmit(question, selectedModel)}
               >
                 {question}
@@ -127,7 +127,7 @@ export default function Welcome({ tenant, className }: Props) {
           </div>
         )}
       </div>
-      <div className="w-full flex flex-col items-center p-2 pl-4 rounded-[24px] border border-[#D7D7D7]">
+      <div className="w-full flex flex-col items-center p-2 pl-4 rounded-[24px] border border-[#D7D7D7] mt-auto">
         <ChatInput
           handleSubmit={handleSubmit}
           selectedModel={selectedModel}

@@ -29,7 +29,7 @@ export default function Conversation({ id, tenant }: Props) {
   };
 
   return (
-    <div className="flex h-full w-full">
+    <div className="relative lg:flex h-full w-full">
       <Chatbot
         tenant={tenant}
         conversationId={id}
@@ -37,12 +37,14 @@ export default function Conversation({ id, tenant }: Props) {
         onSelectedDocumentId={handleSelectedDocumentId}
       />
       {documentId && (
-        <Summary
-          className="flex-1 min-w-[400px] w-[400px] rounded-[24px] p-8 mr-6 mb-4 bg-[#F5F5F7] overflow-y-auto"
-          documentId={documentId}
-          slug={tenant.slug}
-          onCloseClick={() => setDocumentId(null)}
-        />
+        <div className="absolute top-0 left-0 right-0 lg:static">
+          <Summary
+            className="flex-1 w-full lg:min-w-[400px] lg:w-[400px] rounded-[24px] p-8 mr-6 mb-4 bg-[#F5F5F7] overflow-y-auto"
+            documentId={documentId}
+            slug={tenant.slug}
+            onCloseClick={() => setDocumentId(null)}
+          />
+        </div>
       )}
     </div>
   );
