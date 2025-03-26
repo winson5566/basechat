@@ -12,12 +12,17 @@ interface Props {
 }
 
 export default async function MainLayout({ children, params }: Props) {
-  const p = await params;
-  const { tenant, profile, session } = await authOrRedirect(p.slug);
+  const { slug } = await params;
+  const { tenant, profile, session } = await authOrRedirect(slug);
 
   return (
     <div className="h-full w-full flex flex-col items-center bg-white">
-      <Header currentProfileId={profile.id} tenant={tenant} name={session.user.name} />
+      <Header
+        isAnonymous={profile.role === "guest"}
+        currentProfileId={profile.id}
+        tenant={tenant}
+        name={session.user.name}
+      />
       <div className="h-full w-full flex-1 flex justify-center overflow-auto">
         <div className="h-full w-full flex flex-col items-center justify-center min-w-[500px]">{children}</div>
       </div>

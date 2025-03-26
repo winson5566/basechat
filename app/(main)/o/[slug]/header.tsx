@@ -10,8 +10,9 @@ import { z } from "zod";
 import Logo from "@/components/tenant/logo/logo";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { tenantListResponseSchema, updateCurrentProfileSchema } from "@/lib/api";
-import { getTenantPath } from "@/lib/paths";
+import { getSignUpPath, getTenantPath } from "@/lib/paths";
 import { cn } from "@/lib/utils";
+import AnonProfileIcon from "@/public/icons/anonymous-profile.svg";
 import CheckIcon from "@/public/icons/check.svg";
 import HamburgerIcon from "@/public/icons/hamburger.svg";
 import LogOutIcon from "@/public/icons/log-out.svg";
@@ -28,6 +29,7 @@ interface Props {
     slug: string;
   };
   name: string | undefined | null;
+  isAnonymous: boolean;
   className?: string;
   onNavClick?: () => void;
 }
@@ -49,7 +51,7 @@ const HeaderPopoverContent = ({
   </PopoverContent>
 );
 
-export default function Header({ currentProfileId, tenant, name, onNavClick = () => {} }: Props) {
+export default function Header({ currentProfileId, isAnonymous, tenant, name, onNavClick = () => {} }: Props) {
   const router = useRouter();
 
   const [tenants, setTenants] = useState<z.infer<typeof tenantListResponseSchema>>([]);
@@ -93,58 +95,70 @@ export default function Header({ currentProfileId, tenant, name, onNavClick = ()
           <Image src={NewChatIcon} alt="New chat" />
         </Link>
       </div>
-      <Popover>
-        <PopoverTrigger asChild>
-          <div>
-            <Logo
-              name={name}
-              url={tenant.logoUrl}
-              width={32}
-              height={32}
-              className="bg-[#66666E] font-semibold text-[16px] cursor-pointer"
-            />
-          </div>
-        </PopoverTrigger>
-        <HeaderPopoverContent align="end" className="p-4 w-[332px]">
-          <ul>
-            {tenants.map((tenant, i) => (
-              <li
-                key={i}
-                className="hover:bg-black hover:bg-opacity-5 px-4 py-3 rounded-lg cursor-pointer"
-                onClick={() => handleProfileClick(tenant)}
-              >
-                <div className="flex items-center mb-1">
-                  <div className="w-4">
-                    {selectedProfileId === tenant.profileId && <Image src={CheckIcon} alt="selected" />}
-                  </div>
-                  <Logo
-                    name={tenant.name}
-                    url={tenant.logoUrl}
-                    width={40}
-                    height={40}
-                    className="ml-3 text-[16px] avatar w-[40px] h-[40px]"
-                  />
-                  <div className="ml-4">{tenant.name}</div>
-                </div>
-              </li>
-            ))}
-          </ul>
 
-          <hr className="my-4 bg-black border-none h-[1px] opacity-10" />
-
-          <Link className="flex cursor-pointer" href="/setup">
-            <Image src={PlusIcon} alt="New Chatbot" className="mr-3" />
-            New Chatbot
+      {isAnonymous ? (
+        <div className="flex">
+          <Link
+            className="rounded-lg bg-[#D946EF] text-white px-4 py-2.5 mr-6 flex items-center"
+            href={getSignUpPath()}
+          >
+            Create my own chatbot
           </Link>
+          <Image src={AnonProfileIcon} alt={name || "Guest"} />
+        </div>
+      ) : (
+        <Popover>
+          <PopoverTrigger asChild>
+            <div>
+              <Logo
+                name={name}
+                width={32}
+                height={32}
+                className="bg-[#66666E] font-semibold text-[16px] cursor-pointer"
+              />
+            </div>
+          </PopoverTrigger>
+          <HeaderPopoverContent align="end" className="p-4 w-[332px]">
+            <ul>
+              {tenants.map((tenant, i) => (
+                <li
+                  key={i}
+                  className="hover:bg-black hover:bg-opacity-5 px-4 py-3 rounded-lg cursor-pointer"
+                  onClick={() => handleProfileClick(tenant)}
+                >
+                  <div className="flex items-center mb-1">
+                    <div className="w-4">
+                      {selectedProfileId === tenant.profileId && <Image src={CheckIcon} alt="selected" />}
+                    </div>
+                    <Logo
+                      name={tenant.name}
+                      url={tenant.logoUrl}
+                      width={40}
+                      height={40}
+                      className="ml-3 text-[16px] avatar w-[40px] h-[40px]"
+                    />
+                    <div className="ml-4">{tenant.name}</div>
+                  </div>
+                </li>
+              ))}
+            </ul>
 
-          <hr className="my-4 bg-black border-none h-[1px] opacity-10" />
+            <hr className="my-4 bg-black border-none h-[1px] opacity-10" />
 
-          <div className="flex cursor-pointer" onClick={handleLogOutClick}>
-            <Image src={LogOutIcon} alt="Log out" className="mr-3" />
-            Log out
-          </div>
-        </HeaderPopoverContent>
-      </Popover>
+            <Link className="flex cursor-pointer" href="/setup">
+              <Image src={PlusIcon} alt="New Chatbot" className="mr-3" />
+              New Chatbot
+            </Link>
+
+            <hr className="my-4 bg-black border-none h-[1px] opacity-10" />
+
+            <div className="flex cursor-pointer" onClick={handleLogOutClick}>
+              <Image src={LogOutIcon} alt="Log out" className="mr-3" />
+              Log out
+            </div>
+          </HeaderPopoverContent>
+        </Popover>
+      )}
     </header>
   );
 }
