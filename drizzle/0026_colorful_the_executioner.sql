@@ -1,0 +1,1 @@
+ALTER TABLE "messages" ALTER COLUMN "model" SET DEFAULT 'claude-3-7-sonnet-latest';

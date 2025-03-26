@@ -27,8 +27,8 @@ export const PROVIDER_CONFIG = {
 } as const;
 
 // Default values
-export const DEFAULT_MODEL = "gpt-4o";
-export const DEFAULT_PROVIDER = "openai";
+export const DEFAULT_MODEL = "claude-3-7-sonnet-latest";
+export const DEFAULT_PROVIDER = "anthropic";
 
 // Derive types from the config
 export type LLMProvider = keyof typeof PROVIDER_CONFIG;
