@@ -1,6 +1,7 @@
 import { ReactNode } from "react";
 
 import RagieLogo from "@/components/ragie-logo";
+import { getUserById } from "@/lib/server/service";
 import { authOrRedirect } from "@/lib/server/utils";
 
 import Footer from "./footer";
@@ -14,15 +15,11 @@ interface Props {
 export default async function MainLayout({ children, params }: Props) {
   const { slug } = await params;
   const { tenant, profile, session } = await authOrRedirect(slug);
+  const user = await getUserById(session.user.id);
 
   return (
     <div className="h-full w-full flex flex-col items-center bg-white">
-      <Header
-        isAnonymous={profile.role === "guest"}
-        currentProfileId={profile.id}
-        tenant={tenant}
-        name={session.user.name}
-      />
+      <Header isAnonymous={user.isAnonymous} currentProfileId={profile.id} tenant={tenant} name={session.user.name} />
       <div className="h-full w-full flex-1 flex justify-center overflow-auto">
         <div className="h-full w-full flex flex-col items-center justify-center min-w-[500px]">{children}</div>
       </div>

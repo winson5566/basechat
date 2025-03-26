@@ -289,6 +289,12 @@ export async function findUserById(id: string) {
   return rs.length ? rs[0] : null;
 }
 
+export async function getUserById(id: string) {
+  const user = await findUserById(id);
+  assert(user, "unexpected result");
+  return user;
+}
+
 export async function sendResetPasswordVerification(email: string) {
   const user = await findUserByEmail(email);
   if (!user) return false;
