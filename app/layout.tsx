@@ -4,6 +4,8 @@ import "./globals.css";
 import { SessionProvider } from "next-auth/react";
 import { Toaster } from "sonner";
 
+import { GaTags } from "@/components/ga-tags";
+
 import { GlobalStateProvider } from "./(main)/o/[slug]/context";
 
 const inter = Inter({ subsets: ["latin"] });
@@ -24,6 +26,7 @@ export default function RootLayout({
     <SessionProvider>
       <GlobalStateProvider>
         <html lang="en" className="h-full w-full">
+          <GaTags gaKey={process.env.GOOGLE_ANALYTICS_KEY} />
           <body className={`${inter.className} antialiased h-full w-full bg-white`}>
             {children}
             <Toaster position="bottom-center" />
