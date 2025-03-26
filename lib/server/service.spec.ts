@@ -27,7 +27,7 @@ describe("changeRole", () => {
   describe("when the last admin changes their role to user", () => {
     it("throws an error", async () => {
       const user = (await db.insert(schema.users).values({}).returning())[0];
-      const tenant = (await db.insert(schema.tenants).values({ name: "example" }).returning())[0];
+      const tenant = (await db.insert(schema.tenants).values({ name: "example", slug: "example" }).returning())[0];
       const admin = (
         await db.insert(schema.profiles).values({ tenantId: tenant.id, userId: user.id, role: "admin" }).returning()
       )[0];
@@ -40,7 +40,7 @@ describe("changeRole", () => {
 
   describe("when the 2nd to last admin changes their role to user", () => {
     it("allows the change", async () => {
-      const tenant = (await db.insert(schema.tenants).values({ name: "example" }).returning())[0];
+      const tenant = (await db.insert(schema.tenants).values({ name: "example", slug: "example" }).returning())[0];
 
       const user1 = (await db.insert(schema.users).values({}).returning())[0];
       const admin1 = (
@@ -64,7 +64,7 @@ describe("deleteProfile", () => {
   describe("when the last admin is deleted", () => {
     it("throws an error", async () => {
       const user = (await db.insert(schema.users).values({}).returning())[0];
-      const tenant = (await db.insert(schema.tenants).values({ name: "example" }).returning())[0];
+      const tenant = (await db.insert(schema.tenants).values({ name: "example", slug: "example" }).returning())[0];
       const admin = (
         await db.insert(schema.profiles).values({ tenantId: tenant.id, userId: user.id, role: "admin" }).returning()
       )[0];
@@ -77,7 +77,7 @@ describe("deleteProfile", () => {
 
   describe("when the 2nd to last admin is deleted", () => {
     it("deletes the admin", async () => {
-      const tenant = (await db.insert(schema.tenants).values({ name: "example" }).returning())[0];
+      const tenant = (await db.insert(schema.tenants).values({ name: "example", slug: "example" }).returning())[0];
 
       const user1 = (await db.insert(schema.users).values({}).returning())[0];
       const admin1 = (
