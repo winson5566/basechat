@@ -1,7 +1,8 @@
 import NextAuth from "next-auth";
 
+import { BASE_URL } from "@/lib/server/settings";
+
 import authConfig from "./auth.config";
-import { requireAuthContextFromRequest } from "./lib/server/utils";
 
 // Wrapped middleware option. See https://authjs.dev/guides/edge-compatibility
 const { auth } = NextAuth(authConfig);
@@ -19,8 +20,7 @@ export default auth((req) => {
       !pathname.startsWith("/healthz")
     ) {
       const redirectPath = getUnauthenticatedRedirectPath(pathname);
-      console.log({ redirectPath });
-      const newUrl = new URL(redirectPath, req.nextUrl.origin);
+      const newUrl = new URL(redirectPath, BASE_URL);
       if (pathname !== "/") {
         newUrl.searchParams.set("redirectTo", req.nextUrl.toString());
       }

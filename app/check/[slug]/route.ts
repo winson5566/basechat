@@ -1,5 +1,6 @@
 import { auth, signIn } from "@/auth";
 import { createGuestUser, createProfile, findProfileByTenantIdAndUserId, findTenantBySlug } from "@/lib/server/service";
+import { BASE_URL } from "@/lib/server/settings";
 
 interface Params {
   params: Promise<{ slug: string }>;
@@ -25,7 +26,7 @@ export async function GET(request: Request, { params }: Params) {
     await createProfile(tenant.id, user.id, "guest");
     await signIn("anonymous", { id: user.id, redirect: false });
   }
-  return Response.redirect(new URL(`/o/${slug}`, request.url));
+  return Response.redirect(new URL(`/o/${slug}`, BASE_URL));
 }
 
 function getSignInUrl(requestUrl: string) {
