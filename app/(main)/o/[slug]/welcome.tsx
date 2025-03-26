@@ -114,11 +114,11 @@ export default function Welcome({ tenant, className }: Props) {
           What would you like to know?
         </h1>
         {questions.length > 0 && (
-          <div className="flex items-start justify-evenly space-x-2">
+          <div className="flex flex-col md:flex-row items-start justify-evenly space-y-4 md:space-y-0 md:space-x-2 w-full">
             {questions.map((question, i) => (
               <div
                 key={i}
-                className="rounded-md border p-4 h-full w-1/3 cursor-pointer"
+                className="rounded-md border p-4 w-full md:w-1/3 cursor-pointer"
                 onClick={() => handleSubmit(question, selectedModel)}
               >
                 {question}
