@@ -7,7 +7,7 @@ import { DEFAULT_MODEL, DEFAULT_PROVIDER, getProviderForModel } from "@/lib/llm/
 import { createConversationMessage, getConversation, getConversationMessages } from "@/lib/server/service";
 import { requireAuthContextFromRequest } from "@/lib/server/utils";
 
-import { generate, getGroundingSystemPrompt, getRetrievalSystemPrompt } from "./utils";
+import { generate, getGroundingSystemPrompt, getRetrievalSystemPrompt, FAILED_MESSAGE_CONTENT } from "./utils";
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ conversationId: string }> }) {
   const { profile, tenant } = await requireAuthContextFromRequest(request);
@@ -113,13 +113,22 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     prioritizeRecent,
   });
   if (!stream) {
-    return new Response("Failed to generate response", {
-      status: 500,
-      headers: {
-        "x-message-id": messageId,
-        "x-model": model,
+    return new Response(
+      new ReadableStream({
+        start(controller) {
+          controller.enqueue(
+            new TextEncoder().encode(JSON.stringify({ usedSourceIndexes: [], message: FAILED_MESSAGE_CONTENT })),
+          );
+          controller.close();
+        },
+      }),
+      {
+        headers: {
+          "x-message-id": messageId,
+          "x-model": model,
+        },
       },
-    });
+    );
   }
   return stream.toTextStreamResponse({ headers: { "x-message-id": messageId, "x-model": model } });
 }
