@@ -22,7 +22,13 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   const { conversationId } = await params;
   const json = await request.json();
 
-  const { content, model: modelInJson } = createConversationMessageRequestSchema.parse(json);
+  const {
+    content,
+    model: modelInJson,
+    isBreadth,
+    rerankEnabled,
+    prioritizeRecent,
+  } = createConversationMessageRequestSchema.parse(json);
 
   let provider = getProviderForModel(modelInJson);
   let model = modelInJson;
@@ -68,6 +74,9 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     tenant.id,
     tenant.name,
     content,
+    isBreadth,
+    rerankEnabled,
+    prioritizeRecent,
   );
 
   sources = ragSources;
@@ -95,7 +104,14 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     }
   });
 
-  const [stream, messageId] = await generate(tenant.id, profile.id, conversation.id, { messages, sources, model });
+  const [stream, messageId] = await generate(tenant.id, profile.id, conversation.id, {
+    messages,
+    sources,
+    model,
+    isBreadth,
+    rerankEnabled,
+    prioritizeRecent,
+  });
   if (!stream) {
     return new Response("Failed to generate response", {
       status: 500,

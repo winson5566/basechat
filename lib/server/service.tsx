@@ -403,6 +403,9 @@ export async function createConversationMessage(message: typeof schema.messages.
       content: message.content,
       sources: message.sources,
       model: message.model,
+      isBreadth: message.isBreadth ?? false,
+      rerankEnabled: message.rerankEnabled ?? false,
+      prioritizeRecent: message.prioritizeRecent ?? false,
     })
     .returning();
   assert(rs.length === 1);

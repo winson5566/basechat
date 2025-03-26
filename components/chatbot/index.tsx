@@ -49,7 +49,59 @@ export default function Chatbot({ tenant, conversationId, initMessage, onSelecte
   const pendingMessageRef = useRef<null | { id: string; model: LLMModel }>(null);
   pendingMessageRef.current = pendingMessage;
   const { initialModel } = useGlobalState();
-  const [selectedModel, setSelectedModel] = useState<LLMModel>(initialModel);
+  const [selectedModel, setSelectedModel] = useState<LLMModel>(() => {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem("chatSettings");
+      if (saved) {
+        const settings = JSON.parse(saved);
+        return settings.selectedModel ?? initialModel;
+      }
+    }
+    return initialModel;
+  });
+  const [isBreadth, setIsBreadth] = useState(() => {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem("chatSettings");
+      if (saved) {
+        const settings = JSON.parse(saved);
+        return settings.isBreadth ?? false;
+      }
+    }
+    return false;
+  });
+  const [rerankEnabled, setRerankEnabled] = useState(() => {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem("chatSettings");
+      if (saved) {
+        const settings = JSON.parse(saved);
+        return settings.rerankEnabled ?? false;
+      }
+    }
+    return false;
+  });
+  const [prioritizeRecent, setPrioritizeRecent] = useState(() => {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem("chatSettings");
+      if (saved) {
+        const settings = JSON.parse(saved);
+        return settings.prioritizeRecent ?? false;
+      }
+    }
+    return false;
+  });
+
+  // Save settings to localStorage whenever they change
+  useEffect(() => {
+    localStorage.setItem(
+      "chatSettings",
+      JSON.stringify({
+        isBreadth,
+        rerankEnabled,
+        prioritizeRecent,
+        selectedModel,
+      }),
+    );
+  }, [isBreadth, rerankEnabled, prioritizeRecent, selectedModel]);
 
   const { isLoading, object, submit } = useObject({
     api: `/api/conversations/${conversationId}/messages`,
@@ -88,6 +140,9 @@ export default function Chatbot({ tenant, conversationId, initMessage, onSelecte
       conversationId,
       content,
       model,
+      isBreadth,
+      rerankEnabled,
+      prioritizeRecent,
     };
     setMessages([...messages, { content, role: "user" }]);
     submit(payload);
@@ -188,7 +243,17 @@ export default function Chatbot({ tenant, conversationId, initMessage, onSelecte
       </div>
       <div className="p-4 w-full flex justify-center max-w-[717px]">
         <div className="flex flex-col w-full p-2 pl-4 rounded-[16px] border border-[#D7D7D7]">
-          <ChatInput handleSubmit={handleSubmit} selectedModel={selectedModel} onModelChange={setSelectedModel} />
+          <ChatInput
+            handleSubmit={handleSubmit}
+            selectedModel={selectedModel}
+            onModelChange={setSelectedModel}
+            isBreadth={isBreadth}
+            onBreadthChange={setIsBreadth}
+            rerankEnabled={rerankEnabled}
+            onRerankChange={setRerankEnabled}
+            prioritizeRecent={prioritizeRecent}
+            onPrioritizeRecentChange={setPrioritizeRecent}
+          />
         </div>
       </div>
     </div>

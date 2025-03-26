@@ -10,7 +10,14 @@ import { LLMModel, DEFAULT_MODEL, DEFAULT_PROVIDER, getProviderForModel } from "
 import { getRagieClient } from "@/lib/server/ragie";
 import { createConversationMessage, updateConversationMessageContent } from "@/lib/server/service";
 
-type GenerateContext = { messages: CoreMessage[]; sources: any[]; model: LLMModel };
+type GenerateContext = {
+  messages: CoreMessage[];
+  sources: any[];
+  model: LLMModel;
+  isBreadth: boolean;
+  rerankEnabled: boolean;
+  prioritizeRecent: boolean;
+};
 
 const FAILED_MESSAGE_CONTENT = `Failed to generate message from the model, please try again.`;
 
@@ -40,6 +47,9 @@ export async function generate(tenantId: string, profileId: string, conversation
     content: null,
     sources: context.sources,
     model: context.model,
+    isBreadth: context.isBreadth,
+    rerankEnabled: context.rerankEnabled,
+    prioritizeRecent: context.prioritizeRecent,
   });
 
   // Move system messages to the beginning for providers that require it
@@ -120,12 +130,21 @@ export async function generate(tenantId: string, profileId: string, conversation
   return [result, pendingMessage.id] as const;
 }
 
-export async function getRetrievalSystemPrompt(tenantId: string, name: string, query: string) {
+export async function getRetrievalSystemPrompt(
+  tenantId: string,
+  name: string,
+  query: string,
+  isBreadth: boolean,
+  rerankEnabled: boolean,
+  prioritizeRecent: boolean,
+) {
   const response = await getRagieClient().retrievals.retrieve({
     partition: tenantId,
     query,
-    topK: 6,
-    rerank: true,
+    topK: isBreadth ? 32 : 6,
+    rerank: rerankEnabled,
+    recencyBias: prioritizeRecent,
+    ...(isBreadth ? { maxChunksPerDocument: 4 } : {}),
   });
 
   console.log(`ragie response includes ${response.scoredChunks.length} chunk(s)`);

@@ -1,8 +1,10 @@
-import { ChevronDown } from "lucide-react";
+import { ChevronRight, ChevronDown } from "lucide-react";
 import Image from "next/image";
 import { KeyboardEvent, useRef, useState } from "react";
 
-import { LLMModel, ALL_VALID_MODELS, LLM_LOGO_MAP, LLM_DISPLAY_NAMES, DEFAULT_MODEL } from "@/lib/llm/types";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Switch } from "@/components/ui/switch";
+import { LLMModel, ALL_VALID_MODELS, LLM_LOGO_MAP, LLM_DISPLAY_NAMES } from "@/lib/llm/types";
 import { cn } from "@/lib/utils";
 
 import CheckIcon from "../../public/icons/check.svg";
@@ -13,16 +15,41 @@ interface ChatInputProps {
   handleSubmit?: (text: string, model: LLMModel) => void;
   selectedModel: LLMModel;
   onModelChange: (model: LLMModel) => void;
+  isBreadth: boolean;
+  onBreadthChange: (isBreadth: boolean) => void;
+  rerankEnabled?: boolean;
+  onRerankChange?: (enabled: boolean) => void;
+  prioritizeRecent?: boolean;
+  onPrioritizeRecentChange?: (enabled: boolean) => void;
 }
 
+const SettingsPopoverContent = ({ children }: { children: React.ReactNode }) => (
+  <PopoverContent
+    align="start"
+    sideOffset={4}
+    className={cn("bg-[#F5F5F7] w-[300px] border border-[#D7D7D7] shadow-none rounded-[6px] p-6")}
+  >
+    {children}
+  </PopoverContent>
+);
+
 const ModelPopoverContent = ({ children }: { children: React.ReactNode }) => (
-  <PopoverContent align="start" className={cn("bg-[#F5F5F7] w-[258px] border-none shadow-none rounded-[12px] p-6")}>
+  <PopoverContent
+    align="end"
+    alignOffset={-24}
+    sideOffset={30}
+    side="right"
+    className={cn("bg-[#F5F5F7] w-[258px] border border-[#D7D7D7] shadow-none rounded-[8px] p-6")}
+  >
     {children}
   </PopoverContent>
 );
 
 export default function ChatInput(props: ChatInputProps) {
   const [value, setValue] = useState("");
+  const [isBreadth, setIsBreadth] = useState(props.isBreadth);
+  const [rerankEnabled, setRerankEnabled] = useState(props.rerankEnabled ?? false);
+  const [prioritizeRecent, setPrioritizeRecent] = useState(props.prioritizeRecent ?? false);
   const ref = useRef<AutosizeTextAreaRef>(null);
 
   const handleSubmit = (value: string) => {
@@ -70,26 +97,120 @@ export default function ChatInput(props: ChatInputProps) {
           {LLM_DISPLAY_NAMES[props.selectedModel]}
           <ChevronDown className="h-4 w-4" />
         </PopoverTrigger>
-        <ModelPopoverContent>
-          <div className="flex flex-col gap-1">
-            {ALL_VALID_MODELS.map((model) => {
-              const [_, logoPath] = LLM_LOGO_MAP[model];
-              return (
-                <button
-                  key={model}
-                  className="flex items-center rounded-sm px-4 py-3 text-sm text-left hover:bg-black hover:bg-opacity-5"
-                  onClick={() => props.onModelChange(model)}
-                >
-                  <div className="w-4">{props.selectedModel === model && <Image src={CheckIcon} alt="selected" />}</div>
-                  <div className="flex items-center ml-3">
-                    <Image src={logoPath} alt={LLM_DISPLAY_NAMES[model]} width={16} height={16} className="mr-2" />
-                    <span>{LLM_DISPLAY_NAMES[model]}</span>
+        <SettingsPopoverContent>
+          <div className="flex flex-col gap-4">
+            <span className="text-sm text-muted-foreground">Chat settings</span>
+            <div className="flex flex-col gap-2">
+              <RadioGroup
+                value={isBreadth ? "breadth" : "depth"}
+                onValueChange={(value) => {
+                  const newIsBreadth = value === "breadth";
+                  setIsBreadth(newIsBreadth);
+                  props.onBreadthChange(newIsBreadth);
+                }}
+              >
+                <div className="flex flex-col space-y-1">
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem
+                      value="breadth"
+                      id="breadth"
+                      className="text-[#D946EF] border-[#D7D7D7] data-[state=checked]:bg-[#D946EF]"
+                    />
+                    <label htmlFor="breadth" className="text-sm">
+                      Breadth
+                    </label>
                   </div>
-                </button>
-              );
-            })}
+                  <span className="text-xs text-muted-foreground ml-6">
+                    Searches a wider range of documents for a broader response (slower)
+                  </span>
+                </div>
+                <div className="flex flex-col space-y-1">
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem
+                      value="depth"
+                      id="depth"
+                      className="text-[#D946EF] border-[#D7D7D7] data-[state=checked]:bg-[#D946EF]"
+                    />
+                    <label htmlFor="depth" className="text-sm">
+                      Depth
+                    </label>
+                  </div>
+                  <span className="text-xs text-muted-foreground ml-6">
+                    Retrieves results from a smaller range of documents for more depth (faster)
+                  </span>
+                </div>
+              </RadioGroup>
+            </div>
+            <div className="flex flex-col gap-2">
+              <div className="flex items-center justify-between">
+                <div className="flex flex-col">
+                  <span className="text-sm font-medium">Rerank</span>
+                </div>
+                <Switch
+                  checked={rerankEnabled}
+                  onCheckedChange={(checked: boolean) => {
+                    setRerankEnabled(checked);
+                    props.onRerankChange?.(checked);
+                  }}
+                  className="data-[state=checked]:bg-[#D946EF]"
+                />
+              </div>
+              <div className="flex items-center justify-between mt-4">
+                <div className="flex flex-col">
+                  <span className="text-sm font-medium">Prioritize recent data</span>
+                </div>
+                <Switch
+                  checked={prioritizeRecent}
+                  onCheckedChange={(checked: boolean) => {
+                    setPrioritizeRecent(checked);
+                    props.onPrioritizeRecentChange?.(checked);
+                  }}
+                  className="data-[state=checked]:bg-[#D946EF]"
+                />
+              </div>
+            </div>
+            <div className="h-[1px] w-full bg-[#D7D7D7] my-4" />
+            <div className="flex flex-col gap-2">
+              <span className="text-sm font-medium text-black">Switch model</span>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <button className="flex items-center justify-between w-full text-sm text-muted-foreground hover:text-foreground">
+                    <span className="text-[#6B7280]">{LLM_DISPLAY_NAMES[props.selectedModel]}</span>
+                    <ChevronRight className="h-4 w-4" />
+                  </button>
+                </PopoverTrigger>
+                <ModelPopoverContent>
+                  <div className="flex flex-col gap-1">
+                    {ALL_VALID_MODELS.map((model) => {
+                      const [_, logoPath] = LLM_LOGO_MAP[model];
+                      return (
+                        <button
+                          key={model}
+                          className="flex items-center rounded-sm px-4 py-3 text-sm text-left hover:bg-black hover:bg-opacity-5"
+                          onClick={() => props.onModelChange(model)}
+                        >
+                          <div className="w-4">
+                            {props.selectedModel === model && <Image src={CheckIcon} alt="selected" />}
+                          </div>
+                          <div className="flex items-center ml-3">
+                            <Image
+                              src={logoPath}
+                              alt={LLM_DISPLAY_NAMES[model]}
+                              width={16}
+                              height={16}
+                              className="mr-2"
+                            />
+                            <span>{LLM_DISPLAY_NAMES[model]}</span>
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </ModelPopoverContent>
+              </Popover>
+            </div>
           </div>
-        </ModelPopoverContent>
+        </SettingsPopoverContent>
       </Popover>
     </div>
   );

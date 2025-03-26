@@ -2,7 +2,7 @@
 
 import { Inter } from "next/font/google";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { z } from "zod";
 
 import ChatInput from "@/components/chatbot/chat-input";
@@ -25,7 +25,59 @@ interface Props {
 export default function Welcome({ tenant, className }: Props) {
   const router = useRouter();
   const { setInitialMessage, setInitialModel } = useGlobalState();
-  const [selectedModel, setSelectedModel] = useState<LLMModel>(DEFAULT_MODEL);
+  const [selectedModel, setSelectedModel] = useState<LLMModel>(() => {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem("chatSettings");
+      if (saved) {
+        const settings = JSON.parse(saved);
+        return settings.selectedModel ?? DEFAULT_MODEL;
+      }
+    }
+    return DEFAULT_MODEL;
+  });
+  const [isBreadth, setIsBreadth] = useState(() => {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem("chatSettings");
+      if (saved) {
+        const settings = JSON.parse(saved);
+        return settings.isBreadth ?? false;
+      }
+    }
+    return false;
+  });
+  const [rerankEnabled, setRerankEnabled] = useState(() => {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem("chatSettings");
+      if (saved) {
+        const settings = JSON.parse(saved);
+        return settings.rerankEnabled ?? false;
+      }
+    }
+    return false;
+  });
+  const [prioritizeRecent, setPrioritizeRecent] = useState(() => {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem("chatSettings");
+      if (saved) {
+        const settings = JSON.parse(saved);
+        return settings.prioritizeRecent ?? false;
+      }
+    }
+    return false;
+  });
+
+  // Save settings to localStorage whenever they change
+  useEffect(() => {
+    localStorage.setItem(
+      "chatSettings",
+      JSON.stringify({
+        isBreadth,
+        rerankEnabled,
+        prioritizeRecent,
+        selectedModel,
+      }),
+    );
+  }, [isBreadth, rerankEnabled, prioritizeRecent, selectedModel]);
 
   const handleSubmit = async (content: string, model: LLMModel = DEFAULT_MODEL) => {
     const res = await fetch("/api/conversations", {
@@ -33,6 +85,9 @@ export default function Welcome({ tenant, className }: Props) {
       body: JSON.stringify({
         title: content,
         initialModel: model,
+        isBreadth,
+        rerankEnabled,
+        prioritizeRecent,
       }),
       headers: {
         tenant: tenant.slug,
@@ -73,7 +128,17 @@ export default function Welcome({ tenant, className }: Props) {
         )}
       </div>
       <div className="w-full flex flex-col items-center p-2 pl-4 rounded-[24px] border border-[#D7D7D7]">
-        <ChatInput handleSubmit={handleSubmit} selectedModel={selectedModel} onModelChange={setSelectedModel} />
+        <ChatInput
+          handleSubmit={handleSubmit}
+          selectedModel={selectedModel}
+          onModelChange={setSelectedModel}
+          isBreadth={isBreadth}
+          onBreadthChange={setIsBreadth}
+          rerankEnabled={rerankEnabled}
+          onRerankChange={setRerankEnabled}
+          prioritizeRecent={prioritizeRecent}
+          onPrioritizeRecentChange={setPrioritizeRecent}
+        />
       </div>
     </div>
   );
