@@ -254,29 +254,58 @@ export default function GeneralSettings({ tenant, canUploadLogo }: Props) {
   async function onSubmit(values: FormValues) {
     setLoading(true);
 
-    const payload = updateTenantSchema.parse(values);
-    const res = await fetch("/api/tenants/current", {
-      method: "PATCH",
-      headers: { tenant: tenant.slug },
-      body: JSON.stringify(payload),
-    });
-    setLoading(false);
+    try {
+      // If the slug has changed, check if it's available
+      if (values.slug !== tenant.slug) {
+        const checkResponse = await fetch("/api/tenants/check-slug", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            slug: values.slug,
+            tenantId: tenant.id,
+          }),
+        });
 
-    if (res.status !== 200) throw new Error("Failed to save");
+        if (!checkResponse.ok) {
+          throw new Error("Failed to check slug availability");
+        }
 
-    toast.success("Changes saved");
+        const { available } = await checkResponse.json();
+        if (!available) {
+          toast.error("This URL is already taken. Please choose a different one.");
+          setLoading(false);
+          return;
+        }
+      }
 
-    // If the prompts are empty strings, set them to undefined so we get the default value from the schema.
-    form.reset({
-      ...values,
-      groundingPrompt: values.groundingPrompt.length ? values.groundingPrompt : undefined,
-      systemPrompt: values.systemPrompt.length ? values.systemPrompt : undefined,
-      welcomeMessage: values.welcomeMessage.length ? values.welcomeMessage : undefined,
-    });
+      const payload = updateTenantSchema.parse(values);
+      const res = await fetch("/api/tenants/current", {
+        method: "PATCH",
+        headers: { tenant: tenant.slug },
+        body: JSON.stringify(payload),
+      });
 
-    // If the slug was changed, redirect to the new URL
-    if (values.slug !== tenant.slug) {
-      router.push(`/o/${values.slug}/settings`);
+      if (res.status !== 200) throw new Error("Failed to save");
+
+      toast.success("Changes saved");
+
+      // If the prompts are empty strings, set them to undefined so we get the default value from the schema.
+      form.reset({
+        ...values,
+        groundingPrompt: values.groundingPrompt.length ? values.groundingPrompt : undefined,
+        systemPrompt: values.systemPrompt.length ? values.systemPrompt : undefined,
+        welcomeMessage: values.welcomeMessage.length ? values.welcomeMessage : undefined,
+      });
+
+      // If the slug was changed, redirect to the new URL
+      if (values.slug !== tenant.slug) {
+        router.push(`/o/${values.slug}/settings`);
+      }
+    } catch (error) {
+      toast.error("Failed to save changes");
+      console.error(error);
+    } finally {
+      setLoading(false);
     }
   }
 
