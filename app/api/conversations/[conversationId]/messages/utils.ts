@@ -19,7 +19,7 @@ type GenerateContext = {
   prioritizeRecent: boolean;
 };
 
-const FAILED_MESSAGE_CONTENT = `Failed to generate message from the model, please try again.`;
+export const FAILED_MESSAGE_CONTENT = `Failed to generate message from the model, please try again.`;
 
 // Filter out messages with empty content
 function filterEmptyMessages(messages: CoreMessage[]): CoreMessage[] {
