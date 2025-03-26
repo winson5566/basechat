@@ -108,9 +108,9 @@ export default function Welcome({ tenant, className }: Props) {
     <div className={className}>
       <div className={`h-full flex flex-col justify-center ${inter.className}`}>
         <Logo name={tenant.name} url={tenant.logoUrl} width={100} height={100} className="avatar mb-8" />
-        <h1 className="mb-12 text-[40px] font-bold leading-[50px]">
+        <h1 className="mb-12 text-3xl lg:text-[40px] font-bold leading-[50px]">
           Hello, I&apos;m {tenant.name}&apos;s AI.
-          <br />
+          <br className="hidden lg:block" />
           What would you like to know?
         </h1>
         {questions.length > 0 && (
