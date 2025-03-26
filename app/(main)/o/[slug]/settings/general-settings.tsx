@@ -134,6 +134,7 @@ export default function GeneralSettings({ tenant, canUploadLogo }: Props) {
       ...values,
       groundingPrompt: values.groundingPrompt.length ? values.groundingPrompt : undefined,
       systemPrompt: values.systemPrompt.length ? values.systemPrompt : undefined,
+      welcomeMessage: values.welcomeMessage.length ? values.welcomeMessage : undefined,
     });
   }
 
