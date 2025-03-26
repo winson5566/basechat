@@ -60,7 +60,11 @@ export default function AssistantMessage({
         <Logo name={name} url={logoUrl} width={40} height={40} className="avatar text-[13px] h-[40px] w-[40px]" />
       </div>
       <div className="self-start mb-6 rounded-md ml-7">
-        {content?.length ? <Markdown className="markdown">{content}</Markdown> : <div className="dot-pulse mt-1.5" />}
+        {content?.length ? (
+          <Markdown className="markdown mt-[10px]">{content}</Markdown>
+        ) : (
+          <div className="dot-pulse mt-[14px]" />
+        )}
         <div className="flex flex-wrap mt-4">
           {dedupedSources.map((source, i) => (
             <Citation key={i} source={source} onClick={() => onSelectedDocumentId(source.documentId)} />
