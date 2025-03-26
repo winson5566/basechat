@@ -26,7 +26,9 @@ export default async function MainLayout({ children, params }: Props) {
         name={session.user.name}
       />
       <main className="flex-1 w-full flex justify-center overflow-auto">
-        <div className="w-full max-w-[717px] px-4 flex flex-col items-center justify-center">{children}</div>
+        <div className="w-full max-w-[717px] lg:max-w-full px-4 flex flex-col items-center justify-center">
+          {children}
+        </div>
       </main>
       {profile.role == "admin" && (
         <Footer tenant={tenant} className="h-[80px] shrink-0 w-full bg-[#27272A] flex items-center justify-center" />
