@@ -35,9 +35,18 @@ interface Props {
   sources: SourceMetadata[];
   onSelectedDocumentId: (id: string) => void;
   model: LLMModel;
+  isGenerating?: boolean;
 }
 
-export default function AssistantMessage({ name, logoUrl, content, sources, onSelectedDocumentId, model }: Props) {
+export default function AssistantMessage({
+  name,
+  logoUrl,
+  content,
+  sources,
+  onSelectedDocumentId,
+  model,
+  isGenerating,
+}: Props) {
   const dedupe = sources.reduce<Record<string, SourceMetadata>>((acc, v) => {
     acc[v.documentId] = v;
     return acc;
@@ -57,7 +66,9 @@ export default function AssistantMessage({ name, logoUrl, content, sources, onSe
             <Citation key={i} source={source} onClick={() => onSelectedDocumentId(source.documentId)} />
           ))}
         </div>
-        <div className="text-xs text-muted-foreground">Generated with {LLM_DISPLAY_NAMES[model]}</div>
+        <div className="text-xs text-muted-foreground">
+          {isGenerating ? `Generating with ${LLM_DISPLAY_NAMES[model]}` : `Generated with ${LLM_DISPLAY_NAMES[model]}`}
+        </div>
       </div>
     </div>
   );
