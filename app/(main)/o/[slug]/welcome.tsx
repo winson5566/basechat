@@ -2,7 +2,7 @@
 
 import { Inter } from "next/font/google";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { z } from "zod";
 
 import ChatInput from "@/components/chatbot/chat-input";
@@ -25,10 +25,59 @@ interface Props {
 export default function Welcome({ tenant, className }: Props) {
   const router = useRouter();
   const { setInitialMessage, setInitialModel } = useGlobalState();
-  const [selectedModel, setSelectedModel] = useState<LLMModel>(DEFAULT_MODEL);
-  const [isBreadth, setIsBreadth] = useState(true);
-  const [rerankEnabled, setRerankEnabled] = useState(false);
-  const [prioritizeRecent, setPrioritizeRecent] = useState(false);
+  const [selectedModel, setSelectedModel] = useState<LLMModel>(() => {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem("chatSettings");
+      if (saved) {
+        const settings = JSON.parse(saved);
+        return settings.selectedModel ?? DEFAULT_MODEL;
+      }
+    }
+    return DEFAULT_MODEL;
+  });
+  const [isBreadth, setIsBreadth] = useState(() => {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem("chatSettings");
+      if (saved) {
+        const settings = JSON.parse(saved);
+        return settings.isBreadth ?? false;
+      }
+    }
+    return false;
+  });
+  const [rerankEnabled, setRerankEnabled] = useState(() => {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem("chatSettings");
+      if (saved) {
+        const settings = JSON.parse(saved);
+        return settings.rerankEnabled ?? false;
+      }
+    }
+    return false;
+  });
+  const [prioritizeRecent, setPrioritizeRecent] = useState(() => {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem("chatSettings");
+      if (saved) {
+        const settings = JSON.parse(saved);
+        return settings.prioritizeRecent ?? false;
+      }
+    }
+    return false;
+  });
+
+  // Save settings to localStorage whenever they change
+  useEffect(() => {
+    localStorage.setItem(
+      "chatSettings",
+      JSON.stringify({
+        isBreadth,
+        rerankEnabled,
+        prioritizeRecent,
+        selectedModel,
+      }),
+    );
+  }, [isBreadth, rerankEnabled, prioritizeRecent, selectedModel]);
 
   const handleSubmit = async (content: string, model: LLMModel = DEFAULT_MODEL) => {
     const res = await fetch("/api/conversations", {

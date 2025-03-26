@@ -49,10 +49,59 @@ export default function Chatbot({ tenant, conversationId, initMessage, onSelecte
   const pendingMessageRef = useRef<null | { id: string; model: LLMModel }>(null);
   pendingMessageRef.current = pendingMessage;
   const { initialModel } = useGlobalState();
-  const [selectedModel, setSelectedModel] = useState<LLMModel>(initialModel);
-  const [isBreadth, setIsBreadth] = useState(true);
-  const [rerankEnabled, setRerankEnabled] = useState(false);
-  const [prioritizeRecent, setPrioritizeRecent] = useState(false);
+  const [selectedModel, setSelectedModel] = useState<LLMModel>(() => {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem("chatSettings");
+      if (saved) {
+        const settings = JSON.parse(saved);
+        return settings.selectedModel ?? initialModel;
+      }
+    }
+    return initialModel;
+  });
+  const [isBreadth, setIsBreadth] = useState(() => {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem("chatSettings");
+      if (saved) {
+        const settings = JSON.parse(saved);
+        return settings.isBreadth ?? false;
+      }
+    }
+    return false;
+  });
+  const [rerankEnabled, setRerankEnabled] = useState(() => {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem("chatSettings");
+      if (saved) {
+        const settings = JSON.parse(saved);
+        return settings.rerankEnabled ?? false;
+      }
+    }
+    return false;
+  });
+  const [prioritizeRecent, setPrioritizeRecent] = useState(() => {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem("chatSettings");
+      if (saved) {
+        const settings = JSON.parse(saved);
+        return settings.prioritizeRecent ?? false;
+      }
+    }
+    return false;
+  });
+
+  // Save settings to localStorage whenever they change
+  useEffect(() => {
+    localStorage.setItem(
+      "chatSettings",
+      JSON.stringify({
+        isBreadth,
+        rerankEnabled,
+        prioritizeRecent,
+        selectedModel,
+      }),
+    );
+  }, [isBreadth, rerankEnabled, prioritizeRecent, selectedModel]);
 
   const { isLoading, object, submit } = useObject({
     api: `/api/conversations/${conversationId}/messages`,

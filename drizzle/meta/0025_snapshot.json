@@ -1,5 +1,5 @@
 {
-  "id": "371b4aeb-5e03-49d9-bf0c-29f1c9c3f934",
+  "id": "78f7dcec-a126-40ec-a1c5-06a64d8c4add",
   "prevId": "399fe573-dfca-4659-ba8e-95c369a63b2d",
   "version": "7",
   "dialect": "postgresql",
@@ -550,7 +550,7 @@
           "type": "boolean",
           "primaryKey": false,
           "notNull": true,
-          "default": true
+          "default": false
         },
         "rerank_enabled": {
           "name": "rerank_enabled",

@@ -108,7 +108,7 @@ export const messages = pgTable("messages", {
   role: messageRolesEnum("role").notNull(),
   sources: json("sources").notNull(),
   model: text("model").notNull().default(DEFAULT_MODEL),
-  isBreadth: boolean("is_breadth").notNull().default(true),
+  isBreadth: boolean("is_breadth").notNull().default(false),
   rerankEnabled: boolean("rerank_enabled").notNull().default(false),
   prioritizeRecent: boolean("prioritize_recent").notNull().default(false),
 });
