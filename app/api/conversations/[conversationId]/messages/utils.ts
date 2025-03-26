@@ -130,12 +130,21 @@ export async function generate(tenantId: string, profileId: string, conversation
   return [result, pendingMessage.id] as const;
 }
 
-export async function getRetrievalSystemPrompt(tenantId: string, name: string, query: string) {
+export async function getRetrievalSystemPrompt(
+  tenantId: string,
+  name: string,
+  query: string,
+  isBreadth: boolean,
+  rerankEnabled: boolean,
+  prioritizeRecent: boolean,
+) {
   const response = await getRagieClient().retrievals.retrieve({
     partition: tenantId,
     query,
-    topK: 6,
-    rerank: true,
+    topK: isBreadth ? 32 : 6,
+    rerank: rerankEnabled,
+    recencyBias: prioritizeRecent,
+    maxChunksPerDocument: 4,
   });
 
   console.log(`ragie response includes ${response.scoredChunks.length} chunk(s)`);

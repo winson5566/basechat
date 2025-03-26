@@ -74,6 +74,9 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     tenant.id,
     tenant.name,
     content,
+    isBreadth,
+    rerankEnabled,
+    prioritizeRecent,
   );
 
   sources = ragSources;

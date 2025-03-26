@@ -27,7 +27,7 @@ const SettingsPopoverContent = ({ children }: { children: React.ReactNode }) => 
   <PopoverContent
     align="start"
     sideOffset={4}
-    className={cn("bg-[#F5F5F7] w-[258px] border border-[#D7D7D7] shadow-none rounded-[12px] p-6")}
+    className={cn("bg-[#F5F5F7] w-[300px] border border-[#D7D7D7] shadow-none rounded-[6px] p-6")}
   >
     {children}
   </PopoverContent>
@@ -39,7 +39,7 @@ const ModelPopoverContent = ({ children }: { children: React.ReactNode }) => (
     alignOffset={-24}
     sideOffset={30}
     side="right"
-    className={cn("bg-[#F5F5F7] w-[258px] border border-[#D7D7D7] shadow-none rounded-[12px] p-6")}
+    className={cn("bg-[#F5F5F7] w-[258px] border border-[#D7D7D7] shadow-none rounded-[8px] p-6")}
   >
     {children}
   </PopoverContent>
@@ -101,10 +101,13 @@ export default function ChatInput(props: ChatInputProps) {
           <div className="flex flex-col gap-4">
             <span className="text-sm text-muted-foreground">Chat settings</span>
             <div className="flex flex-col gap-2">
-              <span className="text-sm font-medium">Search Mode</span>
               <RadioGroup
                 value={isBreadth ? "breadth" : "depth"}
-                onValueChange={(value) => setIsBreadth(value === "breadth")}
+                onValueChange={(value) => {
+                  const newIsBreadth = value === "breadth";
+                  setIsBreadth(newIsBreadth);
+                  props.onBreadthChange(newIsBreadth);
+                }}
               >
                 <div className="flex flex-col space-y-1">
                   <div className="flex items-center space-x-2">
@@ -152,7 +155,7 @@ export default function ChatInput(props: ChatInputProps) {
                   className="data-[state=checked]:bg-[#D946EF]"
                 />
               </div>
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between mt-4">
                 <div className="flex flex-col">
                   <span className="text-sm font-medium">Prioritize recent data</span>
                 </div>
@@ -168,11 +171,11 @@ export default function ChatInput(props: ChatInputProps) {
             </div>
             <div className="h-[1px] w-full bg-[#D7D7D7] my-4" />
             <div className="flex flex-col gap-2">
-              <span className="text-sm font-medium">Switch model</span>
+              <span className="text-sm font-medium text-black">Switch model</span>
               <Popover>
                 <PopoverTrigger asChild>
                   <button className="flex items-center justify-between w-full text-sm text-muted-foreground hover:text-foreground">
-                    {LLM_DISPLAY_NAMES[props.selectedModel]}
+                    <span className="text-[#6B7280]">{LLM_DISPLAY_NAMES[props.selectedModel]}</span>
                     <ChevronRight className="h-4 w-4" />
                   </button>
                 </PopoverTrigger>
