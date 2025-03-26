@@ -1,7 +1,8 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Loader2 } from "lucide-react";
+import { Check, Copy, Loader2 } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import { useForm, UseFormReturn } from "react-hook-form";
 import { toast } from "sonner";
@@ -12,6 +13,7 @@ import { AutosizeTextarea } from "@/components/ui/autosize-textarea";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import { updateTenantSchema } from "@/lib/api";
 import { DEFAULT_GROUNDING_PROMPT, DEFAULT_SYSTEM_PROMPT, DEFAULT_WELCOME_MESSAGE } from "@/lib/constants";
 import * as schema from "@/lib/server/db/schema";
@@ -24,6 +26,16 @@ import { HelpWelcomeMessageDialog } from "./help-welcome-message-dialog";
 // Transform null to empty string for form field handling
 const nullToEmptyString = (v: string | null) => v ?? "";
 
+const isValidSlug = (slug: string) => {
+  const sanitized = slug
+    .trim()
+    .toLowerCase()
+    .replace(/[^\w\s-]/g, "")
+    .replace(/[\s_-]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+  return slug === sanitized;
+};
+
 const formSchema = z.object({
   question1: z.string().nullable().transform(nullToEmptyString),
   question2: z.string().nullable().transform(nullToEmptyString),
@@ -31,12 +43,70 @@ const formSchema = z.object({
   groundingPrompt: z.string().nullable().default(DEFAULT_GROUNDING_PROMPT).transform(nullToEmptyString),
   systemPrompt: z.string().nullable().default(DEFAULT_SYSTEM_PROMPT).transform(nullToEmptyString),
   welcomeMessage: z.string().nullable().default(DEFAULT_WELCOME_MESSAGE).transform(nullToEmptyString),
+  slug: z.string().nullable().transform(nullToEmptyString).refine(isValidSlug, {
+    message: "URL can only contain lowercase letters, numbers, and hyphens",
+  }),
+  isPublic: z.boolean().default(false),
 });
 
-type QuestionFieldProps = {
-  name: keyof z.infer<typeof formSchema>;
+type FormValues = z.infer<typeof formSchema>;
+
+type URLFieldProps = {
+  name: keyof FormValues;
   label: string;
-  form: UseFormReturn<z.infer<typeof formSchema>, any, undefined>;
+  form: UseFormReturn<FormValues, any, undefined>;
+};
+
+const URLField = ({ form, name, label }: URLFieldProps) => {
+  const [isCopied, setIsCopied] = useState(false);
+
+  const handleCopyUrl = () => {
+    const url = `${location.origin}/o/${form.getValues(name) || "your-chat-name"}`;
+    navigator.clipboard.writeText(url);
+    setIsCopied(true);
+    setTimeout(() => setIsCopied(false), 2000);
+  };
+
+  return (
+    <FormField
+      control={form.control}
+      name={name}
+      render={({ field }) => (
+        <FormItem className="flex flex-col mt-8">
+          <FormLabel className="font-semibold text-[16px] mb-3">{label}</FormLabel>
+          <FormControl>
+            <Input
+              type="text"
+              placeholder="Enter URL"
+              className="rounded-[8px] border border-[#D7D7D7] h-[58px] placeholder-[#74747A] text-[16px]"
+              {...field}
+              value={String(field.value)}
+            />
+          </FormControl>
+          <div className="text-sm text-muted-foreground mt-1 flex items-center gap-2">
+            <span>
+              Your chat will be available at: {location.origin}/o/{field.value || "your-chat-name"}
+            </span>
+            <button
+              type="button"
+              onClick={handleCopyUrl}
+              className="p-1 hover:bg-gray-100 rounded-md transition-colors"
+              title="Copy URL"
+            >
+              {isCopied ? <Check className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4 text-black" />}
+            </button>
+          </div>
+          <FormMessage />
+        </FormItem>
+      )}
+    />
+  );
+};
+
+type QuestionFieldProps = {
+  name: keyof FormValues;
+  label: string;
+  form: UseFormReturn<FormValues, any, undefined>;
 };
 
 const QuestionField = ({ form, name, label }: QuestionFieldProps) => (
@@ -52,6 +122,7 @@ const QuestionField = ({ form, name, label }: QuestionFieldProps) => (
             placeholder="Type something"
             className="rounded-[8px] border border-[#D7D7D7] h-[58px] placeholder-[#74747A] text-[16px]"
             {...field}
+            value={String(field.value)}
           />
         </FormControl>
         <FormMessage />
@@ -61,9 +132,9 @@ const QuestionField = ({ form, name, label }: QuestionFieldProps) => (
 );
 
 type TextAreaFieldProps = {
-  name: keyof z.infer<typeof formSchema>;
+  name: keyof FormValues;
   label: string;
-  form: UseFormReturn<z.infer<typeof formSchema>, any, undefined>;
+  form: UseFormReturn<FormValues, any, undefined>;
   help?: React.ReactNode;
   className?: string;
   hasDefault?: boolean;
@@ -113,7 +184,7 @@ const TextAreaField = ({ form, name, label, className, help, hasDefault }: TextA
           </FormLabel>
           <FormControl>
             <div className="rounded-md border border-input bg-transparent px-3 py-1 text-base shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 md:text-sm">
-              <AutosizeTextarea className="pt-1.5" minHeight={80} {...field} />
+              <AutosizeTextarea className="pt-1.5" minHeight={80} {...field} value={String(field.value)} />
             </div>
           </FormControl>
           <FormMessage />
@@ -123,6 +194,36 @@ const TextAreaField = ({ form, name, label, className, help, hasDefault }: TextA
   );
 };
 
+type SwitchFieldProps = {
+  name: keyof FormValues;
+  label: string;
+  form: UseFormReturn<FormValues, any, undefined>;
+};
+
+const SwitchField = ({ form, name, label }: SwitchFieldProps) => (
+  <FormField
+    control={form.control}
+    name={name}
+    render={({ field }) => (
+      <FormItem className="flex flex-row items-center justify-between mt-8">
+        <div className="space-y-0.5">
+          <FormLabel className="font-semibold text-[16px]">{label}</FormLabel>
+          <p className="text-sm text-muted-foreground">Anyone with the link can chat with your AI assistant</p>
+        </div>
+        <div className="flex-shrink-0 ml-4">
+          <FormControl>
+            <Switch
+              checked={Boolean(field.value)}
+              onCheckedChange={field.onChange}
+              className="data-[state=checked]:bg-[#D946EF]"
+            />
+          </FormControl>
+        </div>
+      </FormItem>
+    )}
+  />
+);
+
 type Props = {
   tenant: typeof schema.tenants.$inferSelect;
   canUploadLogo?: boolean;
@@ -130,6 +231,7 @@ type Props = {
 
 export default function GeneralSettings({ tenant, canUploadLogo }: Props) {
   const [isLoading, setLoading] = useState(false);
+  const router = useRouter();
 
   const formattedTenant = useMemo(() => {
     const { groundingPrompt, systemPrompt, welcomeMessage, ...otherFields } = tenant;
@@ -144,12 +246,12 @@ export default function GeneralSettings({ tenant, canUploadLogo }: Props) {
     };
   }, [tenant]);
 
-  const form = useForm<z.infer<typeof formSchema>>({
+  const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: formSchema.parse(formattedTenant),
   });
 
-  async function onSubmit(values: z.infer<typeof formSchema>) {
+  async function onSubmit(values: FormValues) {
     setLoading(true);
 
     const payload = updateTenantSchema.parse(values);
@@ -171,6 +273,11 @@ export default function GeneralSettings({ tenant, canUploadLogo }: Props) {
       systemPrompt: values.systemPrompt.length ? values.systemPrompt : undefined,
       welcomeMessage: values.welcomeMessage.length ? values.welcomeMessage : undefined,
     });
+
+    // If the slug was changed, redirect to the new URL
+    if (values.slug !== tenant.slug) {
+      router.push(`/o/${values.slug}/settings`);
+    }
   }
 
   async function handleCancel() {
@@ -178,7 +285,7 @@ export default function GeneralSettings({ tenant, canUploadLogo }: Props) {
   }
 
   return (
-    <div className="w-full p-4 flex-grow flex flex-col">
+    <div className="w-full p-4 flex-grow flex flex-col relative">
       <div
         className={cn("flex w-full justify-between items-center", {
           "mb-8": !canUploadLogo,
@@ -252,6 +359,13 @@ export default function GeneralSettings({ tenant, canUploadLogo }: Props) {
               className="mt-8 mb-4"
               hasDefault={true}
             />
+
+            <hr className="w-full my-8" />
+
+            <URLField form={form} name="slug" label="URL name" />
+            <hr className="w-full my-8" />
+            <SwitchField form={form} name="isPublic" label="Enable public chat" />
+            <hr className="w-full my-8" />
           </div>
         </form>
       </Form>
