@@ -61,6 +61,7 @@ export const tenants = pgTable("tenants", {
   question3: text("question3"),
   groundingPrompt: text("grounding_prompt"),
   systemPrompt: text("system_prompt"),
+  welcomeMessage: text("welcome_message"),
   logoFileName: text("logo_file_name"), // The name of the file that was uploaded
   logoObjectName: text("logo_object_name"), // The name of the object in the bucket
   logoUrl: text("logo_url"), // The publicly accessible URL of the object

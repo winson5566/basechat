@@ -13,12 +13,13 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { updateTenantSchema } from "@/lib/api";
-import { DEFAULT_GROUNDING_PROMPT, DEFAULT_SYSTEM_PROMPT } from "@/lib/constants";
+import { DEFAULT_GROUNDING_PROMPT, DEFAULT_SYSTEM_PROMPT, DEFAULT_WELCOME_MESSAGE } from "@/lib/constants";
 import * as schema from "@/lib/server/db/schema";
 import { cn } from "@/lib/utils";
 
 import { HelpGroundingPromptDialog } from "./help-grounding-prompt-dialog";
 import { HelpSystemPromptDialog } from "./help-system-prompt-dialog";
+import { HelpWelcomeMessageDialog } from "./help-welcome-message-dialog";
 
 // Transform null to empty string for form field handling
 const nullToEmptyString = (v: string | null) => v ?? "";
@@ -29,6 +30,7 @@ const formSchema = z.object({
   question3: z.string().nullable().transform(nullToEmptyString),
   groundingPrompt: z.string().nullable().default(DEFAULT_GROUNDING_PROMPT).transform(nullToEmptyString),
   systemPrompt: z.string().nullable().default(DEFAULT_SYSTEM_PROMPT).transform(nullToEmptyString),
+  welcomeMessage: z.string().nullable().default(DEFAULT_WELCOME_MESSAGE).transform(nullToEmptyString),
 });
 
 type QuestionFieldProps = {
@@ -95,13 +97,14 @@ export default function GeneralSettings({ tenant, canUploadLogo }: Props) {
   const [isLoading, setLoading] = useState(false);
 
   const formattedTenant = useMemo(() => {
-    const { groundingPrompt, systemPrompt, ...otherFields } = tenant;
+    const { groundingPrompt, systemPrompt, welcomeMessage, ...otherFields } = tenant;
 
     // Zod only uses default values when the value is undefined. They come in as null
     // Change fields you want to have defaults to undefined.
     return {
       groundingPrompt: groundingPrompt ? groundingPrompt : undefined,
       systemPrompt: systemPrompt ? systemPrompt : undefined,
+      welcomeMessage: welcomeMessage ? welcomeMessage : undefined,
       ...otherFields,
     };
   }, [tenant]);
@@ -185,6 +188,14 @@ export default function GeneralSettings({ tenant, canUploadLogo }: Props) {
             <QuestionField form={form} name="question3" label="Question 3" />
 
             <hr className="w-full my-8" />
+
+            <TextAreaField
+              form={form}
+              name="welcomeMessage"
+              label="Welcome Message"
+              help={<HelpWelcomeMessageDialog />}
+              className="mt-8 mb-4"
+            />
 
             <TextAreaField
               form={form}
