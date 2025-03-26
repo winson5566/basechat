@@ -33,7 +33,7 @@ function getSignInUrl(requestUrl: string) {
   const url = new URL(requestUrl);
   const redirectToParam = url.searchParams.get("redirectTo");
 
-  const signInUrl = new URL("/sign-in", url);
+  const signInUrl = new URL("/sign-in", BASE_URL);
   if (redirectToParam) {
     signInUrl.searchParams.set("redirectTo", redirectToParam);
   }
