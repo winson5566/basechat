@@ -1,6 +1,6 @@
 import { ChevronRight, ChevronDown } from "lucide-react";
 import Image from "next/image";
-import { KeyboardEvent, useRef, useState } from "react";
+import { KeyboardEvent, useRef, useState, useEffect } from "react";
 
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Switch } from "@/components/ui/switch";
@@ -23,6 +23,24 @@ interface ChatInputProps {
   onPrioritizeRecentChange?: (enabled: boolean) => void;
 }
 
+const useIsDesktop = () => {
+  // whether to display model popover to the right of settings or on top
+  const [isDesktop, setIsDesktop] = useState(true);
+
+  useEffect(() => {
+    const checkIsDesktop = () => {
+      setIsDesktop(window.innerWidth >= 640); // sm breakpoint
+    };
+
+    checkIsDesktop();
+    window.addEventListener("resize", checkIsDesktop);
+
+    return () => window.removeEventListener("resize", checkIsDesktop);
+  }, []);
+
+  return isDesktop;
+};
+
 const SettingsPopoverContent = ({ children }: { children: React.ReactNode }) => (
   <PopoverContent
     align="start"
@@ -33,17 +51,20 @@ const SettingsPopoverContent = ({ children }: { children: React.ReactNode }) => 
   </PopoverContent>
 );
 
-const ModelPopoverContent = ({ children }: { children: React.ReactNode }) => (
-  <PopoverContent
-    align="end"
-    alignOffset={-24}
-    sideOffset={30}
-    side="right"
-    className={cn("bg-[#F5F5F7] w-[258px] border border-[#D7D7D7] shadow-none rounded-[8px] p-6")}
-  >
-    {children}
-  </PopoverContent>
-);
+const ModelPopoverContent = ({ children }: { children: React.ReactNode }) => {
+  const isDesktop = useIsDesktop();
+
+  return (
+    <PopoverContent
+      align="end"
+      alignOffset={-24}
+      {...(isDesktop ? { side: "right", sideOffset: 30 } : {})}
+      className={cn("bg-[#F5F5F7] w-[258px] border border-[#D7D7D7] shadow-none rounded-[8px] p-6")}
+    >
+      {children}
+    </PopoverContent>
+  );
+};
 
 export default function ChatInput(props: ChatInputProps) {
   const [value, setValue] = useState("");

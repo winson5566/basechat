@@ -127,7 +127,7 @@ export default function Welcome({ tenant, className }: Props) {
           </div>
         )}
       </div>
-      <div className="w-full flex flex-col items-center p-2 pl-4 rounded-[24px] border border-[#D7D7D7]">
+      <div className="w-full flex flex-col items-center p-2 pl-4 rounded-[24px] border border-[#D7D7D7] mt-auto">
         <ChatInput
           handleSubmit={handleSubmit}
           selectedModel={selectedModel}
