@@ -10,14 +10,19 @@ const checkSlugSchema = z.object({
   tenantId: z.string().optional(),
 });
 
+// returns available: boolean
+// true if slug does not exist in any tenant besides the tenantId passed in
+
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const { slug, tenantId } = checkSlugSchema.parse(body);
+    const { slug, tenantId: tenantIdToExclude } = checkSlugSchema.parse(body);
 
     // If tenantId is provided, exclude that tenant from the check
     // This allows us to check if the slug is unique among other tenants
-    const query = tenantId ? and(eq(tenants.slug, slug), not(eq(tenants.id, tenantId))) : eq(tenants.slug, slug);
+    const query = tenantIdToExclude
+      ? and(eq(tenants.slug, slug), not(eq(tenants.id, tenantIdToExclude)))
+      : eq(tenants.slug, slug);
 
     const existingTenant = await db.select().from(tenants).where(query).limit(1);
 
