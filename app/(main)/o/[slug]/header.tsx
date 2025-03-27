@@ -30,6 +30,7 @@ interface Props {
     id: string;
   };
   name: string | undefined | null;
+  email: string | undefined | null;
   isAnonymous: boolean;
   className?: string;
   onNavClick?: () => void;
@@ -52,7 +53,7 @@ const HeaderPopoverContent = ({
   </PopoverContent>
 );
 
-export default function Header({ currentProfileId, isAnonymous, tenant, name, onNavClick = () => {} }: Props) {
+export default function Header({ currentProfileId, isAnonymous, tenant, name, email, onNavClick = () => {} }: Props) {
   const router = useRouter();
   const [tenants, setTenants] = useState<z.infer<typeof tenantListResponseSchema>>([]);
   const [selectedProfileId, setSelectedProfileId] = useState(currentProfileId);
@@ -139,7 +140,10 @@ export default function Header({ currentProfileId, isAnonymous, tenant, name, on
                       height={40}
                       className={`ml-3 text-[16px]  w-[40px] h-[40px] avatar-${avatarNumber}`}
                     />
-                    <div className="ml-4">{tenant.name}</div>
+                    <div className="ml-4">
+                      <div>{tenant.name}</div>
+                      <div className="text-sm text-gray-500">{email}</div>
+                    </div>
                   </div>
                 </li>
               ))}
