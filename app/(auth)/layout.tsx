@@ -14,9 +14,9 @@ const inter = Inter({ subsets: ["latin"] });
 
 export default function Layout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <div className="min-h-screen w-full flex flex-col items-center bg-white">
-      <div className="flex-1 w-full flex flex-col items-center justify-center overflow-auto">
-        <div className="w-full max-w-[717px] px-4 flex flex-col items-center justify-center">
+    <div className="h-screen w-full flex flex-col items-center bg-white overflow-hidden">
+      <div className="flex-1 w-full overflow-y-auto">
+        <div className="w-full max-w-[717px] px-4 mx-auto h-full flex flex-col items-center justify-center">
           <div className="hidden md:flex items-center mb-16">
             <div className="max-h-[64px] max-w-[64px] avatar mr-3" />
             <h1 className={cn(inter_tight.className, "text-[75px] font-bold")}>{settings.APP_NAME}</h1>
@@ -24,7 +24,7 @@ export default function Layout({ children }: Readonly<{ children: React.ReactNod
           <div className="flex flex-col items-center">{children}</div>
         </div>
       </div>
-      <div className="h-20 w-full bg-[#27272A] flex items-center justify-center">
+      <div className="h-20 shrink-0 w-full bg-[#27272A] flex items-center justify-center">
         <div className={`mr-2.5 text-md text-[#FEFEFE] ${inter.className}`}>Powered by</div>
         <div>
           <a href="https://ragie.ai/?utm_source=oss-chatbot">

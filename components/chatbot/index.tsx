@@ -49,46 +49,22 @@ export default function Chatbot({ tenant, conversationId, initMessage, onSelecte
   const pendingMessageRef = useRef<null | { id: string; model: LLMModel }>(null);
   pendingMessageRef.current = pendingMessage;
   const { initialModel } = useGlobalState();
-  const [selectedModel, setSelectedModel] = useState<LLMModel>(() => {
-    if (typeof window !== "undefined") {
-      const saved = localStorage.getItem("chatSettings");
-      if (saved) {
-        const settings = JSON.parse(saved);
-        return settings.selectedModel ?? initialModel;
-      }
+  const [selectedModel, setSelectedModel] = useState<LLMModel>(initialModel);
+  const [isBreadth, setIsBreadth] = useState(false);
+  const [rerankEnabled, setRerankEnabled] = useState(false);
+  const [prioritizeRecent, setPrioritizeRecent] = useState(false);
+
+  // Load settings from localStorage after initial render
+  useEffect(() => {
+    const saved = localStorage.getItem("chatSettings");
+    if (saved) {
+      const settings = JSON.parse(saved);
+      setSelectedModel(settings.selectedModel ?? initialModel);
+      setIsBreadth(settings.isBreadth ?? false);
+      setRerankEnabled(settings.rerankEnabled ?? false);
+      setPrioritizeRecent(settings.prioritizeRecent ?? false);
     }
-    return initialModel;
-  });
-  const [isBreadth, setIsBreadth] = useState(() => {
-    if (typeof window !== "undefined") {
-      const saved = localStorage.getItem("chatSettings");
-      if (saved) {
-        const settings = JSON.parse(saved);
-        return settings.isBreadth ?? false;
-      }
-    }
-    return false;
-  });
-  const [rerankEnabled, setRerankEnabled] = useState(() => {
-    if (typeof window !== "undefined") {
-      const saved = localStorage.getItem("chatSettings");
-      if (saved) {
-        const settings = JSON.parse(saved);
-        return settings.rerankEnabled ?? false;
-      }
-    }
-    return false;
-  });
-  const [prioritizeRecent, setPrioritizeRecent] = useState(() => {
-    if (typeof window !== "undefined") {
-      const saved = localStorage.getItem("chatSettings");
-      if (saved) {
-        const settings = JSON.parse(saved);
-        return settings.prioritizeRecent ?? false;
-      }
-    }
-    return false;
-  });
+  }, [initialModel]);
 
   // Save settings to localStorage whenever they change
   useEffect(() => {
@@ -224,6 +200,7 @@ export default function Chatbot({ tenant, conversationId, initMessage, onSelecte
                   sources={message.sources}
                   onSelectedDocumentId={onSelectedDocumentId}
                   model={message.model || selectedModel}
+                  isGenerating={false}
                 />
               </Fragment>
             ),
@@ -237,6 +214,7 @@ export default function Chatbot({ tenant, conversationId, initMessage, onSelecte
               sources={[]}
               onSelectedDocumentId={onSelectedDocumentId}
               model={pendingMessage?.model || selectedModel}
+              isGenerating
             />
           )}
         </div>
