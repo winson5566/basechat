@@ -58,6 +58,7 @@ export const updateTenantSchema = z.object({
   welcomeMessage: z.string().nullable(),
   slug: z.string(),
   isPublic: z.boolean(),
+  name: z.string(),
 });
 
 export type MemberType = "profile" | "invite";

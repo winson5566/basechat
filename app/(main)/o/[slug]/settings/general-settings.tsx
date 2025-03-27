@@ -3,7 +3,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Check, Copy, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { useForm, UseFormReturn } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
@@ -27,6 +27,7 @@ import { HelpWelcomeMessageDialog } from "./help-welcome-message-dialog";
 const nullToEmptyString = (v: string | null) => v ?? "";
 
 const isValidSlug = (slug: string) => {
+  if (!slug || slug.trim().length === 0) return false;
   const sanitized = slug
     .trim()
     .toLowerCase()
@@ -46,6 +47,7 @@ const formSchema = z.object({
   slug: z.string().nullable().transform(nullToEmptyString).refine(isValidSlug, {
     message: "URL can only contain lowercase letters, numbers, and hyphens",
   }),
+  name: z.string().min(1, "Name must be at least 1 character").max(30, "Name must be less than 30 characters"),
   isPublic: z.boolean().default(false),
 });
 
@@ -59,9 +61,14 @@ type URLFieldProps = {
 
 const URLField = ({ form, name, label }: URLFieldProps) => {
   const [isCopied, setIsCopied] = useState(false);
+  const [origin, setOrigin] = useState("");
+
+  useEffect(() => {
+    setOrigin(window.location.origin);
+  }, []);
 
   const handleCopyUrl = () => {
-    const url = `${location.origin}/o/${form.getValues(name) || "your-chat-name"}`;
+    const url = `${origin}/o/${form.getValues(name) || "your-chat-name"}`;
     navigator.clipboard.writeText(url);
     setIsCopied(true);
     setTimeout(() => setIsCopied(false), 2000);
@@ -85,7 +92,7 @@ const URLField = ({ form, name, label }: URLFieldProps) => {
           </FormControl>
           <div className="text-sm text-muted-foreground mt-1 flex items-center gap-2">
             <span>
-              Your chat will be available at: {location.origin}/o/{field.value || "your-chat-name"}
+              Your chat will be available at: {origin}/o/{field.value || "your-chat-name"}
             </span>
             <button
               type="button"
@@ -224,6 +231,36 @@ const SwitchField = ({ form, name, label }: SwitchFieldProps) => (
   />
 );
 
+type CompanyNameFieldProps = {
+  name: keyof FormValues;
+  label: string;
+  form: UseFormReturn<FormValues, any, undefined>;
+  tenant: typeof schema.tenants.$inferSelect;
+};
+
+const CompanyNameField = ({ form, name, label, tenant }: CompanyNameFieldProps) => {
+  return (
+    <FormField
+      control={form.control}
+      name={name}
+      render={({ field }) => (
+        <FormItem className="flex flex-col">
+          <FormLabel className="font-semibold text-[16px] mb-3">{label}</FormLabel>
+          <FormControl>
+            <Input
+              type="text"
+              className="rounded-[8px] border border-[#D7D7D7] h-[58px] placeholder-[#74747A] text-[16px]"
+              {...field}
+              value={String(field.value)}
+            />
+          </FormControl>
+          <FormMessage />
+        </FormItem>
+      )}
+    />
+  );
+};
+
 type Props = {
   tenant: typeof schema.tenants.$inferSelect;
   canUploadLogo?: boolean;
@@ -353,6 +390,8 @@ export default function GeneralSettings({ tenant, canUploadLogo }: Props) {
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)}>
           <div>
+            <CompanyNameField form={form} name="name" label="Company Name" tenant={tenant} />
+            <hr className="w-full my-8" />
             <TextAreaField
               form={form}
               name="welcomeMessage"
