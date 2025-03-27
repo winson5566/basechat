@@ -1,7 +1,7 @@
 import { ReactNode } from "react";
 
 import RagieLogo from "@/components/ragie-logo";
-import { getUserById } from "@/lib/server/service";
+import { getUserById, getMembersByTenantId } from "@/lib/server/service";
 import { authOrRedirect } from "@/lib/server/utils";
 
 import Footer from "./footer";
@@ -16,6 +16,8 @@ export default async function MainLayout({ children, params }: Props) {
   const { slug } = await params;
   const { tenant, profile, session } = await authOrRedirect(slug);
   const user = await getUserById(session.user.id);
+  const members = await getMembersByTenantId(tenant.id);
+  const userCount = members.filter((m) => m.type !== "invite").length;
 
   return (
     <div className="h-screen w-full flex flex-col items-center bg-white overflow-hidden">
@@ -25,6 +27,7 @@ export default async function MainLayout({ children, params }: Props) {
         tenant={tenant}
         name={session.user.name}
         email={user.email}
+        userCount={userCount}
       />
       <main className="flex-1 w-full overflow-y-auto">
         <div className="w-full max-w-[717px] lg:max-w-full px-4 mx-auto h-full flex flex-col items-center justify-center">

@@ -11,6 +11,7 @@ import Logo from "@/components/tenant/logo/logo";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { tenantListResponseSchema, updateCurrentProfileSchema } from "@/lib/api";
 import { getSignUpPath, getTenantPath } from "@/lib/paths";
+import { getMembersByTenantId } from "@/lib/server/service";
 import { cn, getAvatarNumber } from "@/lib/utils";
 import AnonProfileIcon from "@/public/icons/anonymous-profile.svg";
 import CheckIcon from "@/public/icons/check.svg";
@@ -34,6 +35,7 @@ interface Props {
   isAnonymous: boolean;
   className?: string;
   onNavClick?: () => void;
+  userCount: number;
 }
 
 const HeaderPopoverContent = ({
@@ -53,7 +55,15 @@ const HeaderPopoverContent = ({
   </PopoverContent>
 );
 
-export default function Header({ currentProfileId, isAnonymous, tenant, name, email, onNavClick = () => {} }: Props) {
+export default function Header({
+  currentProfileId,
+  isAnonymous,
+  tenant,
+  name,
+  email,
+  onNavClick = () => {},
+  userCount = 1,
+}: Props) {
   const router = useRouter();
   const [tenants, setTenants] = useState<z.infer<typeof tenantListResponseSchema>>([]);
   const [selectedProfileId, setSelectedProfileId] = useState(currentProfileId);
@@ -122,6 +132,7 @@ export default function Header({ currentProfileId, isAnonymous, tenant, name, em
             </div>
           </PopoverTrigger>
           <HeaderPopoverContent align="end" className="p-4 w-[332px]">
+            <div className="text-sm text-gray-500 font-semibold ml-2">{email}</div>
             <ul>
               {tenants.map((tenant, i) => (
                 <li
@@ -141,8 +152,10 @@ export default function Header({ currentProfileId, isAnonymous, tenant, name, em
                       className={`ml-3 text-[16px]  w-[40px] h-[40px] avatar-${avatarNumber}`}
                     />
                     <div className="ml-4">
-                      <div>{tenant.name}</div>
-                      <div className="text-sm text-gray-500">{email}</div>
+                      {tenant.name}
+                      <div className="text-xs text-gray-500">
+                        {userCount} User{userCount === 1 ? "" : "s"}
+                      </div>
                     </div>
                   </div>
                 </li>
