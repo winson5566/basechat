@@ -112,7 +112,9 @@ export default function Welcome({ tenant, className }: Props) {
       <div className={`h-full flex flex-col justify-center ${inter.className}`}>
         <Logo name={tenant.name} url={tenant.logoUrl} width={100} height={100} className="avatar mb-8" />
         <h1 className="mb-12 text-3xl lg:text-[40px] font-bold leading-[50px]">
-          {(tenant.welcomeMessage || DEFAULT_WELCOME_MESSAGE).replace("{{company.name}}", tenant.name)}
+          {(tenant.welcomeMessage || DEFAULT_WELCOME_MESSAGE)
+            .replace("{{company.name}}", tenant.name)
+            .replace("{{company.chatBotName}}", tenant.chatBotName || `${tenant.name}'s AI`)}
         </h1>
         {questions.length > 0 && (
           <div className="flex flex-col md:flex-row items-stretch justify-evenly space-y-4 md:space-y-0 md:space-x-2">

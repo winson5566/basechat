@@ -27,6 +27,7 @@ import { HelpWelcomeMessageDialog } from "./help-welcome-message-dialog";
 const nullToEmptyString = (v: string | null) => v ?? "";
 
 const isValidSlug = (slug: string) => {
+  if (!slug || slug.trim().length === 0) return false;
   const sanitized = slug
     .trim()
     .toLowerCase()
@@ -46,6 +47,13 @@ const formSchema = z.object({
   slug: z.string().nullable().transform(nullToEmptyString).refine(isValidSlug, {
     message: "URL can only contain lowercase letters, numbers, and hyphens",
   }),
+  chatBotName: z
+    .string()
+    .nullable()
+    .transform(nullToEmptyString)
+    .refine((val) => val.length >= 1 && val.length <= 30, {
+      message: "Name must be between 1 and 30 characters",
+    }),
   isPublic: z.boolean().default(false),
 });
 
@@ -224,6 +232,37 @@ const SwitchField = ({ form, name, label }: SwitchFieldProps) => (
   />
 );
 
+type ChatBotNameFieldProps = {
+  name: keyof FormValues;
+  label: string;
+  form: UseFormReturn<FormValues, any, undefined>;
+  tenant: typeof schema.tenants.$inferSelect;
+};
+
+const ChatBotNameField = ({ form, name, label, tenant }: ChatBotNameFieldProps) => {
+  return (
+    <FormField
+      control={form.control}
+      name={name}
+      render={({ field }) => (
+        <FormItem className="flex flex-col mt-8">
+          <FormLabel className="font-semibold text-[16px] mb-3">{label}</FormLabel>
+          <FormControl>
+            <Input
+              type="text"
+              className="rounded-[8px] border border-[#D7D7D7] h-[58px] placeholder-[#74747A] text-[16px]"
+              {...field}
+              value={String(field.value)}
+            />
+          </FormControl>
+          <div className="text-sm text-muted-foreground mt-1">The name of your AI assistant</div>
+          <FormMessage />
+        </FormItem>
+      )}
+    />
+  );
+};
+
 type Props = {
   tenant: typeof schema.tenants.$inferSelect;
   canUploadLogo?: boolean;
@@ -234,7 +273,7 @@ export default function GeneralSettings({ tenant, canUploadLogo }: Props) {
   const router = useRouter();
 
   const formattedTenant = useMemo(() => {
-    const { groundingPrompt, systemPrompt, welcomeMessage, ...otherFields } = tenant;
+    const { groundingPrompt, systemPrompt, welcomeMessage, chatBotName, ...otherFields } = tenant;
 
     // Zod only uses default values when the value is undefined. They come in as null
     // Change fields you want to have defaults to undefined.
@@ -242,6 +281,7 @@ export default function GeneralSettings({ tenant, canUploadLogo }: Props) {
       groundingPrompt: groundingPrompt ? groundingPrompt : undefined,
       systemPrompt: systemPrompt ? systemPrompt : undefined,
       welcomeMessage: welcomeMessage ? welcomeMessage : undefined,
+      chatBotName: chatBotName ? chatBotName : `${tenant.name}'s AI`,
       ...otherFields,
     };
   }, [tenant]);
@@ -353,6 +393,8 @@ export default function GeneralSettings({ tenant, canUploadLogo }: Props) {
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)}>
           <div>
+            <ChatBotNameField form={form} name="chatBotName" label="Chatbot Name" tenant={tenant} />
+            <hr className="w-full my-8" />
             <TextAreaField
               form={form}
               name="welcomeMessage"

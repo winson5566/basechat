@@ -18,11 +18,33 @@ export function HelpWelcomeMessageDialog() {
         <div className="flex flex-col gap-4 text-surface-text-tertiary text-s">
           <p>The Welcome Message is displayed when creating a new conversation.</p>
           <h3 className="font-bold">Variables</h3>
-          <p>The Welcome Message can access the company&apos;s name. Here is an example</p>
+          <p>
+            The message has access to some variables like the company&apos;s name. To use these as part of your message
+            wrap the variable in curly braces like so: &#123;&#123;company.name&#125;&#125; Here are the variables
+            available
+          </p>
 
-          <div className="font-mono max-w-[400px] mt-4">
-            <p className="mb-2">{`Hello, I'm {{ company.name }}'s AI. What would you like to know?`}</p>
-          </div>
+          <table className="table-auto border border-collapse mt-4">
+            <thead>
+              <tr>
+                <th className="border p-2">Name</th>
+                <th className="border p-2">Description</th>
+                <th className="border p-2">Example</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td className="border p-2">company.name</td>
+                <td className="border p-2">Your company name</td>
+                <td className="border p-2">Acme Co.</td>
+              </tr>
+              <tr>
+                <td className="border p-2">company.chatBotName</td>
+                <td className="border p-2">The name of your AI assistant</td>
+                <td className="border p-2">Acme Bot</td>
+              </tr>
+            </tbody>
+          </table>
           <DialogClose asChild>
             <Button type="button" className="self-start">
               Got it

@@ -58,6 +58,7 @@ export const updateTenantSchema = z.object({
   welcomeMessage: z.string().nullable(),
   slug: z.string(),
   isPublic: z.boolean(),
+  chatBotName: z.string().nullable(),
 });
 
 export type MemberType = "profile" | "invite";
@@ -89,6 +90,7 @@ export const updateCurrentProfileSchema = z.object({
   currentProfileId: z.string(),
 });
 
+// add chatBotName here? it is nullable in the DB
 export const setupSchema = z.object({
   tenant: z.object({
     id: z.string(),
