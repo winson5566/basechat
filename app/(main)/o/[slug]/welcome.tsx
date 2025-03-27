@@ -5,12 +5,14 @@ import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import { z } from "zod";
 
+
 import ChatInput from "@/components/chatbot/chat-input";
 import Logo from "@/components/tenant/logo/logo";
 import { DEFAULT_WELCOME_MESSAGE } from "@/lib/constants";
 import { DEFAULT_MODEL, LLMModel } from "@/lib/llm/types";
 import { getConversationPath } from "@/lib/paths";
 import * as schema from "@/lib/server/db/schema";
+import { cn } from "@/lib/utils";
 import { getAvatarNumber } from "@/lib/utils";
 
 import { useGlobalState } from "./context";
@@ -118,7 +120,7 @@ export default function Welcome({ tenant, className }: Props) {
           url={tenant.logoUrl}
           width={100}
           height={100}
-          className={`avatar-${avatarNumber} mb-8`}
+          className={cn(`avatar-${avatarNumber}`, "mb-8")}
         />
         <h1 className="mb-12 text-3xl lg:text-[40px] font-bold leading-[50px]">
           {(tenant.welcomeMessage || DEFAULT_WELCOME_MESSAGE).replace("{{company.name}}", tenant.name)}

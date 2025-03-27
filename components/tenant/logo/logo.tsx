@@ -16,12 +16,13 @@ interface Props {
 
 export default function Logo({ name, url, width, height, className, initialCount = 2 }: Props) {
   const formattedName = name ? getInitials(name, initialCount) : "";
+  const isAvatarClass = className?.includes("avatar-");
 
   if (!url) {
     return (
       <div
         className={cn("rounded-full text-white flex items-center justify-center font-bold text-[32px]", className)}
-        style={{ height, width }}
+        style={!isAvatarClass ? { height, width } : undefined}
       >
         {formattedName}
       </div>

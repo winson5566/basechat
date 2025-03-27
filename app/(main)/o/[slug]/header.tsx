@@ -149,7 +149,7 @@ export default function Header({
                       url={tenant.logoUrl}
                       width={40}
                       height={40}
-                      className={`ml-3 text-[16px]  w-[40px] h-[40px] avatar-${avatarNumber}`}
+                      className={cn(`ml-3 text-[16px] w-[40px] h-[40px] avatar-${avatarNumber}`)}
                     />
                     <div className="ml-4">
                       {tenant.name}
