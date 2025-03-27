@@ -23,7 +23,6 @@ export function HelpWelcomeMessageDialog() {
           <div className="font-mono max-w-[400px] mt-4">
             <p className="mb-2">{`Hello, I'm {{ company.name }}'s AI. What would you like to know?`}</p>
           </div>
-
           <DialogClose asChild>
             <Button type="button" className="self-start">
               Got it

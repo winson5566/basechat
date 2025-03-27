@@ -3,7 +3,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Check, Copy, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { useForm, UseFormReturn } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
@@ -61,9 +61,14 @@ type URLFieldProps = {
 
 const URLField = ({ form, name, label }: URLFieldProps) => {
   const [isCopied, setIsCopied] = useState(false);
+  const [origin, setOrigin] = useState("");
+
+  useEffect(() => {
+    setOrigin(window.location.origin);
+  }, []);
 
   const handleCopyUrl = () => {
-    const url = `${location.origin}/o/${form.getValues(name) || "your-chat-name"}`;
+    const url = `${origin}/o/${form.getValues(name) || "your-chat-name"}`;
     navigator.clipboard.writeText(url);
     setIsCopied(true);
     setTimeout(() => setIsCopied(false), 2000);
@@ -87,7 +92,7 @@ const URLField = ({ form, name, label }: URLFieldProps) => {
           </FormControl>
           <div className="text-sm text-muted-foreground mt-1 flex items-center gap-2">
             <span>
-              Your chat will be available at: {location.origin}/o/{field.value || "your-chat-name"}
+              Your chat will be available at: {origin}/o/{field.value || "your-chat-name"}
             </span>
             <button
               type="button"
