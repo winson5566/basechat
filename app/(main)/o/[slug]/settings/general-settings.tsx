@@ -244,7 +244,7 @@ const CompanyNameField = ({ form, name, label, tenant }: CompanyNameFieldProps) 
       control={form.control}
       name={name}
       render={({ field }) => (
-        <FormItem className="flex flex-col mt-8">
+        <FormItem className="flex flex-col">
           <FormLabel className="font-semibold text-[16px] mb-3">{label}</FormLabel>
           <FormControl>
             <Input
