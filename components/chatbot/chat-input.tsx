@@ -26,11 +26,13 @@ interface ChatInputProps {
 const useIsDesktop = () => {
   // Whether to display model popover to the right of settings or on top
   const [isDesktop, setIsDesktop] = useState(false); // Start with false for mobile-first approach
+  const [mounted, setMounted] = useState(false); // Whether the component has mounted
 
   useEffect(() => {
-    // Only run on client-side
+    // Only run on the client
+    setMounted(true);
     const checkIsDesktop = () => {
-      setIsDesktop(window.innerWidth >= 640); // sm breakpoint
+      setIsDesktop(window.innerWidth >= 640);
     };
 
     // Initial check
@@ -43,6 +45,8 @@ const useIsDesktop = () => {
     return () => window.removeEventListener("resize", checkIsDesktop);
   }, []);
 
+  // Return false during SSR and initial client render
+  if (!mounted) return false;
   return isDesktop;
 };
 
