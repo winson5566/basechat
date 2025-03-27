@@ -11,6 +11,7 @@ import { DEFAULT_WELCOME_MESSAGE } from "@/lib/constants";
 import { DEFAULT_MODEL, LLMModel } from "@/lib/llm/types";
 import { getConversationPath } from "@/lib/paths";
 import * as schema from "@/lib/server/db/schema";
+import { getAvatarNumber } from "@/lib/utils";
 
 import { useGlobalState } from "./context";
 
@@ -107,10 +108,18 @@ export default function Welcome({ tenant, className }: Props) {
     (question): question is string => question !== null && question.trim() !== "",
   );
 
+  const avatarNumber = getAvatarNumber(tenant.id);
+
   return (
     <div className={className}>
       <div className={`h-full flex flex-col justify-center ${inter.className}`}>
-        <Logo name={tenant.name} url={tenant.logoUrl} width={100} height={100} className="avatar mb-8" />
+        <Logo
+          name={tenant.name}
+          url={tenant.logoUrl}
+          width={100}
+          height={100}
+          className={`avatar-${avatarNumber} mb-8`}
+        />
         <h1 className="mb-12 text-3xl lg:text-[40px] font-bold leading-[50px]">
           {(tenant.welcomeMessage || DEFAULT_WELCOME_MESSAGE).replace("{{company.name}}", tenant.name)}
         </h1>

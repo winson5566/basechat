@@ -4,6 +4,7 @@ import Markdown from "react-markdown";
 
 import CONNECTOR_MAP from "@/lib/connector-map";
 import { LLMModel, LLM_DISPLAY_NAMES } from "@/lib/llm/types";
+import { getAvatarNumber } from "@/lib/utils";
 
 import Logo from "../tenant/logo/logo";
 
@@ -28,6 +29,7 @@ const Citation = ({ source, onClick = () => {} }: { source: SourceMetadata; onCl
 };
 
 interface Props {
+  tenantId: string;
   content: string | undefined;
   id?: string | null;
   name: string;
@@ -46,6 +48,7 @@ export default function AssistantMessage({
   onSelectedDocumentId,
   model,
   isGenerating,
+  tenantId,
 }: Props) {
   const dedupe = sources.reduce<Record<string, SourceMetadata>>((acc, v) => {
     acc[v.documentId] = v;
@@ -53,11 +56,18 @@ export default function AssistantMessage({
   }, {});
 
   const dedupedSources = Object.values(dedupe);
+  const avatarNumber = getAvatarNumber(tenantId);
 
   return (
     <div className="flex">
       <div className="mb-8 shrink-0">
-        <Logo name={name} url={logoUrl} width={40} height={40} className="avatar text-[13px] h-[40px] w-[40px]" />
+        <Logo
+          name={name}
+          url={logoUrl}
+          width={40}
+          height={40}
+          className={`avatar-${avatarNumber} text-[13px] h-[40px] w-[40px]`}
+        />
       </div>
       <div className="self-start mb-6 rounded-md ml-7">
         {content?.length ? (

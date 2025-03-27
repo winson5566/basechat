@@ -36,6 +36,7 @@ interface Props {
     name: string;
     logoUrl?: string | null;
     slug: string;
+    id: string;
   };
   initMessage?: string;
   onSelectedDocumentId: (id: string) => void;
@@ -201,6 +202,7 @@ export default function Chatbot({ tenant, conversationId, initMessage, onSelecte
                   onSelectedDocumentId={onSelectedDocumentId}
                   model={message.model || selectedModel}
                   isGenerating={false}
+                  tenantId={tenant.id}
                 />
               </Fragment>
             ),
@@ -215,6 +217,7 @@ export default function Chatbot({ tenant, conversationId, initMessage, onSelecte
               onSelectedDocumentId={onSelectedDocumentId}
               model={pendingMessage?.model || selectedModel}
               isGenerating
+              tenantId={tenant.id}
             />
           )}
         </div>

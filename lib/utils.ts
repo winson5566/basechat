@@ -22,3 +22,20 @@ export function getInitials(name: string): string {
 
   return initials;
 }
+
+/**
+ * Deterministically maps a tenantId to a number between 1 and max
+ * @param tenantId - The tenant ID to map
+ * @param max - The maximum number in the range (inclusive) (the number of avatar classes in globals.css)
+ * @returns A number between 1 and max
+ */
+export function getAvatarNumber(tenantId: string, max: number = 3): number {
+  // Convert tenantId to a number using a simple hash function
+  if (!tenantId) return 1;
+  const hash = tenantId.split("").reduce((acc, char) => {
+    return char.charCodeAt(0) + ((acc << 5) - acc);
+  }, 0);
+
+  // Use the hash to get a number between 1 and max
+  return Math.abs(hash % max) + 1;
+}
