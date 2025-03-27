@@ -11,10 +11,11 @@ interface Props {
   className?: string;
   width: number;
   height: number;
+  initialCount?: number;
 }
 
-export default function Logo({ name, url, width, height, className }: Props) {
-  const formattedName = name ? getInitials(name) : "";
+export default function Logo({ name, url, width, height, className, initialCount = 2 }: Props) {
+  const formattedName = name ? getInitials(name, initialCount) : "";
 
   if (!url) {
     return (

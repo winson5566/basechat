@@ -116,6 +116,7 @@ export default function Header({ currentProfileId, isAnonymous, tenant, name, on
                 width={32}
                 height={32}
                 className="bg-[#66666E] font-semibold text-[16px] cursor-pointer"
+                initialCount={1}
               />
             </div>
           </PopoverTrigger>

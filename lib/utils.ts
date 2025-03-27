@@ -10,13 +10,13 @@ export function cn(...inputs: ClassValue[]) {
  * @param name - The title to extract initials from.
  * @returns A string containing up to two initials.
  */
-export function getInitials(name: string): string {
+export function getInitials(name: string, initialCount: number = 2): string {
   // Split the title into words and filter out empty strings
   const words = name.split(/\s+/).filter((word) => word.trim().length > 0);
 
-  // Get the first character of up to two words
+  // Get the first character of up to initialCount words
   const initials = words
-    .slice(0, 2)
+    .slice(0, initialCount)
     .map((word) => word.charAt(0).toUpperCase())
     .join("");
 
