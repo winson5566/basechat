@@ -13,7 +13,7 @@ export function HelpSystemPromptDialog() {
       </DialogTrigger>
       <DialogContent className="sm:max-w-[600px]">
         <DialogHeader>
-          <DialogTitle className="text-xl">Grounding Prompt</DialogTitle>
+          <DialogTitle className="text-xl">System Prompt</DialogTitle>
         </DialogHeader>
         <div className="flex flex-col gap-4 text-surface-text-tertiary text-s">
           <p>
