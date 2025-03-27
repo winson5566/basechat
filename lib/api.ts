@@ -58,7 +58,7 @@ export const updateTenantSchema = z.object({
   welcomeMessage: z.string().nullable(),
   slug: z.string(),
   isPublic: z.boolean(),
-  chatBotName: z.string().nullable(),
+  name: z.string(),
 });
 
 export type MemberType = "profile" | "invite";

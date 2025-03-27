@@ -32,4 +32,4 @@ IMPORTANT RULES:
 
 export const DEFAULT_EXPAND_SYSTEM_PROMPT = `The user would like you to provide more information on the the last topic. Please provide a more detailed response. Re-use the information you have already been provided and expand on your previous response. Your response may be longer than typical. You do not need to note the sources you used again.`;
 
-export const DEFAULT_WELCOME_MESSAGE = `Hello, I'm {{company.chatBotName}}. What would you like to know?`;
+export const DEFAULT_WELCOME_MESSAGE = `Hello, I'm {{company.name}}'s AI. What would you like to know?`;

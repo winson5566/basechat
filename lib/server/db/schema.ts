@@ -65,7 +65,6 @@ export const tenants = pgTable("tenants", {
   logoFileName: text("logo_file_name"), // The name of the file that was uploaded
   logoObjectName: text("logo_object_name"), // The name of the object in the bucket
   logoUrl: text("logo_url"), // The publicly accessible URL of the object
-  chatBotName: text("chat_bot_name"),
 });
 
 export const rolesEnum = pgEnum("roles", ["admin", "user", "guest"]);
