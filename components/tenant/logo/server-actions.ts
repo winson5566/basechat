@@ -124,26 +124,14 @@ function fileToReadable(file: File) {
 const createLogoSchema = z.object({
   slug: z.string(),
   file: z.instanceof(File),
-  isSetup: z.string().optional(),
 });
 
 export async function createLogo(prevState: CreateLogoState, formData: FormData): Promise<CreateLogoState> {
   const parsed = createLogoSchema.parse({
     slug: formData.get("slug"),
     file: formData.get("file"),
-    isSetup: formData.get("isSetup"),
   });
-
   const { tenant } = await requireAuthContext(parsed.slug);
-  // tenant may be garbage if setup is true because slug would be "setup"
-  // For setup, we don't need to verify tenant context
-  let tenantId: string;
-  if (parsed.isSetup === "true") {
-    // Generate a temporary tenant ID for setup
-    tenantId = `setup_${Date.now()}`;
-  } else {
-    tenantId = tenant.id;
-  }
 
   assert(process.env.STORAGE_BUCKET);
 
@@ -152,7 +140,7 @@ export async function createLogo(prevState: CreateLogoState, formData: FormData)
   const minioClient = createMinioClient();
 
   // Delete the old logo if we have one
-  if (!parsed.isSetup && tenant.logoObjectName) {
+  if (tenant.logoObjectName) {
     try {
       await minioClient.statObject(bucket, tenant.logoObjectName);
       await minioClient.removeObject(bucket, tenant.logoObjectName);
@@ -167,7 +155,7 @@ export async function createLogo(prevState: CreateLogoState, formData: FormData)
 
   try {
     const readable = fileToReadable(parsed.file);
-    let uploadObjectName = `${tenantId}/${objectName}`; //use the temporary tenant ID setup_date if setup
+    let uploadObjectName = `${tenant.id}/${objectName}`;
     if (prefix) {
       uploadObjectName = `${prefix}/${uploadObjectName}`;
     }
@@ -175,11 +163,7 @@ export async function createLogo(prevState: CreateLogoState, formData: FormData)
     await minioClient.putObject(bucket, uploadObjectName, readable);
 
     const objectUrl = getObjectUrl(uploadObjectName);
-
-    // Only update tenant record if not in setup
-    if (parsed.isSetup !== "true") {
-      await setTenantLogo(tenantId, parsed.file.name, objectName, objectUrl);
-    }
+    await setTenantLogo(tenant.id, parsed.file.name, objectName, objectUrl);
 
     return {
       status: "success",

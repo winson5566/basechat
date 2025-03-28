@@ -14,11 +14,9 @@ interface Props {
     logoName?: string | null;
     logoUrl?: string | null;
   };
-  onLogoSuccess?: (event: { url: string; fileName: string }) => void;
-  isSetup?: boolean;
 }
 
-export default function LogoChanger({ tenant, onLogoSuccess, isSetup }: Props) {
+export default function LogoChanger({ tenant }: Props) {
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [image, setImage] = useState<string | null>(null);
   const [logoUrl, setLogoUrl] = useState<string | null | undefined>(tenant.logoUrl);
@@ -42,7 +40,6 @@ export default function LogoChanger({ tenant, onLogoSuccess, isSetup }: Props) {
     setLogoUrl(url);
     setLogoName(fileName);
     setImage(null);
-    onLogoSuccess?.({ url, fileName });
   };
 
   const onDeleteLogoSuccess = () => {
@@ -62,7 +59,6 @@ export default function LogoChanger({ tenant, onLogoSuccess, isSetup }: Props) {
           imageName={logoName}
           onCancel={onSetLogoCancel}
           onSuccess={onSetLogoSuccess}
-          isSetup={isSetup}
         />
       )}
       {confirmDelete && (

@@ -27,10 +27,9 @@ interface Props {
   imageName?: string | null | undefined;
   onCancel: () => void;
   onSuccess: (event: OnSuccessEvent) => void;
-  isSetup?: boolean;
 }
 
-export default function CreateLogoDialog({ tenant, image, imageName, onCancel, onSuccess, isSetup }: Props) {
+export default function CreateLogoDialog({ tenant, image, imageName, onCancel, onSuccess }: Props) {
   const [state, formAction] = useActionState(createLogo, {
     status: "pending" as const,
   });
@@ -60,7 +59,6 @@ export default function CreateLogoDialog({ tenant, image, imageName, onCancel, o
           slug={tenant.slug}
           image={image}
           imageName={imageName}
-          isSetup={isSetup}
         />
       </DialogContent>
     </Dialog>
@@ -74,7 +72,6 @@ function CreateLogoForm({
   formAction,
   onCancel,
   slug,
-  isSetup,
 }: {
   image: string;
   imageName: string | null | undefined;
@@ -82,7 +79,6 @@ function CreateLogoForm({
   formAction: (payload: FormData) => void;
   onCancel?: () => void;
   slug: string;
-  isSetup?: boolean;
 }) {
   return (
     <>
@@ -90,7 +86,7 @@ function CreateLogoForm({
         <DialogTitle>Upload logo</DialogTitle>
       </DialogHeader>
       <form action={formAction}>
-        <CreateLogoFormBody slug={slug} image={image} imageName={imageName} onCancel={onCancel} isSetup={isSetup} />
+        <CreateLogoFormBody slug={slug} image={image} imageName={imageName} onCancel={onCancel} />
       </form>
     </>
   );
@@ -101,13 +97,11 @@ function CreateLogoFormBody({
   image,
   imageName,
   onCancel,
-  isSetup,
 }: {
   slug: string;
   image: string;
   imageName?: string | null | undefined;
   onCancel?: () => void;
-  isSetup?: boolean;
 }) {
   const finalImageRef = useRef<HTMLInputElement>(null);
 
@@ -173,7 +167,6 @@ function CreateLogoFormBody({
       </DialogFooter>
       <input ref={finalImageRef} type="file" name="file" className="hidden" />
       <input type="hidden" name="slug" value={slug} />
-      {isSetup && <input type="hidden" name="isSetup" value="true" />}
     </>
   );
 }

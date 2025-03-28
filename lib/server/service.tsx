@@ -19,15 +19,7 @@ import { hashPassword } from "./utils";
 
 type Role = (typeof schema.rolesEnum.enumValues)[number];
 
-export async function createTenant(
-  userId: string,
-  name: string,
-  logoInfo?: {
-    logoUrl: string;
-    logoFileName: string;
-    logoObjectName: string;
-  },
-) {
+export async function createTenant(userId: string, name: string) {
   // Remove any non-alphanumeric characters except hyphens and spaces
   let slug = name
     .trim()
@@ -67,15 +59,7 @@ export async function createTenant(
 
   const tenants = await db
     .insert(schema.tenants)
-    .values({
-      name,
-      slug,
-      ...(logoInfo && {
-        logoUrl: logoInfo.logoUrl,
-        logoFileName: logoInfo.logoFileName,
-        logoObjectName: logoInfo.logoObjectName,
-      }),
-    })
+    .values({ name, slug })
     .returning({ id: schema.tenants.id, slug: schema.tenants.slug });
 
   assert(tenants.length === 1);
