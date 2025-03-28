@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import { z } from "zod";
 
-
 import ChatInput from "@/components/chatbot/chat-input";
 import Logo from "@/components/tenant/logo/logo";
 import { DEFAULT_WELCOME_MESSAGE } from "@/lib/constants";
@@ -110,18 +109,10 @@ export default function Welcome({ tenant, className }: Props) {
     (question): question is string => question !== null && question.trim() !== "",
   );
 
-  const avatarNumber = getAvatarNumber(tenant.id);
-
   return (
     <div className={className}>
       <div className={`h-full flex flex-col justify-center ${inter.className}`}>
-        <Logo
-          name={tenant.name}
-          url={tenant.logoUrl}
-          width={100}
-          height={100}
-          className={cn(`avatar-${avatarNumber}`, "mb-8")}
-        />
+        <Logo name={tenant.name} url={tenant.logoUrl} width={100} height={100} className="mb-8" tenantId={tenant.id} />
         <h1 className="mb-12 text-3xl lg:text-[40px] font-bold leading-[50px]">
           {(tenant.welcomeMessage || DEFAULT_WELCOME_MESSAGE).replace("{{company.name}}", tenant.name)}
         </h1>

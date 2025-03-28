@@ -4,7 +4,6 @@ import Markdown from "react-markdown";
 
 import CONNECTOR_MAP from "@/lib/connector-map";
 import { LLMModel, LLM_DISPLAY_NAMES } from "@/lib/llm/types";
-import { getAvatarNumber } from "@/lib/utils";
 
 import Logo from "../tenant/logo/logo";
 
@@ -56,7 +55,6 @@ export default function AssistantMessage({
   }, {});
 
   const dedupedSources = Object.values(dedupe);
-  const avatarNumber = getAvatarNumber(tenantId);
 
   return (
     <div className="flex">
@@ -66,7 +64,8 @@ export default function AssistantMessage({
           url={logoUrl}
           width={40}
           height={40}
-          className={`avatar-${avatarNumber} text-[13px] h-[40px] w-[40px]`}
+          className="text-[13px] h-[40px] w-[40px]"
+          tenantId={tenantId}
         />
       </div>
       <div className="self-start mb-6 rounded-md ml-7">

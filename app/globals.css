@@ -158,21 +158,21 @@ body {
   .avatar-1 {
     width: 100.41px;
     height: 100px;
-    background: linear-gradient(90deg, #f5c3af 0%, #ea89d7 46.87%, #6767d9 100%);
-    border-radius: 80px;
+    background: linear-gradient(90deg, #f5c3af 0%, #ea89d7 46.87%, #6767d9 100%) !important;
+    border-radius: 80px !important;
   }
 
   .avatar-2 {
     width: 100.41px;
     height: 100px;
-    background: linear-gradient(90deg, #f7d147 0%, #e7557c 100%);
-    border-radius: 80px;
+    background: linear-gradient(90deg, #f7d147 0%, #e7557c 100%) !important;
+    border-radius: 80px !important;
   }
 
   .avatar-3 {
     width: 100.41px;
     height: 100px;
-    background: linear-gradient(90deg, #4393f4 0%, #ec609c 50%, #ef8482 100%);
-    border-radius: 80px;
+    background: linear-gradient(90deg, #4393f4 0%, #ec609c 50%, #ef8482 100%) !important;
+    border-radius: 80px !important;
   }
 }

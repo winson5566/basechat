@@ -11,8 +11,7 @@ import Logo from "@/components/tenant/logo/logo";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { tenantListResponseSchema, updateCurrentProfileSchema } from "@/lib/api";
 import { getSignUpPath, getTenantPath } from "@/lib/paths";
-import { getMembersByTenantId } from "@/lib/server/service";
-import { cn, getAvatarNumber } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 import AnonProfileIcon from "@/public/icons/anonymous-profile.svg";
 import CheckIcon from "@/public/icons/check.svg";
 import HamburgerIcon from "@/public/icons/hamburger.svg";
@@ -148,7 +147,8 @@ export default function Header({
                       url={tenant.logoUrl}
                       width={40}
                       height={40}
-                      className={cn(`ml-3 text-[16px] w-[40px] h-[40px] avatar-${getAvatarNumber(tenant.id)}`)}
+                      className="ml-3 text-[16px] w-[40px] h-[40px]"
+                      tenantId={tenant.id}
                     />
                     <div className="ml-4">
                       {tenant.name}

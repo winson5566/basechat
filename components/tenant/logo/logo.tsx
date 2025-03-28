@@ -1,9 +1,7 @@
 "use client";
 
-import Image from "next/image";
-
 import { cn } from "@/lib/utils";
-import { getInitials } from "@/lib/utils";
+import { getInitials, getAvatarNumber } from "@/lib/utils";
 
 interface Props {
   name?: string | null;
@@ -12,17 +10,22 @@ interface Props {
   width: number;
   height: number;
   initialCount?: number;
+  tenantId?: string;
 }
 
-export default function Logo({ name, url, width, height, className, initialCount = 2 }: Props) {
+export default function Logo({ name, url, width, height, className, initialCount = 2, tenantId }: Props) {
   const formattedName = name ? getInitials(name, initialCount) : "";
-  const isAvatarClass = className?.includes("avatar-");
+  const avatarClass = tenantId ? `avatar-${getAvatarNumber(tenantId)}` : "";
 
   if (!url) {
     return (
       <div
-        className={cn("rounded-full text-white flex items-center justify-center font-bold text-[32px]", className)}
-        style={!isAvatarClass ? { height, width } : undefined}
+        className={cn(
+          "rounded-full text-white flex items-center justify-center font-bold text-[32px]",
+          avatarClass,
+          className,
+        )}
+        style={{ height, width }}
       >
         {formattedName}
       </div>
