@@ -114,15 +114,23 @@ export default function ChatInput(props: ChatInputProps) {
 
     setIsDeleting(true);
     try {
+      // We send the tenantSlug in the request body
+      // The API endpoint will use it to create a Request with the appropriate headers
+      // for requireAuthContextFromRequest to work consistently
       const response = await fetch(`/api/conversations/${props.conversationId}`, {
         method: "DELETE",
         headers: {
-          tenant: props.tenantSlug,
+          "Content-Type": "application/json",
         },
+        body: JSON.stringify({
+          tenantSlug: props.tenantSlug,
+        }),
       });
 
       if (!response.ok) {
-        throw new Error("Failed to delete conversation");
+        const errorText = await response.text();
+        console.error(`Failed to delete conversation: ${response.status} - ${errorText}`);
+        throw new Error(`Delete failed: ${response.status} ${response.statusText}`);
       }
 
       toast.success("Conversation deleted successfully");
@@ -131,7 +139,7 @@ export default function ChatInput(props: ChatInputProps) {
       router.push(`/o/${props.tenantSlug}`);
     } catch (error) {
       console.error("Failed to delete conversation:", error);
-      toast.error("Failed to delete conversation");
+      toast.error(error instanceof Error ? error.message : "Failed to delete conversation");
     } finally {
       setIsDeleting(false);
     }

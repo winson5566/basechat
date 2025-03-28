@@ -1,16 +1,42 @@
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { NextResponse } from "next/server";
+import { z } from "zod";
 
 import db from "@/lib/server/db";
 import { conversations } from "@/lib/server/db/schema";
-import { requireAuthContextFromRequest } from "@/lib/server/utils";
+import { requireAuthContext } from "@/lib/server/utils";
 
-export async function DELETE(request: Request, { params }: { params: { id: string } }) {
+// Schema for validating request body
+const deleteConversationSchema = z.object({
+  tenantSlug: z.string(),
+});
+
+export async function DELETE(request: Request, { params }: { params: { conversationId: string } }) {
   try {
-    const { profile, tenant } = await requireAuthContextFromRequest(request);
+    // Parse the request body
+    const body = await request.json().catch(() => ({}));
+    const validationResult = deleteConversationSchema.safeParse(body);
+    if (!validationResult.success) return new NextResponse("Invalid request body", { status: 400 });
 
-    // Delete the conversation
-    await db.delete(conversations).where(eq(conversations.id, params.id));
+    const { tenantSlug } = validationResult.data;
+
+    const { profile, tenant } = await requireAuthContext(tenantSlug);
+
+    const deleteResults = await db
+      .delete(conversations)
+      .where(
+        and(
+          eq(conversations.id, params.conversationId),
+          eq(conversations.tenantId, tenant.id),
+          eq(conversations.profileId, profile.id),
+        ),
+      )
+      .returning({ id: conversations.id });
+
+    // Check if we actually deleted anything
+    if (deleteResults.length === 0) {
+      return new NextResponse("Conversation not found or not authorized", { status: 404 });
+    }
 
     return new NextResponse(null, { status: 204 });
   } catch (error) {
