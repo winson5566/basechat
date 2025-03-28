@@ -267,8 +267,11 @@ type Props = {
 };
 
 export default function GeneralSettings({ tenant, canUploadLogo }: Props) {
+  const [mounted, setMounted] = useState(false);
   const [isLoading, setLoading] = useState(false);
   const router = useRouter();
+
+  useEffect(() => setMounted(true));
 
   const formattedTenant = useMemo(() => {
     const { groundingPrompt, systemPrompt, welcomeMessage, ...otherFields } = tenant;
@@ -287,6 +290,8 @@ export default function GeneralSettings({ tenant, canUploadLogo }: Props) {
     resolver: zodResolver(formSchema),
     defaultValues: formSchema.parse(formattedTenant),
   });
+
+  if (!mounted) return null;
 
   async function onSubmit(values: FormValues) {
     setLoading(true);
