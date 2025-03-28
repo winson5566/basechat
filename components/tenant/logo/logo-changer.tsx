@@ -14,9 +14,10 @@ interface Props {
     logoName?: string | null;
     logoUrl?: string | null;
   };
+  onLogoUpdate?: (data: { logoFileName?: string; logoObjectName?: string; logoUrl?: string } | null) => void;
 }
 
-export default function LogoChanger({ tenant }: Props) {
+export default function LogoChanger({ tenant, onLogoUpdate }: Props) {
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [image, setImage] = useState<string | null>(null);
   const [logoUrl, setLogoUrl] = useState<string | null | undefined>(tenant.logoUrl);
@@ -40,6 +41,10 @@ export default function LogoChanger({ tenant }: Props) {
     setLogoUrl(url);
     setLogoName(fileName);
     setImage(null);
+    onLogoUpdate?.({
+      logoFileName: fileName,
+      logoUrl: url,
+    });
   };
 
   const onDeleteLogoSuccess = () => {
@@ -47,6 +52,7 @@ export default function LogoChanger({ tenant }: Props) {
     setImage(null);
     setLogoUrl(null);
     toast.success("Logo successfully deleted");
+    onLogoUpdate?.(null);
   };
 
   return (

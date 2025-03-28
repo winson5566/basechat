@@ -23,6 +23,21 @@ export type CreateLogoState =
       message: string;
     };
 
+export type SetupLogoState =
+  | {
+      status: "pending";
+    }
+  | {
+      status: "success";
+      url: string;
+      fileName: string;
+      objectName: string;
+    }
+  | {
+      status: "error";
+      message: string;
+    };
+
 function createMinioClient(): Minio.Client {
   assert(process.env.STORAGE_ENDPOINT);
   assert(process.env.STORAGE_USE_SSL);
@@ -123,6 +138,10 @@ function fileToReadable(file: File) {
 
 const createLogoSchema = z.object({
   slug: z.string(),
+  file: z.instanceof(File),
+});
+
+const setupLogoSchema = z.object({
   file: z.instanceof(File),
 });
 
@@ -230,4 +249,45 @@ export async function deleteLogo(prevState: DeleteLogoState, formData: FormData)
   return {
     status: "success",
   };
+}
+
+export async function uploadSetupLogo(prevState: SetupLogoState, formData: FormData): Promise<SetupLogoState> {
+  const parsed = setupLogoSchema.parse({
+    file: formData.get("file"),
+  });
+
+  assert(process.env.STORAGE_BUCKET);
+
+  const prefix = process.env.STORAGE_PREFIX;
+  const bucket = process.env.STORAGE_BUCKET;
+  const minioClient = createMinioClient();
+
+  // Add the current timestamp to avoid issues with old logo name being cached in browser
+  const nowTimestamp = new Date().getTime();
+  const objectName = `logo_${nowTimestamp}.png`;
+
+  try {
+    const readable = fileToReadable(parsed.file);
+    let uploadObjectName = `setup/${objectName}`;
+    if (prefix) {
+      uploadObjectName = `${prefix}/${uploadObjectName}`;
+    }
+
+    await minioClient.putObject(bucket, uploadObjectName, readable);
+
+    const objectUrl = getObjectUrl(uploadObjectName);
+
+    return {
+      status: "success",
+      url: objectUrl,
+      fileName: parsed.file.name,
+      objectName: objectName,
+    };
+  } catch (error: unknown) {
+    console.log(error);
+    return {
+      status: "error",
+      message: "An unexpected error occurred while uploading the logo",
+    };
+  }
 }

@@ -90,6 +90,13 @@ export const updateCurrentProfileSchema = z.object({
   currentProfileId: z.string(),
 });
 
+export const setupRequestSchema = z.object({
+  name: z.string().trim().min(1),
+  logoFileName: z.string().optional(),
+  logoObjectName: z.string().optional(),
+  logoUrl: z.string().optional(),
+});
+
 export const setupSchema = z.object({
   tenant: z.object({
     id: z.string(),
