@@ -13,6 +13,7 @@ interface Props {
     name: string;
     logoUrl?: string | null;
     slug: string;
+    id: string;
   };
 }
 
