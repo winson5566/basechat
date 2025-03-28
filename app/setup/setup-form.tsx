@@ -6,12 +6,11 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 
-import CreateLogoDialog from "@/components/tenant/logo/create-logo-dialog";
 import LogoChanger from "@/components/tenant/logo/logo-changer";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { setupSchema } from "@/lib/api";
+import { setupRequestSchema, setupResponseSchema } from "@/lib/api";
 import { getTenantPath } from "@/lib/paths";
 
 const formSchema = z.object({
@@ -26,46 +25,51 @@ export default function SetupForm() {
 
   const router = useRouter();
   const [failureMessage, setFailureMessage] = useState<string | null>(null);
-  const [logoData, setLogoData] = useState<{
-    logoFileName?: string;
-    logoObjectName?: string;
-    logoUrl?: string;
+  const [logoInfo, setLogoInfo] = useState<{
+    logoUrl: string;
+    logoFileName: string;
+    logoObjectName: string;
   } | null>(null);
-  const [image, setImage] = useState<string | null>(null);
-  const [imageName, setImageName] = useState<string | null>(null);
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setFailureMessage(null);
 
+    //this is the only place we call this endpoint
+    //TODO: make sure this is consistent with setupSchema vs setupRequestSchema
+    // which is in api.ts but also the route.ts itself?
     const res = await fetch("/api/setup", {
       method: "POST",
       body: JSON.stringify({
         ...values,
-        ...logoData,
+        ...(logoInfo && {
+          logoUrl: logoInfo.logoUrl,
+          logoFileName: logoInfo.logoFileName,
+          logoObjectName: logoInfo.logoObjectName,
+        }),
       }),
     });
 
+    const data = await res.json();
     if (res.status < 200 || res.status >= 300) {
-      setFailureMessage("An unexpected error occurred. Could not finish setup.");
+      setFailureMessage(data.error || "An unexpected error occurred. Could not finish setup.");
       return;
     }
-
-    const data = await res.json();
-    const { tenant } = setupSchema.parse(data);
-    router.push(getTenantPath(tenant.slug));
+    try {
+      const { tenant } = setupResponseSchema.parse(data);
+      router.push(getTenantPath(tenant.slug));
+    } catch (error) {
+      setFailureMessage("Invalid response from server. Please try again.");
+    }
   }
 
-  const handleLogoUpdate = (data: { logoFileName?: string; logoObjectName?: string; logoUrl?: string } | null) => {
-    setLogoData(data);
-  };
-
-  const handleLogoSuccess = (data: { url: string; fileName: string }) => {
-    setLogoData({
-      logoFileName: data.fileName,
-      logoUrl: data.url,
+  const handleLogoSuccess = ({ url, fileName }: { url: string; fileName: string }) => {
+    // Extract object name from URL
+    const objectName = url.split("/").pop() || "";
+    setLogoInfo({
+      logoUrl: url,
+      logoFileName: fileName,
+      logoObjectName: objectName,
     });
-    setImage(null);
-    setImageName(null);
   };
 
   return (
@@ -96,27 +100,14 @@ export default function SetupForm() {
           </div>
           <LogoChanger
             tenant={{
-              name: form.getValues("name") || "",
-              slug: "",
-              logoName: logoData?.logoFileName || null,
-              logoUrl: logoData?.logoUrl || null,
+              name: form.getValues("name") || "New Company",
+              slug: "setup",
+              logoUrl: logoInfo?.logoUrl || null,
+              logoName: logoInfo?.logoFileName || null,
             }}
-            onLogoUpdate={handleLogoUpdate}
+            onLogoSuccess={handleLogoSuccess}
+            isSetup={true}
           />
-          {image && (
-            <CreateLogoDialog
-              tenant={{
-                slug: "",
-              }}
-              image={image}
-              imageName={imageName}
-              onCancel={() => {
-                setImage(null);
-                setImageName(null);
-              }}
-              onSuccess={handleLogoSuccess}
-            />
-          )}
           <hr className="w-full my-8" />
         </div>
         <button

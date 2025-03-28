@@ -23,21 +23,6 @@ export type CreateLogoState =
       message: string;
     };
 
-export type SetupLogoState =
-  | {
-      status: "pending";
-    }
-  | {
-      status: "success";
-      url: string;
-      fileName: string;
-      objectName: string;
-    }
-  | {
-      status: "error";
-      message: string;
-    };
-
 function createMinioClient(): Minio.Client {
   assert(process.env.STORAGE_ENDPOINT);
   assert(process.env.STORAGE_USE_SSL);
@@ -139,18 +124,26 @@ function fileToReadable(file: File) {
 const createLogoSchema = z.object({
   slug: z.string(),
   file: z.instanceof(File),
-});
-
-const setupLogoSchema = z.object({
-  file: z.instanceof(File),
+  isSetup: z.string().optional(),
 });
 
 export async function createLogo(prevState: CreateLogoState, formData: FormData): Promise<CreateLogoState> {
   const parsed = createLogoSchema.parse({
     slug: formData.get("slug"),
     file: formData.get("file"),
+    isSetup: formData.get("isSetup"),
   });
+
   const { tenant } = await requireAuthContext(parsed.slug);
+  // tenant may be garbage if setup is true because slug would be "setup"
+  // For setup, we don't need to verify tenant context
+  let tenantId: string;
+  if (parsed.isSetup === "true") {
+    // Generate a temporary tenant ID for setup
+    tenantId = `setup_${Date.now()}`;
+  } else {
+    tenantId = tenant.id;
+  }
 
   assert(process.env.STORAGE_BUCKET);
 
@@ -159,7 +152,7 @@ export async function createLogo(prevState: CreateLogoState, formData: FormData)
   const minioClient = createMinioClient();
 
   // Delete the old logo if we have one
-  if (tenant.logoObjectName) {
+  if (!parsed.isSetup && tenant.logoObjectName) {
     try {
       await minioClient.statObject(bucket, tenant.logoObjectName);
       await minioClient.removeObject(bucket, tenant.logoObjectName);
@@ -174,7 +167,7 @@ export async function createLogo(prevState: CreateLogoState, formData: FormData)
 
   try {
     const readable = fileToReadable(parsed.file);
-    let uploadObjectName = `${tenant.id}/${objectName}`;
+    let uploadObjectName = `${tenantId}/${objectName}`; //use the temporary tenant ID setup_date if setup
     if (prefix) {
       uploadObjectName = `${prefix}/${uploadObjectName}`;
     }
@@ -182,7 +175,11 @@ export async function createLogo(prevState: CreateLogoState, formData: FormData)
     await minioClient.putObject(bucket, uploadObjectName, readable);
 
     const objectUrl = getObjectUrl(uploadObjectName);
-    await setTenantLogo(tenant.id, parsed.file.name, objectName, objectUrl);
+
+    // Only update tenant record if not in setup
+    if (parsed.isSetup !== "true") {
+      await setTenantLogo(tenantId, parsed.file.name, objectName, objectUrl);
+    }
 
     return {
       status: "success",
@@ -249,45 +246,4 @@ export async function deleteLogo(prevState: DeleteLogoState, formData: FormData)
   return {
     status: "success",
   };
-}
-
-export async function uploadSetupLogo(prevState: SetupLogoState, formData: FormData): Promise<SetupLogoState> {
-  const parsed = setupLogoSchema.parse({
-    file: formData.get("file"),
-  });
-
-  assert(process.env.STORAGE_BUCKET);
-
-  const prefix = process.env.STORAGE_PREFIX;
-  const bucket = process.env.STORAGE_BUCKET;
-  const minioClient = createMinioClient();
-
-  // Add the current timestamp to avoid issues with old logo name being cached in browser
-  const nowTimestamp = new Date().getTime();
-  const objectName = `logo_${nowTimestamp}.png`;
-
-  try {
-    const readable = fileToReadable(parsed.file);
-    let uploadObjectName = `setup/${objectName}`;
-    if (prefix) {
-      uploadObjectName = `${prefix}/${uploadObjectName}`;
-    }
-
-    await minioClient.putObject(bucket, uploadObjectName, readable);
-
-    const objectUrl = getObjectUrl(uploadObjectName);
-
-    return {
-      status: "success",
-      url: objectUrl,
-      fileName: parsed.file.name,
-      objectName: objectName,
-    };
-  } catch (error: unknown) {
-    console.log(error);
-    return {
-      status: "error",
-      message: "An unexpected error occurred while uploading the logo",
-    };
-  }
 }

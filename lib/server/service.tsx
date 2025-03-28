@@ -22,11 +22,11 @@ type Role = (typeof schema.rolesEnum.enumValues)[number];
 export async function createTenant(
   userId: string,
   name: string,
-  logoData?: {
-    logoFileName?: string;
-    logoObjectName?: string;
-    logoUrl?: string;
-  } | null,
+  logoInfo?: {
+    logoUrl: string;
+    logoFileName: string;
+    logoObjectName: string;
+  },
 ) {
   // Remove any non-alphanumeric characters except hyphens and spaces
   let slug = name
@@ -70,13 +70,11 @@ export async function createTenant(
     .values({
       name,
       slug,
-      ...(logoData
-        ? {
-            logoFileName: logoData.logoFileName,
-            logoObjectName: logoData.logoObjectName,
-            logoUrl: logoData.logoUrl,
-          }
-        : {}),
+      ...(logoInfo && {
+        logoUrl: logoInfo.logoUrl,
+        logoFileName: logoInfo.logoFileName,
+        logoObjectName: logoInfo.logoObjectName,
+      }),
     })
     .returning({ id: schema.tenants.id, slug: schema.tenants.slug });
 

@@ -14,10 +14,11 @@ interface Props {
     logoName?: string | null;
     logoUrl?: string | null;
   };
-  onLogoUpdate?: (data: { logoFileName?: string; logoObjectName?: string; logoUrl?: string } | null) => void;
+  onLogoSuccess?: (event: { url: string; fileName: string }) => void;
+  isSetup?: boolean;
 }
 
-export default function LogoChanger({ tenant, onLogoUpdate }: Props) {
+export default function LogoChanger({ tenant, onLogoSuccess, isSetup }: Props) {
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [image, setImage] = useState<string | null>(null);
   const [logoUrl, setLogoUrl] = useState<string | null | undefined>(tenant.logoUrl);
@@ -41,10 +42,7 @@ export default function LogoChanger({ tenant, onLogoUpdate }: Props) {
     setLogoUrl(url);
     setLogoName(fileName);
     setImage(null);
-    onLogoUpdate?.({
-      logoFileName: fileName,
-      logoUrl: url,
-    });
+    onLogoSuccess?.({ url, fileName });
   };
 
   const onDeleteLogoSuccess = () => {
@@ -52,7 +50,6 @@ export default function LogoChanger({ tenant, onLogoUpdate }: Props) {
     setImage(null);
     setLogoUrl(null);
     toast.success("Logo successfully deleted");
-    onLogoUpdate?.(null);
   };
 
   return (
@@ -65,6 +62,7 @@ export default function LogoChanger({ tenant, onLogoUpdate }: Props) {
           imageName={logoName}
           onCancel={onSetLogoCancel}
           onSuccess={onSetLogoSuccess}
+          isSetup={isSetup}
         />
       )}
       {confirmDelete && (
