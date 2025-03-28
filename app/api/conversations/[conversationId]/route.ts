@@ -12,6 +12,7 @@ const deleteConversationSchema = z.object({
 });
 
 export async function DELETE(request: Request, { params }: { params: { conversationId: string } }) {
+  const { conversationId } = await params;
   try {
     // Parse the request body
     const body = await request.json().catch(() => ({}));
@@ -26,7 +27,7 @@ export async function DELETE(request: Request, { params }: { params: { conversat
       .delete(conversations)
       .where(
         and(
-          eq(conversations.id, params.conversationId),
+          eq(conversations.id, conversationId),
           eq(conversations.tenantId, tenant.id),
           eq(conversations.profileId, profile.id),
         ),

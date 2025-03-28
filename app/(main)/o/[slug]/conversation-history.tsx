@@ -51,6 +51,8 @@ export default function ConversationHistory({ className, tenant, refreshTrigger 
           <div className="flex justify-center items-center mt-8">
             <Loader2 className="h-6 w-6 animate-spin" />
           </div>
+        ) : conversations.length === 0 ? (
+          <div className="mt-4 text-gray-500">No conversations yet</div>
         ) : (
           conversations.map((conversation, i) => (
             <Link key={i} href={getConversationPath(tenant.slug, conversation.id)}>
