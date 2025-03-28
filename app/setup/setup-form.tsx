@@ -6,11 +6,9 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 
-import LogoChanger from "@/components/tenant/logo/logo-changer";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { setupRequestSchema, setupResponseSchema } from "@/lib/api";
+import { setupSchema } from "@/lib/api";
 import { getTenantPath } from "@/lib/paths";
 
 const formSchema = z.object({
@@ -24,53 +22,22 @@ export default function SetupForm() {
   });
 
   const router = useRouter();
+
   const [failureMessage, setFailureMessage] = useState<string | null>(null);
-  const [logoInfo, setLogoInfo] = useState<{
-    logoUrl: string;
-    logoFileName: string;
-    logoObjectName: string;
-  } | null>(null);
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setFailureMessage(null);
 
-    //this is the only place we call this endpoint
-    //TODO: make sure this is consistent with setupSchema vs setupRequestSchema
-    // which is in api.ts but also the route.ts itself?
-    const res = await fetch("/api/setup", {
-      method: "POST",
-      body: JSON.stringify({
-        ...values,
-        ...(logoInfo && {
-          logoUrl: logoInfo.logoUrl,
-          logoFileName: logoInfo.logoFileName,
-          logoObjectName: logoInfo.logoObjectName,
-        }),
-      }),
-    });
-
-    const data = await res.json();
+    const res = await fetch("/api/setup", { method: "POST", body: JSON.stringify(values) });
     if (res.status < 200 || res.status >= 300) {
-      setFailureMessage(data.error || "An unexpected error occurred. Could not finish setup.");
+      setFailureMessage("An unexpected error occurred. Could not finish setup.");
       return;
     }
-    try {
-      const { tenant } = setupResponseSchema.parse(data);
-      router.push(getTenantPath(tenant.slug));
-    } catch (error) {
-      setFailureMessage("Invalid response from server. Please try again.");
-    }
-  }
 
-  const handleLogoSuccess = ({ url, fileName }: { url: string; fileName: string }) => {
-    // Extract object name from URL
-    const objectName = url.split("/").pop() || "";
-    setLogoInfo({
-      logoUrl: url,
-      logoFileName: fileName,
-      logoObjectName: objectName,
-    });
-  };
+    const data = await res.json();
+    const { tenant } = setupSchema.parse(data);
+    router.push(getTenantPath(tenant.slug));
+  }
 
   return (
     <Form {...form}>
@@ -94,22 +61,6 @@ export default function SetupForm() {
             </FormItem>
           )}
         ></FormField>
-        <div>
-          <div className="mb-2">
-            <Label className="font-semibold text-[16px]">Avatar</Label>
-          </div>
-          <LogoChanger
-            tenant={{
-              name: form.getValues("name") || "New Company",
-              slug: "setup",
-              logoUrl: logoInfo?.logoUrl || null,
-              logoName: logoInfo?.logoFileName || null,
-            }}
-            onLogoSuccess={handleLogoSuccess}
-            isSetup={true}
-          />
-          <hr className="w-full my-8" />
-        </div>
         <button
           type="submit"
           className="bg-[#D946EF] fond-semibold text-white flex justify-center w-full py-2.5 rounded-[54px]"
