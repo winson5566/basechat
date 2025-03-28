@@ -9,13 +9,16 @@ interface GlobalState {
   setInitialMessage: (content: string) => void;
   initialModel: LLMModel;
   setInitialModel: (model: LLMModel) => void;
+  refreshTrigger: number;
+  setRefreshTrigger: (value: number) => void;
 }
 
-const GlobalStateContext = createContext<GlobalState | undefined>(undefined);
+const GlobalStateContext = createContext<GlobalState | null>(null);
 
-export const GlobalStateProvider = ({ children }: { children: ReactNode }) => {
+export function GlobalStateProvider({ children }: { children: ReactNode }) {
   const [initialMessage, setInitialMessage] = useState("");
   const [initialModel, setInitialModel] = useState<LLMModel>(DEFAULT_MODEL);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
 
   return (
     <GlobalStateContext.Provider
@@ -24,17 +27,19 @@ export const GlobalStateProvider = ({ children }: { children: ReactNode }) => {
         setInitialMessage,
         initialModel,
         setInitialModel,
+        refreshTrigger,
+        setRefreshTrigger,
       }}
     >
       {children}
     </GlobalStateContext.Provider>
   );
-};
+}
 
-export const useGlobalState = () => {
+export function useGlobalState() {
   const context = useContext(GlobalStateContext);
   if (!context) {
     throw new Error("useGlobalState must be used within a GlobalStateProvider");
   }
   return context;
-};
+}

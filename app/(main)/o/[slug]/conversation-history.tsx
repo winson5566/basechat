@@ -11,11 +11,12 @@ import NewChatIcon from "@/public/icons/new-chat.svg";
 interface Props {
   className?: string;
   tenant: { slug: string };
+  refreshTrigger?: number;
 }
 
 type Conversation = z.infer<typeof conversationSchema>;
 
-export default function ConversationHistory({ className, tenant }: Props) {
+export default function ConversationHistory({ className, tenant, refreshTrigger = 0 }: Props) {
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -33,7 +34,7 @@ export default function ConversationHistory({ className, tenant }: Props) {
         setIsLoading(false);
       }
     })();
-  }, [tenant.slug]);
+  }, [tenant.slug, refreshTrigger]);
 
   return (
     <div className={className}>

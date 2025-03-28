@@ -19,6 +19,7 @@ import LogOutIcon from "@/public/icons/log-out.svg";
 import NewChatIcon from "@/public/icons/new-chat.svg";
 import PlusIcon from "@/public/icons/plus.svg";
 
+import { useGlobalState } from "./context";
 import ConversationHistory from "./conversation-history";
 
 interface Props {
@@ -53,8 +54,10 @@ const HeaderPopoverContent = ({
   </PopoverContent>
 );
 
-export default function Header({ currentProfileId, isAnonymous, tenant, name, email, onNavClick = () => {} }: Props) {
+export default function Header({ currentProfileId, isAnonymous, tenant, name, email, onNavClick = () => { } }: Props) {
   const router = useRouter();
+  const { refreshTrigger } = useGlobalState();
+
   const [tenants, setTenants] = useState<z.infer<typeof tenantListResponseSchema>>([]);
   const [selectedProfileId, setSelectedProfileId] = useState(currentProfileId);
   const [userCounts, setUserCounts] = useState<Record<string, number>>({});
@@ -96,7 +99,7 @@ export default function Header({ currentProfileId, isAnonymous, tenant, name, em
             <Image src={HamburgerIcon} alt="Expand chats" className="mr-2.5 cursor-pointer" onClick={onNavClick} />
           </PopoverTrigger>
           <HeaderPopoverContent align="start">
-            <ConversationHistory tenant={tenant} />
+            <ConversationHistory tenant={tenant} refreshTrigger={refreshTrigger} />
           </HeaderPopoverContent>
         </Popover>
         <Link href={getTenantPath(tenant.slug)}>
