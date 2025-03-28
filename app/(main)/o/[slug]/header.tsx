@@ -67,7 +67,6 @@ export default function Header({
   const router = useRouter();
   const [tenants, setTenants] = useState<z.infer<typeof tenantListResponseSchema>>([]);
   const [selectedProfileId, setSelectedProfileId] = useState(currentProfileId);
-  const avatarNumber = getAvatarNumber(tenant.id);
 
   useEffect(() => {
     (async () => {
@@ -149,7 +148,7 @@ export default function Header({
                       url={tenant.logoUrl}
                       width={40}
                       height={40}
-                      className={cn(`ml-3 text-[16px] w-[40px] h-[40px] avatar-${avatarNumber}`)}
+                      className={cn(`ml-3 text-[16px] w-[40px] h-[40px] avatar-${getAvatarNumber(tenant.id)}`)}
                     />
                     <div className="ml-4">
                       {tenant.name}
