@@ -34,7 +34,6 @@ interface Props {
   isAnonymous: boolean;
   className?: string;
   onNavClick?: () => void;
-  userCount: number;
 }
 
 const HeaderPopoverContent = ({
@@ -54,24 +53,23 @@ const HeaderPopoverContent = ({
   </PopoverContent>
 );
 
-export default function Header({
-  currentProfileId,
-  isAnonymous,
-  tenant,
-  name,
-  email,
-  onNavClick = () => {},
-  userCount = 1,
-}: Props) {
+export default function Header({ currentProfileId, isAnonymous, tenant, name, email, onNavClick = () => {} }: Props) {
   const router = useRouter();
   const [tenants, setTenants] = useState<z.infer<typeof tenantListResponseSchema>>([]);
   const [selectedProfileId, setSelectedProfileId] = useState(currentProfileId);
+  const [userCounts, setUserCounts] = useState<Record<string, number>>({});
 
   useEffect(() => {
     (async () => {
       const res = await fetch("/api/tenants");
       const tenants = tenantListResponseSchema.parse(await res.json());
       setTenants(tenants);
+
+      // Fetch user counts from API
+      const tenantIds = tenants.map((t) => t.id).join(",");
+      const countsRes = await fetch(`/api/tenants/user-counts?tenantIds=${tenantIds}`);
+      const counts = await countsRes.json();
+      setUserCounts(counts);
     })();
   }, []);
 
@@ -153,7 +151,7 @@ export default function Header({
                     <div className="ml-4">
                       {tenant.name}
                       <div className="text-xs text-gray-500">
-                        {userCount} User{userCount === 1 ? "" : "s"}
+                        {userCounts[tenant.id] ?? "..."} User{(userCounts[tenant.id] ?? 1) === 1 ? "" : "s"}
                       </div>
                     </div>
                   </div>
