@@ -1,5 +1,7 @@
 "use client";
 
+import { useEffect, useState } from "react";
+
 import { cn } from "@/lib/utils";
 import { getInitials, getAvatarNumber } from "@/lib/utils";
 
@@ -16,6 +18,12 @@ interface Props {
 export default function Logo({ name, url, width, height, className, initialCount = 2, tenantId }: Props) {
   const formattedName = name ? getInitials(name, initialCount) : "";
   const avatarClass = tenantId ? `avatar-${getAvatarNumber(tenantId)}` : "";
+  const [mounted, setMounted] = useState(false);
+
+  // Force a re-render on the client side
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   if (!url) {
     return (
