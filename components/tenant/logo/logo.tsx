@@ -1,9 +1,9 @@
 "use client";
 
-import Image from "next/image";
+import { useEffect, useState } from "react";
 
 import { cn } from "@/lib/utils";
-import { getInitials } from "@/lib/utils";
+import { getInitials, getAvatarNumber } from "@/lib/utils";
 
 interface Props {
   name?: string | null;
@@ -11,15 +11,28 @@ interface Props {
   className?: string;
   width: number;
   height: number;
+  initialCount?: number;
+  tenantId?: string;
 }
 
-export default function Logo({ name, url, width, height, className }: Props) {
-  const formattedName = name ? getInitials(name) : "";
+export default function Logo({ name, url, width, height, className, initialCount = 2, tenantId }: Props) {
+  const formattedName = name ? getInitials(name, initialCount) : "";
+  const avatarClass = tenantId ? `avatar-${getAvatarNumber(tenantId)}` : "";
+  const [mounted, setMounted] = useState(false);
+
+  // Force a re-render on the client side
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   if (!url) {
     return (
       <div
-        className={cn("rounded-full text-white flex items-center justify-center font-bold text-[32px]", className)}
+        className={cn(
+          "rounded-full text-white flex items-center justify-center font-bold text-[32px]",
+          avatarClass,
+          className,
+        )}
         style={{ height, width }}
       >
         {formattedName}

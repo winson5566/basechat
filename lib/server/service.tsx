@@ -169,6 +169,11 @@ export async function getMembersByTenantId(tenantId: string): Promise<Member[]> 
   ).orderBy(sql`type desc`, sql`name`);
 }
 
+export async function getUserCountByTenantId(tenantId: string) {
+  const members = await getMembersByTenantId(tenantId);
+  return members.filter((m) => m.type !== "invite").length;
+}
+
 export async function getFirstTenantByUserId(id: string) {
   const rs = await db
     .select()

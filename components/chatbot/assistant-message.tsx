@@ -28,6 +28,7 @@ const Citation = ({ source, onClick = () => {} }: { source: SourceMetadata; onCl
 };
 
 interface Props {
+  tenantId: string;
   content: string | undefined;
   id?: string | null;
   name: string;
@@ -46,6 +47,7 @@ export default function AssistantMessage({
   onSelectedDocumentId,
   model,
   isGenerating,
+  tenantId,
 }: Props) {
   const dedupe = sources.reduce<Record<string, SourceMetadata>>((acc, v) => {
     acc[v.documentId] = v;
@@ -57,7 +59,14 @@ export default function AssistantMessage({
   return (
     <div className="flex">
       <div className="mb-8 shrink-0">
-        <Logo name={name} url={logoUrl} width={40} height={40} className="avatar text-[13px] h-[40px] w-[40px]" />
+        <Logo
+          name={name}
+          url={logoUrl}
+          width={40}
+          height={40}
+          className="text-[13px] h-[40px] w-[40px]"
+          tenantId={tenantId}
+        />
       </div>
       <div className="self-start mb-6 rounded-md ml-7">
         {content?.length ? (

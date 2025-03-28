@@ -154,12 +154,25 @@ body {
   .markdown td {
     @apply p-2 border-b border-gray-200 dark:border-gray-700;
   }
+}
 
-  .avatar {
-    width: 100.41px;
-    height: 100px;
+.avatar-1 {
+  width: 100.41px;
+  height: 100px;
+  background: linear-gradient(90deg, #f5c3af 0%, #ea89d7 46.87%, #6767d9 100%) !important;
+  border-radius: 80px !important;
+}
 
-    background: linear-gradient(90deg, #f5c3af 0%, #ea89d7 46.87%, #6767d9 100%);
-    border-radius: 80px;
-  }
+.avatar-2 {
+  width: 100.41px;
+  height: 100px;
+  background: linear-gradient(90deg, #f7d147 0%, #e7557c 100%) !important;
+  border-radius: 80px !important;
+}
+
+.avatar-3 {
+  width: 100.41px;
+  height: 100px;
+  background: linear-gradient(90deg, #4393f4 0%, #ec609c 50%, #ef8482 100%) !important;
+  border-radius: 80px !important;
 }

@@ -27,8 +27,10 @@ interface Props {
     name?: string | null;
     logoUrl?: string | null;
     slug: string;
+    id: string;
   };
   name: string | undefined | null;
+  email: string | undefined | null;
   isAnonymous: boolean;
   className?: string;
   onNavClick?: () => void;
@@ -51,17 +53,23 @@ const HeaderPopoverContent = ({
   </PopoverContent>
 );
 
-export default function Header({ currentProfileId, isAnonymous, tenant, name, onNavClick = () => {} }: Props) {
+export default function Header({ currentProfileId, isAnonymous, tenant, name, email, onNavClick = () => {} }: Props) {
   const router = useRouter();
-
   const [tenants, setTenants] = useState<z.infer<typeof tenantListResponseSchema>>([]);
   const [selectedProfileId, setSelectedProfileId] = useState(currentProfileId);
+  const [userCounts, setUserCounts] = useState<Record<string, number>>({});
 
   useEffect(() => {
     (async () => {
       const res = await fetch("/api/tenants");
       const tenants = tenantListResponseSchema.parse(await res.json());
       setTenants(tenants);
+
+      // Fetch user counts from API
+      const tenantIds = tenants.map((t) => t.id).join(",");
+      const countsRes = await fetch(`/api/tenants/user-counts?tenantIds=${tenantIds}`);
+      const counts = await countsRes.json();
+      setUserCounts(counts);
     })();
   }, []);
 
@@ -115,10 +123,12 @@ export default function Header({ currentProfileId, isAnonymous, tenant, name, on
                 width={32}
                 height={32}
                 className="bg-[#66666E] font-semibold text-[16px] cursor-pointer"
+                initialCount={1}
               />
             </div>
           </PopoverTrigger>
           <HeaderPopoverContent align="end" className="p-4 w-[332px]">
+            <div className="text-sm text-gray-500 font-semibold ml-2">{email}</div>
             <ul>
               {tenants.map((tenant, i) => (
                 <li
@@ -135,9 +145,15 @@ export default function Header({ currentProfileId, isAnonymous, tenant, name, on
                       url={tenant.logoUrl}
                       width={40}
                       height={40}
-                      className="ml-3 text-[16px] avatar w-[40px] h-[40px]"
+                      className="ml-3 text-[16px] w-[40px] h-[40px]"
+                      tenantId={tenant.id}
                     />
-                    <div className="ml-4">{tenant.name}</div>
+                    <div className="ml-4">
+                      {tenant.name}
+                      <div className="text-xs text-gray-500">
+                        {userCounts[tenant.id] ?? "..."} User{(userCounts[tenant.id] ?? 1) === 1 ? "" : "s"}
+                      </div>
+                    </div>
                   </div>
                 </li>
               ))}
