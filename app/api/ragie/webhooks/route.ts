@@ -41,12 +41,19 @@ export async function POST(request: NextRequest) {
   const status =
     event.type === "connection_sync_started" || event.type === "connection_sync_progress" ? "syncing" : "ready";
 
-  // FIXME: This fails if we don't already know about the connection
   const rs = await db
     .select()
     .from(schema.connections)
     .where(eq(schema.connections.ragieConnectionId, event.payload.connection_id));
-  assert(rs.length === 1, "failed connection lookup");
+
+  // Not one we know about. We return a successful status because otherwise it is considered a failure
+  // and webhooks stop being called upon enough failures.
+  if (rs.length === 0) {
+    return Response.json({ message: "unknown connection" });
+  }
+
+  assert(rs.length === 1, "Failed connection lookup. More than one connection.");
+
   await saveConnection(rs[0].tenantId, event.payload.connection_id, status);
 
   return Response.json({ message: "success" });
