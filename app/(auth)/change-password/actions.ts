@@ -3,11 +3,12 @@
 import jwt from "jsonwebtoken";
 import { z, ZodError } from "zod";
 
-import { signIn } from "@/auth";
 import { changePassword } from "@/lib/server/service";
 import * as settings from "@/lib/server/settings";
 
 import { extendPasswordSchema } from "../utils";
+
+import { signIn } from "@/_auth";
 
 interface ChangePasswordFormState {
   error?: string[];

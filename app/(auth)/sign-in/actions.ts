@@ -2,7 +2,7 @@
 
 import { isRedirectError } from "next/dist/client/components/redirect-error";
 
-import { signIn } from "@/auth";
+import { signIn } from "@/_auth";
 
 interface SignInFormState {
   error?: string;

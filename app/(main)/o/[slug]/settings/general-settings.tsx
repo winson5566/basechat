@@ -56,7 +56,7 @@ type FormValues = z.infer<typeof formSchema>;
 type URLFieldProps = {
   name: keyof FormValues;
   label: string;
-  form: UseFormReturn<FormValues, any, undefined>;
+  form: UseFormReturn<FormValues>;
 };
 
 const URLField = ({ form, name, label }: URLFieldProps) => {
@@ -113,7 +113,7 @@ const URLField = ({ form, name, label }: URLFieldProps) => {
 type QuestionFieldProps = {
   name: keyof FormValues;
   label: string;
-  form: UseFormReturn<FormValues, any, undefined>;
+  form: UseFormReturn<FormValues>;
 };
 
 const QuestionField = ({ form, name, label }: QuestionFieldProps) => (
@@ -141,7 +141,7 @@ const QuestionField = ({ form, name, label }: QuestionFieldProps) => (
 type TextAreaFieldProps = {
   name: keyof FormValues;
   label: string;
-  form: UseFormReturn<FormValues, any, undefined>;
+  form: UseFormReturn<FormValues>;
   help?: React.ReactNode;
   className?: string;
   hasDefault?: boolean;
@@ -204,7 +204,7 @@ const TextAreaField = ({ form, name, label, className, help, hasDefault }: TextA
 type SwitchFieldProps = {
   name: keyof FormValues;
   label: string;
-  form: UseFormReturn<FormValues, any, undefined>;
+  form: UseFormReturn<FormValues>;
 };
 
 const SwitchField = ({ form, name, label }: SwitchFieldProps) => (
@@ -234,7 +234,7 @@ const SwitchField = ({ form, name, label }: SwitchFieldProps) => (
 type CompanyNameFieldProps = {
   name: keyof FormValues;
   label: string;
-  form: UseFormReturn<FormValues, any, undefined>;
+  form: UseFormReturn<FormValues>;
   tenant: typeof schema.tenants.$inferSelect;
 };
 
@@ -271,7 +271,9 @@ export default function GeneralSettings({ tenant, canUploadLogo }: Props) {
   const [isLoading, setLoading] = useState(false);
   const router = useRouter();
 
-  useEffect(() => setMounted(true));
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const formattedTenant = useMemo(() => {
     const { groundingPrompt, systemPrompt, welcomeMessage, ...otherFields } = tenant;

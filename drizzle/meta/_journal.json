@@ -197,6 +197,48 @@
       "when": 1743009418460,
       "tag": "0027_lowly_tana_nile",
       "breakpoints": true
+    },
+    {
+      "idx": 28,
+      "version": "7",
+      "when": 1743269707043,
+      "tag": "0028_regular_carnage",
+      "breakpoints": true
+    },
+    {
+      "idx": 29,
+      "version": "7",
+      "when": 1743279248752,
+      "tag": "0029_dashing_starbolt",
+      "breakpoints": true
+    },
+    {
+      "idx": 30,
+      "version": "7",
+      "when": 1743279429812,
+      "tag": "0030_slim_synch",
+      "breakpoints": true
+    },
+    {
+      "idx": 31,
+      "version": "7",
+      "when": 1743279769049,
+      "tag": "0031_naive_yellowjacket",
+      "breakpoints": true
+    },
+    {
+      "idx": 32,
+      "version": "7",
+      "when": 1743280083353,
+      "tag": "0032_wet_red_shift",
+      "breakpoints": true
+    },
+    {
+      "idx": 33,
+      "version": "7",
+      "when": 1743281369807,
+      "tag": "0033_bouncy_stick",
+      "breakpoints": true
     }
   ]
 }

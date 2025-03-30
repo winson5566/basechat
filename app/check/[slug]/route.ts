@@ -1,4 +1,5 @@
-import { auth, signIn } from "@/auth";
+import { signIn } from "@/lib/auth-client";
+import auth from "@/lib/server/auth";
 import { createGuestUser, createProfile, findProfileByTenantIdAndUserId, findTenantBySlug } from "@/lib/server/service";
 import { BASE_URL } from "@/lib/server/settings";
 

@@ -2,12 +2,13 @@
 
 import { z, ZodError } from "zod";
 
-import { signIn } from "@/auth";
 import db from "@/lib/server/db";
 import * as schema from "@/lib/server/db/schema";
 import { hashPassword } from "@/lib/server/utils";
 
 import { extendPasswordSchema } from "../utils";
+
+import { signIn } from "@/_auth";
 
 const registerSchema = extendPasswordSchema({
   firstName: z.string().trim().min(1, { message: "First name is required" }),

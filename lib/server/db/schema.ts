@@ -134,21 +134,20 @@ export const accounts = pgTable(
     userId: uuid("user_id")
       .notNull()
       .references(() => users.id, { onDelete: "cascade" }),
-    type: text("type").$type<AdapterAccountType>().notNull(),
-    provider: text("provider").notNull(),
-    providerAccountId: text("provider_account_id").notNull(),
-    refresh_token: text("refresh_token"),
-    access_token: text("access_token"),
-    expires_at: integer("expires_at"),
-    token_type: text("token_type"),
+    providerId: text("provider_id").notNull(),
+    accountId: text("account_id").notNull(),
+    refreshToken: text("refresh_token"),
+    accessToken: text("access_token"),
+    refreshTokenExpiresAt: timestamp("refresh_token_expires_at"),
+    accessTokenExpiresAt: timestamp("access_token_expires_at"),
     scope: text("scope"),
     id_token: text("id_token"),
-    session_state: text("session_state"),
+    password: text("password"),
   },
   (account) => [
     {
       compoundKey: primaryKey({
-        columns: [account.provider, account.providerAccountId],
+        columns: [account.providerId, account.accountId],
       }),
     },
   ],
@@ -156,29 +155,23 @@ export const accounts = pgTable(
 
 export const sessions = pgTable("sessions", {
   ...timestampFields,
-  sessionToken: text("session_token").primaryKey(),
+  id: text("id").primaryKey(),
+  token: text("token").notNull().unique(),
+  ipAddress: text("ip_address"),
+  userAgent: text("user_agent"),
   userId: uuid("user_id")
     .notNull()
     .references(() => users.id, { onDelete: "cascade" }),
-  expires: timestamp("expires", { mode: "date" }).notNull(),
+  expiresAt: timestamp("expires_at", { mode: "date" }).notNull(),
 });
 
-export const verificationTokens = pgTable(
-  "verification_tokens",
-  {
-    ...baseFields,
-    identifier: text("identifier").notNull(),
-    token: text("token").notNull(),
-    expires: timestamp("expires", { mode: "date" }).notNull(),
-  },
-  (verificationToken) => [
-    {
-      compositePk: primaryKey({
-        columns: [verificationToken.identifier, verificationToken.token],
-      }),
-    },
-  ],
-);
+export const verifications = pgTable("verifications", {
+  ...timestampFields,
+  id: text("id").primaryKey(),
+  identifier: text("identifier").notNull(),
+  value: text("value").notNull(),
+  expiresAt: timestamp("expires_at").notNull(),
+});
 
 export const authenticators = pgTable(
   "authenticators",
