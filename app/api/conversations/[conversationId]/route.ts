@@ -1,5 +1,5 @@
 import { and, eq } from "drizzle-orm";
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
 import db from "@/lib/server/db";
@@ -11,7 +11,7 @@ const deleteConversationSchema = z.object({
   tenantSlug: z.string(),
 });
 
-export async function DELETE(request: Request, { params }: { params: { conversationId: string } }) {
+export async function DELETE(request: NextRequest, { params }: { params: Promise<{ conversationId: string }> }) {
   const { conversationId } = await params;
   try {
     // Parse the request body

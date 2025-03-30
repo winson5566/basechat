@@ -271,7 +271,7 @@ export default function GeneralSettings({ tenant, canUploadLogo }: Props) {
   const [isLoading, setLoading] = useState(false);
   const router = useRouter();
 
-  useEffect(() => setMounted(true));
+  useEffect(() => setMounted(true), []);
 
   const formattedTenant = useMemo(() => {
     const { groundingPrompt, systemPrompt, welcomeMessage, ...otherFields } = tenant;

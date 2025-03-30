@@ -2,7 +2,7 @@ import { Loader2 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { toast } from "sonner";
 import { z } from "zod";
 
@@ -43,7 +43,7 @@ export default function ConversationHistory({ className, tenant }: Props) {
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  const fetchConversations = async () => {
+  const fetchConversations = useCallback(async () => {
     setIsLoading(true);
     try {
       const res = await fetch("/api/conversations", { headers: { tenant: tenant.slug } });
@@ -55,11 +55,11 @@ export default function ConversationHistory({ className, tenant }: Props) {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [tenant.slug]);
 
   useEffect(() => {
     fetchConversations();
-  }, [tenant.slug]);
+  }, [fetchConversations]);
 
   const handleDelete = async (conversationId: string) => {
     try {
