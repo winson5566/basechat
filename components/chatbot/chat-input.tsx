@@ -1,10 +1,7 @@
-import { ChevronRight, ChevronDown, Trash2 } from "lucide-react";
+import { ChevronRight, ChevronDown } from "lucide-react";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
 import { KeyboardEvent, useRef, useState, useEffect } from "react";
-import { toast } from "sonner";
 
-import { useGlobalState } from "@/app/(main)/o/[slug]/context";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Switch } from "@/components/ui/switch";
 import { LLMModel, ALL_VALID_MODELS, LLM_LOGO_MAP, LLM_DISPLAY_NAMES } from "@/lib/llm/types";
@@ -13,8 +10,6 @@ import { cn } from "@/lib/utils";
 import CheckIcon from "../../public/icons/check.svg";
 import { AutosizeTextarea, AutosizeTextAreaRef } from "../ui/autosize-textarea";
 import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
-
-import DeleteConversationDialog from "./delete-conversation-dialog";
 
 interface ChatInputProps {
   handleSubmit?: (text: string, model: LLMModel) => void;
@@ -26,9 +21,6 @@ interface ChatInputProps {
   onRerankChange?: (enabled: boolean) => void;
   prioritizeRecent?: boolean;
   onPrioritizeRecentChange?: (enabled: boolean) => void;
-  conversationId?: string;
-  tenantSlug?: string;
-  onConversationDeleted?: () => void;
 }
 
 const useIsDesktop = () => {
@@ -88,11 +80,7 @@ export default function ChatInput(props: ChatInputProps) {
   const [isBreadth, setIsBreadth] = useState(props.isBreadth);
   const [rerankEnabled, setRerankEnabled] = useState(props.rerankEnabled ?? false);
   const [prioritizeRecent, setPrioritizeRecent] = useState(props.prioritizeRecent ?? false);
-  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
-  const [isDeleting, setIsDeleting] = useState(false);
   const ref = useRef<AutosizeTextAreaRef>(null);
-  const router = useRouter();
-  const { setRefreshTrigger } = useGlobalState();
 
   const handleSubmit = (value: string) => {
     setValue("");
@@ -109,52 +97,9 @@ export default function ChatInput(props: ChatInputProps) {
     handleSubmit(value);
   };
 
-  const handleDeleteConversation = async () => {
-    if (!props.conversationId || !props.tenantSlug) return;
-
-    setIsDeleting(true);
-    try {
-      // We send the tenantSlug in the request body
-      // The API endpoint will use it to create a Request with the appropriate headers
-      // for requireAuthContextFromRequest to work consistently
-      const response = await fetch(`/api/conversations/${props.conversationId}`, {
-        method: "DELETE",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          tenantSlug: props.tenantSlug,
-        }),
-      });
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error(`Failed to delete conversation: ${response.status} - ${errorText}`);
-        throw new Error(`Delete failed: ${response.status} ${response.statusText}`);
-      }
-
-      toast.success("Conversation deleted successfully");
-      setShowDeleteDialog(false);
-      setRefreshTrigger(Date.now());
-      router.push(`/o/${props.tenantSlug}`);
-    } catch (error) {
-      console.error("Failed to delete conversation:", error);
-      toast.error(error instanceof Error ? error.message : "Failed to delete conversation");
-    } finally {
-      setIsDeleting(false);
-    }
-  };
-
   return (
     <div className="flex w-full flex-col gap-2">
       <div className="flex w-full items-end items-center">
-        <button
-          onClick={() => setShowDeleteDialog(true)}
-          className="p-2 hover:bg-gray-100 rounded-md mr-2"
-          title="Delete conversation"
-        >
-          <Trash2 className="h-5 w-5 text-gray-500 hover:text-red-500" />
-        </button>
         <AutosizeTextarea
           className="pt-1.5"
           ref={ref}
@@ -177,12 +122,6 @@ export default function ChatInput(props: ChatInputProps) {
           </svg>
         </button>
       </div>
-      <DeleteConversationDialog
-        open={showDeleteDialog}
-        onOpenChange={setShowDeleteDialog}
-        onConfirm={handleDeleteConversation}
-        isDeleting={isDeleting}
-      />
       <Popover>
         <PopoverTrigger className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
           {LLM_DISPLAY_NAMES[props.selectedModel]}

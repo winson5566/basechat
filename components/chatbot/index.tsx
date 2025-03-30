@@ -234,8 +234,6 @@ export default function Chatbot({ tenant, conversationId, initMessage, onSelecte
             onRerankChange={setRerankEnabled}
             prioritizeRecent={prioritizeRecent}
             onPrioritizeRecentChange={setPrioritizeRecent}
-            conversationId={conversationId}
-            tenantSlug={tenant.slug}
           />
         </div>
       </div>
