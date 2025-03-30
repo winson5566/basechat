@@ -22,6 +22,7 @@ export const conversationSchema = z.object({
   id: z.string(),
   title: z.string(),
   createdAt: z.coerce.date(),
+  updatedAt: z.coerce.date(),
 });
 
 export const conversationListResponseSchema = z.array(conversationSchema);
