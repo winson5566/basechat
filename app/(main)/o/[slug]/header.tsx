@@ -128,7 +128,7 @@ export default function Header({ currentProfileId, isAnonymous, tenant, name, em
             </div>
           </PopoverTrigger>
           <HeaderPopoverContent align="end" className="p-4 w-[332px] flex flex-col">
-            <div className="text-sm text-gray-500 font-semibold ml-2 mb-3">{email}</div>
+            <div className="text-sm text-gray-500 font-semibold ml-6 mb-3 mt-3">{email}</div>
 
             {/* Scrollable container for tenants list */}
             <div className="max-h-[calc(100vh-330px)] overflow-y-auto pr-1 scrollbar-thin mb-4">
