@@ -169,11 +169,6 @@ export async function getMembersByTenantId(tenantId: string): Promise<Member[]> 
   ).orderBy(sql`type desc`, sql`name`);
 }
 
-export async function getUserCountByTenantId(tenantId: string) {
-  const members = await getMembersByTenantId(tenantId);
-  return members.filter((m) => m.type !== "invite").length;
-}
-
 export async function getFirstTenantByUserId(id: string) {
   const rs = await db
     .select()
@@ -273,6 +268,12 @@ export async function getTenantsByUserId(userId: string) {
       slug: schema.tenants.slug,
       logoUrl: schema.tenants.logoUrl,
       profileId: schema.profiles.id,
+      userCount: sql<number>`(
+        SELECT COUNT(*)
+        FROM ${schema.profiles} p 
+        WHERE p.tenant_id = ${schema.tenants.id}
+        AND p.role != 'guest'
+      )`.mapWith(Number),
     })
     .from(schema.tenants)
     .innerJoin(schema.profiles, eq(schema.tenants.id, schema.profiles.tenantId))
