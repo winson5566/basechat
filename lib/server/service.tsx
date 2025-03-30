@@ -260,7 +260,22 @@ export async function acceptInvite(userId: string, inviteId: string) {
   return profile;
 }
 
+async function getUserCountSubquery() {
+  const userCount = db
+    .select({
+      tenantId: schema.profiles.tenantId,
+      userCount: sql<number>`COALESCE(COUNT(*) FILTER (WHERE ${schema.profiles.role} != 'guest'), 0)`
+        .mapWith(Number)
+        .as("user_count"),
+    })
+    .from(schema.profiles)
+    .groupBy(schema.profiles.tenantId)
+    .as("user_counts");
+  return userCount;
+}
+
 export async function getTenantsByUserId(userId: string) {
+  const userCountResult = await getUserCountSubquery();
   return db
     .select({
       id: schema.tenants.id,
@@ -268,15 +283,11 @@ export async function getTenantsByUserId(userId: string) {
       slug: schema.tenants.slug,
       logoUrl: schema.tenants.logoUrl,
       profileId: schema.profiles.id,
-      userCount: sql<number>`(
-        SELECT COUNT(*)
-        FROM ${schema.profiles} p 
-        WHERE p.tenant_id = ${schema.tenants.id}
-        AND p.role != 'guest'
-      )`.mapWith(Number),
+      userCount: userCountResult.userCount,
     })
     .from(schema.tenants)
     .innerJoin(schema.profiles, eq(schema.tenants.id, schema.profiles.tenantId))
+    .leftJoin(userCountResult, eq(schema.tenants.id, userCountResult.tenantId))
     .where(eq(schema.profiles.userId, userId));
 }
 
