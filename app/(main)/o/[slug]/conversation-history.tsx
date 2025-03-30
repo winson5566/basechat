@@ -1,7 +1,9 @@
 import { Loader2 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { toast } from "sonner";
 import { z } from "zod";
 
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -37,24 +39,59 @@ const ConversationPopoverContent = ({ children }: { children: React.ReactNode })
 );
 
 export default function ConversationHistory({ className, tenant }: Props) {
+  const router = useRouter();
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
+  const fetchConversations = async () => {
+    setIsLoading(true);
+    try {
+      const res = await fetch("/api/conversations", { headers: { tenant: tenant.slug } });
+      const json = await res.json();
+      const conversations = conversationListResponseSchema.parse(json);
+      setConversations(conversations);
+    } catch (error) {
+      console.error("Error fetching conversations:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   useEffect(() => {
-    (async () => {
-      setIsLoading(true);
-      try {
-        const res = await fetch("/api/conversations", { headers: { tenant: tenant.slug } });
-        const json = await res.json();
-        const conversations = conversationListResponseSchema.parse(json);
-        setConversations(conversations);
-      } catch (error) {
-        console.error("Error fetching conversations:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    })();
+    fetchConversations();
   }, [tenant.slug]);
+
+  const handleDelete = async (conversationId: string) => {
+    try {
+      const res = await fetch(`/api/conversations/${conversationId}`, {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+          tenant: tenant.slug,
+        },
+        body: JSON.stringify({ tenantSlug: tenant.slug }),
+      });
+
+      if (!res.ok) {
+        throw new Error("Failed to delete conversation");
+      }
+
+      toast.success("Conversation deleted");
+
+      // Refresh the conversation list
+      await fetchConversations();
+
+      // Check if we're currently viewing the deleted conversation
+      const currentPath = location.pathname;
+      const deletedConversationPath = getConversationPath(tenant.slug, conversationId);
+      if (currentPath === deletedConversationPath) {
+        router.push(getTenantPath(tenant.slug));
+      }
+    } catch (error) {
+      console.error("Error deleting conversation:", error);
+      toast.error("Failed to delete conversation");
+    }
+  };
 
   // Group conversations by date
   const groupedConversations = conversations.reduce<ConversationsByDate>(
@@ -133,7 +170,12 @@ export default function ConversationHistory({ className, tenant }: Props) {
                             />
                           </PopoverTrigger>
                           <ConversationPopoverContent>
-                            <button className="text-sm text-black hover:text-gray-700">Delete</button>
+                            <button
+                              className="text-sm text-black hover:text-gray-700"
+                              onClick={() => handleDelete(conversation.id)}
+                            >
+                              Delete
+                            </button>
                           </ConversationPopoverContent>
                         </Popover>
                       </div>
@@ -166,7 +208,12 @@ export default function ConversationHistory({ className, tenant }: Props) {
                             />
                           </PopoverTrigger>
                           <ConversationPopoverContent>
-                            <button className="text-sm text-black hover:text-gray-700">Delete</button>
+                            <button
+                              className="text-sm text-black hover:text-gray-700"
+                              onClick={() => handleDelete(conversation.id)}
+                            >
+                              Delete
+                            </button>
                           </ConversationPopoverContent>
                         </Popover>
                       </div>
@@ -206,7 +253,12 @@ export default function ConversationHistory({ className, tenant }: Props) {
                               />
                             </PopoverTrigger>
                             <ConversationPopoverContent>
-                              <button className="text-sm text-black hover:text-gray-700">Delete</button>
+                              <button
+                                className="text-sm text-black hover:text-gray-700"
+                                onClick={() => handleDelete(conversation.id)}
+                              >
+                                Delete
+                              </button>
                             </ConversationPopoverContent>
                           </Popover>
                         </div>
