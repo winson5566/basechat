@@ -462,6 +462,13 @@ export async function updateInviteRoleById(tenantId: string, inviteId: string, n
   return;
 }
 
+async function updateConversationTimestamp(tenantId: string, conversationId: string) {
+  return await db
+    .update(schema.conversations)
+    .set({ updatedAt: sql`now()` })
+    .where(and(eq(schema.conversations.tenantId, tenantId), eq(schema.conversations.id, conversationId)));
+}
+
 export async function createConversationMessage(message: typeof schema.messages.$inferInsert) {
   const rs = await db
     .insert(schema.messages)
@@ -478,6 +485,10 @@ export async function createConversationMessage(message: typeof schema.messages.
     })
     .returning();
   assert(rs.length === 1);
+
+  // Update the conversation's timestamp
+  await updateConversationTimestamp(message.tenantId, message.conversationId);
+
   return rs[0];
 }
 
