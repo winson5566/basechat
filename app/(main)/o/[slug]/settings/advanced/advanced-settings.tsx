@@ -14,7 +14,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { updateTenantSchema } from "@/lib/api";
-import { DEFAULT_GROUNDING_PROMPT, DEFAULT_SYSTEM_PROMPT, DEFAULT_WELCOME_MESSAGE } from "@/lib/constants";
+import { DEFAULT_GROUNDING_PROMPT, DEFAULT_SYSTEM_PROMPT } from "@/lib/constants";
 import * as schema from "@/lib/server/db/schema";
 import { cn } from "@/lib/utils";
 

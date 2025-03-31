@@ -1,7 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Check, Copy, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useMemo, useState, useEffect } from "react";
 import { useForm, UseFormReturn } from "react-hook-form";
@@ -13,14 +13,11 @@ import { AutosizeTextarea } from "@/components/ui/autosize-textarea";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
 import { updateTenantSchema } from "@/lib/api";
-import { DEFAULT_GROUNDING_PROMPT, DEFAULT_SYSTEM_PROMPT, DEFAULT_WELCOME_MESSAGE } from "@/lib/constants";
+import { DEFAULT_WELCOME_MESSAGE } from "@/lib/constants";
 import * as schema from "@/lib/server/db/schema";
 import { cn } from "@/lib/utils";
 
-import { HelpGroundingPromptDialog } from "./help-grounding-prompt-dialog";
-import { HelpSystemPromptDialog } from "./help-system-prompt-dialog";
 import { HelpWelcomeMessageDialog } from "./help-welcome-message-dialog";
 
 // Transform null to empty string for form field handling
