@@ -226,29 +226,17 @@ export async function createInvites(tenantId: string, invitedBy: string, emails:
 }
 
 export async function getAuthContextByUserId(userId: string, slug: string) {
-  const userCountResult = await getUserCountSubquery();
   const rs = await db
-    .select({
-      tenant: schema.tenants,
-      profile: schema.profiles,
-      userCount: userCountResult.userCount,
-    })
+    .select()
     .from(schema.tenants)
     .innerJoin(schema.users, eq(schema.users.id, userId))
     .innerJoin(schema.profiles, eq(schema.tenants.id, schema.profiles.tenantId))
-    .leftJoin(userCountResult, eq(schema.tenants.id, userCountResult.tenantId))
     .where(and(eq(schema.profiles.userId, userId), eq(schema.tenants.slug, slug)));
 
   assert(rs.length === 1, "expected single record");
   const row = rs[0];
 
-  return {
-    profile: row.profile,
-    tenant: {
-      ...row.tenant,
-      userCount: row.userCount ?? 0,
-    },
-  };
+  return { profile: row.profiles, tenant: row.tenants };
 }
 
 async function getInviteById(id: string) {

@@ -28,7 +28,6 @@ interface Props {
     logoUrl?: string | null;
     slug: string;
     id: string;
-    userCount: number;
   };
   name: string | undefined | null;
   email: string | undefined | null;
