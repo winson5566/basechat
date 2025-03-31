@@ -147,7 +147,7 @@ export default function Header({ currentProfileId, isAnonymous, tenant, name, em
                       <div className="ml-4">
                         {tenant.name}
                         <div className="text-xs text-gray-500">
-                          {tenant.userCount} User{tenant.userCount === 1 ? "" : "s"}
+                          {tenant.userCount ?? 1} User{(tenant.userCount ?? 1) === 1 ? "" : "s"}
                         </div>
                       </div>
                     </div>

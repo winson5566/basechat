@@ -84,7 +84,7 @@ export const tenantListResponseSchema = z.array(
     slug: z.string(),
     logoUrl: z.string().nullable(),
     profileId: z.string(),
-    userCount: z.number(),
+    userCount: z.number().nullable(),
   }),
 );
 
