@@ -10,7 +10,7 @@ export async function PATCH(request: NextRequest) {
   const { tenant } = await requireAdminContextFromRequest(request);
 
   const json = await request.json();
-  const update = updateTenantSchema.parse(json);
+  const update = updateTenantSchema.partial().parse(json);
 
   await db.update(schema.tenants).set(update).where(eq(schema.tenants.id, tenant.id));
 

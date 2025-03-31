@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ReactNode } from "react";
 
-import { getSettingsPath, getUserSettingsPath } from "@/lib/paths";
+import { getAdvancedSettingsPath, getSettingsPath, getUserSettingsPath } from "@/lib/paths";
 import { cn } from "@/lib/utils";
 
 import { AppLocation } from "../footer";
@@ -17,7 +17,9 @@ function getAppLocation(path: string, slug: string): AppLocation {
   if (path.startsWith(getUserSettingsPath(slug))) {
     return AppLocation.SETTINGS_USERS;
   }
-
+  if (path.startsWith(getAdvancedSettingsPath(slug))) {
+    return AppLocation.SETTINGS_ADVANCED;
+  }
   return AppLocation.SETTINGS;
 }
 
@@ -36,6 +38,9 @@ export default function SettingsNav({ tenant }: Props) {
       </Link>
       <Link href={getUserSettingsPath(tenant.slug)}>
         <NavItem selected={appLocation === AppLocation.SETTINGS_USERS}>Users</NavItem>
+      </Link>
+      <Link href={getAdvancedSettingsPath(tenant.slug)}>
+        <NavItem selected={appLocation === AppLocation.SETTINGS_ADVANCED}>Advanced</NavItem>
       </Link>
     </div>
   );

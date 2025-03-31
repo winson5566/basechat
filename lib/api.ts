@@ -51,15 +51,15 @@ export const conversationMessagesResponseSchema = z.array(
 );
 
 export const updateTenantSchema = z.object({
-  question1: z.string(),
-  question2: z.string(),
-  question3: z.string(),
-  groundingPrompt: z.string().nullable(),
-  systemPrompt: z.string().nullable(),
-  welcomeMessage: z.string().nullable(),
-  slug: z.string(),
-  isPublic: z.boolean(),
-  name: z.string(),
+  question1: z.string().optional(),
+  question2: z.string().optional(),
+  question3: z.string().optional(),
+  groundingPrompt: z.string().nullable().optional(),
+  systemPrompt: z.string().nullable().optional(),
+  welcomeMessage: z.string().nullable().optional(),
+  slug: z.string().optional(),
+  isPublic: z.boolean().optional(),
+  name: z.string().optional(),
 });
 
 export type MemberType = "profile" | "invite";
