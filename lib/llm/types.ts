@@ -27,8 +27,11 @@ export const PROVIDER_CONFIG = {
 } as const;
 
 // Default values
+// If adding a new provider, update app/api/conversations/[conversationId]/messages/utils.ts using the vercel ai-sdk
+// If changing the DEFAULT_NAMING_MODEL, update createConversationName in app/api/conversations/[conversationId]/messages/utils.ts to use appropriate provider
 export const DEFAULT_MODEL = "claude-3-7-sonnet-latest";
 export const DEFAULT_PROVIDER = "anthropic";
+export const DEFAULT_NAMING_MODEL = "gemini-1.5-flash";
 
 // Derive types from the config
 export type LLMProvider = keyof typeof PROVIDER_CONFIG;
@@ -68,3 +71,6 @@ export const LLM_DISPLAY_NAMES = Object.fromEntries(
     ];
   }),
 ) as unknown as Record<LLMModel, string>;
+
+export const NAMING_SYSTEM_PROMPT =
+  "You are an expert at naming conversations. The name should be a short PROFESSIONAL phrase that captures the essence of the conversation. MAXIMUM 10 characters. Name is better too short than too long. Do not include words like 'chat' or 'conversation'. Return ONLY the name, no other text.";
