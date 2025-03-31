@@ -2,6 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Check, Copy, Loader2 } from "lucide-react";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useMemo, useState, useEffect } from "react";
 import { useForm, UseFormReturn } from "react-hook-form";
@@ -14,7 +15,7 @@ import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { updateTenantSchema } from "@/lib/api";
 import { DEFAULT_GROUNDING_PROMPT, DEFAULT_SYSTEM_PROMPT } from "@/lib/constants";
-import { ALL_VALID_MODELS, LLM_DISPLAY_NAMES, LLMModel } from "@/lib/llm/types";
+import { ALL_VALID_MODELS, LLM_DISPLAY_NAMES, LLMModel, LLM_LOGO_MAP } from "@/lib/llm/types";
 import * as schema from "@/lib/server/db/schema";
 import { cn } from "@/lib/utils";
 
@@ -226,23 +227,38 @@ const ModelsField = ({ form }: ModelsFieldProps) => {
       name="enabledModels"
       render={({ field }) => (
         <FormItem className="flex flex-col mt-8">
-          <FormLabel className="font-semibold text-[16px] mb-3">Enabled Models</FormLabel>
-          <div className="space-y-4">
+          <div className="mb-5">
+            <FormLabel className="font-semibold text-[16px]">Models</FormLabel>
+            <p className="text-sm text-muted-foreground">Choose which models can be used by this chatbot</p>
+          </div>
+          <div className="space-y-5 pl-8">
             {ALL_VALID_MODELS.map((model) => {
               const isEnabled = field.value?.includes(model);
+              const [_, logoPath] = LLM_LOGO_MAP[model as LLMModel];
               return (
-                <div key={model} className="flex items-center justify-between">
-                  <div className="text-base">{LLM_DISPLAY_NAMES[model as LLMModel]}</div>
-                  <Switch
-                    checked={isEnabled}
-                    onCheckedChange={(checked) => handleToggleModel(model, checked)}
-                    className="data-[state=checked]:bg-[#D946EF]"
-                  />
+                <div key={model}>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center">
+                      <Image
+                        src={logoPath}
+                        alt={LLM_DISPLAY_NAMES[model as LLMModel]}
+                        width={20}
+                        height={20}
+                        className="mr-2"
+                      />
+                      <div className="text-base">{LLM_DISPLAY_NAMES[model as LLMModel]}</div>
+                    </div>
+                    <Switch
+                      checked={isEnabled}
+                      onCheckedChange={(checked) => handleToggleModel(model, checked)}
+                      className="data-[state=checked]:bg-[#D946EF]"
+                    />
+                  </div>
+                  <hr className="w-full my-4" />
                 </div>
               );
             })}
           </div>
-          <p className="text-sm text-muted-foreground mt-2">Select which AI models will be available in your chat</p>
           <FormMessage />
         </FormItem>
       )}
@@ -310,11 +326,6 @@ export default function AdvancedSettings({ tenant }: Props) {
       }
 
       const payload = updateTenantSchema.parse(values);
-      //const payload = updateTenantSchema.parse({
-      //  ...values,
-      //  // Ensure we're sending enabledModels correctly
-      //  enabledModels: values.enabledModels || ALL_VALID_MODELS,
-      //});
       const res = await fetch("/api/tenants/current", {
         method: "PATCH",
         headers: { tenant: tenant.slug },
@@ -400,7 +411,6 @@ export default function AdvancedSettings({ tenant }: Props) {
             <SwitchField form={form} name="isPublic" label="Enable public chat" />
             <hr className="w-full my-8" />
             <ModelsField form={form} />
-            <hr className="w-full my-8" />
           </div>
         </form>
       </Form>
