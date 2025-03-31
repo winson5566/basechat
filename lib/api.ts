@@ -60,6 +60,7 @@ export const updateTenantSchema = z.object({
   slug: z.string().optional(),
   isPublic: z.boolean().optional(),
   name: z.string().optional(),
+  enabledModels: z.array(z.string()).optional(),
 });
 
 export type MemberType = "profile" | "invite";

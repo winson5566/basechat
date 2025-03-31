@@ -11,10 +11,10 @@ import { z } from "zod";
 import { AutosizeTextarea } from "@/components/ui/autosize-textarea";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { updateTenantSchema } from "@/lib/api";
 import { DEFAULT_GROUNDING_PROMPT, DEFAULT_SYSTEM_PROMPT } from "@/lib/constants";
+import { ALL_VALID_MODELS, LLM_DISPLAY_NAMES, LLMModel } from "@/lib/llm/types";
 import * as schema from "@/lib/server/db/schema";
 import { cn } from "@/lib/utils";
 
@@ -42,6 +42,7 @@ const formSchema = z.object({
     message: "URL can only contain lowercase letters, numbers, and hyphens",
   }),
   isPublic: z.boolean().default(false),
+  enabledModels: z.array(z.string()).default(ALL_VALID_MODELS),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -194,6 +195,61 @@ const SwitchField = ({ form, name, label }: SwitchFieldProps) => (
   />
 );
 
+type ModelsFieldProps = {
+  form: UseFormReturn<FormValues, any, undefined>;
+};
+
+const ModelsField = ({ form }: ModelsFieldProps) => {
+  const handleToggleModel = (model: string, isEnabled: boolean) => {
+    const currentModels = form.getValues("enabledModels") || [];
+
+    if (isEnabled && !currentModels.includes(model)) {
+      form.setValue("enabledModels", [...currentModels, model], {
+        shouldDirty: true,
+        shouldValidate: true,
+      });
+    } else if (!isEnabled && currentModels.includes(model)) {
+      form.setValue(
+        "enabledModels",
+        currentModels.filter((m) => m !== model),
+        {
+          shouldDirty: true,
+          shouldValidate: true,
+        },
+      );
+    }
+  };
+
+  return (
+    <FormField
+      control={form.control}
+      name="enabledModels"
+      render={({ field }) => (
+        <FormItem className="flex flex-col mt-8">
+          <FormLabel className="font-semibold text-[16px] mb-3">Enabled Models</FormLabel>
+          <div className="space-y-4">
+            {ALL_VALID_MODELS.map((model) => {
+              const isEnabled = field.value?.includes(model);
+              return (
+                <div key={model} className="flex items-center justify-between">
+                  <div className="text-base">{LLM_DISPLAY_NAMES[model as LLMModel]}</div>
+                  <Switch
+                    checked={isEnabled}
+                    onCheckedChange={(checked) => handleToggleModel(model, checked)}
+                    className="data-[state=checked]:bg-[#D946EF]"
+                  />
+                </div>
+              );
+            })}
+          </div>
+          <p className="text-sm text-muted-foreground mt-2">Select which AI models will be available in your chat</p>
+          <FormMessage />
+        </FormItem>
+      )}
+    />
+  );
+};
+
 type Props = {
   tenant: typeof schema.tenants.$inferSelect;
 };
@@ -206,13 +262,15 @@ export default function AdvancedSettings({ tenant }: Props) {
   useEffect(() => setMounted(true), []);
 
   const formattedTenant = useMemo(() => {
-    const { groundingPrompt, systemPrompt, ...otherFields } = tenant;
+    const { groundingPrompt, systemPrompt, enabledModels, ...otherFields } = tenant;
 
     // Zod only uses default values when the value is undefined. They come in as null
     // Change fields you want to have defaults to undefined.
     return {
       groundingPrompt: groundingPrompt ? groundingPrompt : undefined,
       systemPrompt: systemPrompt ? systemPrompt : undefined,
+      // If enabledModels is available in tenant, use it; otherwise default to all models
+      enabledModels: enabledModels ? enabledModels : ALL_VALID_MODELS,
       ...otherFields,
     };
   }, [tenant]);
@@ -252,6 +310,11 @@ export default function AdvancedSettings({ tenant }: Props) {
       }
 
       const payload = updateTenantSchema.parse(values);
+      //const payload = updateTenantSchema.parse({
+      //  ...values,
+      //  // Ensure we're sending enabledModels correctly
+      //  enabledModels: values.enabledModels || ALL_VALID_MODELS,
+      //});
       const res = await fetch("/api/tenants/current", {
         method: "PATCH",
         headers: { tenant: tenant.slug },
@@ -335,6 +398,8 @@ export default function AdvancedSettings({ tenant }: Props) {
             <URLField form={form} name="slug" label="URL name" />
             <hr className="w-full my-8" />
             <SwitchField form={form} name="isPublic" label="Enable public chat" />
+            <hr className="w-full my-8" />
+            <ModelsField form={form} />
             <hr className="w-full my-8" />
           </div>
         </form>

@@ -13,7 +13,7 @@ import {
   index,
 } from "drizzle-orm/pg-core";
 
-import { DEFAULT_MODEL } from "@/lib/llm/types";
+import { DEFAULT_MODEL, ALL_VALID_MODELS } from "@/lib/llm/types";
 
 const timestampFields = {
   createdAt: timestamp("created_at", { withTimezone: true, mode: "date" }).defaultNow().notNull(),
@@ -72,6 +72,7 @@ export const tenants = pgTable("tenants", {
   logoFileName: text("logo_file_name"), // The name of the file that was uploaded
   logoObjectName: text("logo_object_name"), // The name of the object in the bucket
   logoUrl: text("logo_url"), // The publicly accessible URL of the object
+  enabledModels: text("enabled_models").array().default(ALL_VALID_MODELS),
 });
 
 export const rolesEnum = pgEnum("roles", ["admin", "user", "guest"]);
