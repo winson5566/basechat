@@ -95,6 +95,10 @@ function readFile(file: File): Promise<string | null> {
 
 function Logo({ url }: { url?: string | null }) {
   if (url) {
+    // These images could come from any source, <Image /> would need additional set up per external resource
+    // Just use <img /> for now.
+    // https://nextjs.org/docs/pages/api-reference/components/image#remotepatterns
+    // eslint-disable-next-line @next/next/no-img-element
     return <img src={url} className="rounded" height={80} width={80} alt="Logo" />;
   }
 
