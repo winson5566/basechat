@@ -212,7 +212,7 @@ returns: string - appropriate name for this conversation
 */
 async function createConversationTitle(messages: CoreMessage[]) {
   const nonSystemMessages = messages.filter((msg) => msg.role !== "system");
-  const model = google(DEFAULT_NAMING_MODEL);
+  const model = openai(DEFAULT_NAMING_MODEL);
   const systemPrompt = NAMING_SYSTEM_PROMPT;
   const userPrompt = `
   Here are the messages from the conversation:

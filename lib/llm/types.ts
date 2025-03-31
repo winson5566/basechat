@@ -31,7 +31,7 @@ export const PROVIDER_CONFIG = {
 // If changing the DEFAULT_NAMING_MODEL, update createConversationName in app/api/conversations/[conversationId]/messages/utils.ts to use appropriate provider
 export const DEFAULT_MODEL = "claude-3-7-sonnet-latest";
 export const DEFAULT_PROVIDER = "anthropic";
-export const DEFAULT_NAMING_MODEL = "gemini-1.5-flash";
+export const DEFAULT_NAMING_MODEL = "gpt-4o-mini";
 
 // Derive types from the config
 export type LLMProvider = keyof typeof PROVIDER_CONFIG;
