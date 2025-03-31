@@ -260,22 +260,21 @@ export async function acceptInvite(userId: string, inviteId: string) {
   return profile;
 }
 
-async function getUserCountSubquery() {
+async function getUserCountSubquery(userId: string) {
   const userCount = db
     .select({
       tenantId: schema.profiles.tenantId,
-      userCount: sql<number>`COALESCE(COUNT(*) FILTER (WHERE ${schema.profiles.role} != 'guest'), 0)`
-        .mapWith(Number)
-        .as("user_count"),
+      userCount: sql<number>`COUNT(*)`.mapWith(Number).as("user_count"),
     })
     .from(schema.profiles)
+    .where(and(eq(schema.profiles.userId, userId), ne(schema.profiles.role, "guest")))
     .groupBy(schema.profiles.tenantId)
     .as("user_counts");
   return userCount;
 }
 
 export async function getTenantsByUserId(userId: string) {
-  const userCountResult = await getUserCountSubquery();
+  const userCountResult = await getUserCountSubquery(userId);
   return db
     .select({
       id: schema.tenants.id,
