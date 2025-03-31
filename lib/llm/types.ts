@@ -71,6 +71,3 @@ export const LLM_DISPLAY_NAMES = Object.fromEntries(
     ];
   }),
 ) as unknown as Record<LLMModel, string>;
-
-export const NAMING_SYSTEM_PROMPT =
-  "You are an expert at naming conversations. The name should be a short PROFESSIONAL phrase that captures the essence of the conversation. MAXIMUM 10 characters. Name is better too short than too long. Do not include words like 'chat' or 'conversation'. Return ONLY the name, no other text.";
