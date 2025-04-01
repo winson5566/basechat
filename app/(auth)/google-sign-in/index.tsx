@@ -15,7 +15,6 @@ const roboto = Roboto({ subsets: ["latin"], weight: "400" });
 
 export default function GoogleSignIn({ redirectTo }: Props) {
   async function handleClick() {
-    console.log("handleClick: ", redirectTo);
     const { data, error } = await signIn.social({
       provider: "google",
       callbackURL: redirectTo,

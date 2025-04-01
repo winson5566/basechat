@@ -36,12 +36,8 @@ export const auth = betterAuth({
     },
     // resetPasswordTokenExpiresIn: 3600, // seconds
     password: {
-      hash: async (password) => hashPassword(password),
-      verify: async ({ hash, password }) => {
-        const res = await verifyPassword(hash, password);
-        console.log({ verifyPassword: res });
-        return res;
-      },
+      hash: (password) => hashPassword(password),
+      verify: ({ hash, password }) => verifyPassword(hash, password),
     },
   },
 });
