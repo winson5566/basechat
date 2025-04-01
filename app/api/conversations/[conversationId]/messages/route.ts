@@ -2,8 +2,12 @@ import { CoreMessage } from "ai";
 import assertNever from "assert-never";
 import { NextRequest } from "next/server";
 
-import { conversationMessagesResponseSchema, createConversationMessageRequestSchema } from "@/lib/api";
-import { DEFAULT_MODEL, DEFAULT_PROVIDER, getProviderForModel } from "@/lib/llm/types";
+import {
+  conversationMessagesResponseSchema,
+  createConversationMessageRequestSchema,
+  createConversationMessageResponseSchema,
+} from "@/lib/api";
+import { DEFAULT_MODEL, DEFAULT_PROVIDER, getProviderForModel, modelSchema } from "@/lib/llm/types";
 import { createConversationMessage, getConversation, getConversationMessages } from "@/lib/server/service";
 import { requireAuthContextFromRequest } from "@/lib/server/utils";
 
@@ -32,8 +36,9 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 
   let provider = getProviderForModel(modelInJson);
   let model = modelInJson;
-  if (!provider) {
-    console.log(`Provider not found for model ${model}`);
+  if (!provider || !tenant.enabledModels.includes(modelInJson)) {
+    console.log(`Invalid model or model not enabled for tenant: ${model}`);
+    console.log(`Using default model: ${DEFAULT_MODEL} and default provider: ${DEFAULT_PROVIDER}`);
     provider = DEFAULT_PROVIDER;
     model = DEFAULT_MODEL;
   }

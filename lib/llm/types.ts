@@ -1,3 +1,5 @@
+import { z } from "zod";
+
 // Single source of truth for providers and their models
 export const PROVIDER_CONFIG = {
   openai: {
@@ -35,19 +37,29 @@ export const DEFAULT_NAMING_MODEL = "gpt-4o-mini";
 
 // Derive types from the config
 export type LLMProvider = keyof typeof PROVIDER_CONFIG;
-export type LLMModel = (typeof PROVIDER_CONFIG)[LLMProvider]["models"][number];
-export type ProviderModels<T extends LLMProvider> = (typeof PROVIDER_CONFIG)[T]["models"][number];
 
-// Runtime mappings
-export const PROVIDER_MODELS = {
-  openai: PROVIDER_CONFIG.openai.models,
-  google: PROVIDER_CONFIG.google.models,
-  anthropic: PROVIDER_CONFIG.anthropic.models,
-} as const;
+// List of all currently valid model names for validation
+export const ALL_VALID_MODELS = Object.values(PROVIDER_CONFIG).flatMap((config) => config.models) as string[];
 
-export const ALL_VALID_MODELS = Object.values(PROVIDER_CONFIG).flatMap((config) => config.models) as LLMModel[];
+// Create Zod schema for model validation
+export const modelSchema = z.enum(ALL_VALID_MODELS as [string, ...string[]]);
 
-export function getProviderForModel(model: LLMModel): LLMProvider | null {
+// Type for validated model names
+export type LLMModel = z.infer<typeof modelSchema>;
+
+// Schema for array of models (used for enabledModels)
+export const modelArraySchema = z.array(modelSchema).min(1, "At least one model must be enabled").nullable();
+
+// Helper function to get enabled models, handling null case
+export function getEnabledModels(enabledModels: string[] | null): string[] {
+  return enabledModels ?? ALL_VALID_MODELS;
+}
+
+export function getProviderForModel(model: string): LLMProvider | null {
+  // Validate the model first
+  const parsed = modelSchema.safeParse(model);
+  if (!parsed.success) return null;
+
   for (const [provider, config] of Object.entries(PROVIDER_CONFIG)) {
     if ((config.models as readonly string[]).includes(model)) {
       return provider as LLMProvider;
@@ -56,18 +68,25 @@ export function getProviderForModel(model: LLMModel): LLMProvider | null {
   return null;
 }
 
-// Logo mapping
+// Logo and display name mappings
 export const LLM_LOGO_MAP = Object.fromEntries(
-  ALL_VALID_MODELS.map((model) => [model, [model, PROVIDER_CONFIG[getProviderForModel(model)!].logo]]),
+  ALL_VALID_MODELS.map((model) => {
+    const provider = getProviderForModel(model);
+    return [model, [model, provider ? PROVIDER_CONFIG[provider].logo : ""]];
+  }),
 ) as Record<LLMModel, [string, string]>;
 
-// Display name mapping
 export const LLM_DISPLAY_NAMES = Object.fromEntries(
   ALL_VALID_MODELS.map((model) => {
-    const provider = getProviderForModel(model)!;
+    const provider = getProviderForModel(model);
     return [
       model,
-      PROVIDER_CONFIG[provider].displayNames[model as keyof (typeof PROVIDER_CONFIG)[typeof provider]["displayNames"]],
+      provider &&
+      PROVIDER_CONFIG[provider].displayNames[model as keyof (typeof PROVIDER_CONFIG)[typeof provider]["displayNames"]]
+        ? PROVIDER_CONFIG[provider].displayNames[
+            model as keyof (typeof PROVIDER_CONFIG)[typeof provider]["displayNames"]
+          ]
+        : model,
     ];
   }),
-) as unknown as Record<LLMModel, string>;
+) as Record<LLMModel, string>;

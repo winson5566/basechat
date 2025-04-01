@@ -3,7 +3,7 @@ import Image from "next/image";
 import Markdown from "react-markdown";
 
 import CONNECTOR_MAP from "@/lib/connector-map";
-import { LLMModel, LLM_DISPLAY_NAMES } from "@/lib/llm/types";
+import { LLM_DISPLAY_NAMES, LLMModel } from "@/lib/llm/types";
 
 import Logo from "../tenant/logo/logo";
 

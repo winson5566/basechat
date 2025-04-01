@@ -8,6 +8,8 @@ export const getSettingsPath = (slug: string) => `${getTenantPath(slug)}/setting
 
 export const getUserSettingsPath = (slug: string) => `${getSettingsPath(slug)}/users`;
 
+export const getModelsPromptsSettingsPath = (slug: string) => `${getSettingsPath(slug)}/models-prompts`;
+
 export const getCheckPath = (slug: string) => `/check/${slug}`;
 
 export const getSignInPath = ({ reset }: { reset?: boolean } = {}) => `/sign-in${reset ? "?reset=true" : ""}`;

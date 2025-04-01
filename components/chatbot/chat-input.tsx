@@ -4,7 +4,7 @@ import { KeyboardEvent, useRef, useState, useEffect } from "react";
 
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Switch } from "@/components/ui/switch";
-import { LLMModel, ALL_VALID_MODELS, LLM_LOGO_MAP, LLM_DISPLAY_NAMES } from "@/lib/llm/types";
+import { LLMModel, modelSchema, LLM_LOGO_MAP, LLM_DISPLAY_NAMES, ALL_VALID_MODELS } from "@/lib/llm/types";
 import { cn } from "@/lib/utils";
 
 import CheckIcon from "../../public/icons/check.svg";
@@ -21,6 +21,7 @@ interface ChatInputProps {
   onRerankChange?: (enabled: boolean) => void;
   prioritizeRecent?: boolean;
   onPrioritizeRecentChange?: (enabled: boolean) => void;
+  enabledModels: LLMModel[];
 }
 
 const useIsDesktop = () => {
@@ -199,46 +200,50 @@ export default function ChatInput(props: ChatInputProps) {
                 />
               </div>
             </div>
-            <div className="h-[1px] w-full bg-[#D7D7D7] my-4" />
-            <div className="flex flex-col gap-2">
-              <span className="text-sm font-medium text-black">Switch model</span>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <button className="flex items-center justify-between w-full text-sm text-muted-foreground hover:text-foreground">
-                    <span className="text-[#6B7280]">{LLM_DISPLAY_NAMES[props.selectedModel]}</span>
-                    <ChevronRight className="h-4 w-4" />
-                  </button>
-                </PopoverTrigger>
-                <ModelPopoverContent>
-                  <div className="flex flex-col gap-1">
-                    {ALL_VALID_MODELS.map((model) => {
-                      const [_, logoPath] = LLM_LOGO_MAP[model];
-                      return (
-                        <button
-                          key={model}
-                          className="flex items-center rounded-sm px-4 py-3 text-sm text-left hover:bg-black hover:bg-opacity-5"
-                          onClick={() => props.onModelChange(model)}
-                        >
-                          <div className="w-4">
-                            {props.selectedModel === model && <Image src={CheckIcon} alt="selected" />}
-                          </div>
-                          <div className="flex items-center ml-3">
-                            <Image
-                              src={logoPath}
-                              alt={LLM_DISPLAY_NAMES[model]}
-                              width={16}
-                              height={16}
-                              className="mr-2"
-                            />
-                            <span>{LLM_DISPLAY_NAMES[model]}</span>
-                          </div>
-                        </button>
-                      );
-                    })}
-                  </div>
-                </ModelPopoverContent>
-              </Popover>
-            </div>
+            {props.enabledModels.length > 1 && (
+              <>
+                <div className="h-[1px] w-full bg-[#D7D7D7] my-4" />
+                <div className="flex flex-col gap-2">
+                  <span className="text-sm font-medium text-black">Switch model</span>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <button className="flex items-center justify-between w-full text-sm text-muted-foreground hover:text-foreground">
+                        <span className="text-[#6B7280]">{LLM_DISPLAY_NAMES[props.selectedModel]}</span>
+                        <ChevronRight className="h-4 w-4" />
+                      </button>
+                    </PopoverTrigger>
+                    <ModelPopoverContent>
+                      <div className="flex flex-col gap-1">
+                        {props.enabledModels.map((model) => {
+                          const [_, logoPath] = LLM_LOGO_MAP[model];
+                          return (
+                            <button
+                              key={model}
+                              className="flex items-center rounded-sm px-4 py-3 text-sm text-left hover:bg-black hover:bg-opacity-5"
+                              onClick={() => props.onModelChange(model)}
+                            >
+                              <div className="w-4">
+                                {props.selectedModel === model && <Image src={CheckIcon} alt="selected" />}
+                              </div>
+                              <div className="flex items-center ml-3">
+                                <Image
+                                  src={logoPath}
+                                  alt={LLM_DISPLAY_NAMES[model]}
+                                  width={16}
+                                  height={16}
+                                  className="mr-2"
+                                />
+                                <span>{LLM_DISPLAY_NAMES[model]}</span>
+                              </div>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </ModelPopoverContent>
+                  </Popover>
+                </div>
+              </>
+            )}
           </div>
         </SettingsPopoverContent>
       </Popover>

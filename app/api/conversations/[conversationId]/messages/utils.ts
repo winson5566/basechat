@@ -6,7 +6,7 @@ import Handlebars from "handlebars";
 
 import { createConversationMessageResponseSchema } from "@/lib/api";
 import { DEFAULT_GROUNDING_PROMPT, DEFAULT_SYSTEM_PROMPT, NAMING_SYSTEM_PROMPT } from "@/lib/constants";
-import { DEFAULT_NAMING_MODEL, LLMModel, DEFAULT_MODEL, DEFAULT_PROVIDER, getProviderForModel } from "@/lib/llm/types";
+import { DEFAULT_NAMING_MODEL, DEFAULT_MODEL, DEFAULT_PROVIDER, getProviderForModel, LLMModel } from "@/lib/llm/types";
 import { getRagieClient } from "@/lib/server/ragie";
 import {
   createConversationMessage,
@@ -39,7 +39,7 @@ export async function generate(tenantId: string, profileId: string, conversation
   let provider = getProviderForModel(context.model);
   if (!provider) {
     console.log(`Provider not found for model ${context.model}`);
-    console.log(`Using default provider: ${DEFAULT_PROVIDER} and default model: ${DEFAULT_MODEL}`);
+    console.log(`Using default model: ${DEFAULT_MODEL} and default provider: ${DEFAULT_PROVIDER}`);
     provider = DEFAULT_PROVIDER;
     context.model = DEFAULT_MODEL;
   }

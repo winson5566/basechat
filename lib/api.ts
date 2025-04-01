@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { LLMModel, ALL_VALID_MODELS } from "@/lib/llm/types";
+import { modelSchema, modelArraySchema } from "@/lib/llm/types";
 
 export const createConversationMessageResponseSchema = z.object({
   usedSourceIndexes: z.array(z.number().describe("The indexes of the sources used in the response")),
@@ -10,7 +10,7 @@ export const createConversationMessageResponseSchema = z.object({
 export const createConversationMessageRequestSchema = z.object({
   conversationId: z.string(),
   content: z.string().describe("The request message"),
-  model: z.enum(ALL_VALID_MODELS as [LLMModel, ...LLMModel[]]).describe("The LLM model to use"),
+  model: modelSchema.describe("The LLM model to use"),
   isBreadth: z.boolean().describe("Whether to use breadth-first search"),
   rerankEnabled: z.boolean().describe("Whether to rerank results"),
   prioritizeRecent: z.boolean().describe("Whether to prioritize recent data"),
@@ -35,7 +35,7 @@ export const conversationMessagesResponseSchema = z.array(
       role: z.literal("assistant"),
       sources: z.array(z.any()).default([]),
       expanded: z.boolean().default(false),
-      model: z.enum(ALL_VALID_MODELS as [LLMModel, ...LLMModel[]]),
+      model: modelSchema,
     }),
     z.object({
       id: z.string(),
@@ -51,15 +51,16 @@ export const conversationMessagesResponseSchema = z.array(
 );
 
 export const updateTenantSchema = z.object({
-  question1: z.string(),
-  question2: z.string(),
-  question3: z.string(),
-  groundingPrompt: z.string().nullable(),
-  systemPrompt: z.string().nullable(),
-  welcomeMessage: z.string().nullable(),
-  slug: z.string(),
-  isPublic: z.boolean(),
-  name: z.string(),
+  question1: z.string().optional(),
+  question2: z.string().optional(),
+  question3: z.string().optional(),
+  groundingPrompt: z.string().nullable().optional(),
+  systemPrompt: z.string().nullable().optional(),
+  welcomeMessage: z.string().nullable().optional(),
+  slug: z.string().optional(),
+  isPublic: z.boolean().optional(),
+  name: z.string().optional(),
+  enabledModels: modelArraySchema.optional(),
 });
 
 export type MemberType = "profile" | "invite";

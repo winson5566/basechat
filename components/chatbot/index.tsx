@@ -3,7 +3,6 @@
 import assert from "assert";
 
 import { experimental_useObject as useObject } from "ai/react";
-import { Inter } from "next/font/google";
 import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 
 import { useGlobalState } from "@/app/(main)/o/[slug]/context";
@@ -12,14 +11,11 @@ import {
   CreateConversationMessageRequest,
   createConversationMessageResponseSchema,
 } from "@/lib/api";
-import { LLMModel, getProviderForModel } from "@/lib/llm/types";
-import { DEFAULT_MODEL, DEFAULT_PROVIDER } from "@/lib/llm/types";
+import { getProviderForModel, LLMModel, modelSchema } from "@/lib/llm/types";
 
 import AssistantMessage from "./assistant-message";
 import ChatInput from "./chat-input";
 import { SourceMetadata } from "./types";
-
-const inter = Inter({ subsets: ["latin"] });
 
 type AiMessage = { content: string; role: "assistant"; id?: string; sources: SourceMetadata[]; model?: LLMModel };
 type UserMessage = { content: string; role: "user" };
@@ -37,6 +33,7 @@ interface Props {
     logoUrl?: string | null;
     slug: string;
     id: string;
+    enabledModels: LLMModel[];
   };
   initMessage?: string;
   onSelectedDocumentId: (id: string) => void;
@@ -50,7 +47,17 @@ export default function Chatbot({ tenant, conversationId, initMessage, onSelecte
   const pendingMessageRef = useRef<null | { id: string; model: LLMModel }>(null);
   pendingMessageRef.current = pendingMessage;
   const { initialModel } = useGlobalState();
-  const [selectedModel, setSelectedModel] = useState<LLMModel>(initialModel);
+  const [selectedModel, setSelectedModel] = useState<LLMModel>(() => {
+    if (tenant.enabledModels.length > 0) {
+      const parsed = modelSchema.safeParse(initialModel);
+      if (parsed.success && tenant.enabledModels.includes(initialModel)) {
+        return initialModel;
+      }
+      // if initial model from global state is no longer enabled by this tenant, change to one that is
+      return tenant.enabledModels[0];
+    }
+    return initialModel;
+  });
   const [isBreadth, setIsBreadth] = useState(false);
   const [rerankEnabled, setRerankEnabled] = useState(false);
   const [prioritizeRecent, setPrioritizeRecent] = useState(false);
@@ -184,6 +191,14 @@ export default function Chatbot({ tenant, conversationId, initMessage, onSelecte
     [messages, sourceCache],
   );
 
+  // Ensure selected model is in enabled models list
+  useEffect(() => {
+    if (!tenant.enabledModels.includes(selectedModel)) {
+      // Update to first enabled model
+      setSelectedModel(tenant.enabledModels[0]);
+    }
+  }, [selectedModel, tenant.enabledModels]);
+
   return (
     <div className="flex h-full w-full items-center flex-col">
       <div ref={container} className="flex flex-col h-full w-full items-center overflow-y-auto">
@@ -234,6 +249,7 @@ export default function Chatbot({ tenant, conversationId, initMessage, onSelecte
             onRerankChange={setRerankEnabled}
             prioritizeRecent={prioritizeRecent}
             onPrioritizeRecentChange={setPrioritizeRecent}
+            enabledModels={tenant.enabledModels}
           />
         </div>
       </div>

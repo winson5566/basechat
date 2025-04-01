@@ -12,8 +12,9 @@ import {
   uuid,
   index,
 } from "drizzle-orm/pg-core";
+import { z } from "zod";
 
-import { DEFAULT_MODEL } from "@/lib/llm/types";
+import { DEFAULT_MODEL, ALL_VALID_MODELS, modelSchema, modelArraySchema } from "@/lib/llm/types";
 
 const timestampFields = {
   createdAt: timestamp("created_at", { withTimezone: true, mode: "date" }).defaultNow().notNull(),
@@ -72,6 +73,7 @@ export const tenants = pgTable("tenants", {
   logoFileName: text("logo_file_name"), // The name of the file that was uploaded
   logoObjectName: text("logo_object_name"), // The name of the object in the bucket
   logoUrl: text("logo_url"), // The publicly accessible URL of the object
+  enabledModels: text("enabled_models").array().default(ALL_VALID_MODELS).$type<z.infer<typeof modelArraySchema>>(),
 });
 
 export const rolesEnum = pgEnum("roles", ["admin", "user", "guest"]);
@@ -118,7 +120,7 @@ export const messages = pgTable(
     content: text("content"),
     role: messageRolesEnum("role").notNull(),
     sources: json("sources").notNull(),
-    model: text("model").notNull().default(DEFAULT_MODEL),
+    model: text("model").notNull().default(DEFAULT_MODEL).$type<z.infer<typeof modelSchema>>(),
     isBreadth: boolean("is_breadth").notNull().default(false),
     rerankEnabled: boolean("rerank_enabled").notNull().default(false),
     prioritizeRecent: boolean("prioritize_recent").notNull().default(false),

@@ -1,0 +1,1 @@
+ALTER TABLE "tenants" ADD COLUMN "enabled_models" text[] DEFAULT '{"gpt-4o","gpt-3.5-turbo","gemini-2.0-flash","gemini-1.5-pro","claude-3-7-sonnet-latest","claude-3-5-haiku-latest"}';

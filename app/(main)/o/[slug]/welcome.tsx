@@ -8,11 +8,9 @@ import { z } from "zod";
 import ChatInput from "@/components/chatbot/chat-input";
 import Logo from "@/components/tenant/logo/logo";
 import { DEFAULT_WELCOME_MESSAGE } from "@/lib/constants";
-import { DEFAULT_MODEL, LLMModel } from "@/lib/llm/types";
+import { DEFAULT_MODEL, LLMModel, modelSchema, getEnabledModels } from "@/lib/llm/types";
 import { getConversationPath } from "@/lib/paths";
 import * as schema from "@/lib/server/db/schema";
-import { cn } from "@/lib/utils";
-import { getAvatarNumber } from "@/lib/utils";
 
 import { useGlobalState } from "./context";
 
@@ -33,10 +31,19 @@ export default function Welcome({ tenant, className }: Props) {
       const saved = localStorage.getItem("chatSettings");
       if (saved) {
         const settings = JSON.parse(saved);
-        return settings.selectedModel ?? DEFAULT_MODEL;
+        const savedModel = settings.selectedModel;
+        const parsed = modelSchema.safeParse(savedModel);
+        const enabledModels = getEnabledModels(tenant.enabledModels);
+        if (parsed.success && enabledModels.includes(savedModel)) {
+          return savedModel;
+        }
       }
     }
-    return DEFAULT_MODEL;
+    // Validate first enabled model or default model
+    const enabledModels = getEnabledModels(tenant.enabledModels);
+    const firstModel = enabledModels[0];
+    const parsed = modelSchema.safeParse(firstModel);
+    return parsed.success ? firstModel : DEFAULT_MODEL;
   });
   const [isBreadth, setIsBreadth] = useState(() => {
     if (typeof window !== "undefined") {
@@ -141,6 +148,7 @@ export default function Welcome({ tenant, className }: Props) {
           onRerankChange={setRerankEnabled}
           prioritizeRecent={prioritizeRecent}
           onPrioritizeRecentChange={setPrioritizeRecent}
+          enabledModels={getEnabledModels(tenant.enabledModels)}
         />
       </div>
     </div>

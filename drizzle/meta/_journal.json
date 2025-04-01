@@ -211,6 +211,13 @@
       "when": 1743519486830,
       "tag": "0029_icy_james_howlett",
       "breakpoints": true
+    },
+    {
+      "idx": 30,
+      "version": "7",
+      "when": 1743542276333,
+      "tag": "0030_legal_namor",
+      "breakpoints": true
     }
   ]
 }

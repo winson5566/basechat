@@ -2,7 +2,7 @@
 
 import React, { createContext, useState, useContext, ReactNode } from "react";
 
-import { LLMModel, DEFAULT_MODEL } from "@/lib/llm/types";
+import { DEFAULT_MODEL, LLMModel } from "@/lib/llm/types";
 
 interface GlobalState {
   initialMessage: string;
