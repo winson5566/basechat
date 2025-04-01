@@ -16,6 +16,7 @@ import { Switch } from "@/components/ui/switch";
 import { updateTenantSchema } from "@/lib/api";
 import { DEFAULT_GROUNDING_PROMPT, DEFAULT_SYSTEM_PROMPT } from "@/lib/constants";
 import { ALL_VALID_MODELS, LLM_DISPLAY_NAMES, LLM_LOGO_MAP } from "@/lib/llm/types";
+import { getModelPromptSettingsPath } from "@/lib/paths";
 import * as schema from "@/lib/server/db/schema";
 import { cn } from "@/lib/utils";
 
@@ -274,7 +275,7 @@ type Props = {
   tenant: typeof schema.tenants.$inferSelect;
 };
 
-export default function AdvancedSettings({ tenant }: Props) {
+export default function ModelPromptsSettings({ tenant }: Props) {
   const [mounted, setMounted] = useState(false);
   const [isLoading, setLoading] = useState(false);
   const router = useRouter();
@@ -349,7 +350,7 @@ export default function AdvancedSettings({ tenant }: Props) {
 
       // If the slug was changed, redirect to the new URL
       if (values.slug !== tenant.slug) {
-        router.push(`/o/${values.slug}/settings/advanced`);
+        router.push(getModelPromptSettingsPath(values.slug));
       }
     } catch (error) {
       toast.error("Failed to save changes");
@@ -366,7 +367,7 @@ export default function AdvancedSettings({ tenant }: Props) {
   return (
     <div className="w-full p-4 flex-grow flex flex-col relative">
       <div className="flex w-full justify-between items-center">
-        <h1 className="font-bold text-[32px] mb-16">Advanced Settings</h1>
+        <h1 className="font-bold text-[32px] mb-16">Model & Prompts</h1>
         <div className="flex justify-end">
           <button
             type="reset"

@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ReactNode } from "react";
 
-import { getAdvancedSettingsPath, getSettingsPath, getUserSettingsPath } from "@/lib/paths";
+import { getModelPromptSettingsPath, getSettingsPath, getUserSettingsPath } from "@/lib/paths";
 import { cn } from "@/lib/utils";
 
 import { AppLocation } from "../footer";
@@ -17,8 +17,8 @@ function getAppLocation(path: string, slug: string): AppLocation {
   if (path.startsWith(getUserSettingsPath(slug))) {
     return AppLocation.SETTINGS_USERS;
   }
-  if (path.startsWith(getAdvancedSettingsPath(slug))) {
-    return AppLocation.SETTINGS_ADVANCED;
+  if (path.startsWith(getModelPromptSettingsPath(slug))) {
+    return AppLocation.SETTINGS_MODEL_PROMPTS;
   }
   return AppLocation.SETTINGS;
 }
@@ -39,8 +39,8 @@ export default function SettingsNav({ tenant }: Props) {
       <Link href={getUserSettingsPath(tenant.slug)}>
         <NavItem selected={appLocation === AppLocation.SETTINGS_USERS}>Users</NavItem>
       </Link>
-      <Link href={getAdvancedSettingsPath(tenant.slug)}>
-        <NavItem selected={appLocation === AppLocation.SETTINGS_ADVANCED}>Advanced</NavItem>
+      <Link href={getModelPromptSettingsPath(tenant.slug)}>
+        <NavItem selected={appLocation === AppLocation.SETTINGS_MODEL_PROMPTS}>Model & Prompts</NavItem>
       </Link>
     </div>
   );

@@ -8,7 +8,7 @@ export const getSettingsPath = (slug: string) => `${getTenantPath(slug)}/setting
 
 export const getUserSettingsPath = (slug: string) => `${getSettingsPath(slug)}/users`;
 
-export const getAdvancedSettingsPath = (slug: string) => `${getSettingsPath(slug)}/advanced`;
+export const getModelPromptSettingsPath = (slug: string) => `${getSettingsPath(slug)}/model-prompts`;
 
 export const getCheckPath = (slug: string) => `/check/${slug}`;
 
