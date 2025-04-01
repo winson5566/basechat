@@ -29,11 +29,7 @@ export const auth = betterAuth({
   socialProviders,
   emailAndPassword: {
     enabled: true,
-    // disableSignUp: false,
-    // requireEmailVerification: true,
     minPasswordLength: 6,
-    maxPasswordLength: 128,
-    // autoSignIn: true,
     sendResetPassword: ({ user, url, token }) => sendResetPasswordEmail(user, url, token),
     resetPasswordTokenExpiresIn: 36000, // seconds
     password: {
