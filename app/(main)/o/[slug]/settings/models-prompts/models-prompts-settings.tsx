@@ -59,7 +59,7 @@ type FormValues = z.infer<typeof formSchema>;
 type URLFieldProps = {
   name: keyof FormValues;
   label: string;
-  form: UseFormReturn<FormValues, any, undefined>;
+  form: UseFormReturn<FormValues>;
 };
 
 const URLField = ({ form, name, label }: URLFieldProps) => {
@@ -116,7 +116,7 @@ const URLField = ({ form, name, label }: URLFieldProps) => {
 type TextAreaFieldProps = {
   name: keyof FormValues;
   label: string;
-  form: UseFormReturn<FormValues, any, undefined>;
+  form: UseFormReturn<FormValues>;
   help?: React.ReactNode;
   className?: string;
   hasDefault?: boolean;
@@ -177,7 +177,7 @@ const TextAreaField = ({ form, name, label, className, help, hasDefault }: TextA
 type SwitchFieldProps = {
   name: keyof FormValues;
   label: string;
-  form: UseFormReturn<FormValues, any, undefined>;
+  form: UseFormReturn<FormValues>;
 };
 
 const SwitchField = ({ form, name, label }: SwitchFieldProps) => (
@@ -205,7 +205,7 @@ const SwitchField = ({ form, name, label }: SwitchFieldProps) => (
 );
 
 type ModelsFieldProps = {
-  form: UseFormReturn<FormValues, any, undefined>;
+  form: UseFormReturn<FormValues>;
 };
 
 const ModelsField = ({ form }: ModelsFieldProps) => {
