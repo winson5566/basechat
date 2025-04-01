@@ -213,12 +213,12 @@ export default function ChatInput(props: ChatInputProps) {
                 <ModelPopoverContent>
                   <div className="flex flex-col gap-1">
                     {props.enabledModels.map((model) => {
-                      const [_, logoPath] = LLM_LOGO_MAP[model as string];
+                      const [_, logoPath] = LLM_LOGO_MAP[model];
                       return (
                         <button
                           key={model}
                           className="flex items-center rounded-sm px-4 py-3 text-sm text-left hover:bg-black hover:bg-opacity-5"
-                          onClick={() => props.onModelChange(model as string)}
+                          onClick={() => props.onModelChange(model)}
                         >
                           <div className="w-4">
                             {props.selectedModel === model && <Image src={CheckIcon} alt="selected" />}
@@ -226,12 +226,12 @@ export default function ChatInput(props: ChatInputProps) {
                           <div className="flex items-center ml-3">
                             <Image
                               src={logoPath}
-                              alt={LLM_DISPLAY_NAMES[model as string]}
+                              alt={LLM_DISPLAY_NAMES[model]}
                               width={16}
                               height={16}
                               className="mr-2"
                             />
-                            <span>{LLM_DISPLAY_NAMES[model as string]}</span>
+                            <span>{LLM_DISPLAY_NAMES[model]}</span>
                           </div>
                         </button>
                       );

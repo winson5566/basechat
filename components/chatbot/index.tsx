@@ -3,7 +3,6 @@
 import assert from "assert";
 
 import { experimental_useObject as useObject } from "ai/react";
-import { Inter } from "next/font/google";
 import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 
 import { useGlobalState } from "@/app/(main)/o/[slug]/context";
@@ -17,8 +16,6 @@ import { getProviderForModel, LLMModel, modelSchema } from "@/lib/llm/types";
 import AssistantMessage from "./assistant-message";
 import ChatInput from "./chat-input";
 import { SourceMetadata } from "./types";
-
-const inter = Inter({ subsets: ["latin"] });
 
 type AiMessage = { content: string; role: "assistant"; id?: string; sources: SourceMetadata[]; model?: LLMModel };
 type UserMessage = { content: string; role: "user" };
@@ -46,8 +43,8 @@ export default function Chatbot({ tenant, conversationId, initMessage, onSelecte
   const [localInitMessage, setLocalInitMessage] = useState(initMessage);
   const [messages, setMessages] = useState<Message[]>([]);
   const [sourceCache, setSourceCache] = useState<Record<string, SourceMetadata[]>>({});
-  const [pendingMessage, setPendingMessage] = useState<null | { id: string; model: string }>(null);
-  const pendingMessageRef = useRef<null | { id: string; model: string }>(null);
+  const [pendingMessage, setPendingMessage] = useState<null | { id: string; model: LLMModel }>(null);
+  const pendingMessageRef = useRef<null | { id: string; model: LLMModel }>(null);
   pendingMessageRef.current = pendingMessage;
   const { initialModel } = useGlobalState();
   const [selectedModel, setSelectedModel] = useState<LLMModel>(() => {
@@ -103,7 +100,7 @@ export default function Chatbot({ tenant, conversationId, initMessage, onSelecte
 
       assert(id);
 
-      setPendingMessage({ id, model: model as string });
+      setPendingMessage({ id, model: model as LLMModel });
       return res;
     },
     onError: console.error,
@@ -116,7 +113,7 @@ export default function Chatbot({ tenant, conversationId, initMessage, onSelecte
     },
   });
 
-  const handleSubmit = (content: string, model: string) => {
+  const handleSubmit = (content: string, model: LLMModel) => {
     const provider = getProviderForModel(model);
     if (!provider) {
       console.error(`No provider found for model ${model}`);

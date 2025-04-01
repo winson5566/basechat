@@ -1,4 +1,3 @@
-import { ALL_VALID_MODELS } from "@/lib/llm/types";
 import { authOrRedirect } from "@/lib/server/utils";
 
 import Welcome from "./welcome";

@@ -39,7 +39,7 @@ export default function Welcome({ tenant, className }: Props) {
       }
     }
     // Validate first enabled model or default model
-    const firstModel = tenant.enabledModels[0] ?? DEFAULT_MODEL;
+    const firstModel = tenant.enabledModels[0];
     const parsed = modelSchema.safeParse(firstModel);
     return parsed.success ? firstModel : DEFAULT_MODEL;
   });
