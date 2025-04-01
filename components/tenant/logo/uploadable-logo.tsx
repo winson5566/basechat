@@ -2,6 +2,7 @@
 
 import { Image as LucideImage } from "lucide-react";
 import { ChangeEvent } from "react";
+import { toast } from "sonner";
 
 export interface FileCreateEvent {
   action: "create";
@@ -21,9 +22,39 @@ interface Props {
 }
 
 export default function UploadableLogo({ imageName, imageUrl, onChange }: Props) {
+  const validateFile = (file: File): { isValid: boolean; error?: string } => {
+    // Check file type
+    const validImageTypes = ["image/jpeg", "image/png", "image/gif", "image/webp"];
+    if (!validImageTypes.includes(file.type)) {
+      return {
+        isValid: false,
+        error: "Please upload an image file (JPEG, PNG, GIF, or WebP)",
+      };
+    }
+
+    // Check file size (10MB limit)
+    const maxSize = 10 * 1024 * 1024;
+    if (file.size > maxSize) {
+      return {
+        isValid: false,
+        error: "File size must be less than 10MB",
+      };
+    }
+
+    return { isValid: true };
+  };
+
   const onFileChange = async (e: ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
       const file = e.target.files[0];
+      const validation = validateFile(file);
+
+      if (!validation.isValid) {
+        toast.error(validation.error);
+        e.target.value = "";
+        return;
+      }
+
       let imageDataUrl = await readFile(file);
 
       if (imageDataUrl) {
