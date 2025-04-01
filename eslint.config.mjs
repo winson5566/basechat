@@ -22,18 +22,21 @@ const settings = [
     },
 
     rules: {
-      "import/order": [
-        "error",
-        {
-          groups: ["builtin", "external", "internal", "parent", "sibling", "index"],
-          "newlines-between": "always",
+      "import/order":
+        process.env.DISABLE_IMPORT_ORDER === "true"
+          ? "off"
+          : [
+              "error",
+              {
+                groups: ["builtin", "external", "internal", "parent", "sibling", "index"],
+                "newlines-between": "always",
 
-          alphabetize: {
-            order: "asc",
-            caseInsensitive: true,
-          },
-        },
-      ],
+                alphabetize: {
+                  order: "asc",
+                  caseInsensitive: true,
+                },
+              },
+            ],
 
       "react/no-unknown-property": [
         "error",
