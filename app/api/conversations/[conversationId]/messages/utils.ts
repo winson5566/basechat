@@ -226,7 +226,5 @@ async function createConversationTitle(messages: CoreMessage[]) {
     system: systemPrompt,
     prompt: userPrompt,
   });
-
-  console.log(`Conversation name: ${text}`);
   return text;
 }

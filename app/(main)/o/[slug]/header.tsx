@@ -21,7 +21,6 @@ import PlusIcon from "@/public/icons/plus.svg";
 
 import ConversationHistory from "./conversation-history";
 interface Props {
-  currentProfileId: string;
   tenant: {
     name?: string | null;
     logoUrl?: string | null;
@@ -52,10 +51,9 @@ const HeaderPopoverContent = ({
   </PopoverContent>
 );
 
-export default function Header({ currentProfileId, isAnonymous, tenant, name, email, onNavClick = () => {} }: Props) {
+export default function Header({ isAnonymous, tenant, name, email, onNavClick = () => {} }: Props) {
   const router = useRouter();
   const [tenants, setTenants] = useState<z.infer<typeof tenantListResponseSchema>>([]);
-  const [selectedProfileId, setSelectedProfileId] = useState(currentProfileId);
 
   useEffect(() => {
     (async () => {
@@ -77,11 +75,10 @@ export default function Header({ currentProfileId, isAnonymous, tenant, name, em
       method: "POST",
       body: JSON.stringify(
         updateCurrentProfileSchema.parse({
-          currentProfileId: tenant.profileId,
+          tenantId: tenant.id,
         }),
       ),
     });
-    setSelectedProfileId(tenant.profileId);
     router.push(getTenantPath(tenant.slug));
   };
 
@@ -130,28 +127,28 @@ export default function Header({ currentProfileId, isAnonymous, tenant, name, em
             {/* Scrollable container for tenants list */}
             <div className="max-h-[calc(100vh-330px)] overflow-y-auto pr-1 scrollbar-thin mb-4">
               <ul>
-                {tenants.map((tenant, i) => (
+                {tenants.map((tenantItem, i) => (
                   <li
                     key={i}
                     className="hover:bg-black hover:bg-opacity-5 px-4 py-3 rounded-lg cursor-pointer"
-                    onClick={() => handleProfileClick(tenant)}
+                    onClick={() => handleProfileClick(tenantItem)}
                   >
                     <div className="flex items-center mb-1">
                       <div className="w-4">
-                        {selectedProfileId === tenant.profileId && <Image src={CheckIcon} alt="selected" />}
+                        {tenant.id === tenantItem.id && <Image src={CheckIcon} alt="selected" />}
                       </div>
                       <Logo
-                        name={tenant.name}
-                        url={tenant.logoUrl}
+                        name={tenantItem.name}
+                        url={tenantItem.logoUrl}
                         width={40}
                         height={40}
                         className="ml-3 text-[16px] w-[40px] h-[40px]"
-                        tenantId={tenant.id}
+                        tenantId={tenantItem.id}
                       />
                       <div className="ml-4">
-                        {tenant.name}
+                        {tenantItem.name}
                         <div className="text-xs text-gray-500">
-                          {tenant.userCount ?? 1} User{(tenant.userCount ?? 1) === 1 ? "" : "s"}
+                          {tenantItem.userCount ?? 1} User{(tenantItem.userCount ?? 1) === 1 ? "" : "s"}
                         </div>
                       </div>
                     </div>

@@ -1,7 +1,7 @@
 import assert from "assert";
 
 import { render } from "@react-email/components";
-import { asc, and, eq, ne, sql } from "drizzle-orm";
+import { asc, and, eq, ne, sql, inArray } from "drizzle-orm";
 import { union } from "drizzle-orm/pg-core";
 import nodemailer from "nodemailer";
 import SMTPConnection from "nodemailer/lib/smtp-connection";
@@ -250,34 +250,30 @@ export async function acceptInvite(userId: string, inviteId: string) {
   return profile;
 }
 
-async function getUserCountSubquery(userId: string) {
-  const userCount = db
+async function getTenantIdsSubquery(userId: string) {
+  const res = await db
     .select({
       tenantId: schema.profiles.tenantId,
-      userCount: sql<number>`COUNT(*)`.mapWith(Number).as("user_count"),
     })
     .from(schema.profiles)
-    .where(and(eq(schema.profiles.userId, userId), ne(schema.profiles.role, "guest")))
-    .groupBy(schema.profiles.tenantId)
-    .as("user_counts");
-  return userCount;
+    .where(and(ne(schema.profiles.role, "guest"), eq(schema.profiles.userId, userId)));
+  return res.map((obj) => obj.tenantId);
 }
 
 export async function getTenantsByUserId(userId: string) {
-  const userCountResult = await getUserCountSubquery(userId);
+  const tenantIds = await getTenantIdsSubquery(userId);
   return db
     .select({
       id: schema.tenants.id,
+      userCount: sql<number>`COUNT(*)`.mapWith(Number).as("user_count"),
       name: schema.tenants.name,
       slug: schema.tenants.slug,
       logoUrl: schema.tenants.logoUrl,
-      profileId: schema.profiles.id,
-      userCount: userCountResult.userCount,
     })
     .from(schema.tenants)
     .innerJoin(schema.profiles, eq(schema.tenants.id, schema.profiles.tenantId))
-    .leftJoin(userCountResult, eq(schema.tenants.id, userCountResult.tenantId))
-    .where(eq(schema.profiles.userId, userId));
+    .where(inArray(schema.tenants.id, tenantIds))
+    .groupBy(schema.tenants.id);
 }
 
 export async function findTenantBySlug(slug: string) {
@@ -298,6 +294,18 @@ export async function setCurrentProfileId(userId: string, profileId: string) {
 
     await db.update(schema.users).set({ currentProfileId: profile.id }).where(eq(schema.users.id, userId));
   });
+}
+
+export async function setUserTenant(userId: string, tenantId: string) {
+  const profiles = await db
+    .select()
+    .from(schema.profiles)
+    .where(and(eq(schema.profiles.tenantId, tenantId), eq(schema.profiles.userId, userId)));
+
+  assert(profiles.length === 1, "expect single record");
+  const profile = profiles[0];
+
+  await db.update(schema.users).set({ currentProfileId: profile.id }).where(eq(schema.users.id, userId));
 }
 
 export async function deleteInviteById(tenantId: string, id: string) {

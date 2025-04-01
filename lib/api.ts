@@ -83,13 +83,12 @@ export const tenantListResponseSchema = z.array(
     name: z.string(),
     slug: z.string(),
     logoUrl: z.string().nullable(),
-    profileId: z.string(),
     userCount: z.number().nullable(),
   }),
 );
 
 export const updateCurrentProfileSchema = z.object({
-  currentProfileId: z.string(),
+  tenantId: z.string(),
 });
 
 export const setupSchema = z.object({
