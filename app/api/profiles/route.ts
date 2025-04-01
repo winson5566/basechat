@@ -1,7 +1,7 @@
 import { NextRequest } from "next/server";
 
 import { updateCurrentProfileSchema } from "@/lib/api";
-import { setCurrentProfileId } from "@/lib/server/service";
+import { setUserTenant } from "@/lib/server/service";
 import { requireSession } from "@/lib/server/utils";
 
 export async function POST(request: NextRequest) {
@@ -9,7 +9,7 @@ export async function POST(request: NextRequest) {
   const json = await request.json();
   const payload = updateCurrentProfileSchema.parse(json);
 
-  await setCurrentProfileId(session.user.id, payload.currentProfileId);
+  await setUserTenant(session.user.id, payload.tenantId);
 
   return new Response(null, { status: 200 });
 }
