@@ -10,7 +10,7 @@ export const getUserSettingsPath = (slug: string) => `${getSettingsPath(slug)}/u
 
 export const getCheckPath = (slug: string) => `/check/${slug}`;
 
-export const getSignInPath = () => `/sign-in`;
+export const getSignInPath = ({ reset }: { reset?: boolean } = {}) => `/sign-in${reset ? "?reset=true" : ""}`;
 
 export const getSignUpPath = () => `/sign-up`;
 

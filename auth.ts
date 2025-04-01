@@ -7,6 +7,7 @@ import db from "@/lib/server/db";
 import * as schema from "@/lib/server/db/schema";
 import * as settings from "@/lib/server/settings";
 
+import { sendResetPasswordEmail } from "./lib/server/service";
 import { hashPassword, verifyPassword } from "./lib/server/utils";
 
 const socialProviders: Record<string, unknown> = {};
@@ -33,10 +34,8 @@ export const auth = betterAuth({
     minPasswordLength: 6,
     maxPasswordLength: 128,
     // autoSignIn: true,
-    sendResetPassword: async ({ user, url, token }) => {
-      // Send reset password email
-    },
-    // resetPasswordTokenExpiresIn: 3600, // seconds
+    sendResetPassword: ({ user, url, token }) => sendResetPasswordEmail(user, url, token),
+    resetPasswordTokenExpiresIn: 36000, // seconds
     password: {
       hash: (password) => hashPassword(password),
       verify: ({ hash, password }) => verifyPassword(hash, password),

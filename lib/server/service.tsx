@@ -3,7 +3,6 @@ import assert from "assert";
 import { render } from "@react-email/components";
 import { asc, and, eq, ne, sql } from "drizzle-orm";
 import { union } from "drizzle-orm/pg-core";
-import jwt from "jsonwebtoken";
 import nodemailer from "nodemailer";
 import SMTPConnection from "nodemailer/lib/smtp-connection";
 
@@ -325,34 +324,19 @@ export async function getUserById(id: string) {
   return user;
 }
 
-export async function sendResetPasswordVerification(email: string) {
-  const user = await findUserByEmail(email);
-  if (!user) return false;
+export async function sendResetPasswordEmail(user: { name: string; email: string }, url: string, _token: string) {
+  // FIX: callbackURL is not being set from the reset flow
+  const urlObj = new URL(url);
+  urlObj.searchParams.set("callbackURL", `${settings.BASE_URL}/change-password`);
 
-  assert(user.email, "expected not null email address");
-
-  const token = jwt.sign({}, settings.AUTH_SECRET, {
-    subject: user.email,
-    expiresIn: "10m",
-    audience: settings.BASE_URL,
-  });
-
-  const link = settings.BASE_URL + `/change-password?token=${token}`;
+  const link = urlObj.toString();
 
   await sendMail({
-    to: email,
+    to: user.email,
     subject: "Reset password verification",
     text: `Click the link below to reset your password:\n\n${link}`,
     html: await render(<ResetPasswordHtml name={user.name} link={link} />),
   });
-  return true;
-}
-
-export async function changePassword(email: string, newPassword: string) {
-  await db
-    .update(schema.users)
-    .set({ password: await hashPassword(newPassword) })
-    .where(eq(schema.users.email, email));
 }
 
 export async function sendMail({

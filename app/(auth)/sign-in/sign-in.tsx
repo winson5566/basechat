@@ -7,7 +7,7 @@ import { getStartPath } from "@/lib/paths";
 
 import { Button } from "../common";
 
-export default function SignIn({ redirectTo }: { redirectTo?: string }) {
+export default function SignIn({ redirectTo, reset }: { redirectTo?: string; reset?: boolean }) {
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
@@ -25,7 +25,7 @@ export default function SignIn({ redirectTo }: { redirectTo?: string }) {
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
+  const [error, setError] = useState(reset ? "Your password has been reset. Please sign in again." : "");
 
   const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setEmail(e.target.value);

@@ -7,8 +7,13 @@ import GoogleSignIn from "../google-sign-in";
 
 import SignIn from "./sign-in";
 
-export default async function SignInPage({ searchParams }: { searchParams: Promise<{ redirectTo?: string }> }) {
-  const { redirectTo } = await searchParams;
+interface Params {
+  redirectTo?: string;
+  reset?: string;
+}
+
+export default async function SignInPage({ searchParams }: { searchParams: Promise<Params> }) {
+  const { reset, redirectTo } = await searchParams;
   const signUpUrl = new URL("/sign-up", settings.BASE_URL);
   if (redirectTo) {
     signUpUrl.searchParams.set("redirectTo", redirectTo);
@@ -31,7 +36,7 @@ export default async function SignInPage({ searchParams }: { searchParams: Promi
         <div className="absolute top-[-24px] bg-white p-3 text-center text-[#74747A]">or</div>
       </div>
 
-      <SignIn redirectTo={redirectTo} />
+      <SignIn reset={!!reset} redirectTo={redirectTo} />
 
       <Link href="/reset" className="text-[#D946EF] text-[16px] mt-6 hover:underline">
         Forgot password?

@@ -1,14 +1,12 @@
 "use server";
 
-import jwt from "jsonwebtoken";
+import { redirect } from "next/navigation";
 import { z, ZodError } from "zod";
 
-import { changePassword } from "@/lib/server/service";
-import * as settings from "@/lib/server/settings";
+import auth from "@/auth";
+import { getSignInPath } from "@/lib/paths";
 
 import { extendPasswordSchema } from "../utils";
-
-import { signIn } from "@/_auth";
 
 interface ChangePasswordFormState {
   error?: string[];
@@ -38,22 +36,12 @@ export async function handleChangePassword(
     return { error: e.errors.map((error) => error.message) };
   }
 
-  let payload;
-  try {
-    payload = jwt.verify(data.token, settings.AUTH_SECRET);
-  } catch (e) {
-    return { error: ["Reset expired. Please try resetting your password again."] };
-  }
-
-  const token = verificationTokenSchema.parse(payload);
-
-  await changePassword(token.sub, data.password);
-
-  await signIn("credentials", {
-    email: token.sub,
-    password: data.password,
-    redirectTo: "/",
+  await auth.api.resetPassword({
+    body: {
+      token: data.token,
+      newPassword: data.password,
+    },
   });
 
-  return {};
+  redirect(getSignInPath({ reset: true }));
 }
