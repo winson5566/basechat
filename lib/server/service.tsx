@@ -183,7 +183,7 @@ export async function createInvites(tenantId: string, invitedBy: string, emails:
             .values({ tenantId, invitedBy, email, role })
             .onConflictDoUpdate({
               target: [schema.invites.tenantId, schema.invites.email],
-              set: { invitedBy, updatedAt: new Date().toISOString() },
+              set: { invitedBy, updatedAt: new Date() },
             })
             .returning();
 

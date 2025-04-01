@@ -120,7 +120,7 @@ export const users = pgTable("users", {
   name: text("name"),
   email: text("email").unique(),
   isAnonymous: boolean("is_anonymous").notNull().default(false),
-  emailVerified: boolean("email_verified").notNull(),
+  emailVerified: boolean("email_verified").notNull().default(false),
   image: text("image"),
   currentProfileId: uuid("current_profile_id").references((): AnyPgColumn => profiles.id, { onDelete: "set null" }),
 });
