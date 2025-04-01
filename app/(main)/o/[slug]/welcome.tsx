@@ -8,11 +8,9 @@ import { z } from "zod";
 import ChatInput from "@/components/chatbot/chat-input";
 import Logo from "@/components/tenant/logo/logo";
 import { DEFAULT_WELCOME_MESSAGE } from "@/lib/constants";
-import { DEFAULT_MODEL, LLMModel } from "@/lib/llm/types";
+import { DEFAULT_MODEL } from "@/lib/llm/types";
 import { getConversationPath } from "@/lib/paths";
 import * as schema from "@/lib/server/db/schema";
-import { cn } from "@/lib/utils";
-import { getAvatarNumber } from "@/lib/utils";
 
 import { useGlobalState } from "./context";
 
@@ -28,15 +26,18 @@ interface Props {
 export default function Welcome({ tenant, className }: Props) {
   const router = useRouter();
   const { setInitialMessage, setInitialModel } = useGlobalState();
-  const [selectedModel, setSelectedModel] = useState<LLMModel>(() => {
+  const [selectedModel, setSelectedModel] = useState<string>(() => {
     if (typeof window !== "undefined") {
       const saved = localStorage.getItem("chatSettings");
       if (saved) {
         const settings = JSON.parse(saved);
-        return settings.selectedModel ?? DEFAULT_MODEL;
+        const savedModel = settings.selectedModel;
+        if (tenant.enabledModels && tenant.enabledModels.includes(savedModel)) {
+          return savedModel;
+        }
       }
     }
-    return DEFAULT_MODEL;
+    return tenant.enabledModels && tenant.enabledModels.length > 0 ? tenant.enabledModels[0] : DEFAULT_MODEL;
   });
   const [isBreadth, setIsBreadth] = useState(() => {
     if (typeof window !== "undefined") {
@@ -82,7 +83,7 @@ export default function Welcome({ tenant, className }: Props) {
     );
   }, [isBreadth, rerankEnabled, prioritizeRecent, selectedModel]);
 
-  const handleSubmit = async (content: string, model: LLMModel = DEFAULT_MODEL) => {
+  const handleSubmit = async (content: string, model: string = DEFAULT_MODEL) => {
     const res = await fetch("/api/conversations", {
       method: "POST",
       body: JSON.stringify({
@@ -141,6 +142,7 @@ export default function Welcome({ tenant, className }: Props) {
           onRerankChange={setRerankEnabled}
           prioritizeRecent={prioritizeRecent}
           onPrioritizeRecentChange={setPrioritizeRecent}
+          enabledModels={tenant.enabledModels}
         />
       </div>
     </div>

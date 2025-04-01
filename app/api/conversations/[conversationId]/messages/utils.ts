@@ -6,7 +6,7 @@ import Handlebars from "handlebars";
 
 import { createConversationMessageResponseSchema } from "@/lib/api";
 import { DEFAULT_GROUNDING_PROMPT, DEFAULT_SYSTEM_PROMPT, NAMING_SYSTEM_PROMPT } from "@/lib/constants";
-import { DEFAULT_NAMING_MODEL, LLMModel, DEFAULT_MODEL, DEFAULT_PROVIDER, getProviderForModel } from "@/lib/llm/types";
+import { DEFAULT_NAMING_MODEL, DEFAULT_MODEL, DEFAULT_PROVIDER, getProviderForModel } from "@/lib/llm/types";
 import { getRagieClient } from "@/lib/server/ragie";
 import {
   createConversationMessage,
@@ -17,7 +17,7 @@ import {
 type GenerateContext = {
   messages: CoreMessage[];
   sources: any[];
-  model: LLMModel;
+  model: string;
   isBreadth: boolean;
   rerankEnabled: boolean;
   prioritizeRecent: boolean;

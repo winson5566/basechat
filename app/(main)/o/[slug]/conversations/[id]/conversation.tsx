@@ -14,12 +14,24 @@ interface Props {
     logoUrl?: string | null;
     slug: string;
     id: string;
+    enabledModels?: string[] | null;
   };
 }
 
 export default function Conversation({ id, tenant }: Props) {
   const [documentId, setDocumentId] = useState<string | null>(null);
-  const { initialMessage, setInitialMessage } = useGlobalState();
+  const { initialMessage, setInitialMessage, initialModel, setInitialModel } = useGlobalState();
+
+  // Check if the initial model is still in the enabled models list
+  useEffect(() => {
+    if (initialModel && tenant.enabledModels && tenant.enabledModels.length > 0) {
+      // If the initial model is not in the enabled models list, update it
+      if (!tenant.enabledModels.includes(initialModel)) {
+        // Set to the first enabled model
+        setInitialModel(tenant.enabledModels[0]);
+      }
+    }
+  }, [initialModel, tenant.enabledModels, setInitialModel]);
 
   useEffect(() => {
     setInitialMessage("");

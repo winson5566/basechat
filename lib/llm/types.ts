@@ -35,19 +35,20 @@ export const DEFAULT_NAMING_MODEL = "gpt-4o-mini";
 
 // Derive types from the config
 export type LLMProvider = keyof typeof PROVIDER_CONFIG;
-export type LLMModel = (typeof PROVIDER_CONFIG)[LLMProvider]["models"][number];
-export type ProviderModels<T extends LLMProvider> = (typeof PROVIDER_CONFIG)[T]["models"][number];
 
-// Runtime mappings
-export const PROVIDER_MODELS = {
-  openai: PROVIDER_CONFIG.openai.models,
-  google: PROVIDER_CONFIG.google.models,
-  anthropic: PROVIDER_CONFIG.anthropic.models,
-} as const;
+// Create a string literal union type for all currently supported models
+// This provides autocomplete and type checking during development
+export type SupportedModelName = (typeof PROVIDER_CONFIG)[LLMProvider]["models"][number];
 
-export const ALL_VALID_MODELS = Object.values(PROVIDER_CONFIG).flatMap((config) => config.models) as LLMModel[];
+// List of all currently valid model names for validation
+export const ALL_VALID_MODELS = Object.values(PROVIDER_CONFIG).flatMap((config) => config.models) as string[];
 
-export function getProviderForModel(model: LLMModel): LLMProvider | null {
+// Checks if a model name is currently supported
+export function isValidModel(model: string): model is SupportedModelName {
+  return ALL_VALID_MODELS.includes(model);
+}
+
+export function getProviderForModel(model: string): LLMProvider | null {
   for (const [provider, config] of Object.entries(PROVIDER_CONFIG)) {
     if ((config.models as readonly string[]).includes(model)) {
       return provider as LLMProvider;
@@ -57,17 +58,23 @@ export function getProviderForModel(model: LLMModel): LLMProvider | null {
 }
 
 // Logo mapping
-export const LLM_LOGO_MAP = Object.fromEntries(
-  ALL_VALID_MODELS.map((model) => [model, [model, PROVIDER_CONFIG[getProviderForModel(model)!].logo]]),
-) as Record<LLMModel, [string, string]>;
+export const LLM_LOGO_MAP: Record<string, [string, string]> = {};
+ALL_VALID_MODELS.forEach((model) => {
+  const provider = getProviderForModel(model);
+  if (provider) {
+    LLM_LOGO_MAP[model] = [model, PROVIDER_CONFIG[provider].logo];
+  }
+});
 
 // Display name mapping
-export const LLM_DISPLAY_NAMES = Object.fromEntries(
-  ALL_VALID_MODELS.map((model) => {
-    const provider = getProviderForModel(model)!;
-    return [
-      model,
-      PROVIDER_CONFIG[provider].displayNames[model as keyof (typeof PROVIDER_CONFIG)[typeof provider]["displayNames"]],
-    ];
-  }),
-) as unknown as Record<LLMModel, string>;
+export const LLM_DISPLAY_NAMES: Record<string, string> = {};
+ALL_VALID_MODELS.forEach((model) => {
+  const provider = getProviderForModel(model);
+  if (provider && Object.prototype.hasOwnProperty.call(PROVIDER_CONFIG[provider].displayNames, model)) {
+    LLM_DISPLAY_NAMES[model] =
+      PROVIDER_CONFIG[provider].displayNames[model as keyof (typeof PROVIDER_CONFIG)[typeof provider]["displayNames"]];
+  } else {
+    // Fallback for unknown models
+    LLM_DISPLAY_NAMES[model] = model;
+  }
+});

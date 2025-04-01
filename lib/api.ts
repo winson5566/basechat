@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { LLMModel, ALL_VALID_MODELS } from "@/lib/llm/types";
+import { ALL_VALID_MODELS } from "@/lib/llm/types";
 
 export const createConversationMessageResponseSchema = z.object({
   usedSourceIndexes: z.array(z.number().describe("The indexes of the sources used in the response")),
@@ -10,7 +10,7 @@ export const createConversationMessageResponseSchema = z.object({
 export const createConversationMessageRequestSchema = z.object({
   conversationId: z.string(),
   content: z.string().describe("The request message"),
-  model: z.enum(ALL_VALID_MODELS as [LLMModel, ...LLMModel[]]).describe("The LLM model to use"),
+  model: z.enum(ALL_VALID_MODELS as [string, ...string[]]).describe("The LLM model to use"),
   isBreadth: z.boolean().describe("Whether to use breadth-first search"),
   rerankEnabled: z.boolean().describe("Whether to rerank results"),
   prioritizeRecent: z.boolean().describe("Whether to prioritize recent data"),
@@ -35,7 +35,7 @@ export const conversationMessagesResponseSchema = z.array(
       role: z.literal("assistant"),
       sources: z.array(z.any()).default([]),
       expanded: z.boolean().default(false),
-      model: z.enum(ALL_VALID_MODELS as [LLMModel, ...LLMModel[]]),
+      model: z.enum(ALL_VALID_MODELS as [string, ...string[]]),
     }),
     z.object({
       id: z.string(),

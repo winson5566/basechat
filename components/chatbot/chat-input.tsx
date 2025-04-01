@@ -4,7 +4,7 @@ import { KeyboardEvent, useRef, useState, useEffect } from "react";
 
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Switch } from "@/components/ui/switch";
-import { LLMModel, ALL_VALID_MODELS, LLM_LOGO_MAP, LLM_DISPLAY_NAMES } from "@/lib/llm/types";
+import { ALL_VALID_MODELS, LLM_LOGO_MAP, LLM_DISPLAY_NAMES } from "@/lib/llm/types";
 import { cn } from "@/lib/utils";
 
 import CheckIcon from "../../public/icons/check.svg";
@@ -12,15 +12,16 @@ import { AutosizeTextarea, AutosizeTextAreaRef } from "../ui/autosize-textarea";
 import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
 
 interface ChatInputProps {
-  handleSubmit?: (text: string, model: LLMModel) => void;
-  selectedModel: LLMModel;
-  onModelChange: (model: LLMModel) => void;
+  handleSubmit?: (text: string, model: string) => void;
+  selectedModel: string;
+  onModelChange: (model: string) => void;
   isBreadth: boolean;
   onBreadthChange: (isBreadth: boolean) => void;
   rerankEnabled?: boolean;
   onRerankChange?: (enabled: boolean) => void;
   prioritizeRecent?: boolean;
   onPrioritizeRecentChange?: (enabled: boolean) => void;
+  enabledModels?: string[] | null;
 }
 
 const useIsDesktop = () => {
@@ -81,6 +82,8 @@ export default function ChatInput(props: ChatInputProps) {
   const [rerankEnabled, setRerankEnabled] = useState(props.rerankEnabled ?? false);
   const [prioritizeRecent, setPrioritizeRecent] = useState(props.prioritizeRecent ?? false);
   const ref = useRef<AutosizeTextAreaRef>(null);
+
+  const enabledModels = props.enabledModels || ALL_VALID_MODELS;
 
   const handleSubmit = (value: string) => {
     setValue("");
@@ -211,13 +214,13 @@ export default function ChatInput(props: ChatInputProps) {
                 </PopoverTrigger>
                 <ModelPopoverContent>
                   <div className="flex flex-col gap-1">
-                    {ALL_VALID_MODELS.map((model) => {
-                      const [_, logoPath] = LLM_LOGO_MAP[model];
+                    {enabledModels.map((model) => {
+                      const [_, logoPath] = LLM_LOGO_MAP[model as string];
                       return (
                         <button
                           key={model}
                           className="flex items-center rounded-sm px-4 py-3 text-sm text-left hover:bg-black hover:bg-opacity-5"
-                          onClick={() => props.onModelChange(model)}
+                          onClick={() => props.onModelChange(model as string)}
                         >
                           <div className="w-4">
                             {props.selectedModel === model && <Image src={CheckIcon} alt="selected" />}
@@ -225,12 +228,12 @@ export default function ChatInput(props: ChatInputProps) {
                           <div className="flex items-center ml-3">
                             <Image
                               src={logoPath}
-                              alt={LLM_DISPLAY_NAMES[model]}
+                              alt={LLM_DISPLAY_NAMES[model as string]}
                               width={16}
                               height={16}
                               className="mr-2"
                             />
-                            <span>{LLM_DISPLAY_NAMES[model]}</span>
+                            <span>{LLM_DISPLAY_NAMES[model as string]}</span>
                           </div>
                         </button>
                       );

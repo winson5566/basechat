@@ -12,8 +12,7 @@ import {
   CreateConversationMessageRequest,
   createConversationMessageResponseSchema,
 } from "@/lib/api";
-import { LLMModel, getProviderForModel } from "@/lib/llm/types";
-import { DEFAULT_MODEL, DEFAULT_PROVIDER } from "@/lib/llm/types";
+import { getProviderForModel } from "@/lib/llm/types";
 
 import AssistantMessage from "./assistant-message";
 import ChatInput from "./chat-input";
@@ -21,7 +20,7 @@ import { SourceMetadata } from "./types";
 
 const inter = Inter({ subsets: ["latin"] });
 
-type AiMessage = { content: string; role: "assistant"; id?: string; sources: SourceMetadata[]; model?: LLMModel };
+type AiMessage = { content: string; role: "assistant"; id?: string; sources: SourceMetadata[]; model?: string };
 type UserMessage = { content: string; role: "user" };
 type SystemMessage = { content: string; role: "system" };
 type Message = AiMessage | UserMessage | SystemMessage;
@@ -37,6 +36,7 @@ interface Props {
     logoUrl?: string | null;
     slug: string;
     id: string;
+    enabledModels?: string[] | null;
   };
   initMessage?: string;
   onSelectedDocumentId: (id: string) => void;
@@ -46,11 +46,19 @@ export default function Chatbot({ tenant, conversationId, initMessage, onSelecte
   const [localInitMessage, setLocalInitMessage] = useState(initMessage);
   const [messages, setMessages] = useState<Message[]>([]);
   const [sourceCache, setSourceCache] = useState<Record<string, SourceMetadata[]>>({});
-  const [pendingMessage, setPendingMessage] = useState<null | { id: string; model: LLMModel }>(null);
-  const pendingMessageRef = useRef<null | { id: string; model: LLMModel }>(null);
+  const [pendingMessage, setPendingMessage] = useState<null | { id: string; model: string }>(null);
+  const pendingMessageRef = useRef<null | { id: string; model: string }>(null);
   pendingMessageRef.current = pendingMessage;
   const { initialModel } = useGlobalState();
-  const [selectedModel, setSelectedModel] = useState<LLMModel>(initialModel);
+  const [selectedModel, setSelectedModel] = useState<string>(() => {
+    // If tenant has enabled models and the default model is not in the list, use the first enabled model
+    if (tenant.enabledModels && tenant.enabledModels.length > 0) {
+      if (!tenant.enabledModels.includes(initialModel)) {
+        return tenant.enabledModels[0];
+      }
+    }
+    return initialModel;
+  });
   const [isBreadth, setIsBreadth] = useState(false);
   const [rerankEnabled, setRerankEnabled] = useState(false);
   const [prioritizeRecent, setPrioritizeRecent] = useState(false);
@@ -93,7 +101,7 @@ export default function Chatbot({ tenant, conversationId, initMessage, onSelecte
 
       assert(id);
 
-      setPendingMessage({ id, model: model as LLMModel });
+      setPendingMessage({ id, model: model as string });
       return res;
     },
     onError: console.error,
@@ -106,7 +114,7 @@ export default function Chatbot({ tenant, conversationId, initMessage, onSelecte
     },
   });
 
-  const handleSubmit = (content: string, model: LLMModel) => {
+  const handleSubmit = (content: string, model: string) => {
     const provider = getProviderForModel(model);
     if (!provider) {
       console.error(`No provider found for model ${model}`);
@@ -184,6 +192,16 @@ export default function Chatbot({ tenant, conversationId, initMessage, onSelecte
     [messages, sourceCache],
   );
 
+  // Ensure selected model is in enabled models list
+  useEffect(() => {
+    if (selectedModel && tenant.enabledModels && tenant.enabledModels.length > 0) {
+      if (!tenant.enabledModels.includes(selectedModel)) {
+        // Update to first enabled model
+        setSelectedModel(tenant.enabledModels[0]);
+      }
+    }
+  }, [selectedModel, tenant.enabledModels]);
+
   return (
     <div className="flex h-full w-full items-center flex-col">
       <div ref={container} className="flex flex-col h-full w-full items-center overflow-y-auto">
@@ -234,6 +252,7 @@ export default function Chatbot({ tenant, conversationId, initMessage, onSelecte
             onRerankChange={setRerankEnabled}
             prioritizeRecent={prioritizeRecent}
             onPrioritizeRecentChange={setPrioritizeRecent}
+            enabledModels={tenant.enabledModels}
           />
         </div>
       </div>

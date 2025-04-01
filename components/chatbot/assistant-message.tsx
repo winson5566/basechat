@@ -3,7 +3,7 @@ import Image from "next/image";
 import Markdown from "react-markdown";
 
 import CONNECTOR_MAP from "@/lib/connector-map";
-import { LLMModel, LLM_DISPLAY_NAMES } from "@/lib/llm/types";
+import { LLM_DISPLAY_NAMES } from "@/lib/llm/types";
 
 import Logo from "../tenant/logo/logo";
 
@@ -35,7 +35,7 @@ interface Props {
   logoUrl?: string | null;
   sources: SourceMetadata[];
   onSelectedDocumentId: (id: string) => void;
-  model: LLMModel;
+  model: string;
   isGenerating?: boolean;
 }
 

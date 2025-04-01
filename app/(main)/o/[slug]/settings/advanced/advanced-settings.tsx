@@ -15,7 +15,7 @@ import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { updateTenantSchema } from "@/lib/api";
 import { DEFAULT_GROUNDING_PROMPT, DEFAULT_SYSTEM_PROMPT } from "@/lib/constants";
-import { ALL_VALID_MODELS, LLM_DISPLAY_NAMES, LLMModel, LLM_LOGO_MAP } from "@/lib/llm/types";
+import { ALL_VALID_MODELS, LLM_DISPLAY_NAMES, LLM_LOGO_MAP } from "@/lib/llm/types";
 import * as schema from "@/lib/server/db/schema";
 import { cn } from "@/lib/utils";
 
@@ -36,6 +36,8 @@ const isValidSlug = (slug: string) => {
   return slug === sanitized;
 };
 
+const atLeastOneModel = (models: string[]) => models.length > 0;
+
 const formSchema = z.object({
   groundingPrompt: z.string().nullable().default(DEFAULT_GROUNDING_PROMPT).transform(nullToEmptyString),
   systemPrompt: z.string().nullable().default(DEFAULT_SYSTEM_PROMPT).transform(nullToEmptyString),
@@ -43,7 +45,9 @@ const formSchema = z.object({
     message: "URL can only contain lowercase letters, numbers, and hyphens",
   }),
   isPublic: z.boolean().default(false),
-  enabledModels: z.array(z.string()).default(ALL_VALID_MODELS),
+  enabledModels: z.array(z.string()).default(ALL_VALID_MODELS).refine(atLeastOneModel, {
+    message: "At least one model must be enabled",
+  }),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -234,19 +238,19 @@ const ModelsField = ({ form }: ModelsFieldProps) => {
           <div className="space-y-5 pl-8">
             {ALL_VALID_MODELS.map((model) => {
               const isEnabled = field.value?.includes(model);
-              const [_, logoPath] = LLM_LOGO_MAP[model as LLMModel];
+              const [_, logoPath] = LLM_LOGO_MAP[model as string];
               return (
                 <div key={model}>
                   <div className="flex items-center justify-between">
                     <div className="flex items-center">
                       <Image
                         src={logoPath}
-                        alt={LLM_DISPLAY_NAMES[model as LLMModel]}
+                        alt={LLM_DISPLAY_NAMES[model as string]}
                         width={20}
                         height={20}
                         className="mr-2"
                       />
-                      <div className="text-base">{LLM_DISPLAY_NAMES[model as LLMModel]}</div>
+                      <div className="text-base">{LLM_DISPLAY_NAMES[model as string]}</div>
                     </div>
                     <Switch
                       checked={isEnabled}
