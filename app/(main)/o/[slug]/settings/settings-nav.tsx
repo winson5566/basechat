@@ -32,7 +32,7 @@ export default function SettingsNav({ tenant }: Props) {
   const appLocation = getAppLocation(pathname, tenant.slug);
 
   return (
-    <div className="w-[233px] flex flex-col pr-16">
+    <div className="w-[245px] flex flex-col pr-16">
       <Link href={getSettingsPath(tenant.slug)}>
         <NavItem selected={appLocation === AppLocation.SETTINGS}>General</NavItem>
       </Link>
