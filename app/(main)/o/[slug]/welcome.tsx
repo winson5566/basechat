@@ -8,7 +8,7 @@ import { z } from "zod";
 import ChatInput from "@/components/chatbot/chat-input";
 import Logo from "@/components/tenant/logo/logo";
 import { DEFAULT_WELCOME_MESSAGE } from "@/lib/constants";
-import { DEFAULT_MODEL, ValidatedModel, modelSchema } from "@/lib/llm/types";
+import { DEFAULT_MODEL, LLMModel, modelSchema } from "@/lib/llm/types";
 import { getConversationPath } from "@/lib/paths";
 import * as schema from "@/lib/server/db/schema";
 
@@ -26,7 +26,7 @@ interface Props {
 export default function Welcome({ tenant, className }: Props) {
   const router = useRouter();
   const { setInitialMessage, setInitialModel } = useGlobalState();
-  const [selectedModel, setSelectedModel] = useState<ValidatedModel>(() => {
+  const [selectedModel, setSelectedModel] = useState<LLMModel>(() => {
     if (typeof window !== "undefined") {
       const saved = localStorage.getItem("chatSettings");
       if (saved) {

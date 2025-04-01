@@ -45,7 +45,7 @@ export const ALL_VALID_MODELS = Object.values(PROVIDER_CONFIG).flatMap((config) 
 export const modelSchema = z.enum(ALL_VALID_MODELS as [string, ...string[]]);
 
 // Type for validated model names
-export type ValidatedModel = z.infer<typeof modelSchema>;
+export type LLMModel = z.infer<typeof modelSchema>;
 
 // Schema for array of models (used for enabledModels)
 export const modelArraySchema = z.array(modelSchema).min(1, "At least one model must be enabled");
@@ -69,7 +69,7 @@ export const LLM_LOGO_MAP = Object.fromEntries(
     const provider = getProviderForModel(model);
     return [model, [model, provider ? PROVIDER_CONFIG[provider].logo : ""]];
   }),
-) as Record<ValidatedModel, [string, string]>;
+) as Record<LLMModel, [string, string]>;
 
 export const LLM_DISPLAY_NAMES = Object.fromEntries(
   ALL_VALID_MODELS.map((model) => {
@@ -84,4 +84,4 @@ export const LLM_DISPLAY_NAMES = Object.fromEntries(
         : model,
     ];
   }),
-) as Record<ValidatedModel, string>;
+) as Record<LLMModel, string>;

@@ -2,20 +2,20 @@
 
 import React, { createContext, useState, useContext, ReactNode } from "react";
 
-import { DEFAULT_MODEL, ValidatedModel } from "@/lib/llm/types";
+import { DEFAULT_MODEL, LLMModel } from "@/lib/llm/types";
 
 interface GlobalState {
   initialMessage: string;
   setInitialMessage: (content: string) => void;
-  initialModel: ValidatedModel;
-  setInitialModel: (model: ValidatedModel) => void;
+  initialModel: LLMModel;
+  setInitialModel: (model: LLMModel) => void;
 }
 
 const GlobalStateContext = createContext<GlobalState | undefined>(undefined);
 
 export const GlobalStateProvider = ({ children }: { children: ReactNode }) => {
   const [initialMessage, setInitialMessage] = useState("");
-  const [initialModel, setInitialModel] = useState<ValidatedModel>(DEFAULT_MODEL);
+  const [initialModel, setInitialModel] = useState<LLMModel>(DEFAULT_MODEL);
 
   return (
     <GlobalStateContext.Provider

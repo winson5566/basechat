@@ -12,7 +12,7 @@ import {
   CreateConversationMessageRequest,
   createConversationMessageResponseSchema,
 } from "@/lib/api";
-import { getProviderForModel, ValidatedModel, modelSchema } from "@/lib/llm/types";
+import { getProviderForModel, LLMModel, modelSchema } from "@/lib/llm/types";
 
 import AssistantMessage from "./assistant-message";
 import ChatInput from "./chat-input";
@@ -20,7 +20,7 @@ import { SourceMetadata } from "./types";
 
 const inter = Inter({ subsets: ["latin"] });
 
-type AiMessage = { content: string; role: "assistant"; id?: string; sources: SourceMetadata[]; model?: ValidatedModel };
+type AiMessage = { content: string; role: "assistant"; id?: string; sources: SourceMetadata[]; model?: LLMModel };
 type UserMessage = { content: string; role: "user" };
 type SystemMessage = { content: string; role: "system" };
 type Message = AiMessage | UserMessage | SystemMessage;
@@ -36,7 +36,7 @@ interface Props {
     logoUrl?: string | null;
     slug: string;
     id: string;
-    enabledModels: ValidatedModel[];
+    enabledModels: LLMModel[];
   };
   initMessage?: string;
   onSelectedDocumentId: (id: string) => void;
@@ -50,7 +50,7 @@ export default function Chatbot({ tenant, conversationId, initMessage, onSelecte
   const pendingMessageRef = useRef<null | { id: string; model: string }>(null);
   pendingMessageRef.current = pendingMessage;
   const { initialModel } = useGlobalState();
-  const [selectedModel, setSelectedModel] = useState<ValidatedModel>(() => {
+  const [selectedModel, setSelectedModel] = useState<LLMModel>(() => {
     if (tenant.enabledModels.length > 0) {
       const parsed = modelSchema.safeParse(initialModel);
       if (parsed.success && tenant.enabledModels.includes(initialModel)) {

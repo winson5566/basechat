@@ -4,7 +4,7 @@ import { KeyboardEvent, useRef, useState, useEffect } from "react";
 
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Switch } from "@/components/ui/switch";
-import { ValidatedModel, modelSchema, LLM_LOGO_MAP, LLM_DISPLAY_NAMES, ALL_VALID_MODELS } from "@/lib/llm/types";
+import { LLMModel, modelSchema, LLM_LOGO_MAP, LLM_DISPLAY_NAMES, ALL_VALID_MODELS } from "@/lib/llm/types";
 import { cn } from "@/lib/utils";
 
 import CheckIcon from "../../public/icons/check.svg";
@@ -12,16 +12,16 @@ import { AutosizeTextarea, AutosizeTextAreaRef } from "../ui/autosize-textarea";
 import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
 
 interface ChatInputProps {
-  handleSubmit?: (text: string, model: ValidatedModel) => void;
-  selectedModel: ValidatedModel;
-  onModelChange: (model: ValidatedModel) => void;
+  handleSubmit?: (text: string, model: LLMModel) => void;
+  selectedModel: LLMModel;
+  onModelChange: (model: LLMModel) => void;
   isBreadth: boolean;
   onBreadthChange: (isBreadth: boolean) => void;
   rerankEnabled?: boolean;
   onRerankChange?: (enabled: boolean) => void;
   prioritizeRecent?: boolean;
   onPrioritizeRecentChange?: (enabled: boolean) => void;
-  enabledModels: ValidatedModel[];
+  enabledModels: LLMModel[];
 }
 
 const useIsDesktop = () => {
