@@ -119,47 +119,13 @@ const TextAreaField = ({ form, name, label, className, help, hasDefault }: TextA
   );
 };
 
-<<<<<<< HEAD
-type SwitchFieldProps = {
-  name: keyof FormValues;
-  label: string;
-  form: UseFormReturn<FormValues>;
-};
-
-const SwitchField = ({ form, name, label }: SwitchFieldProps) => (
-  <FormField
-    control={form.control}
-    name={name}
-    render={({ field }) => (
-      <FormItem className="flex flex-row items-center justify-between mt-8">
-        <div className="space-y-0.5">
-          <FormLabel className="font-semibold text-[16px]">{label}</FormLabel>
-          <p className="text-sm text-muted-foreground">Anyone with the link can chat with your AI assistant</p>
-        </div>
-        <div className="flex-shrink-0 ml-4">
-          <FormControl>
-            <Switch
-              checked={Boolean(field.value)}
-              onCheckedChange={field.onChange}
-              className="data-[state=checked]:bg-[#D946EF]"
-            />
-          </FormControl>
-        </div>
-      </FormItem>
-    )}
-  />
-);
-
-=======
->>>>>>> adbdcf4 (move prompts and public settings to advanced page)
 type CompanyNameFieldProps = {
   name: keyof FormValues;
   label: string;
   form: UseFormReturn<FormValues>;
-  tenant: typeof schema.tenants.$inferSelect;
 };
 
-const CompanyNameField = ({ form, name, label, tenant }: CompanyNameFieldProps) => {
+const CompanyNameField = ({ form, name, label }: CompanyNameFieldProps) => {
   return (
     <FormField
       control={form.control}
@@ -283,7 +249,7 @@ export default function GeneralSettings({ tenant, canUploadLogo }: Props) {
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)}>
           <div>
-            <CompanyNameField form={form} name="name" label="Company Name" tenant={tenant} />
+            <CompanyNameField form={form} name="name" label="Company Name" />
             <hr className="w-full my-8" />
             <TextAreaField
               form={form}
