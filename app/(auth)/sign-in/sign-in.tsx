@@ -1,33 +1,59 @@
 "use client";
 
-import { Roboto } from "next/font/google";
-import { useActionState } from "react";
+import { useState } from "react";
+
+import { signIn } from "@/lib/auth-client";
+import { getStartPath } from "@/lib/paths";
 
 import { Button } from "../common";
 
-import { handleSignIn } from "./actions";
+export default function SignIn({ redirectTo, reset }: { redirectTo?: string; reset?: boolean }) {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
 
-const roboto = Roboto({ subsets: ["latin"], weight: "400" });
+    await signIn.email({
+      email,
+      password,
+      callbackURL: redirectTo || getStartPath(),
+      fetchOptions: {
+        onError: (error) => {
+          setError(error.error.message);
+        },
+      },
+    });
+  };
 
-export default function SignIn({ redirectTo }: { redirectTo?: string }) {
-  const [{ error }, signInAction, pending] = useActionState(handleSignIn, {});
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState(reset ? "Your password has been reset. Please sign in again." : "");
+
+  const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setEmail(e.target.value);
+    setError("");
+  };
+
+  const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setPassword(e.target.value);
+    setError("");
+  };
 
   return (
-    <form className="flex flex-col w-full" action={signInAction}>
+    <form className="flex flex-col w-full" method="POST" onSubmit={handleSubmit}>
       {error && <div className="text-red-500 text-center mb-4">{error}</div>}
       <input
         name="email"
         type="email"
         placeholder="Email"
         className="w-full border rounded-[6px] text-[16px] placeholder-[#74747A] px-4 py-2 mb-4"
+        onChange={handleEmailChange}
       />
       <input
         name="password"
         type="password"
         placeholder="Password"
         className="w-full border rounded-[6px] text-[16px] placeholder-[#74747A] px-4 py-2 mb-8"
+        onChange={handlePasswordChange}
       />
-      <input type="hidden" name="redirectTo" value={redirectTo} />
       <Button>Sign in</Button>
     </form>
   );

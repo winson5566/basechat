@@ -1,10 +1,11 @@
 import assert from "assert";
 
 import argon2 from "argon2";
+import { headers } from "next/headers";
 import { redirect, unauthorized } from "next/navigation";
 import { z } from "zod";
 
-import { auth } from "@/auth";
+import auth from "@/auth";
 
 import { getCheckPath, getSignInPath, getTenantPath } from "../paths";
 
@@ -13,7 +14,10 @@ import { findTenantBySlug, getAuthContextByUserId } from "./service";
 const tenantSchema = z.string();
 
 export async function requireSession() {
-  const session = await auth();
+  const session = await auth.api.getSession({
+    headers: await headers(), // you need to pass the headers object.
+  });
+
   assert(session, "not logged in");
   return session;
 }

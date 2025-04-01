@@ -1,5 +1,4 @@
 import { Inter, Inter_Tight } from "next/font/google";
-import { ReactNode } from "react";
 
 import RagieLogo from "@/components/ragie-logo";
 import * as settings from "@/lib/server/settings";

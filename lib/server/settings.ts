@@ -34,3 +34,7 @@ export const SMTP_PORT = Number(process.env.SMTP_PORT!);
 export const SMTP_SECURE = process.env.SMTP_SECURE === "1";
 export const SMTP_USER = process.env.SMTP_USER;
 export const SMTP_PASSWORD = process.env.SMTP_PASSWORD;
+
+// Google OAuth configs - Optional
+export const AUTH_GOOGLE_ID = process.env.AUTH_GOOGLE_ID;
+export const AUTH_GOOGLE_SECRET = process.env.AUTH_GOOGLE_SECRET;

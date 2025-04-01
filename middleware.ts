@@ -1,15 +1,13 @@
-import NextAuth from "next-auth";
+import { getSessionCookie } from "better-auth/cookies";
+import { NextRequest, NextResponse } from "next/server";
 
-import { BASE_URL } from "@/lib/server/settings";
+import { BASE_URL } from "./lib/server/settings";
 
-import authConfig from "./auth.config";
+export async function middleware(request: NextRequest) {
+  const sessionCookie = getSessionCookie(request);
 
-// Wrapped middleware option. See https://authjs.dev/guides/edge-compatibility
-const { auth } = NextAuth(authConfig);
-
-export default auth((req) => {
-  if (!req.auth) {
-    const pathname = req.nextUrl.pathname;
+  if (!sessionCookie) {
+    const pathname = request.nextUrl.pathname;
     if (
       pathname !== "/sign-in" &&
       pathname !== "/sign-up" &&
@@ -22,12 +20,14 @@ export default auth((req) => {
       const redirectPath = getUnauthenticatedRedirectPath(pathname);
       const newUrl = new URL(redirectPath, BASE_URL);
       if (pathname !== "/") {
-        newUrl.searchParams.set("redirectTo", req.nextUrl.toString());
+        newUrl.searchParams.set("redirectTo", request.nextUrl.toString());
       }
       return Response.redirect(newUrl);
     }
   }
-});
+
+  return NextResponse.next();
+}
 
 export const config = {
   matcher: ["/((?!api|_next/static|_next/image|favicon.ico).*)"],

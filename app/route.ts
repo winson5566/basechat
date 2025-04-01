@@ -1,11 +1,11 @@
 import { redirect } from "next/navigation";
 
-import { auth } from "@/auth";
 import { getSignUpPath, getStartPath } from "@/lib/paths";
 import { findUserById } from "@/lib/server/service";
+import getSession from "@/lib/server/session";
 
 export async function GET() {
-  const session = await auth();
+  const session = await getSession();
 
   if (session?.user.id) {
     const user = await findUserById(session.user.id);

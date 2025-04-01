@@ -2,7 +2,8 @@
 
 import { z, ZodError } from "zod";
 
-import { sendResetPasswordVerification } from "@/lib/server/service";
+import auth from "@/auth";
+import { getChangePasswordPath } from "@/lib/paths";
 
 interface ResetFormState {
   error?: string[];
@@ -17,6 +18,12 @@ export async function handleResetPassword(prevState: ResetFormState, formData: F
     if (!(e instanceof ZodError)) throw e;
     return { error: e.errors.map((e) => e.message) };
   }
-  await sendResetPasswordVerification(email);
+
+  await auth.api.forgetPassword({
+    body: {
+      email,
+      callbackURL: getChangePasswordPath(),
+    },
+  });
   return { email };
 }

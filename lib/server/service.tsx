@@ -3,10 +3,10 @@ import assert from "assert";
 import { render } from "@react-email/components";
 import { asc, and, eq, ne, sql } from "drizzle-orm";
 import { union } from "drizzle-orm/pg-core";
-import jwt from "jsonwebtoken";
 import nodemailer from "nodemailer";
 import SMTPConnection from "nodemailer/lib/smtp-connection";
 
+import auth from "@/auth";
 import { Member, MemberType } from "@/lib/api";
 import * as settings from "@/lib/server/settings";
 
@@ -15,7 +15,6 @@ import { InviteHtml, ResetPasswordHtml } from "../mail";
 import db from "./db";
 import * as schema from "./db/schema";
 import { getRagieClient } from "./ragie";
-import { hashPassword } from "./utils";
 
 type Role = (typeof schema.rolesEnum.enumValues)[number];
 
@@ -68,15 +67,6 @@ export async function createTenant(userId: string, name: string) {
   const profile = await createProfile(tenantId, userId, "admin");
 
   return { tenant: tenants[0], profile };
-}
-
-export async function createGuestUser() {
-  const rs = await db
-    .insert(schema.users)
-    .values({ name: "Guest", isAnonymous: true })
-    .returning({ id: schema.users.id });
-  assert(rs.length === 1);
-  return rs[0];
 }
 
 export async function createProfile(tenantId: string, userId: string, role: Role) {
@@ -188,7 +178,7 @@ export async function createInvites(tenantId: string, invitedBy: string, emails:
             .values({ tenantId, invitedBy, email, role })
             .onConflictDoUpdate({
               target: [schema.invites.tenantId, schema.invites.email],
-              set: { invitedBy, updatedAt: new Date().toISOString() },
+              set: { invitedBy, updatedAt: new Date() },
             })
             .returning();
 
@@ -345,34 +335,19 @@ export async function getUserById(id: string) {
   return user;
 }
 
-export async function sendResetPasswordVerification(email: string) {
-  const user = await findUserByEmail(email);
-  if (!user) return false;
+export async function sendResetPasswordEmail(user: { name: string; email: string }, url: string, _token: string) {
+  // TODO: callbackURL is not being set from the reset flow. This looks like a bug in better-auth.
+  const urlObj = new URL(url);
+  urlObj.searchParams.set("callbackURL", `${settings.BASE_URL}/change-password`);
 
-  assert(user.email, "expected not null email address");
-
-  const token = jwt.sign({}, settings.AUTH_SECRET, {
-    subject: user.email,
-    expiresIn: "10m",
-    audience: settings.BASE_URL,
-  });
-
-  const link = settings.BASE_URL + `/change-password?token=${token}`;
+  const link = urlObj.toString();
 
   await sendMail({
-    to: email,
+    to: user.email,
     subject: "Reset password verification",
     text: `Click the link below to reset your password:\n\n${link}`,
     html: await render(<ResetPasswordHtml name={user.name} link={link} />),
   });
-  return true;
-}
-
-export async function changePassword(email: string, newPassword: string) {
-  await db
-    .update(schema.users)
-    .set({ password: await hashPassword(newPassword) })
-    .where(eq(schema.users.email, email));
 }
 
 export async function sendMail({

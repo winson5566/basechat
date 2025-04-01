@@ -3,14 +3,14 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { signOut } from "next-auth/react";
 import { ReactNode, useEffect, useState } from "react";
 import { z } from "zod";
 
 import Logo from "@/components/tenant/logo/logo";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { tenantListResponseSchema, updateCurrentProfileSchema } from "@/lib/api";
-import { getSignUpPath, getTenantPath } from "@/lib/paths";
+import { signOut } from "@/lib/auth-client";
+import { getSignInPath, getSignUpPath, getTenantPath } from "@/lib/paths";
 import { cn } from "@/lib/utils";
 import AnonProfileIcon from "@/public/icons/anonymous-profile.svg";
 import CheckIcon from "@/public/icons/check.svg";
@@ -20,7 +20,6 @@ import NewChatIcon from "@/public/icons/new-chat.svg";
 import PlusIcon from "@/public/icons/plus.svg";
 
 import ConversationHistory from "./conversation-history";
-
 interface Props {
   currentProfileId: string;
   tenant: {
@@ -66,7 +65,12 @@ export default function Header({ currentProfileId, isAnonymous, tenant, name, em
     })();
   }, []);
 
-  const handleLogOutClick = async () => await signOut();
+  const handleLogOutClick = async () =>
+    await signOut({
+      fetchOptions: {
+        onSuccess: () => router.push(getSignInPath()),
+      },
+    });
 
   const handleProfileClick = async (tenant: z.infer<typeof tenantListResponseSchema>[number]) => {
     await fetch("/api/profiles", {
