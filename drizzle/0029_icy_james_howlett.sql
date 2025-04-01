@@ -1,25 +1,3 @@
--- ALTER TABLE "verification_tokens" RENAME TO "verifications";--> statement-breakpoint
--- ALTER TABLE "accounts" RENAME COLUMN "provider" TO "provider_id";--> statement-breakpoint
--- ALTER TABLE "accounts" RENAME COLUMN "provider_account_id" TO "account_id";--> statement-breakpoint
--- ALTER TABLE "accounts" RENAME COLUMN "expires_at" TO "access_token_expires_at";--> statement-breakpoint
--- ALTER TABLE "sessions" RENAME COLUMN "session_token" TO "token";--> statement-breakpoint
--- ALTER TABLE "sessions" RENAME COLUMN "expires" TO "expires_at";--> statement-breakpoint
--- ALTER TABLE "verifications" RENAME COLUMN "token" TO "value";--> statement-breakpoint
--- ALTER TABLE "verifications" RENAME COLUMN "expires" TO "expires_at";--> statement-breakpoint
--- ALTER TABLE "users" ALTER COLUMN "email_verified" SET DATA TYPE boolean;--> statement-breakpoint
--- ALTER TABLE "users" ALTER COLUMN "email_verified" SET DEFAULT false;--> statement-breakpoint
--- ALTER TABLE "users" ALTER COLUMN "email_verified" SET NOT NULL;--> statement-breakpoint
--- ALTER TABLE "accounts" ADD COLUMN "refresh_token_expires_at" timestamp;--> statement-breakpoint
--- ALTER TABLE "accounts" ADD COLUMN "password" text;--> statement-breakpoint
--- ALTER TABLE "sessions" ADD COLUMN "id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL;--> statement-breakpoint
--- ALTER TABLE "sessions" ADD COLUMN "ip_address" text;--> statement-breakpoint
--- ALTER TABLE "sessions" ADD COLUMN "user_agent" text;--> statement-breakpoint
--- ALTER TABLE "accounts" DROP COLUMN IF EXISTS "type";--> statement-breakpoint
--- ALTER TABLE "accounts" DROP COLUMN IF EXISTS "token_type";--> statement-breakpoint
--- ALTER TABLE "accounts" DROP COLUMN IF EXISTS "session_state";--> statement-breakpoint
--- ALTER TABLE "users" DROP COLUMN IF EXISTS "password";--> statement-breakpoint
--- ALTER TABLE "sessions" ADD CONSTRAINT "sessions_token_unique" UNIQUE("token");
-
 -- Verifications
 CREATE TABLE IF NOT EXISTS "verifications" (
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
