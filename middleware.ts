@@ -22,9 +22,9 @@ export async function middleware(request: NextRequest) {
       pathname !== "/sign-up" &&
       pathname !== "/reset" &&
       pathname !== "/change-password" &&
-      pathname !== "/check" &&
-      pathname !== "/api/auth/callback" &&
-      pathname !== "/healthz"
+      !pathname.startsWith("/check") &&
+      !pathname.startsWith("/api/auth/callback") &&
+      !pathname.startsWith("/healthz")
     ) {
       const redirectPath = getUnauthenticatedRedirectPath(pathname);
       const newUrl = new URL(redirectPath, BASE_URL);

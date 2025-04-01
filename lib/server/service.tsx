@@ -70,15 +70,6 @@ export async function createTenant(userId: string, name: string) {
   return { tenant: tenants[0], profile };
 }
 
-export async function createGuestUser() {
-  const rs = await db
-    .insert(schema.users)
-    .values({ name: "Guest", isAnonymous: true })
-    .returning({ id: schema.users.id });
-  assert(rs.length === 1);
-  return rs[0];
-}
-
 export async function createProfile(tenantId: string, userId: string, role: Role) {
   const profiles = await db
     .insert(schema.profiles)

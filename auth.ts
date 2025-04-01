@@ -1,5 +1,7 @@
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
+import { nextCookies } from "better-auth/next-js";
+import { anonymous } from "better-auth/plugins";
 
 import db from "@/lib/server/db";
 import * as schema from "@/lib/server/db/schema";
@@ -40,6 +42,12 @@ export const auth = betterAuth({
       verify: ({ hash, password }) => verifyPassword(hash, password),
     },
   },
+  plugins: [
+    anonymous({
+      emailDomainName: "example.com",
+    }),
+    nextCookies(),
+  ],
 });
 
 export default auth;
