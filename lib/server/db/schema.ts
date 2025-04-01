@@ -10,6 +10,7 @@ import {
   timestamp,
   unique,
   uuid,
+  index,
 } from "drizzle-orm/pg-core";
 
 import { DEFAULT_MODEL } from "@/lib/llm/types";
@@ -42,13 +43,20 @@ export const connections = pgTable("connections", {
   sourceType: text().notNull(),
 });
 
-export const conversations = pgTable("conversations", {
-  ...baseTenantFields,
-  profileId: uuid("profile_id")
-    .references(() => profiles.id, { onDelete: "cascade" })
-    .notNull(),
-  title: text().notNull(),
-});
+export const conversations = pgTable(
+  "conversations",
+  {
+    ...baseTenantFields,
+    profileId: uuid("profile_id")
+      .references(() => profiles.id, { onDelete: "cascade" })
+      .notNull(),
+    title: text().notNull(),
+  },
+  (t) => ({
+    profileIdx: index("conversations_profile_idx").on(t.profileId),
+    tenantProfileIdx: index("conversations_tenant_profile_idx").on(t.tenantId, t.profileId),
+  }),
+);
 
 export const tenants = pgTable("tenants", {
   ...baseFields,
@@ -94,24 +102,32 @@ export const profiles = pgTable(
   },
   (t) => ({
     unique_tenant_id_user_id: unique().on(t.tenantId, t.userId),
+    roleIdx: index("profiles_role_idx").on(t.role),
   }),
 );
 
 export const messageRolesEnum = pgEnum("message_roles", ["assistant", "system", "user"]);
 
-export const messages = pgTable("messages", {
-  ...baseTenantFields,
-  conversationId: uuid("conversation_id")
-    .references(() => conversations.id, { onDelete: "cascade" })
-    .notNull(),
-  content: text("content"),
-  role: messageRolesEnum("role").notNull(),
-  sources: json("sources").notNull(),
-  model: text("model").notNull().default(DEFAULT_MODEL),
-  isBreadth: boolean("is_breadth").notNull().default(false),
-  rerankEnabled: boolean("rerank_enabled").notNull().default(false),
-  prioritizeRecent: boolean("prioritize_recent").notNull().default(false),
-});
+export const messages = pgTable(
+  "messages",
+  {
+    ...baseTenantFields,
+    conversationId: uuid("conversation_id")
+      .references(() => conversations.id, { onDelete: "cascade" })
+      .notNull(),
+    content: text("content"),
+    role: messageRolesEnum("role").notNull(),
+    sources: json("sources").notNull(),
+    model: text("model").notNull().default(DEFAULT_MODEL),
+    isBreadth: boolean("is_breadth").notNull().default(false),
+    rerankEnabled: boolean("rerank_enabled").notNull().default(false),
+    prioritizeRecent: boolean("prioritize_recent").notNull().default(false),
+  },
+  (t) => ({
+    conversationIdx: index("messages_conversation_idx").on(t.conversationId),
+    tenantConversationIdx: index("messages_tenant_conversation_idx").on(t.tenantId, t.conversationId),
+  }),
+);
 
 /** Based on Auth.js example schema: https://authjs.dev/getting-started/adapters/drizzle */
 

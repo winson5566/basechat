@@ -1,6 +1,6 @@
 import assert from "assert";
 
-import { and, desc, eq } from "drizzle-orm";
+import { and, desc, eq, sql } from "drizzle-orm";
 import { NextRequest } from "next/server";
 import { z } from "zod";
 
@@ -42,7 +42,11 @@ export async function GET(request: NextRequest) {
     })
     .from(schema.conversations)
     .where(and(eq(schema.conversations.tenantId, tenant.id), eq(schema.conversations.profileId, profile.id)))
-    .orderBy(desc(schema.conversations.createdAt));
+    .orderBy(
+      desc(
+        sql`CASE WHEN ${schema.conversations.updatedAt} IS NOT NULL THEN ${schema.conversations.updatedAt} ELSE ${schema.conversations.createdAt} END`,
+      ),
+    );
 
   return Response.json(rs);
 }

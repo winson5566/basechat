@@ -56,19 +56,12 @@ export default function Header({ currentProfileId, isAnonymous, tenant, name, em
   const router = useRouter();
   const [tenants, setTenants] = useState<z.infer<typeof tenantListResponseSchema>>([]);
   const [selectedProfileId, setSelectedProfileId] = useState(currentProfileId);
-  const [userCounts, setUserCounts] = useState<Record<string, number>>({});
 
   useEffect(() => {
     (async () => {
       const res = await fetch("/api/tenants");
       const tenants = tenantListResponseSchema.parse(await res.json());
       setTenants(tenants);
-
-      // Fetch user counts from API
-      const tenantIds = tenants.map((t) => t.id).join(",");
-      const countsRes = await fetch(`/api/tenants/user-counts?tenantIds=${tenantIds}`);
-      const counts = await countsRes.json();
-      setUserCounts(counts);
     })();
   }, []);
 
@@ -131,50 +124,57 @@ export default function Header({ currentProfileId, isAnonymous, tenant, name, em
               />
             </div>
           </PopoverTrigger>
-          <HeaderPopoverContent align="end" className="p-4 w-[332px]">
-            <div className="text-sm text-gray-500 font-semibold ml-2">{email}</div>
-            <ul>
-              {tenants.map((tenant, i) => (
-                <li
-                  key={i}
-                  className="hover:bg-black hover:bg-opacity-5 px-4 py-3 rounded-lg cursor-pointer"
-                  onClick={() => handleProfileClick(tenant)}
-                >
-                  <div className="flex items-center mb-1">
-                    <div className="w-4">
-                      {selectedProfileId === tenant.profileId && <Image src={CheckIcon} alt="selected" />}
-                    </div>
-                    <Logo
-                      name={tenant.name}
-                      url={tenant.logoUrl}
-                      width={40}
-                      height={40}
-                      className="ml-3 text-[16px] w-[40px] h-[40px]"
-                      tenantId={tenant.id}
-                    />
-                    <div className="ml-4">
-                      {tenant.name}
-                      <div className="text-xs text-gray-500">
-                        {userCounts[tenant.id] ?? "..."} User{(userCounts[tenant.id] ?? 1) === 1 ? "" : "s"}
+          <HeaderPopoverContent align="end" className="p-4 w-[332px] flex flex-col">
+            <div className="text-sm text-gray-500 font-semibold ml-6 mb-3 mt-3">{email}</div>
+
+            {/* Scrollable container for tenants list */}
+            <div className="max-h-[calc(100vh-330px)] overflow-y-auto pr-1 scrollbar-thin mb-4">
+              <ul>
+                {tenants.map((tenant, i) => (
+                  <li
+                    key={i}
+                    className="hover:bg-black hover:bg-opacity-5 px-4 py-3 rounded-lg cursor-pointer"
+                    onClick={() => handleProfileClick(tenant)}
+                  >
+                    <div className="flex items-center mb-1">
+                      <div className="w-4">
+                        {selectedProfileId === tenant.profileId && <Image src={CheckIcon} alt="selected" />}
+                      </div>
+                      <Logo
+                        name={tenant.name}
+                        url={tenant.logoUrl}
+                        width={40}
+                        height={40}
+                        className="ml-3 text-[16px] w-[40px] h-[40px]"
+                        tenantId={tenant.id}
+                      />
+                      <div className="ml-4">
+                        {tenant.name}
+                        <div className="text-xs text-gray-500">
+                          {tenant.userCount ?? 1} User{(tenant.userCount ?? 1) === 1 ? "" : "s"}
+                        </div>
                       </div>
                     </div>
-                  </div>
-                </li>
-              ))}
-            </ul>
+                  </li>
+                ))}
+              </ul>
+            </div>
 
-            <hr className="my-4 bg-black border-none h-[1px] opacity-10" />
+            {/* Fixed bottom options */}
+            <div className="mt-auto">
+              <hr className="mb-4 bg-black border-none h-[1px] opacity-10" />
 
-            <Link className="flex cursor-pointer" href="/setup">
-              <Image src={PlusIcon} alt="New Chatbot" className="mr-3" />
-              New Chatbot
-            </Link>
+              <Link className="flex cursor-pointer mb-4" href="/setup">
+                <Image src={PlusIcon} alt="New Chatbot" className="mr-3" />
+                New Chatbot
+              </Link>
 
-            <hr className="my-4 bg-black border-none h-[1px] opacity-10" />
+              <hr className="mb-4 bg-black border-none h-[1px] opacity-10" />
 
-            <div className="flex cursor-pointer" onClick={handleLogOutClick}>
-              <Image src={LogOutIcon} alt="Log out" className="mr-3" />
-              Log out
+              <div className="flex cursor-pointer" onClick={handleLogOutClick}>
+                <Image src={LogOutIcon} alt="Log out" className="mr-3" />
+                Log out
+              </div>
             </div>
           </HeaderPopoverContent>
         </Popover>

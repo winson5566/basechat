@@ -159,11 +159,6 @@ export async function getMembersByTenantId(tenantId: string): Promise<Member[]> 
   ).orderBy(sql`type desc`, sql`name`);
 }
 
-export async function getUserCountByTenantId(tenantId: string) {
-  const members = await getMembersByTenantId(tenantId);
-  return members.filter((m) => m.type !== "invite").length;
-}
-
 export async function getFirstTenantByUserId(id: string) {
   const rs = await db
     .select()
@@ -255,7 +250,21 @@ export async function acceptInvite(userId: string, inviteId: string) {
   return profile;
 }
 
+async function getUserCountSubquery(userId: string) {
+  const userCount = db
+    .select({
+      tenantId: schema.profiles.tenantId,
+      userCount: sql<number>`COUNT(*)`.mapWith(Number).as("user_count"),
+    })
+    .from(schema.profiles)
+    .where(and(eq(schema.profiles.userId, userId), ne(schema.profiles.role, "guest")))
+    .groupBy(schema.profiles.tenantId)
+    .as("user_counts");
+  return userCount;
+}
+
 export async function getTenantsByUserId(userId: string) {
+  const userCountResult = await getUserCountSubquery(userId);
   return db
     .select({
       id: schema.tenants.id,
@@ -263,9 +272,11 @@ export async function getTenantsByUserId(userId: string) {
       slug: schema.tenants.slug,
       logoUrl: schema.tenants.logoUrl,
       profileId: schema.profiles.id,
+      userCount: userCountResult.userCount,
     })
     .from(schema.tenants)
     .innerJoin(schema.profiles, eq(schema.tenants.id, schema.profiles.tenantId))
+    .leftJoin(userCountResult, eq(schema.tenants.id, userCountResult.tenantId))
     .where(eq(schema.profiles.userId, userId));
 }
 
@@ -413,6 +424,20 @@ export async function updateInviteRoleById(tenantId: string, inviteId: string, n
   return;
 }
 
+async function updateConversationTimestamp(tenantId: string, conversationId: string) {
+  return await db
+    .update(schema.conversations)
+    .set({ updatedAt: sql`now()` })
+    .where(and(eq(schema.conversations.tenantId, tenantId), eq(schema.conversations.id, conversationId)));
+}
+
+export async function updateConversationTitle(tenantId: string, conversationId: string, title: string) {
+  return await db
+    .update(schema.conversations)
+    .set({ title })
+    .where(and(eq(schema.conversations.tenantId, tenantId), eq(schema.conversations.id, conversationId)));
+}
+
 export async function createConversationMessage(message: typeof schema.messages.$inferInsert) {
   const rs = await db
     .insert(schema.messages)
@@ -429,6 +454,10 @@ export async function createConversationMessage(message: typeof schema.messages.
     })
     .returning();
   assert(rs.length === 1);
+
+  // Update the conversation's timestamp
+  await updateConversationTimestamp(message.tenantId, message.conversationId);
+
   return rs[0];
 }
 

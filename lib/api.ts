@@ -22,6 +22,7 @@ export const conversationSchema = z.object({
   id: z.string(),
   title: z.string(),
   createdAt: z.coerce.date(),
+  updatedAt: z.coerce.date(),
 });
 
 export const conversationListResponseSchema = z.array(conversationSchema);
@@ -83,6 +84,7 @@ export const tenantListResponseSchema = z.array(
     slug: z.string(),
     logoUrl: z.string().nullable(),
     profileId: z.string(),
+    userCount: z.number().nullable(),
   }),
 );
 

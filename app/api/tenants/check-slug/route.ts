@@ -4,6 +4,7 @@ import { z } from "zod";
 
 import db from "@/lib/server/db";
 import { tenants } from "@/lib/server/db/schema";
+import { requireSession } from "@/lib/server/utils";
 
 const checkSlugSchema = z.object({
   slug: z.string().min(1),
@@ -14,6 +15,7 @@ const checkSlugSchema = z.object({
 // true if slug does not exist in any tenant besides the tenantId passed in
 
 export async function POST(req: Request) {
+  await requireSession();
   try {
     const body = await req.json();
     const { slug, tenantId: tenantIdToExclude } = checkSlugSchema.parse(body);

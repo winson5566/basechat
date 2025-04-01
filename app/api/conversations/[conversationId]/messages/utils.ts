@@ -1,14 +1,18 @@
 import { anthropic } from "@ai-sdk/anthropic";
 import { google } from "@ai-sdk/google";
 import { openai } from "@ai-sdk/openai";
-import { CoreMessage, streamObject } from "ai";
+import { CoreMessage, generateText, streamObject } from "ai";
 import Handlebars from "handlebars";
 
 import { createConversationMessageResponseSchema } from "@/lib/api";
-import { DEFAULT_GROUNDING_PROMPT, DEFAULT_SYSTEM_PROMPT } from "@/lib/constants";
-import { LLMModel, DEFAULT_MODEL, DEFAULT_PROVIDER, getProviderForModel } from "@/lib/llm/types";
+import { DEFAULT_GROUNDING_PROMPT, DEFAULT_SYSTEM_PROMPT, NAMING_SYSTEM_PROMPT } from "@/lib/constants";
+import { DEFAULT_NAMING_MODEL, LLMModel, DEFAULT_MODEL, DEFAULT_PROVIDER, getProviderForModel } from "@/lib/llm/types";
 import { getRagieClient } from "@/lib/server/ragie";
-import { createConversationMessage, updateConversationMessageContent } from "@/lib/server/service";
+import {
+  createConversationMessage,
+  updateConversationMessageContent,
+  updateConversationTitle,
+} from "@/lib/server/service";
 
 type GenerateContext = {
   messages: CoreMessage[];
@@ -59,6 +63,12 @@ export async function generate(tenantId: string, profileId: string, conversation
 
   // Filter out empty messages before sending to API
   context.messages = filterEmptyMessages(context.messages);
+
+  // Rename conversation on 2nd user message
+  if (context.messages.length === 6) {
+    const title = await createConversationTitle(context.messages);
+    await updateConversationTitle(tenantId, conversationId, title);
+  }
 
   let model;
   switch (provider) {
@@ -194,4 +204,29 @@ function getSystemPrompt(context: SystemPromptContext, prompt?: string | null) {
   const template = Handlebars.compile(systemPrompt);
 
   return template({ ...context });
+}
+
+/*
+params: messages: CoreMessage[] - array of messages
+returns: string - appropriate name for this conversation
+*/
+async function createConversationTitle(messages: CoreMessage[]) {
+  const nonSystemMessages = messages.filter((msg) => msg.role !== "system");
+  const model = openai(DEFAULT_NAMING_MODEL);
+  const systemPrompt = NAMING_SYSTEM_PROMPT;
+  const userPrompt = `
+  Here are the messages from the conversation:
+  ${nonSystemMessages.map((msg) => `${msg.role}: ${msg.content}`).join("\n")}
+
+  Please generate a title for this conversation.
+  `;
+
+  const { text } = await generateText({
+    model,
+    system: systemPrompt,
+    prompt: userPrompt,
+  });
+
+  console.log(`Conversation name: ${text}`);
+  return text;
 }
