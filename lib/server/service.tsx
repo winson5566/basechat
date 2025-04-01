@@ -267,7 +267,6 @@ async function getTenantIdsSubquery(userId: string) {
     })
     .from(schema.profiles)
     .where(and(ne(schema.profiles.role, "guest"), eq(schema.profiles.userId, userId)));
-
   return res.map((obj) => obj.tenantId);
 }
 
