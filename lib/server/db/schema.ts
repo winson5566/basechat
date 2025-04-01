@@ -11,16 +11,15 @@ import {
   unique,
   uuid,
 } from "drizzle-orm/pg-core";
-import type { AdapterAccountType } from "next-auth/adapters";
 
 import { DEFAULT_MODEL } from "@/lib/llm/types";
 
 const timestampFields = {
-  createdAt: timestamp("created_at", { withTimezone: true, mode: "string" }).defaultNow().notNull(),
-  updatedAt: timestamp("updated_at", { withTimezone: true, mode: "string" })
+  createdAt: timestamp("created_at", { withTimezone: true, mode: "date" }).defaultNow().notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true, mode: "date" })
     .defaultNow()
     .notNull()
-    .$onUpdate(() => new Date().toISOString()),
+    .$onUpdate(() => new Date()),
 };
 
 const baseFields = {
@@ -120,9 +119,8 @@ export const users = pgTable("users", {
   ...baseFields,
   name: text("name"),
   email: text("email").unique(),
-  password: text("password"),
   isAnonymous: boolean("is_anonymous").notNull().default(false),
-  emailVerified: timestamp("email_verified", { mode: "date" }),
+  emailVerified: boolean("email_verified").notNull(),
   image: text("image"),
   currentProfileId: uuid("current_profile_id").references((): AnyPgColumn => profiles.id, { onDelete: "set null" }),
 });
@@ -154,8 +152,7 @@ export const accounts = pgTable(
 );
 
 export const sessions = pgTable("sessions", {
-  ...timestampFields,
-  id: text("id").primaryKey(),
+  ...baseFields,
   token: text("token").notNull().unique(),
   ipAddress: text("ip_address"),
   userAgent: text("user_agent"),
@@ -166,8 +163,7 @@ export const sessions = pgTable("sessions", {
 });
 
 export const verifications = pgTable("verifications", {
-  ...timestampFields,
-  id: text("id").primaryKey(),
+  ...baseFields,
   identifier: text("identifier").notNull(),
   value: text("value").notNull(),
   expiresAt: timestamp("expires_at").notNull(),
