@@ -20,7 +20,7 @@ export default function Layout({ children }: Readonly<{ children: React.ReactNod
             <div className="max-h-[64px] max-w-[64px] avatar-1 mr-3" />
             <h1 className={cn(inter_tight.className, "text-[75px] font-bold")}>{settings.APP_NAME}</h1>
           </div>
-          <div className="flex flex-col items-center">{children}</div>
+          <div className="flex flex-col items-center w-full">{children}</div>
         </div>
       </div>
       <div className="h-20 shrink-0 w-full bg-[#27272A] flex items-center justify-center">
