@@ -15,7 +15,14 @@ import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { updateTenantSchema } from "@/lib/api";
 import { DEFAULT_GROUNDING_PROMPT, DEFAULT_SYSTEM_PROMPT } from "@/lib/constants";
-import { ALL_VALID_MODELS, LLM_DISPLAY_NAMES, LLM_LOGO_MAP, LLMModel, modelArraySchema } from "@/lib/llm/types";
+import {
+  ALL_VALID_MODELS,
+  LLM_DISPLAY_NAMES,
+  LLM_LOGO_MAP,
+  LLMModel,
+  modelArraySchema,
+  getEnabledModels,
+} from "@/lib/llm/types";
 import { getModelsPromptsSettingsPath } from "@/lib/paths";
 import * as schema from "@/lib/server/db/schema";
 import { cn } from "@/lib/utils";
@@ -203,7 +210,7 @@ type ModelsFieldProps = {
 
 const ModelsField = ({ form }: ModelsFieldProps) => {
   const handleToggleModel = (model: LLMModel, isEnabled: boolean) => {
-    const currentModels = form.getValues("enabledModels");
+    const currentModels = getEnabledModels(form.getValues("enabledModels"));
 
     if (isEnabled && !currentModels.includes(model)) {
       form.setValue("enabledModels", [...currentModels, model], {

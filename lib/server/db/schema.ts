@@ -73,11 +73,7 @@ export const tenants = pgTable("tenants", {
   logoFileName: text("logo_file_name"), // The name of the file that was uploaded
   logoObjectName: text("logo_object_name"), // The name of the object in the bucket
   logoUrl: text("logo_url"), // The publicly accessible URL of the object
-  enabledModels: text("enabled_models")
-    .array()
-    .notNull()
-    .default(ALL_VALID_MODELS)
-    .$type<z.infer<typeof modelArraySchema>>(),
+  enabledModels: text("enabled_models").array().default(ALL_VALID_MODELS).$type<z.infer<typeof modelArraySchema>>(),
 });
 
 export const rolesEnum = pgEnum("roles", ["admin", "user", "guest"]);

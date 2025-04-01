@@ -8,7 +8,7 @@ import { z } from "zod";
 import ChatInput from "@/components/chatbot/chat-input";
 import Logo from "@/components/tenant/logo/logo";
 import { DEFAULT_WELCOME_MESSAGE } from "@/lib/constants";
-import { DEFAULT_MODEL, LLMModel, modelSchema } from "@/lib/llm/types";
+import { DEFAULT_MODEL, LLMModel, modelSchema, getEnabledModels } from "@/lib/llm/types";
 import { getConversationPath } from "@/lib/paths";
 import * as schema from "@/lib/server/db/schema";
 
@@ -33,13 +33,15 @@ export default function Welcome({ tenant, className }: Props) {
         const settings = JSON.parse(saved);
         const savedModel = settings.selectedModel;
         const parsed = modelSchema.safeParse(savedModel);
-        if (parsed.success && tenant.enabledModels.includes(savedModel)) {
+        const enabledModels = getEnabledModels(tenant.enabledModels);
+        if (parsed.success && enabledModels.includes(savedModel)) {
           return savedModel;
         }
       }
     }
     // Validate first enabled model or default model
-    const firstModel = tenant.enabledModels[0];
+    const enabledModels = getEnabledModels(tenant.enabledModels);
+    const firstModel = enabledModels[0];
     const parsed = modelSchema.safeParse(firstModel);
     return parsed.success ? firstModel : DEFAULT_MODEL;
   });
@@ -87,7 +89,7 @@ export default function Welcome({ tenant, className }: Props) {
     );
   }, [isBreadth, rerankEnabled, prioritizeRecent, selectedModel]);
 
-  const handleSubmit = async (content: string, model: string = DEFAULT_MODEL) => {
+  const handleSubmit = async (content: string, model: LLMModel = DEFAULT_MODEL) => {
     const res = await fetch("/api/conversations", {
       method: "POST",
       body: JSON.stringify({
@@ -146,7 +148,7 @@ export default function Welcome({ tenant, className }: Props) {
           onRerankChange={setRerankEnabled}
           prioritizeRecent={prioritizeRecent}
           onPrioritizeRecentChange={setPrioritizeRecent}
-          enabledModels={tenant.enabledModels}
+          enabledModels={getEnabledModels(tenant.enabledModels)}
         />
       </div>
     </div>

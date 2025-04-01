@@ -8,6 +8,7 @@ import SMTPConnection from "nodemailer/lib/smtp-connection";
 
 import auth from "@/auth";
 import { Member, MemberType } from "@/lib/api";
+import { getEnabledModels } from "@/lib/llm/types";
 import * as settings from "@/lib/server/settings";
 
 import { InviteHtml, ResetPasswordHtml } from "../mail";
@@ -226,7 +227,13 @@ export async function getAuthContextByUserId(userId: string, slug: string) {
   assert(rs.length === 1, "expected single record");
   const row = rs[0];
 
-  return { profile: row.profiles, tenant: row.tenants };
+  return {
+    profile: row.profiles,
+    tenant: {
+      ...row.tenants,
+      enabledModels: getEnabledModels(row.tenants.enabledModels),
+    },
+  };
 }
 
 async function getInviteById(id: string) {

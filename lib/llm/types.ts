@@ -48,7 +48,12 @@ export const modelSchema = z.enum(ALL_VALID_MODELS as [string, ...string[]]);
 export type LLMModel = z.infer<typeof modelSchema>;
 
 // Schema for array of models (used for enabledModels)
-export const modelArraySchema = z.array(modelSchema).min(1, "At least one model must be enabled");
+export const modelArraySchema = z.array(modelSchema).min(1, "At least one model must be enabled").nullable();
+
+// Helper function to get enabled models, handling null case
+export function getEnabledModels(enabledModels: string[] | null): string[] {
+  return enabledModels ?? ALL_VALID_MODELS;
+}
 
 export function getProviderForModel(model: string): LLMProvider | null {
   // Validate the model first

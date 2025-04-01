@@ -1,5 +1,9 @@
 {
+<<<<<<< HEAD
   "id": "9d253466-c3ac-4bf7-a7be-268c26def9e5",
+=======
+  "id": "44337dd5-6ce0-4bd8-876f-dc77066a0eae",
+>>>>>>> dcca834 (make column nullable)
   "prevId": "bde3798b-7133-4006-8446-5de22a8b212d",
   "version": "7",
   "dialect": "postgresql",
@@ -898,6 +902,16 @@
           "type": "text",
           "primaryKey": false,
           "notNull": false
+<<<<<<< HEAD
+=======
+        },
+        "enabled_models": {
+          "name": "enabled_models",
+          "type": "text[]",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "'{\"gpt-4o\",\"gpt-3.5-turbo\",\"gemini-2.0-flash\",\"gemini-1.5-pro\",\"claude-3-7-sonnet-latest\",\"claude-3-5-haiku-latest\"}'"
+>>>>>>> dcca834 (make column nullable)
         }
       },
       "indexes": {},
