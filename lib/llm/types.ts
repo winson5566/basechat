@@ -1,3 +1,5 @@
+import { z } from "zod";
+
 // Single source of truth for providers and their models
 export const PROVIDER_CONFIG = {
   openai: {
@@ -36,19 +38,23 @@ export const DEFAULT_NAMING_MODEL = "gpt-4o-mini";
 // Derive types from the config
 export type LLMProvider = keyof typeof PROVIDER_CONFIG;
 
-// Create a string literal union type for all currently supported models
-// This provides autocomplete and type checking during development
-export type SupportedModelName = (typeof PROVIDER_CONFIG)[LLMProvider]["models"][number];
-
 // List of all currently valid model names for validation
 export const ALL_VALID_MODELS = Object.values(PROVIDER_CONFIG).flatMap((config) => config.models) as string[];
 
-// Checks if a model name is currently supported
-export function isValidModel(model: string): model is SupportedModelName {
-  return ALL_VALID_MODELS.includes(model);
-}
+// Create Zod schema for model validation
+export const modelSchema = z.enum(ALL_VALID_MODELS as [string, ...string[]]);
+
+// Type for validated model names
+export type ValidatedModel = z.infer<typeof modelSchema>;
+
+// Schema for array of models (used for enabledModels)
+export const modelArraySchema = z.array(modelSchema).min(1, "At least one model must be enabled");
 
 export function getProviderForModel(model: string): LLMProvider | null {
+  // Validate the model first
+  const parsed = modelSchema.safeParse(model);
+  if (!parsed.success) return null;
+
   for (const [provider, config] of Object.entries(PROVIDER_CONFIG)) {
     if ((config.models as readonly string[]).includes(model)) {
       return provider as LLMProvider;
@@ -57,24 +63,25 @@ export function getProviderForModel(model: string): LLMProvider | null {
   return null;
 }
 
-// Logo mapping
-export const LLM_LOGO_MAP: Record<string, [string, string]> = {};
-ALL_VALID_MODELS.forEach((model) => {
-  const provider = getProviderForModel(model);
-  if (provider) {
-    LLM_LOGO_MAP[model] = [model, PROVIDER_CONFIG[provider].logo];
-  }
-});
+// Logo and display name mappings
+export const LLM_LOGO_MAP = Object.fromEntries(
+  ALL_VALID_MODELS.map((model) => {
+    const provider = getProviderForModel(model);
+    return [model, [model, provider ? PROVIDER_CONFIG[provider].logo : ""]];
+  }),
+) as Record<ValidatedModel, [string, string]>;
 
-// Display name mapping
-export const LLM_DISPLAY_NAMES: Record<string, string> = {};
-ALL_VALID_MODELS.forEach((model) => {
-  const provider = getProviderForModel(model);
-  if (provider && Object.prototype.hasOwnProperty.call(PROVIDER_CONFIG[provider].displayNames, model)) {
-    LLM_DISPLAY_NAMES[model] =
-      PROVIDER_CONFIG[provider].displayNames[model as keyof (typeof PROVIDER_CONFIG)[typeof provider]["displayNames"]];
-  } else {
-    // Fallback for unknown models
-    LLM_DISPLAY_NAMES[model] = model;
-  }
-});
+export const LLM_DISPLAY_NAMES = Object.fromEntries(
+  ALL_VALID_MODELS.map((model) => {
+    const provider = getProviderForModel(model);
+    return [
+      model,
+      provider &&
+      PROVIDER_CONFIG[provider].displayNames[model as keyof (typeof PROVIDER_CONFIG)[typeof provider]["displayNames"]]
+        ? PROVIDER_CONFIG[provider].displayNames[
+            model as keyof (typeof PROVIDER_CONFIG)[typeof provider]["displayNames"]
+          ]
+        : model,
+    ];
+  }),
+) as Record<ValidatedModel, string>;

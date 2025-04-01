@@ -12,7 +12,7 @@ import {
   CreateConversationMessageRequest,
   createConversationMessageResponseSchema,
 } from "@/lib/api";
-import { getProviderForModel } from "@/lib/llm/types";
+import { getProviderForModel, ValidatedModel, modelSchema } from "@/lib/llm/types";
 
 import AssistantMessage from "./assistant-message";
 import ChatInput from "./chat-input";
@@ -20,7 +20,7 @@ import { SourceMetadata } from "./types";
 
 const inter = Inter({ subsets: ["latin"] });
 
-type AiMessage = { content: string; role: "assistant"; id?: string; sources: SourceMetadata[]; model?: string };
+type AiMessage = { content: string; role: "assistant"; id?: string; sources: SourceMetadata[]; model?: ValidatedModel };
 type UserMessage = { content: string; role: "user" };
 type SystemMessage = { content: string; role: "system" };
 type Message = AiMessage | UserMessage | SystemMessage;
@@ -36,7 +36,7 @@ interface Props {
     logoUrl?: string | null;
     slug: string;
     id: string;
-    enabledModels?: string[] | null;
+    enabledModels: ValidatedModel[];
   };
   initMessage?: string;
   onSelectedDocumentId: (id: string) => void;
@@ -50,12 +50,14 @@ export default function Chatbot({ tenant, conversationId, initMessage, onSelecte
   const pendingMessageRef = useRef<null | { id: string; model: string }>(null);
   pendingMessageRef.current = pendingMessage;
   const { initialModel } = useGlobalState();
-  const [selectedModel, setSelectedModel] = useState<string>(() => {
-    // If tenant has enabled models and the default model is not in the list, use the first enabled model
-    if (tenant.enabledModels && tenant.enabledModels.length > 0) {
-      if (!tenant.enabledModels.includes(initialModel)) {
-        return tenant.enabledModels[0];
+  const [selectedModel, setSelectedModel] = useState<ValidatedModel>(() => {
+    if (tenant.enabledModels.length > 0) {
+      const parsed = modelSchema.safeParse(initialModel);
+      if (parsed.success && tenant.enabledModels.includes(initialModel)) {
+        return initialModel;
       }
+      // if initial model from global state is no longer enabled by this tenant, change to one that is
+      return tenant.enabledModels[0];
     }
     return initialModel;
   });
@@ -194,11 +196,9 @@ export default function Chatbot({ tenant, conversationId, initMessage, onSelecte
 
   // Ensure selected model is in enabled models list
   useEffect(() => {
-    if (selectedModel && tenant.enabledModels && tenant.enabledModels.length > 0) {
-      if (!tenant.enabledModels.includes(selectedModel)) {
-        // Update to first enabled model
-        setSelectedModel(tenant.enabledModels[0]);
-      }
+    if (!tenant.enabledModels.includes(selectedModel)) {
+      // Update to first enabled model
+      setSelectedModel(tenant.enabledModels[0]);
     }
   }, [selectedModel, tenant.enabledModels]);
 

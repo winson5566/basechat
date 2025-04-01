@@ -15,7 +15,7 @@ import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { updateTenantSchema } from "@/lib/api";
 import { DEFAULT_GROUNDING_PROMPT, DEFAULT_SYSTEM_PROMPT } from "@/lib/constants";
-import { ALL_VALID_MODELS, LLM_DISPLAY_NAMES, LLM_LOGO_MAP } from "@/lib/llm/types";
+import { ALL_VALID_MODELS, LLM_DISPLAY_NAMES, LLM_LOGO_MAP, modelArraySchema } from "@/lib/llm/types";
 import { getModelPromptSettingsPath } from "@/lib/paths";
 import * as schema from "@/lib/server/db/schema";
 import { cn } from "@/lib/utils";
@@ -37,8 +37,6 @@ const isValidSlug = (slug: string) => {
   return slug === sanitized;
 };
 
-const atLeastOneModel = (models: string[]) => models.length > 0;
-
 const formSchema = z.object({
   groundingPrompt: z.string().nullable().default(DEFAULT_GROUNDING_PROMPT).transform(nullToEmptyString),
   systemPrompt: z.string().nullable().default(DEFAULT_SYSTEM_PROMPT).transform(nullToEmptyString),
@@ -46,9 +44,7 @@ const formSchema = z.object({
     message: "URL can only contain lowercase letters, numbers, and hyphens",
   }),
   isPublic: z.boolean().default(false),
-  enabledModels: z.array(z.string()).default(ALL_VALID_MODELS).refine(atLeastOneModel, {
-    message: "At least one model must be enabled",
-  }),
+  enabledModels: modelArraySchema,
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -207,7 +203,7 @@ type ModelsFieldProps = {
 
 const ModelsField = ({ form }: ModelsFieldProps) => {
   const handleToggleModel = (model: string, isEnabled: boolean) => {
-    const currentModels = form.getValues("enabledModels") || [];
+    const currentModels = form.getValues("enabledModels");
 
     if (isEnabled && !currentModels.includes(model)) {
       form.setValue("enabledModels", [...currentModels, model], {
@@ -283,15 +279,13 @@ export default function ModelPromptsSettings({ tenant }: Props) {
   useEffect(() => setMounted(true), []);
 
   const formattedTenant = useMemo(() => {
-    const { groundingPrompt, systemPrompt, enabledModels, ...otherFields } = tenant;
+    const { groundingPrompt, systemPrompt, ...otherFields } = tenant;
 
     // Zod only uses default values when the value is undefined. They come in as null
     // Change fields you want to have defaults to undefined.
     return {
       groundingPrompt: groundingPrompt ? groundingPrompt : undefined,
       systemPrompt: systemPrompt ? systemPrompt : undefined,
-      // If enabledModels is available in tenant, use it; otherwise default to all models
-      enabledModels: enabledModels ? enabledModels : ALL_VALID_MODELS,
       ...otherFields,
     };
   }, [tenant]);

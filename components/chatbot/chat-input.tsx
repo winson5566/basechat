@@ -4,7 +4,7 @@ import { KeyboardEvent, useRef, useState, useEffect } from "react";
 
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Switch } from "@/components/ui/switch";
-import { ALL_VALID_MODELS, LLM_LOGO_MAP, LLM_DISPLAY_NAMES } from "@/lib/llm/types";
+import { ValidatedModel, modelSchema, LLM_LOGO_MAP, LLM_DISPLAY_NAMES, ALL_VALID_MODELS } from "@/lib/llm/types";
 import { cn } from "@/lib/utils";
 
 import CheckIcon from "../../public/icons/check.svg";
@@ -12,16 +12,16 @@ import { AutosizeTextarea, AutosizeTextAreaRef } from "../ui/autosize-textarea";
 import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
 
 interface ChatInputProps {
-  handleSubmit?: (text: string, model: string) => void;
-  selectedModel: string;
-  onModelChange: (model: string) => void;
+  handleSubmit?: (text: string, model: ValidatedModel) => void;
+  selectedModel: ValidatedModel;
+  onModelChange: (model: ValidatedModel) => void;
   isBreadth: boolean;
   onBreadthChange: (isBreadth: boolean) => void;
   rerankEnabled?: boolean;
   onRerankChange?: (enabled: boolean) => void;
   prioritizeRecent?: boolean;
   onPrioritizeRecentChange?: (enabled: boolean) => void;
-  enabledModels?: string[] | null;
+  enabledModels: ValidatedModel[];
 }
 
 const useIsDesktop = () => {
@@ -82,8 +82,6 @@ export default function ChatInput(props: ChatInputProps) {
   const [rerankEnabled, setRerankEnabled] = useState(props.rerankEnabled ?? false);
   const [prioritizeRecent, setPrioritizeRecent] = useState(props.prioritizeRecent ?? false);
   const ref = useRef<AutosizeTextAreaRef>(null);
-
-  const enabledModels = props.enabledModels || ALL_VALID_MODELS;
 
   const handleSubmit = (value: string) => {
     setValue("");
@@ -214,7 +212,7 @@ export default function ChatInput(props: ChatInputProps) {
                 </PopoverTrigger>
                 <ModelPopoverContent>
                   <div className="flex flex-col gap-1">
-                    {enabledModels.map((model) => {
+                    {props.enabledModels.map((model) => {
                       const [_, logoPath] = LLM_LOGO_MAP[model as string];
                       return (
                         <button

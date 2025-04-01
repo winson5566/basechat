@@ -39,7 +39,7 @@ export async function generate(tenantId: string, profileId: string, conversation
   let provider = getProviderForModel(context.model);
   if (!provider) {
     console.log(`Provider not found for model ${context.model}`);
-    console.log(`Using default provider: ${DEFAULT_PROVIDER} and default model: ${DEFAULT_MODEL}`);
+    console.log(`Using default model: ${DEFAULT_MODEL} and default provider: ${DEFAULT_PROVIDER}`);
     provider = DEFAULT_PROVIDER;
     context.model = DEFAULT_MODEL;
   }

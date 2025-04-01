@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 
 import { useGlobalState } from "@/app/(main)/o/[slug]/context";
 import Chatbot from "@/components/chatbot";
+import { ValidatedModel } from "@/lib/llm/types";
 
 import Summary from "./summary";
 
@@ -14,7 +15,7 @@ interface Props {
     logoUrl?: string | null;
     slug: string;
     id: string;
-    enabledModels?: string[] | null;
+    enabledModels: ValidatedModel[];
   };
 }
 

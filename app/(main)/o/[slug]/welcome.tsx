@@ -8,7 +8,7 @@ import { z } from "zod";
 import ChatInput from "@/components/chatbot/chat-input";
 import Logo from "@/components/tenant/logo/logo";
 import { DEFAULT_WELCOME_MESSAGE } from "@/lib/constants";
-import { DEFAULT_MODEL } from "@/lib/llm/types";
+import { DEFAULT_MODEL, ValidatedModel, modelSchema } from "@/lib/llm/types";
 import { getConversationPath } from "@/lib/paths";
 import * as schema from "@/lib/server/db/schema";
 
@@ -26,18 +26,22 @@ interface Props {
 export default function Welcome({ tenant, className }: Props) {
   const router = useRouter();
   const { setInitialMessage, setInitialModel } = useGlobalState();
-  const [selectedModel, setSelectedModel] = useState<string>(() => {
+  const [selectedModel, setSelectedModel] = useState<ValidatedModel>(() => {
     if (typeof window !== "undefined") {
       const saved = localStorage.getItem("chatSettings");
       if (saved) {
         const settings = JSON.parse(saved);
         const savedModel = settings.selectedModel;
-        if (tenant.enabledModels && tenant.enabledModels.includes(savedModel)) {
+        const parsed = modelSchema.safeParse(savedModel);
+        if (parsed.success && tenant.enabledModels.includes(savedModel)) {
           return savedModel;
         }
       }
     }
-    return tenant.enabledModels && tenant.enabledModels.length > 0 ? tenant.enabledModels[0] : DEFAULT_MODEL;
+    // Validate first enabled model or default model
+    const firstModel = tenant.enabledModels[0] ?? DEFAULT_MODEL;
+    const parsed = modelSchema.safeParse(firstModel);
+    return parsed.success ? firstModel : DEFAULT_MODEL;
   });
   const [isBreadth, setIsBreadth] = useState(() => {
     if (typeof window !== "undefined") {
