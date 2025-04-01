@@ -41,7 +41,7 @@ export const auth = betterAuth({
     anonymous({
       emailDomainName: "example.com",
     }),
-    nextCookies(),
+    nextCookies(), // This must be the last plugin
   ],
 });
 

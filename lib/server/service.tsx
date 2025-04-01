@@ -6,6 +6,7 @@ import { union } from "drizzle-orm/pg-core";
 import nodemailer from "nodemailer";
 import SMTPConnection from "nodemailer/lib/smtp-connection";
 
+import auth from "@/auth";
 import { Member, MemberType } from "@/lib/api";
 import * as settings from "@/lib/server/settings";
 
@@ -14,7 +15,6 @@ import { InviteHtml, ResetPasswordHtml } from "../mail";
 import db from "./db";
 import * as schema from "./db/schema";
 import { getRagieClient } from "./ragie";
-import { hashPassword } from "./utils";
 
 type Role = (typeof schema.rolesEnum.enumValues)[number];
 
@@ -336,7 +336,7 @@ export async function getUserById(id: string) {
 }
 
 export async function sendResetPasswordEmail(user: { name: string; email: string }, url: string, _token: string) {
-  // FIX: callbackURL is not being set from the reset flow
+  // TODO: callbackURL is not being set from the reset flow. This looks like a bug in better-auth.
   const urlObj = new URL(url);
   urlObj.searchParams.set("callbackURL", `${settings.BASE_URL}/change-password`);
 

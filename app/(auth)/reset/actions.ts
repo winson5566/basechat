@@ -3,7 +3,7 @@
 import { z, ZodError } from "zod";
 
 import auth from "@/auth";
-import * as settings from "@/lib/server/settings";
+import { getChangePasswordPath } from "@/lib/paths";
 
 interface ResetFormState {
   error?: string[];
@@ -22,7 +22,7 @@ export async function handleResetPassword(prevState: ResetFormState, formData: F
   await auth.api.forgetPassword({
     body: {
       email,
-      callbackUrl: "/test",
+      callbackURL: getChangePasswordPath(),
     },
   });
   return { email };

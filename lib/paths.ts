@@ -17,3 +17,5 @@ export const getSignUpPath = () => `/sign-up`;
 export const getSetupPath = () => `/setup`;
 
 export const getStartPath = () => `/start`;
+
+export const getChangePasswordPath = () => `/change-password`;
