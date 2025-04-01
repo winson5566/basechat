@@ -1,21 +1,12 @@
-import { betterFetch } from "@better-fetch/fetch";
+import { getSessionCookie } from "better-auth/cookies";
 import { NextRequest, NextResponse } from "next/server";
-
-import auth from "@/auth";
 
 import { BASE_URL } from "./lib/server/settings";
 
-type Session = typeof auth.$Infer.Session;
-
 export async function middleware(request: NextRequest) {
-  const { data: session } = await betterFetch<Session>("/api/auth/get-session", {
-    baseURL: request.nextUrl.origin,
-    headers: {
-      cookie: request.headers.get("cookie") || "", // Forward the cookies from the request
-    },
-  });
+  const sessionCookie = getSessionCookie(request);
 
-  if (!session) {
+  if (!sessionCookie) {
     const pathname = request.nextUrl.pathname;
     if (
       pathname !== "/sign-in" &&
