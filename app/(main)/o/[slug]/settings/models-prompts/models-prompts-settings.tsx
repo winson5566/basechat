@@ -15,8 +15,8 @@ import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { updateTenantSchema } from "@/lib/api";
 import { DEFAULT_GROUNDING_PROMPT, DEFAULT_SYSTEM_PROMPT } from "@/lib/constants";
-import { ALL_VALID_MODELS, LLM_DISPLAY_NAMES, LLM_LOGO_MAP, modelArraySchema } from "@/lib/llm/types";
-import { getModelPromptSettingsPath } from "@/lib/paths";
+import { ALL_VALID_MODELS, LLM_DISPLAY_NAMES, LLM_LOGO_MAP, LLMModel, modelArraySchema } from "@/lib/llm/types";
+import { getModelsPromptsSettingsPath } from "@/lib/paths";
 import * as schema from "@/lib/server/db/schema";
 import { cn } from "@/lib/utils";
 
@@ -202,7 +202,7 @@ type ModelsFieldProps = {
 };
 
 const ModelsField = ({ form }: ModelsFieldProps) => {
-  const handleToggleModel = (model: string, isEnabled: boolean) => {
+  const handleToggleModel = (model: LLMModel, isEnabled: boolean) => {
     const currentModels = form.getValues("enabledModels");
 
     if (isEnabled && !currentModels.includes(model)) {
@@ -271,7 +271,7 @@ type Props = {
   tenant: typeof schema.tenants.$inferSelect;
 };
 
-export default function ModelPromptsSettings({ tenant }: Props) {
+export default function ModelsPromptsSettings({ tenant }: Props) {
   const [mounted, setMounted] = useState(false);
   const [isLoading, setLoading] = useState(false);
   const router = useRouter();
@@ -344,7 +344,7 @@ export default function ModelPromptsSettings({ tenant }: Props) {
 
       // If the slug was changed, redirect to the new URL
       if (values.slug !== tenant.slug) {
-        router.push(getModelPromptSettingsPath(values.slug));
+        router.push(getModelsPromptsSettingsPath(values.slug));
       }
     } catch (error) {
       toast.error("Failed to save changes");
@@ -361,7 +361,7 @@ export default function ModelPromptsSettings({ tenant }: Props) {
   return (
     <div className="w-full p-4 flex-grow flex flex-col relative">
       <div className="flex w-full justify-between items-center">
-        <h1 className="font-bold text-[32px] mb-16">Model & Prompts</h1>
+        <h1 className="font-bold text-[32px] mb-16">Models and Prompts</h1>
         <div className="flex justify-end">
           <button
             type="reset"
