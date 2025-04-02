@@ -23,7 +23,19 @@ const Layout = ({ children, preview }: { children: React.ReactElement; preview: 
     <Tailwind>
       <Body className="m-0 p-0 bg-gray-100 font-sans">
         <Section className="text-center mt-10">
-          <Heading className="text-[32px] font-bold text-black">{settings.APP_NAME}</Heading>
+          <div className="flex justify-center items-center">
+            <div
+              className="mr-2"
+              style={{
+                width: "32px",
+                height: "32px",
+                display: "inline-block",
+                borderRadius: "50%", // make a complete circle
+                background: "linear-gradient(90deg, #f5c3af 0%, #ea89d7 46.87%, #6767d9 100%)",
+              }}
+            />
+            <Heading className="text-[32px] font-bold text-black">{settings.APP_NAME}</Heading>
+          </div>
         </Section>
 
         <Container className="mx-auto mt-10 w-[504px] p-12 bg-white rounded-[24px]">{children}</Container>
