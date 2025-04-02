@@ -9,12 +9,9 @@ import { useForm, UseFormReturn } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 
-import { AutosizeTextarea } from "@/components/ui/autosize-textarea";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { updateTenantSchema } from "@/lib/api";
-import { DEFAULT_GROUNDING_PROMPT, DEFAULT_SYSTEM_PROMPT } from "@/lib/constants";
 import {
   ALL_VALID_MODELS,
   LLM_DISPLAY_NAMES,
@@ -26,86 +23,18 @@ import {
 import * as schema from "@/lib/server/db/schema";
 import { cn } from "@/lib/utils";
 
-import { HelpGroundingPromptDialog } from "../help-grounding-prompt-dialog";
-import { HelpSystemPromptDialog } from "../help-system-prompt-dialog";
-
-// Transform null to empty string for form field handling
-const nullToEmptyString = (v: string | null) => v ?? "";
-
 const formSchema = z.object({
-  groundingPrompt: z.string().nullable().default(DEFAULT_GROUNDING_PROMPT).transform(nullToEmptyString),
-  systemPrompt: z.string().nullable().default(DEFAULT_SYSTEM_PROMPT).transform(nullToEmptyString),
   enabledModels: modelArraySchema,
 });
 
 type FormValues = z.infer<typeof formSchema>;
 
-type TextAreaFieldProps = {
-  name: keyof FormValues;
-  label: string;
-  form: UseFormReturn<FormValues>;
-  help?: React.ReactNode;
-  className?: string;
-  hasDefault?: boolean;
-};
-
-const TextAreaField = ({ form, name, label, className, help, hasDefault }: TextAreaFieldProps) => {
-  const getDefaultValue = () => {
-    switch (name) {
-      case "systemPrompt":
-        return DEFAULT_SYSTEM_PROMPT;
-      case "groundingPrompt":
-        return DEFAULT_GROUNDING_PROMPT;
-      default:
-        return "";
-    }
-  };
-
-  const handleReset = () => {
-    form.setValue(name, getDefaultValue(), {
-      shouldDirty: true,
-      shouldTouch: true,
-      shouldValidate: true,
-    });
-  };
-
-  return (
-    <FormField
-      control={form.control}
-      name={name}
-      render={({ field }) => (
-        <FormItem className={cn("flex flex-col", className)}>
-          <FormLabel className="font-semibold text-[16px] mb-3 flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              {label} {help}
-            </div>
-            {hasDefault && (
-              <button
-                type="button"
-                onClick={handleReset}
-                className="text-sm text-[#D946EF] hover:text-foreground transition-colors"
-              >
-                Reset
-              </button>
-            )}
-          </FormLabel>
-          <FormControl>
-            <div className="rounded-md border border-input bg-transparent px-3 py-1 text-base shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 md:text-sm">
-              <AutosizeTextarea className="pt-1.5" minHeight={80} {...field} value={String(field.value)} />
-            </div>
-          </FormControl>
-          <FormMessage />
-        </FormItem>
-      )}
-    />
-  );
-};
-
 type ModelsFieldProps = {
   form: UseFormReturn<FormValues>;
+  className?: string;
 };
 
-const ModelsField = ({ form }: ModelsFieldProps) => {
+const ModelsField = ({ form, className }: ModelsFieldProps) => {
   const handleToggleModel = (model: LLMModel, isEnabled: boolean) => {
     const currentModels = getEnabledModels(form.getValues("enabledModels"));
 
@@ -131,7 +60,7 @@ const ModelsField = ({ form }: ModelsFieldProps) => {
       control={form.control}
       name="enabledModels"
       render={({ field }) => (
-        <FormItem className="flex flex-col mt-8">
+        <FormItem className={cn("flex flex-col", className)}>
           <div className="mb-5">
             <FormLabel className="font-semibold text-[16px]">Models</FormLabel>
             <p className="text-sm text-muted-foreground">Choose which models can be used by this chatbot</p>
@@ -175,21 +104,19 @@ type Props = {
   tenant: typeof schema.tenants.$inferSelect;
 };
 
-export default function ModelsPromptsSettings({ tenant }: Props) {
+export default function ModelSettings({ tenant }: Props) {
   const [mounted, setMounted] = useState(false);
   const [isLoading, setLoading] = useState(false);
-  const router = useRouter();
 
   useEffect(() => setMounted(true), []);
 
   const formattedTenant = useMemo(() => {
-    const { groundingPrompt, systemPrompt, ...otherFields } = tenant;
+    const { enabledModels, ...otherFields } = tenant;
 
     // Zod only uses default values when the value is undefined. They come in as null
     // Change fields you want to have defaults to undefined.
     return {
-      groundingPrompt: groundingPrompt ? groundingPrompt : undefined,
-      systemPrompt: systemPrompt ? systemPrompt : undefined,
+      enabledModels: enabledModels,
       ...otherFields,
     };
   }, [tenant]);
@@ -215,13 +142,7 @@ export default function ModelsPromptsSettings({ tenant }: Props) {
       if (res.status !== 200) throw new Error("Failed to save");
 
       toast.success("Changes saved");
-
-      // If the prompts are empty strings, set them to undefined so we get the default value from the schema.
-      form.reset({
-        ...values,
-        groundingPrompt: values.groundingPrompt.length ? values.groundingPrompt : undefined,
-        systemPrompt: values.systemPrompt.length ? values.systemPrompt : undefined,
-      });
+      form.reset(values);
     } catch (error) {
       toast.error("Failed to save changes");
       console.error(error);
@@ -237,7 +158,7 @@ export default function ModelsPromptsSettings({ tenant }: Props) {
   return (
     <div className="w-full p-4 flex-grow flex flex-col relative">
       <div className="flex w-full justify-between items-center">
-        <h1 className="font-bold text-[32px] mb-16">Models and Prompts</h1>
+        <h1 className="font-bold text-[32px] mb-16">Models</h1>
         <div className="flex justify-end">
           <button
             type="reset"
@@ -262,28 +183,11 @@ export default function ModelsPromptsSettings({ tenant }: Props) {
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)}>
           <div>
-            <TextAreaField
-              form={form}
-              name="groundingPrompt"
-              label="Grounding Prompt"
-              help={<HelpGroundingPromptDialog />}
-              hasDefault={true}
-            />
-
-            <TextAreaField
-              form={form}
-              name="systemPrompt"
-              label="System Prompt"
-              help={<HelpSystemPromptDialog />}
-              className="mt-8 mb-4"
-              hasDefault={true}
-            />
-
-            <hr className="w-full my-8" />
             <ModelsField form={form} />
           </div>
         </form>
       </Form>
+      <div className="h-32" />
     </div>
   );
 }
