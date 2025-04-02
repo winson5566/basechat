@@ -16,9 +16,11 @@ export default function Layout({ children }: Readonly<{ children: React.ReactNod
     <div className="h-screen w-full flex flex-col items-center bg-white overflow-hidden">
       <div className="flex-1 w-full overflow-y-auto">
         <div className="w-full max-w-[717px] px-4 mx-auto h-full flex flex-col items-center justify-center">
-          <div className="hidden md:flex items-center mb-16">
-            <div className="max-h-[64px] max-w-[64px] avatar-1 mr-3" />
-            <h1 className={cn(inter_tight.className, "text-[75px] font-bold")}>{settings.APP_NAME}</h1>
+          <div className="flex items-center mb-16">
+            <div className="max-h-[64px] max-w-[64px] max-[460px]:max-h-[38px] max-[460px]:max-w-[38px] avatar-1 mr-3" />
+            <h1 className={cn(inter_tight.className, "text-[75px] max-[460px]:text-[45px] font-bold")}>
+              {settings.APP_NAME}
+            </h1>
           </div>
           <div className="flex flex-col items-center w-full">{children}</div>
         </div>
