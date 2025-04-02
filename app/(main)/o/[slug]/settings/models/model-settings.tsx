@@ -157,8 +157,8 @@ export default function ModelSettings({ tenant }: Props) {
 
   return (
     <div className="w-full p-4 flex-grow flex flex-col relative">
-      <div className="flex w-full justify-between items-center">
-        <h1 className="font-bold text-[32px] mb-16">Models</h1>
+      <div className="flex w-full justify-between items-center mb-16">
+        <h1 className="font-bold text-[32px]">Models</h1>
         <div className="flex justify-end">
           <button
             type="reset"
