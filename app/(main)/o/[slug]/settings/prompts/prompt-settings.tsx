@@ -35,9 +35,10 @@ type TextAreaFieldProps = {
   help?: React.ReactNode;
   className?: string;
   hasDefault?: boolean;
+  description?: string;
 };
 
-const TextAreaField = ({ form, name, label, className, help, hasDefault }: TextAreaFieldProps) => {
+const TextAreaField = ({ form, name, label, className, help, hasDefault, description }: TextAreaFieldProps) => {
   const getDefaultValue = () => {
     switch (name) {
       case "systemPrompt":
@@ -63,7 +64,7 @@ const TextAreaField = ({ form, name, label, className, help, hasDefault }: TextA
       name={name}
       render={({ field }) => (
         <FormItem className={cn("flex flex-col", className)}>
-          <FormLabel className="font-semibold text-[16px] mb-3 flex items-center justify-between">
+          <FormLabel className="font-semibold text-[16px] mb-1 flex items-center justify-between">
             <div className="flex items-center gap-2">
               {label} {help}
             </div>
@@ -77,6 +78,7 @@ const TextAreaField = ({ form, name, label, className, help, hasDefault }: TextA
               </button>
             )}
           </FormLabel>
+          {description && <p className="text-sm text-muted-foreground mb-3">{description}</p>}
           <FormControl>
             <div className="rounded-md border border-input bg-transparent px-3 py-1 text-base shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 md:text-sm">
               <AutosizeTextarea className="pt-1.5" minHeight={80} {...field} />
@@ -186,6 +188,7 @@ export default function PromptSettings({ tenant }: Props) {
               label="Grounding Prompt"
               help={<HelpGroundingPromptDialog />}
               hasDefault={true}
+              description="The content first sent to the LLM before any message. This is used to help tune the responses the LLM outputs."
             />
 
             <TextAreaField
@@ -195,6 +198,7 @@ export default function PromptSettings({ tenant }: Props) {
               help={<HelpSystemPromptDialog />}
               className="mt-8 mb-4"
               hasDefault={true}
+              description="The content sent to the LLM when the relevant chunks for the query are received. It wraps the chunks in this message."
             />
           </div>
         </form>
