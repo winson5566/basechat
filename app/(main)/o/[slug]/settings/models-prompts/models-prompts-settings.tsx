@@ -1,7 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Check, Copy, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useMemo, useState, useEffect } from "react";
@@ -23,7 +23,6 @@ import {
   modelArraySchema,
   getEnabledModels,
 } from "@/lib/llm/types";
-import { getModelsPromptsSettingsPath } from "@/lib/paths";
 import * as schema from "@/lib/server/db/schema";
 import { cn } from "@/lib/utils";
 
@@ -33,85 +32,13 @@ import { HelpSystemPromptDialog } from "../help-system-prompt-dialog";
 // Transform null to empty string for form field handling
 const nullToEmptyString = (v: string | null) => v ?? "";
 
-const isValidSlug = (slug: string) => {
-  if (!slug || slug.trim().length === 0) return false;
-  const sanitized = slug
-    .trim()
-    .toLowerCase()
-    .replace(/[^\w\s-]/g, "")
-    .replace(/[\s_-]+/g, "-")
-    .replace(/^-+|-+$/g, "");
-  return slug === sanitized;
-};
-
 const formSchema = z.object({
   groundingPrompt: z.string().nullable().default(DEFAULT_GROUNDING_PROMPT).transform(nullToEmptyString),
   systemPrompt: z.string().nullable().default(DEFAULT_SYSTEM_PROMPT).transform(nullToEmptyString),
-  slug: z.string().nullable().transform(nullToEmptyString).refine(isValidSlug, {
-    message: "URL can only contain lowercase letters, numbers, and hyphens",
-  }),
-  isPublic: z.boolean().default(false),
   enabledModels: modelArraySchema,
 });
 
 type FormValues = z.infer<typeof formSchema>;
-
-type URLFieldProps = {
-  name: keyof FormValues;
-  label: string;
-  form: UseFormReturn<FormValues>;
-};
-
-const URLField = ({ form, name, label }: URLFieldProps) => {
-  const [isCopied, setIsCopied] = useState(false);
-  const [origin, setOrigin] = useState("");
-
-  useEffect(() => {
-    setOrigin(window.location.origin);
-  }, []);
-
-  const handleCopyUrl = () => {
-    const url = `${origin}/o/${form.getValues(name) || "your-chat-name"}`;
-    navigator.clipboard.writeText(url);
-    setIsCopied(true);
-    setTimeout(() => setIsCopied(false), 2000);
-  };
-
-  return (
-    <FormField
-      control={form.control}
-      name={name}
-      render={({ field }) => (
-        <FormItem className="flex flex-col mt-8">
-          <FormLabel className="font-semibold text-[16px] mb-3">{label}</FormLabel>
-          <FormControl>
-            <Input
-              type="text"
-              placeholder="Enter URL"
-              className="rounded-[8px] border border-[#D7D7D7] h-[58px] placeholder-[#74747A] text-[16px]"
-              {...field}
-              value={String(field.value)}
-            />
-          </FormControl>
-          <div className="text-sm text-muted-foreground mt-1 flex items-center gap-2">
-            <span>
-              Your chat will be available at: {origin}/o/{field.value || "your-chat-name"}
-            </span>
-            <button
-              type="button"
-              onClick={handleCopyUrl}
-              className="p-1 hover:bg-gray-100 rounded-md transition-colors"
-              title="Copy URL"
-            >
-              {isCopied ? <Check className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4 text-black" />}
-            </button>
-          </div>
-          <FormMessage />
-        </FormItem>
-      )}
-    />
-  );
-};
 
 type TextAreaFieldProps = {
   name: keyof FormValues;
@@ -173,36 +100,6 @@ const TextAreaField = ({ form, name, label, className, help, hasDefault }: TextA
     />
   );
 };
-
-type SwitchFieldProps = {
-  name: keyof FormValues;
-  label: string;
-  form: UseFormReturn<FormValues>;
-};
-
-const SwitchField = ({ form, name, label }: SwitchFieldProps) => (
-  <FormField
-    control={form.control}
-    name={name}
-    render={({ field }) => (
-      <FormItem className="flex flex-row items-center justify-between mt-8">
-        <div className="space-y-0.5">
-          <FormLabel className="font-semibold text-[16px]">{label}</FormLabel>
-          <p className="text-sm text-muted-foreground">Anyone with the link can chat with your AI assistant</p>
-        </div>
-        <div className="flex-shrink-0 ml-4">
-          <FormControl>
-            <Switch
-              checked={Boolean(field.value)}
-              onCheckedChange={field.onChange}
-              className="data-[state=checked]:bg-[#D946EF]"
-            />
-          </FormControl>
-        </div>
-      </FormItem>
-    )}
-  />
-);
 
 type ModelsFieldProps = {
   form: UseFormReturn<FormValues>;
@@ -308,29 +205,6 @@ export default function ModelsPromptsSettings({ tenant }: Props) {
     setLoading(true);
 
     try {
-      // If the slug has changed, check if it's available
-      if (values.slug !== tenant.slug) {
-        const checkResponse = await fetch("/api/tenants/check-slug", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            slug: values.slug,
-            tenantId: tenant.id,
-          }),
-        });
-
-        if (!checkResponse.ok) {
-          throw new Error("Failed to check slug availability");
-        }
-
-        const { available } = await checkResponse.json();
-        if (!available) {
-          toast.error("This URL is already taken. Please choose a different one.");
-          setLoading(false);
-          return;
-        }
-      }
-
       const payload = updateTenantSchema.parse(values);
       const res = await fetch("/api/tenants/current", {
         method: "PATCH",
@@ -348,11 +222,6 @@ export default function ModelsPromptsSettings({ tenant }: Props) {
         groundingPrompt: values.groundingPrompt.length ? values.groundingPrompt : undefined,
         systemPrompt: values.systemPrompt.length ? values.systemPrompt : undefined,
       });
-
-      // If the slug was changed, redirect to the new URL
-      if (values.slug !== tenant.slug) {
-        router.push(getModelsPromptsSettingsPath(values.slug));
-      }
     } catch (error) {
       toast.error("Failed to save changes");
       console.error(error);
@@ -410,11 +279,6 @@ export default function ModelsPromptsSettings({ tenant }: Props) {
               hasDefault={true}
             />
 
-            <hr className="w-full my-8" />
-
-            <URLField form={form} name="slug" label="URL name" />
-            <hr className="w-full my-8" />
-            <SwitchField form={form} name="isPublic" label="Enable public chat" />
             <hr className="w-full my-8" />
             <ModelsField form={form} />
           </div>
