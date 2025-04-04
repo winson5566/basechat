@@ -7,7 +7,7 @@ import nodemailer from "nodemailer";
 import SMTPConnection from "nodemailer/lib/smtp-connection";
 
 import auth from "@/auth";
-import { Member, MemberType } from "@/lib/api";
+import { Member, MemberType, UpdateSearchSettingsRequest } from "@/lib/api";
 import { getEnabledModels } from "@/lib/llm/types";
 import * as settings from "@/lib/server/settings";
 
@@ -274,6 +274,7 @@ export async function getTenantsByUserId(userId: string) {
       name: schema.tenants.name,
       slug: schema.tenants.slug,
       logoUrl: schema.tenants.logoUrl,
+      searchSettingsId: schema.tenants.searchSettingsId,
     })
     .from(schema.tenants)
     .leftJoin(schema.profiles, and(eq(schema.tenants.id, schema.profiles.tenantId), ne(schema.profiles.role, "guest")))
@@ -559,4 +560,20 @@ export async function deleteTenantLogo(tenantId: string) {
 
 export function linkUsers(fromUserId: string, toUserId: string) {
   return db.update(schema.profiles).set({ userId: toUserId }).where(eq(schema.profiles.userId, fromUserId));
+}
+
+export async function getSearchSettingsById(id: string) {
+  const rs = await db.select().from(schema.searchSettings).where(eq(schema.searchSettings.id, id));
+  assert(rs.length === 1);
+  return rs[0];
+}
+
+export async function updateSearchSettingsById(id: string, params: UpdateSearchSettingsRequest) {
+  await db
+    .update(schema.searchSettings)
+    .set({
+      ...params,
+      updatedAt: new Date(),
+    })
+    .where(eq(schema.searchSettings.id, id));
 }

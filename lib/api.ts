@@ -101,3 +101,27 @@ export const setupSchema = z.object({
     id: z.string(),
   }),
 });
+
+export const searchSettingsSchema = z.object({
+  id: z.string(),
+  isBreadth: z.boolean(),
+  rerankEnabled: z.boolean(),
+  prioritizeRecent: z.boolean(),
+  overrideBreadth: z.boolean(),
+  overrideRerank: z.boolean(),
+  overridePrioritizeRecent: z.boolean(),
+  createdAt: z.coerce.date(),
+  updatedAt: z.coerce.date(),
+});
+
+export const updateSearchSettingsSchema = z.object({
+  isBreadth: z.boolean().optional(),
+  rerankEnabled: z.boolean().optional(),
+  prioritizeRecent: z.boolean().optional(),
+  overrideBreadth: z.boolean().optional(),
+  overrideRerank: z.boolean().optional(),
+  overridePrioritizeRecent: z.boolean().optional(),
+});
+
+export type SearchSettings = z.infer<typeof searchSettingsSchema>;
+export type UpdateSearchSettingsRequest = z.infer<typeof updateSearchSettingsSchema>;
