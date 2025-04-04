@@ -62,7 +62,7 @@ const ModelsField = ({ form, className }: ModelsFieldProps) => {
       render={({ field }) => (
         <FormItem className={cn("flex flex-col", className)}>
           <div className="mb-5">
-            <FormLabel className="font-semibold text-[16px]">Models</FormLabel>
+            <FormLabel className="font-semibold text-base">Models</FormLabel>
             <p className="text-sm text-muted-foreground">Choose which models can be used by this chatbot</p>
           </div>
           <div className="space-y-5 pl-8">

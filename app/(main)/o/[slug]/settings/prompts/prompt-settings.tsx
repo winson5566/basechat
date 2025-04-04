@@ -64,7 +64,7 @@ const TextAreaField = ({ form, name, label, className, help, hasDefault, descrip
       name={name}
       render={({ field }) => (
         <FormItem className={cn("flex flex-col", className)}>
-          <FormLabel className="font-semibold text-[16px] mb-1 flex items-center justify-between">
+          <FormLabel className="font-semibold text-base mb-1 flex items-center justify-between">
             <div className="flex items-center gap-2">
               {label} {help}
             </div>
@@ -144,7 +144,6 @@ export default function PromptSettings({ tenant }: Props) {
       });
     } catch (error) {
       toast.error("Failed to save changes");
-      console.error(error);
     } finally {
       setLoading(false);
     }

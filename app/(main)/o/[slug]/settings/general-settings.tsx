@@ -62,12 +62,12 @@ const QuestionField = ({ form, name, label }: QuestionFieldProps) => (
     name={name}
     render={({ field }) => (
       <FormItem className="flex flex-col mt-8">
-        <FormLabel className="font-semibold text-[16px] mb-3">{label}</FormLabel>
+        <FormLabel className="font-semibold text-base mb-3">{label}</FormLabel>
         <FormControl>
           <Input
             type="text"
             placeholder="Type something"
-            className="rounded-[8px] border border-[#D7D7D7] h-[58px] placeholder-[#74747A] text-[16px]"
+            className="rounded-[8px] border border-[#D7D7D7] h-[58px] placeholder-[#74747A] text-base"
             {...field}
             value={String(field.value)}
           />
@@ -111,7 +111,7 @@ const TextAreaField = ({ form, name, label, className, help, hasDefault }: TextA
       name={name}
       render={({ field }) => (
         <FormItem className={cn("flex flex-col", className)}>
-          <FormLabel className="font-semibold text-[16px] mb-3 flex items-center justify-between">
+          <FormLabel className="font-semibold text-base mb-3 flex items-center justify-between">
             <div className="flex items-center gap-2">
               {label} {help}
             </div>
@@ -150,11 +150,11 @@ const CompanyNameField = ({ form, name, label }: CompanyNameFieldProps) => {
       name={name}
       render={({ field }) => (
         <FormItem className="flex flex-col">
-          <FormLabel className="font-semibold text-[16px] mb-3">{label}</FormLabel>
+          <FormLabel className="font-semibold text-base mb-3">{label}</FormLabel>
           <FormControl>
             <Input
               type="text"
-              className="rounded-[8px] border border-[#D7D7D7] h-[58px] placeholder-[#74747A] text-[16px]"
+              className="rounded-[8px] border border-[#D7D7D7] h-[58px] placeholder-[#74747A] text-base"
               {...field}
               value={String(field.value)}
             />
@@ -181,7 +181,7 @@ const URLField = ({ form, name, label }: URLFieldProps) => {
   }, []);
 
   const handleCopyUrl = () => {
-    const url = `${origin}/o/${form.getValues(name) || "your-chat-name"}`;
+    const url = `${origin}/o/${form.getValues(name)}`;
     navigator.clipboard.writeText(url);
     setIsCopied(true);
     setTimeout(() => setIsCopied(false), 2000);
@@ -193,12 +193,12 @@ const URLField = ({ form, name, label }: URLFieldProps) => {
       name={name}
       render={({ field }) => (
         <FormItem className="flex flex-col mt-8">
-          <FormLabel className="font-semibold text-[16px] mb-3">{label}</FormLabel>
+          <FormLabel className="font-semibold text-base mb-3">{label}</FormLabel>
           <FormControl>
             <Input
               type="text"
               placeholder="Enter URL"
-              className="rounded-[8px] border border-[#D7D7D7] h-[58px] placeholder-[#74747A] text-[16px]"
+              className="rounded-[8px] border border-[#D7D7D7] h-[58px] placeholder-[#74747A] text-base"
               {...field}
               value={String(field.value)}
             />
@@ -223,20 +223,20 @@ const URLField = ({ form, name, label }: URLFieldProps) => {
   );
 };
 
-type SwitchFieldProps = {
+type PublicSwitchFieldProps = {
   name: keyof FormValues;
   label: string;
   form: UseFormReturn<FormValues>;
 };
 
-const SwitchField = ({ form, name, label }: SwitchFieldProps) => (
+const PublicSwitchField = ({ form, name, label }: PublicSwitchFieldProps) => (
   <FormField
     control={form.control}
     name={name}
     render={({ field }) => (
       <FormItem className="flex flex-row items-center justify-between mt-8">
         <div className="space-y-0.5">
-          <FormLabel className="font-semibold text-[16px]">{label}</FormLabel>
+          <FormLabel className="font-semibold text-base">{label}</FormLabel>
           <p className="text-sm text-muted-foreground">Anyone with the link can chat with your AI assistant</p>
         </div>
         <div className="flex-shrink-0 ml-4">
@@ -333,7 +333,6 @@ export default function GeneralSettings({ tenant, canUploadLogo }: Props) {
       }
     } catch (error) {
       toast.error("Failed to save changes");
-      console.error(error);
     } finally {
       setLoading(false);
     }
@@ -374,7 +373,7 @@ export default function GeneralSettings({ tenant, canUploadLogo }: Props) {
       {canUploadLogo && (
         <div>
           <div className="mb-2">
-            <Label className="font-semibold text-[16px]">Avatar</Label>
+            <Label className="font-semibold text-base">Avatar</Label>
           </div>
           <LogoChanger tenant={tenant} />
           <hr className="w-full my-8" />
@@ -396,7 +395,7 @@ export default function GeneralSettings({ tenant, canUploadLogo }: Props) {
 
             <hr className="w-full my-8" />
 
-            <h3 className="font-semibold text-[16px]">Example questions to help your users get started</h3>
+            <h3 className="font-semibold text-base">Example questions to help your users get started</h3>
 
             <QuestionField form={form} name="question1" label="Question 1" />
             <QuestionField form={form} name="question2" label="Question 2" />
@@ -406,7 +405,7 @@ export default function GeneralSettings({ tenant, canUploadLogo }: Props) {
 
             <URLField form={form} name="slug" label="URL name" />
             <hr className="w-full my-8" />
-            <SwitchField form={form} name="isPublic" label="Enable public chat" />
+            <PublicSwitchField form={form} name="isPublic" label="Enable public chat" />
             <hr className="w-full my-8" />
           </div>
         </form>
