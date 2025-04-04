@@ -74,6 +74,7 @@ export const tenants = pgTable("tenants", {
   logoObjectName: text("logo_object_name"), // The name of the object in the bucket
   logoUrl: text("logo_url"), // The publicly accessible URL of the object
   enabledModels: text("enabled_models").array().default(ALL_VALID_MODELS).$type<z.infer<typeof modelArraySchema>>(),
+  searchSettingsId: uuid("search_settings_id").references(() => searchSettings.id, { onDelete: "cascade" }),
 });
 
 export const rolesEnum = pgEnum("roles", ["admin", "user", "guest"]);
@@ -130,6 +131,16 @@ export const messages = pgTable(
     tenantConversationIdx: index("messages_tenant_conversation_idx").on(t.tenantId, t.conversationId),
   }),
 );
+
+export const searchSettings = pgTable("search_settings", {
+  ...baseFields,
+  isBreadth: boolean("is_breadth").notNull().default(false),
+  rerankEnabled: boolean("rerank_enabled").notNull().default(false),
+  prioritizeRecent: boolean("prioritize_recent").notNull().default(false),
+  overrideBreadth: boolean("override_breadth").notNull().default(true),
+  overrideRerank: boolean("override_rerank").notNull().default(true),
+  overridePrioritizeRecent: boolean("override_prioritize_recent").notNull().default(true),
+});
 
 /** Based on Auth.js example schema: https://authjs.dev/getting-started/adapters/drizzle */
 
