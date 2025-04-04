@@ -6,7 +6,7 @@ import { modelArraySchema } from "@/lib/llm/types";
 import db from "@/lib/server/db";
 import * as schema from "@/lib/server/db/schema";
 import { getSearchSettingsById, updateSearchSettingsById } from "@/lib/server/service";
-import { requireAdminContextFromRequest } from "@/lib/server/utils";
+import { requireAdminContextFromRequest, requireAuthContextFromRequest } from "@/lib/server/utils";
 
 export async function PATCH(request: NextRequest) {
   const { tenant } = await requireAdminContextFromRequest(request);
@@ -55,7 +55,7 @@ export async function PUT(request: NextRequest) {
 }
 
 export async function GET(request: NextRequest) {
-  const { tenant } = await requireAdminContextFromRequest(request);
+  const { tenant } = await requireAuthContextFromRequest(request);
 
   if (!tenant.searchSettingsId) {
     return Response.json({ error: "Search settings not found" }, { status: 404 });
