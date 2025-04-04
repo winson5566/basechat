@@ -10,6 +10,8 @@ import {
   conversationMessagesResponseSchema,
   CreateConversationMessageRequest,
   createConversationMessageResponseSchema,
+  SearchSettings,
+  searchSettingsSchema,
 } from "@/lib/api";
 import { getProviderForModel, LLMModel, modelSchema } from "@/lib/llm/types";
 
@@ -34,6 +36,7 @@ interface Props {
     slug: string;
     id: string;
     enabledModels: LLMModel[];
+    searchSettingsId?: string | null;
   };
   initMessage?: string;
   onSelectedDocumentId: (id: string) => void;
@@ -61,21 +64,84 @@ export default function Chatbot({ tenant, conversationId, initMessage, onSelecte
   const [isBreadth, setIsBreadth] = useState(false);
   const [rerankEnabled, setRerankEnabled] = useState(false);
   const [prioritizeRecent, setPrioritizeRecent] = useState(false);
+  const [tenantSearchSettings, setTenantSearchSettings] = useState<SearchSettings | null>(null);
+  const [isLoadingSettings, setIsLoadingSettings] = useState(true);
 
-  // Load settings from localStorage after initial render
+  // Fetch tenant search settings
   useEffect(() => {
+    const fetchTenantSearchSettings = async () => {
+      try {
+        // Only fetch if the tenant has a searchSettingsId
+        if (!tenant.searchSettingsId) {
+          setIsLoadingSettings(false);
+          return;
+        }
+
+        const res = await fetch(`/api/tenants/current`, {
+          headers: { tenant: tenant.slug },
+        });
+
+        if (res.ok) {
+          const data = await res.json();
+          const settings = searchSettingsSchema.parse(data);
+          setTenantSearchSettings(settings);
+
+          // Apply tenant defaults for non-overridable settings immediately
+          if (!settings.overrideBreadth) {
+            setIsBreadth(settings.isBreadth);
+          }
+          if (!settings.overrideRerank) {
+            setRerankEnabled(settings.rerankEnabled);
+          }
+          if (!settings.overridePrioritizeRecent) {
+            setPrioritizeRecent(settings.prioritizeRecent);
+          }
+        } else if (res.status === 404) {
+          // Tenant doesn't have search settings yet, proceed without them
+          console.log("No search settings found for tenant");
+        }
+      } catch (error) {
+        console.error("Failed to fetch tenant search settings:", error);
+      } finally {
+        setIsLoadingSettings(false);
+      }
+    };
+
+    fetchTenantSearchSettings();
+  }, [tenant.slug, tenant.searchSettingsId]);
+
+  // Load user settings from localStorage after initial render and tenant settings are loaded
+  useEffect(() => {
+    if (isLoadingSettings) return;
+
     const saved = localStorage.getItem("chatSettings");
     if (saved) {
-      const settings = JSON.parse(saved);
-      setSelectedModel(settings.selectedModel ?? initialModel);
-      setIsBreadth(settings.isBreadth ?? false);
-      setRerankEnabled(settings.rerankEnabled ?? false);
-      setPrioritizeRecent(settings.prioritizeRecent ?? false);
-    }
-  }, [initialModel]);
+      try {
+        const settings = JSON.parse(saved);
 
-  // Save settings to localStorage whenever they change
+        // Apply user settings only if overrides are allowed
+        if (!tenantSearchSettings || tenantSearchSettings.overrideBreadth) {
+          setIsBreadth(settings.isBreadth ?? false);
+        }
+        if (!tenantSearchSettings || tenantSearchSettings.overrideRerank) {
+          setRerankEnabled(settings.rerankEnabled ?? false);
+        }
+        if (!tenantSearchSettings || tenantSearchSettings.overridePrioritizeRecent) {
+          setPrioritizeRecent(settings.prioritizeRecent ?? false);
+        }
+
+        setSelectedModel(settings.selectedModel ?? initialModel);
+      } catch (error) {
+        console.error("Error parsing saved chat settings:", error);
+      }
+    }
+  }, [isLoadingSettings, initialModel, tenantSearchSettings, tenant.searchSettingsId]);
+
+  // Save user settings to localStorage whenever they change
   useEffect(() => {
+    // Only save if tenant settings are loaded and we're not in the initial loading phase
+    if (isLoadingSettings) return;
+
     localStorage.setItem(
       "chatSettings",
       JSON.stringify({
@@ -85,7 +151,7 @@ export default function Chatbot({ tenant, conversationId, initMessage, onSelecte
         selectedModel,
       }),
     );
-  }, [isBreadth, rerankEnabled, prioritizeRecent, selectedModel]);
+  }, [isBreadth, rerankEnabled, prioritizeRecent, selectedModel, isLoadingSettings]);
 
   const { isLoading, object, submit } = useObject({
     api: `/api/conversations/${conversationId}/messages`,
@@ -250,6 +316,7 @@ export default function Chatbot({ tenant, conversationId, initMessage, onSelecte
             prioritizeRecent={prioritizeRecent}
             onPrioritizeRecentChange={setPrioritizeRecent}
             enabledModels={tenant.enabledModels}
+            tenantSearchSettings={tenantSearchSettings || undefined}
           />
         </div>
       </div>

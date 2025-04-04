@@ -7,6 +7,7 @@ import { z } from "zod";
 
 import ChatInput from "@/components/chatbot/chat-input";
 import Logo from "@/components/tenant/logo/logo";
+import { SearchSettings, searchSettingsSchema } from "@/lib/api";
 import { DEFAULT_WELCOME_MESSAGE } from "@/lib/constants";
 import { DEFAULT_MODEL, LLMModel, modelSchema, getEnabledModels } from "@/lib/llm/types";
 import { getConversationPath } from "@/lib/paths";
@@ -26,6 +27,9 @@ interface Props {
 export default function Welcome({ tenant, className }: Props) {
   const router = useRouter();
   const { setInitialMessage, setInitialModel } = useGlobalState();
+  const [tenantSearchSettings, setTenantSearchSettings] = useState<SearchSettings | null>(null);
+  const [isLoadingSettings, setIsLoadingSettings] = useState(true);
+
   const [selectedModel, setSelectedModel] = useState<LLMModel>(() => {
     if (typeof window !== "undefined") {
       const saved = localStorage.getItem("chatSettings");
@@ -45,39 +49,94 @@ export default function Welcome({ tenant, className }: Props) {
     const parsed = modelSchema.safeParse(firstModel);
     return parsed.success ? firstModel : DEFAULT_MODEL;
   });
-  const [isBreadth, setIsBreadth] = useState(() => {
+
+  const [isBreadth, setIsBreadth] = useState(false);
+  const [rerankEnabled, setRerankEnabled] = useState(false);
+  const [prioritizeRecent, setPrioritizeRecent] = useState(false);
+
+  // Fetch tenant search settings
+  useEffect(() => {
+    const fetchTenantSearchSettings = async () => {
+      try {
+        // Only fetch if the tenant has a searchSettingsId
+        if (!tenant.searchSettingsId) {
+          setIsLoadingSettings(false);
+          return;
+        }
+
+        const res = await fetch(`/api/tenants/current`, {
+          headers: { tenant: tenant.slug },
+        });
+
+        if (res.ok) {
+          const data = await res.json();
+          const settings = searchSettingsSchema.parse(data);
+          setTenantSearchSettings(settings);
+
+          // Apply tenant defaults for non-overridable settings immediately
+          if (!settings.overrideBreadth) {
+            setIsBreadth(settings.isBreadth);
+          }
+          if (!settings.overrideRerank) {
+            setRerankEnabled(settings.rerankEnabled);
+          }
+          if (!settings.overridePrioritizeRecent) {
+            setPrioritizeRecent(settings.prioritizeRecent);
+          }
+        } else if (res.status === 404) {
+          // Tenant doesn't have search settings yet, proceed without them
+          console.log("No search settings found for tenant");
+        }
+      } catch (error) {
+        console.error("Failed to fetch tenant search settings:", error);
+      } finally {
+        setIsLoadingSettings(false);
+      }
+    };
+
+    fetchTenantSearchSettings();
+  }, [tenant.slug, tenant.searchSettingsId]);
+
+  // Load user settings from localStorage after initial render and tenant settings are loaded
+  useEffect(() => {
+    if (isLoadingSettings) return;
+
     if (typeof window !== "undefined") {
       const saved = localStorage.getItem("chatSettings");
       if (saved) {
-        const settings = JSON.parse(saved);
-        return settings.isBreadth ?? false;
+        try {
+          const settings = JSON.parse(saved);
+
+          // Apply user settings only if overrides are allowed
+          if (!tenantSearchSettings || tenantSearchSettings.overrideBreadth) {
+            setIsBreadth(settings.isBreadth ?? false);
+          }
+          if (!tenantSearchSettings || tenantSearchSettings.overrideRerank) {
+            setRerankEnabled(settings.rerankEnabled ?? false);
+          }
+          if (!tenantSearchSettings || tenantSearchSettings.overridePrioritizeRecent) {
+            setPrioritizeRecent(settings.prioritizeRecent ?? false);
+          }
+
+          // Model selection is always allowed
+          const savedModel = settings.selectedModel;
+          const parsed = modelSchema.safeParse(savedModel);
+          const enabledModels = getEnabledModels(tenant.enabledModels);
+          if (parsed.success && enabledModels.includes(savedModel)) {
+            setSelectedModel(savedModel);
+          }
+        } catch (error) {
+          console.error("Error parsing saved chat settings:", error);
+        }
       }
     }
-    return false;
-  });
-  const [rerankEnabled, setRerankEnabled] = useState(() => {
-    if (typeof window !== "undefined") {
-      const saved = localStorage.getItem("chatSettings");
-      if (saved) {
-        const settings = JSON.parse(saved);
-        return settings.rerankEnabled ?? false;
-      }
-    }
-    return false;
-  });
-  const [prioritizeRecent, setPrioritizeRecent] = useState(() => {
-    if (typeof window !== "undefined") {
-      const saved = localStorage.getItem("chatSettings");
-      if (saved) {
-        const settings = JSON.parse(saved);
-        return settings.prioritizeRecent ?? false;
-      }
-    }
-    return false;
-  });
+  }, [isLoadingSettings, tenant.enabledModels, tenantSearchSettings, tenant.searchSettingsId]);
 
   // Save settings to localStorage whenever they change
   useEffect(() => {
+    // Only save if tenant settings are loaded and we're not in the initial loading phase
+    if (isLoadingSettings) return;
+
     localStorage.setItem(
       "chatSettings",
       JSON.stringify({
@@ -87,7 +146,7 @@ export default function Welcome({ tenant, className }: Props) {
         selectedModel,
       }),
     );
-  }, [isBreadth, rerankEnabled, prioritizeRecent, selectedModel]);
+  }, [isBreadth, rerankEnabled, prioritizeRecent, selectedModel, isLoadingSettings]);
 
   const handleSubmit = async (content: string, model: LLMModel = DEFAULT_MODEL) => {
     const res = await fetch("/api/conversations", {
@@ -149,6 +208,7 @@ export default function Welcome({ tenant, className }: Props) {
           prioritizeRecent={prioritizeRecent}
           onPrioritizeRecentChange={setPrioritizeRecent}
           enabledModels={getEnabledModels(tenant.enabledModels)}
+          tenantSearchSettings={tenantSearchSettings || undefined}
         />
       </div>
     </div>

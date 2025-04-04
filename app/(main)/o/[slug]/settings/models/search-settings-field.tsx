@@ -39,8 +39,11 @@ export function SearchSettingsField({ form, className }: SearchSettingsFieldProp
             <FormItem className="space-y-3">
               <FormControl>
                 <RadioGroup
-                  onValueChange={(value) => field.onChange(value === "breadth")}
-                  defaultValue={field.value ? "breadth" : "depth"}
+                  onValueChange={(value) => {
+                    const newValue = value === "breadth";
+                    field.onChange(newValue);
+                  }}
+                  value={field.value ? "breadth" : "depth"}
                   className="flex flex-col space-y-1"
                 >
                   <div className="flex flex-col space-y-1">

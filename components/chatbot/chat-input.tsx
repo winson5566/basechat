@@ -1,9 +1,10 @@
-import { ChevronRight, ChevronDown } from "lucide-react";
+import { ChevronRight, ChevronDown, LockIcon } from "lucide-react";
 import Image from "next/image";
 import { KeyboardEvent, useRef, useState, useEffect } from "react";
 
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Switch } from "@/components/ui/switch";
+import { SearchSettings } from "@/lib/api";
 import { LLMModel, modelSchema, LLM_LOGO_MAP, LLM_DISPLAY_NAMES, ALL_VALID_MODELS } from "@/lib/llm/types";
 import { cn } from "@/lib/utils";
 
@@ -22,6 +23,7 @@ interface ChatInputProps {
   prioritizeRecent?: boolean;
   onPrioritizeRecentChange?: (enabled: boolean) => void;
   enabledModels: LLMModel[];
+  tenantSearchSettings?: SearchSettings;
 }
 
 const useIsDesktop = () => {
@@ -83,6 +85,43 @@ export default function ChatInput(props: ChatInputProps) {
   const [prioritizeRecent, setPrioritizeRecent] = useState(props.prioritizeRecent ?? false);
   const ref = useRef<AutosizeTextAreaRef>(null);
 
+  // Determine which settings can be overridden based on tenant settings
+  const canOverrideBreadth = props.tenantSearchSettings?.overrideBreadth ?? true;
+  const canOverrideRerank = props.tenantSearchSettings?.overrideRerank ?? true;
+  const canOverridePrioritizeRecent = props.tenantSearchSettings?.overridePrioritizeRecent ?? true;
+
+  // Get default values from tenant settings if they exist
+  const defaultIsBreadth = props.tenantSearchSettings?.isBreadth ?? false;
+  const defaultRerankEnabled = props.tenantSearchSettings?.rerankEnabled ?? false;
+  const defaultPrioritizeRecent = props.tenantSearchSettings?.prioritizeRecent ?? false;
+
+  // Update local state if tenant settings change
+  useEffect(() => {
+    if (!canOverrideBreadth) {
+      setIsBreadth(defaultIsBreadth);
+      props.onBreadthChange(defaultIsBreadth);
+    }
+    if (!canOverrideRerank) {
+      setRerankEnabled(defaultRerankEnabled);
+      props.onRerankChange?.(defaultRerankEnabled);
+    }
+    if (!canOverridePrioritizeRecent) {
+      setPrioritizeRecent(defaultPrioritizeRecent);
+      props.onPrioritizeRecentChange?.(defaultPrioritizeRecent);
+    }
+  }, [
+    props.tenantSearchSettings,
+    canOverrideBreadth,
+    canOverrideRerank,
+    canOverridePrioritizeRecent,
+    defaultIsBreadth,
+    defaultRerankEnabled,
+    defaultPrioritizeRecent,
+    props.onBreadthChange,
+    props.onRerankChange,
+    props.onPrioritizeRecentChange,
+  ]);
+
   const handleSubmit = (value: string) => {
     setValue("");
 
@@ -132,72 +171,111 @@ export default function ChatInput(props: ChatInputProps) {
           <div className="flex flex-col gap-4">
             <span className="text-sm text-muted-foreground">Chat settings</span>
             <div className="flex flex-col gap-2">
-              <RadioGroup
-                value={isBreadth ? "breadth" : "depth"}
-                onValueChange={(value) => {
-                  const newIsBreadth = value === "breadth";
-                  setIsBreadth(newIsBreadth);
-                  props.onBreadthChange(newIsBreadth);
-                }}
-              >
-                <div className="flex flex-col space-y-1">
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem
-                      value="breadth"
-                      id="breadth"
-                      className="text-[#D946EF] border-[#D7D7D7] data-[state=checked]:bg-[#D946EF]"
-                    />
-                    <label htmlFor="breadth" className="text-sm">
-                      Breadth
-                    </label>
+              {(canOverrideBreadth || !props.tenantSearchSettings) && (
+                <RadioGroup
+                  value={isBreadth ? "breadth" : "depth"}
+                  onValueChange={(value) => {
+                    const newIsBreadth = value === "breadth";
+                    setIsBreadth(newIsBreadth);
+                    props.onBreadthChange(newIsBreadth);
+                  }}
+                >
+                  <div className="flex flex-col space-y-1">
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem
+                        value="breadth"
+                        id="breadth"
+                        className="text-[#D946EF] border-[#D7D7D7] data-[state=checked]:bg-[#D946EF]"
+                      />
+                      <label htmlFor="breadth" className="text-sm">
+                        Breadth
+                      </label>
+                    </div>
+                    <span className="text-xs text-muted-foreground ml-6">
+                      Searches a wider range of documents for a broader response (slower)
+                    </span>
                   </div>
-                  <span className="text-xs text-muted-foreground ml-6">
-                    Searches a wider range of documents for a broader response (slower)
-                  </span>
-                </div>
-                <div className="flex flex-col space-y-1">
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem
-                      value="depth"
-                      id="depth"
-                      className="text-[#D946EF] border-[#D7D7D7] data-[state=checked]:bg-[#D946EF]"
-                    />
-                    <label htmlFor="depth" className="text-sm">
-                      Depth
-                    </label>
+                  <div className="flex flex-col space-y-1">
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem
+                        value="depth"
+                        id="depth"
+                        className="text-[#D946EF] border-[#D7D7D7] data-[state=checked]:bg-[#D946EF]"
+                      />
+                      <label htmlFor="depth" className="text-sm">
+                        Depth
+                      </label>
+                    </div>
+                    <span className="text-xs text-muted-foreground ml-6">
+                      Retrieves results from a smaller range of documents for more depth (faster)
+                    </span>
                   </div>
-                  <span className="text-xs text-muted-foreground ml-6">
-                    Retrieves results from a smaller range of documents for more depth (faster)
-                  </span>
+                </RadioGroup>
+              )}
+              {!canOverrideBreadth && props.tenantSearchSettings && (
+                <div className="flex items-center justify-between py-2">
+                  <div className="flex flex-col">
+                    <span className="text-sm font-medium">Search mode</span>
+                    <span className="text-xs text-muted-foreground">
+                      {defaultIsBreadth ? "Breadth (set by admin)" : "Depth (set by admin)"}
+                    </span>
+                  </div>
+                  <LockIcon className="h-4 w-4 text-muted-foreground" />
                 </div>
-              </RadioGroup>
+              )}
             </div>
             <div className="flex flex-col gap-2">
-              <div className="flex items-center justify-between">
-                <div className="flex flex-col">
-                  <span className="text-sm font-medium">Rerank</span>
+              {canOverrideRerank || !props.tenantSearchSettings ? (
+                <div className="flex items-center justify-between">
+                  <div className="flex flex-col">
+                    <span className="text-sm font-medium">Rerank</span>
+                  </div>
+                  <Switch
+                    checked={rerankEnabled}
+                    onCheckedChange={(checked: boolean) => {
+                      setRerankEnabled(checked);
+                      props.onRerankChange?.(checked);
+                    }}
+                    className="data-[state=checked]:bg-[#D946EF]"
+                  />
                 </div>
-                <Switch
-                  checked={rerankEnabled}
-                  onCheckedChange={(checked: boolean) => {
-                    setRerankEnabled(checked);
-                    props.onRerankChange?.(checked);
-                  }}
-                  className="data-[state=checked]:bg-[#D946EF]"
-                />
-              </div>
+              ) : (
+                <div className="flex items-center justify-between py-2">
+                  <div className="flex flex-col">
+                    <span className="text-sm font-medium">Rerank</span>
+                    <span className="text-xs text-muted-foreground">
+                      {defaultRerankEnabled ? "Enabled (set by admin)" : "Disabled (set by admin)"}
+                    </span>
+                  </div>
+                  <LockIcon className="h-4 w-4 text-muted-foreground" />
+                </div>
+              )}
               <div className="flex items-center justify-between mt-4">
-                <div className="flex flex-col">
-                  <span className="text-sm font-medium">Prioritize recent data</span>
-                </div>
-                <Switch
-                  checked={prioritizeRecent}
-                  onCheckedChange={(checked: boolean) => {
-                    setPrioritizeRecent(checked);
-                    props.onPrioritizeRecentChange?.(checked);
-                  }}
-                  className="data-[state=checked]:bg-[#D946EF]"
-                />
+                {canOverridePrioritizeRecent || !props.tenantSearchSettings ? (
+                  <>
+                    <div className="flex flex-col">
+                      <span className="text-sm font-medium">Prioritize recent data</span>
+                    </div>
+                    <Switch
+                      checked={prioritizeRecent}
+                      onCheckedChange={(checked: boolean) => {
+                        setPrioritizeRecent(checked);
+                        props.onPrioritizeRecentChange?.(checked);
+                      }}
+                      className="data-[state=checked]:bg-[#D946EF]"
+                    />
+                  </>
+                ) : (
+                  <div className="flex items-center justify-between py-2 w-full">
+                    <div className="flex flex-col">
+                      <span className="text-sm font-medium">Prioritize recent data</span>
+                      <span className="text-xs text-muted-foreground">
+                        {defaultPrioritizeRecent ? "Enabled (set by admin)" : "Disabled (set by admin)"}
+                      </span>
+                    </div>
+                    <LockIcon className="h-4 w-4 text-muted-foreground" />
+                  </div>
+                )}
               </div>
             </div>
             {props.enabledModels.length > 1 && (
