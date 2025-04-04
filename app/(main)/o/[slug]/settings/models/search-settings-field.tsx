@@ -28,8 +28,7 @@ export function SearchSettingsField({ form, className }: SearchSettingsFieldProp
     <Form {...form}>
       <div className={cn("flex flex-col gap-6", className)}>
         <div>
-          <FormLabel className="font-semibold text-base">Search Settings</FormLabel>
-          <p className="text-sm text-muted-foreground">Configure default search settings for all users</p>
+          <FormLabel className="font-semibold text-base">Additional Options</FormLabel>
         </div>
 
         {/* Breadth/Depth Setting */}
@@ -38,7 +37,6 @@ export function SearchSettingsField({ form, className }: SearchSettingsFieldProp
           name="isBreadth"
           render={({ field }) => (
             <FormItem className="space-y-3">
-              <FormLabel>Search Mode</FormLabel>
               <FormControl>
                 <RadioGroup
                   onValueChange={(value) => field.onChange(value === "breadth")}
@@ -53,7 +51,7 @@ export function SearchSettingsField({ form, className }: SearchSettingsFieldProp
                         className="text-[#D946EF] border-[#D7D7D7] data-[state=checked]:bg-[#D946EF]"
                       />
                       <label htmlFor="breadth" className="text-sm">
-                        Breadth
+                        Breadth Mode
                       </label>
                     </div>
                     <span className="text-xs text-muted-foreground ml-6">
@@ -68,7 +66,7 @@ export function SearchSettingsField({ form, className }: SearchSettingsFieldProp
                         className="text-[#D946EF] border-[#D7D7D7] data-[state=checked]:bg-[#D946EF]"
                       />
                       <label htmlFor="depth" className="text-sm">
-                        Depth
+                        Depth Mode
                       </label>
                     </div>
                     <span className="text-xs text-muted-foreground ml-6">
@@ -91,32 +89,33 @@ export function SearchSettingsField({ form, className }: SearchSettingsFieldProp
                 <Checkbox checked={field.value} onCheckedChange={field.onChange} />
               </FormControl>
               <div className="space-y-1 leading-none">
-                <FormLabel>Allow users to change search mode</FormLabel>
-                <p className="text-sm text-muted-foreground">Users can override the default search mode setting</p>
+                <FormLabel>Allow users to change default setting</FormLabel>
               </div>
             </FormItem>
           )}
         />
 
-        <div className="h-[1px] w-full bg-[#D7D7D7] my-4" />
+        <hr className="w-full my-1" />
 
         {/* Rerank Setting */}
         <FormField
           control={form.control}
           name="rerankEnabled"
           render={({ field }) => (
-            <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+            <FormItem className="flex flex-row items-center justify-between">
               <div className="space-y-0.5">
-                <FormLabel className="text-base">Rerank</FormLabel>
+                <FormLabel className="font-semibold text-base">Rerank</FormLabel>
                 <p className="text-sm text-muted-foreground">Reorder search results for better relevance</p>
               </div>
-              <FormControl>
-                <Switch
-                  checked={field.value}
-                  onCheckedChange={field.onChange}
-                  className="data-[state=checked]:bg-[#D946EF]"
-                />
-              </FormControl>
+              <div className="flex-shrink-0 ml-4">
+                <FormControl>
+                  <Switch
+                    checked={field.value}
+                    onCheckedChange={field.onChange}
+                    className="data-[state=checked]:bg-[#D946EF]"
+                  />
+                </FormControl>
+              </div>
             </FormItem>
           )}
         />
@@ -130,34 +129,35 @@ export function SearchSettingsField({ form, className }: SearchSettingsFieldProp
                 <Checkbox checked={field.value} onCheckedChange={field.onChange} />
               </FormControl>
               <div className="space-y-1 leading-none">
-                <FormLabel>Allow users to change rerank setting</FormLabel>
-                <p className="text-sm text-muted-foreground">Users can override the default rerank setting</p>
+                <FormLabel>Allow users to change default setting</FormLabel>
               </div>
             </FormItem>
           )}
         />
 
-        <div className="h-[1px] w-full bg-[#D7D7D7] my-4" />
+        <hr className="w-full my-1" />
 
         {/* Prioritize Recent Setting */}
         <FormField
           control={form.control}
           name="prioritizeRecent"
           render={({ field }) => (
-            <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+            <FormItem className="flex flex-row items-center justify-between">
               <div className="space-y-0.5">
-                <FormLabel className="text-base">Prioritize recent data</FormLabel>
+                <FormLabel className="font-semibold text-base">Prioritize recent data</FormLabel>
                 <p className="text-sm text-muted-foreground">
                   Give preference to more recent documents in search results
                 </p>
               </div>
-              <FormControl>
-                <Switch
-                  checked={field.value}
-                  onCheckedChange={field.onChange}
-                  className="data-[state=checked]:bg-[#D946EF]"
-                />
-              </FormControl>
+              <div className="flex-shrink-0 ml-4">
+                <FormControl>
+                  <Switch
+                    checked={field.value}
+                    onCheckedChange={field.onChange}
+                    className="data-[state=checked]:bg-[#D946EF]"
+                  />
+                </FormControl>
+              </div>
             </FormItem>
           )}
         />
@@ -166,13 +166,12 @@ export function SearchSettingsField({ form, className }: SearchSettingsFieldProp
           control={form.control}
           name="overridePrioritizeRecent"
           render={({ field }) => (
-            <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+            <FormItem className="flex flex-row items-start space-x-3 space-y-0 pb-8">
               <FormControl>
                 <Checkbox checked={field.value} onCheckedChange={field.onChange} />
               </FormControl>
               <div className="space-y-1 leading-none">
-                <FormLabel>Allow users to change recency bias</FormLabel>
-                <p className="text-sm text-muted-foreground">Users can override the default recency bias setting</p>
+                <FormLabel>Allow users to change default setting</FormLabel>
               </div>
             </FormItem>
           )}

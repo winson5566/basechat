@@ -3,7 +3,6 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2 } from "lucide-react";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
 import { useMemo, useState, useEffect } from "react";
 import { useForm, UseFormReturn } from "react-hook-form";
 import { toast } from "sonner";
@@ -16,7 +15,7 @@ import {
 } from "@/app/(main)/o/[slug]/settings/models/search-settings-field";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Switch } from "@/components/ui/switch";
-import { updateTenantSchema, updateSearchSettingsSchema } from "@/lib/api";
+import { updateTenantSchema, updateSearchSettingsSchema, searchSettingsSchema, SearchSettings } from "@/lib/api";
 import {
   ALL_VALID_MODELS,
   LLM_DISPLAY_NAMES,
@@ -114,8 +113,46 @@ type CombinedFormValues = FormValues & SearchSettingsFormValues;
 export default function ModelSettings({ tenant }: Props) {
   const [mounted, setMounted] = useState(false);
   const [isLoading, setLoading] = useState(false);
+  const [isLoadingSettings, setIsLoadingSettings] = useState(true);
 
-  useEffect(() => setMounted(true), []);
+  useEffect(() => {
+    setMounted(true);
+
+    // Fetch search settings when component mounts
+    async function fetchSearchSettings() {
+      if (tenant.searchSettingsId) {
+        try {
+          const res = await fetch(`/api/tenants/current`, {
+            headers: { tenant: tenant.slug },
+          });
+
+          if (res.ok) {
+            const data = await res.json();
+            const settings = searchSettingsSchema.parse(data);
+
+            // Update the form with fetched settings
+            searchSettingsForm.reset({
+              isBreadth: settings.isBreadth,
+              overrideBreadth: settings.overrideBreadth,
+              rerankEnabled: settings.rerankEnabled,
+              overrideRerank: settings.overrideRerank,
+              prioritizeRecent: settings.prioritizeRecent,
+              overridePrioritizeRecent: settings.overridePrioritizeRecent,
+            });
+          }
+        } catch (error) {
+          console.error("Failed to fetch search settings:", error);
+          toast.error("Failed to load search settings");
+        } finally {
+          setIsLoadingSettings(false);
+        }
+      } else {
+        setIsLoadingSettings(false);
+      }
+    }
+
+    fetchSearchSettings();
+  }, [tenant]);
 
   const formattedTenant = useMemo(() => {
     const { enabledModels, ...otherFields } = tenant;
@@ -241,8 +278,6 @@ export default function ModelSettings({ tenant }: Props) {
       <div className="h-16" />
 
       <SearchSettingsField form={searchSettingsForm} />
-
-      <div className="h-32" />
     </div>
   );
 }
