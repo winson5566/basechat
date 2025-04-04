@@ -9,9 +9,14 @@ import { useForm, UseFormReturn } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 
+import {
+  SearchSettingsField,
+  searchSettingsFormSchema,
+  SearchSettingsFormValues,
+} from "@/app/(main)/o/[slug]/settings/models/search-settings-field";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Switch } from "@/components/ui/switch";
-import { updateTenantSchema } from "@/lib/api";
+import { updateTenantSchema, updateSearchSettingsSchema } from "@/lib/api";
 import {
   ALL_VALID_MODELS,
   LLM_DISPLAY_NAMES,
@@ -23,11 +28,11 @@ import {
 import * as schema from "@/lib/server/db/schema";
 import { cn } from "@/lib/utils";
 
-const formSchema = z.object({
+const modelsFormSchema = z.object({
   enabledModels: modelArraySchema,
 });
 
-type FormValues = z.infer<typeof formSchema>;
+type FormValues = z.infer<typeof modelsFormSchema>;
 
 type ModelsFieldProps = {
   form: UseFormReturn<FormValues>;
@@ -104,6 +109,8 @@ type Props = {
   tenant: typeof schema.tenants.$inferSelect;
 };
 
+type CombinedFormValues = FormValues & SearchSettingsFormValues;
+
 export default function ModelSettings({ tenant }: Props) {
   const [mounted, setMounted] = useState(false);
   const [isLoading, setLoading] = useState(false);
@@ -121,28 +128,66 @@ export default function ModelSettings({ tenant }: Props) {
     };
   }, [tenant]);
 
-  const form = useForm<FormValues>({
-    resolver: zodResolver(formSchema),
-    defaultValues: formSchema.parse(formattedTenant),
+  const modelsForm = useForm<FormValues>({
+    resolver: zodResolver(modelsFormSchema),
+    defaultValues: modelsFormSchema.parse(formattedTenant),
+  });
+
+  const searchSettingsForm = useForm<SearchSettingsFormValues>({
+    resolver: zodResolver(searchSettingsFormSchema),
+    defaultValues: {
+      isBreadth: false,
+      overrideBreadth: true,
+      rerankEnabled: false,
+      overrideRerank: true,
+      prioritizeRecent: false,
+      overridePrioritizeRecent: true,
+    },
   });
 
   if (!mounted) return null;
 
-  async function onSubmit(values: FormValues) {
+  async function onSubmit(values: CombinedFormValues) {
     setLoading(true);
 
     try {
-      const payload = updateTenantSchema.parse(values);
-      const res = await fetch("/api/tenants/current", {
+      // Update models
+      const modelsPayload = updateTenantSchema.parse({ enabledModels: values.enabledModels });
+      const modelsRes = await fetch("/api/tenants/current", {
         method: "PATCH",
         headers: { tenant: tenant.slug },
-        body: JSON.stringify(payload),
+        body: JSON.stringify(modelsPayload),
       });
 
-      if (res.status !== 200) throw new Error("Failed to save");
+      if (modelsRes.status !== 200) throw new Error("Failed to save models");
+
+      // Update search settings
+      const searchSettingsPayload = updateSearchSettingsSchema.parse({
+        isBreadth: values.isBreadth,
+        overrideBreadth: values.overrideBreadth,
+        rerankEnabled: values.rerankEnabled,
+        overrideRerank: values.overrideRerank,
+        prioritizeRecent: values.prioritizeRecent,
+        overridePrioritizeRecent: values.overridePrioritizeRecent,
+      });
+      const searchSettingsRes = await fetch(`/api/tenants/current`, {
+        method: "PUT",
+        headers: { tenant: tenant.slug },
+        body: JSON.stringify(searchSettingsPayload),
+      });
+
+      if (searchSettingsRes.status !== 200) throw new Error("Failed to save search settings");
 
       toast.success("Changes saved");
-      form.reset(values);
+      modelsForm.reset({ enabledModels: values.enabledModels });
+      searchSettingsForm.reset({
+        isBreadth: values.isBreadth,
+        overrideBreadth: values.overrideBreadth,
+        rerankEnabled: values.rerankEnabled,
+        overrideRerank: values.overrideRerank,
+        prioritizeRecent: values.prioritizeRecent,
+        overridePrioritizeRecent: values.overridePrioritizeRecent,
+      });
     } catch (error) {
       toast.error("Failed to save changes");
       console.error(error);
@@ -152,7 +197,8 @@ export default function ModelSettings({ tenant }: Props) {
   }
 
   async function handleCancel() {
-    form.reset();
+    modelsForm.reset();
+    searchSettingsForm.reset();
   }
 
   return (
@@ -163,7 +209,7 @@ export default function ModelSettings({ tenant }: Props) {
           <button
             type="reset"
             className="rounded-lg disabled:opacity-[55%] px-4 py-2.5 mr-3"
-            disabled={!form.formState.isDirty}
+            disabled={!modelsForm.formState.isDirty && !searchSettingsForm.formState.isDirty}
             onClick={handleCancel}
           >
             Cancel
@@ -171,8 +217,12 @@ export default function ModelSettings({ tenant }: Props) {
           <button
             type="button"
             className="rounded-lg bg-[#D946EF] text-white disabled:opacity-[55%] px-4 py-2.5 flex items-center"
-            disabled={!form.formState.isDirty || isLoading}
-            onClick={form.handleSubmit(onSubmit)}
+            disabled={(!modelsForm.formState.isDirty && !searchSettingsForm.formState.isDirty) || isLoading}
+            onClick={() => {
+              const modelsValues = modelsForm.getValues();
+              const searchSettingsValues = searchSettingsForm.getValues();
+              onSubmit({ ...modelsValues, ...searchSettingsValues });
+            }}
           >
             Save
             {isLoading && <Loader2 size={18} className="ml-2 animate-spin" />}
@@ -180,13 +230,18 @@ export default function ModelSettings({ tenant }: Props) {
         </div>
       </div>
 
-      <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)}>
+      <Form {...modelsForm}>
+        <form onSubmit={modelsForm.handleSubmit(() => {})}>
           <div>
-            <ModelsField form={form} />
+            <ModelsField form={modelsForm} />
           </div>
         </form>
       </Form>
+
+      <div className="h-16" />
+
+      <SearchSettingsField form={searchSettingsForm} />
+
       <div className="h-32" />
     </div>
   );
