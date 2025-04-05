@@ -1,4 +1,4 @@
-import { ChevronRight, ChevronDown, LockIcon } from "lucide-react";
+import { ChevronRight, ChevronDown } from "lucide-react";
 import Image from "next/image";
 import { KeyboardEvent, useRef, useState, useEffect } from "react";
 
@@ -9,6 +9,7 @@ import { LLMModel, modelSchema, LLM_LOGO_MAP, LLM_DISPLAY_NAMES, ALL_VALID_MODEL
 import { cn } from "@/lib/utils";
 
 import CheckIcon from "../../public/icons/check.svg";
+import GearIcon from "../../public/icons/gear.svg";
 import { AutosizeTextarea, AutosizeTextAreaRef } from "../ui/autosize-textarea";
 import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
 
@@ -63,14 +64,20 @@ const SettingsPopoverContent = ({ children }: { children: React.ReactNode }) => 
   </PopoverContent>
 );
 
-const ModelPopoverContent = ({ children }: { children: React.ReactNode }) => {
+const ModelPopoverContent = ({
+  children,
+  isStandalone = false,
+}: {
+  children: React.ReactNode;
+  isStandalone?: boolean;
+}) => {
   const isDesktop = useIsDesktop();
 
   return (
     <PopoverContent
-      align="end"
-      alignOffset={-24}
-      {...(isDesktop ? { side: "right", sideOffset: 30 } : {})}
+      align={isStandalone ? "start" : "end"}
+      alignOffset={isStandalone ? 4 : -24}
+      {...(isDesktop && !isStandalone ? { side: "right", sideOffset: 30 } : {})}
       className={cn("bg-[#F5F5F7] w-[258px] border border-[#D7D7D7] shadow-none rounded-[8px] p-6")}
     >
       {children}
@@ -89,6 +96,9 @@ export default function ChatInput(props: ChatInputProps) {
   const canOverrideBreadth = props.tenantSearchSettings?.overrideBreadth ?? true;
   const canOverrideRerank = props.tenantSearchSettings?.overrideRerank ?? true;
   const canOverridePrioritizeRecent = props.tenantSearchSettings?.overridePrioritizeRecent ?? true;
+
+  const canOverrideSomething = canOverrideBreadth || canOverrideRerank || canOverridePrioritizeRecent;
+  const canSwitchModel = props.enabledModels.length > 1;
 
   // Get default values from tenant settings if they exist
   const defaultIsBreadth = props.tenantSearchSettings?.isBreadth ?? false;
@@ -164,166 +174,167 @@ export default function ChatInput(props: ChatInputProps) {
       </div>
       <Popover>
         <PopoverTrigger className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
-          {LLM_DISPLAY_NAMES[props.selectedModel]}
-          <ChevronDown className="h-4 w-4" />
+          {canOverrideSomething && <Image src={GearIcon} alt="settings" className="h-4 w-4" />}
+          {canSwitchModel && LLM_DISPLAY_NAMES[props.selectedModel]}
+          {(canOverrideSomething || canSwitchModel) && <ChevronDown className="h-4 w-4" />}
         </PopoverTrigger>
-        <SettingsPopoverContent>
-          <div className="flex flex-col gap-4">
-            <span className="text-sm text-muted-foreground">Chat settings</span>
-            <div className="flex flex-col gap-2">
-              {(canOverrideBreadth || !props.tenantSearchSettings) && (
-                <RadioGroup
-                  value={isBreadth ? "breadth" : "depth"}
-                  onValueChange={(value) => {
-                    const newIsBreadth = value === "breadth";
-                    setIsBreadth(newIsBreadth);
-                    props.onBreadthChange(newIsBreadth);
-                  }}
-                >
-                  <div className="flex flex-col space-y-1">
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem
-                        value="breadth"
-                        id="breadth"
-                        className="text-[#D946EF] border-[#D7D7D7] data-[state=checked]:bg-[#D946EF]"
-                      />
-                      <label htmlFor="breadth" className="text-sm">
-                        Breadth
-                      </label>
-                    </div>
-                    <span className="text-xs text-muted-foreground ml-6">
-                      Searches a wider range of documents for a broader response (slower)
-                    </span>
-                  </div>
-                  <div className="flex flex-col space-y-1">
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem
-                        value="depth"
-                        id="depth"
-                        className="text-[#D946EF] border-[#D7D7D7] data-[state=checked]:bg-[#D946EF]"
-                      />
-                      <label htmlFor="depth" className="text-sm">
-                        Depth
-                      </label>
-                    </div>
-                    <span className="text-xs text-muted-foreground ml-6">
-                      Retrieves results from a smaller range of documents for more depth (faster)
-                    </span>
-                  </div>
-                </RadioGroup>
-              )}
-              {!canOverrideBreadth && props.tenantSearchSettings && (
-                <div className="flex items-center justify-between py-2">
-                  <div className="flex flex-col">
-                    <span className="text-sm font-medium">Search mode</span>
-                    <span className="text-xs text-muted-foreground">
-                      {defaultIsBreadth ? "Breadth (set by admin)" : "Depth (set by admin)"}
-                    </span>
-                  </div>
-                  <LockIcon className="h-4 w-4 text-muted-foreground" />
-                </div>
-              )}
-            </div>
-            <div className="flex flex-col gap-2">
-              {canOverrideRerank || !props.tenantSearchSettings ? (
-                <div className="flex items-center justify-between">
-                  <div className="flex flex-col">
-                    <span className="text-sm font-medium">Rerank</span>
-                  </div>
-                  <Switch
-                    checked={rerankEnabled}
-                    onCheckedChange={(checked: boolean) => {
-                      setRerankEnabled(checked);
-                      props.onRerankChange?.(checked);
+        {canOverrideSomething ? (
+          <SettingsPopoverContent>
+            <div className="flex flex-col gap-4">
+              <span className="text-sm text-muted-foreground">Chat settings</span>
+              <div className="flex flex-col gap-2">
+                {(canOverrideBreadth || !props.tenantSearchSettings) && (
+                  <RadioGroup
+                    value={isBreadth ? "breadth" : "depth"}
+                    onValueChange={(value) => {
+                      const newIsBreadth = value === "breadth";
+                      setIsBreadth(newIsBreadth);
+                      props.onBreadthChange(newIsBreadth);
                     }}
-                    className="data-[state=checked]:bg-[#D946EF]"
-                  />
-                </div>
-              ) : (
-                <div className="flex items-center justify-between py-2">
-                  <div className="flex flex-col">
-                    <span className="text-sm font-medium">Rerank</span>
-                    <span className="text-xs text-muted-foreground">
-                      {defaultRerankEnabled ? "Enabled (set by admin)" : "Disabled (set by admin)"}
-                    </span>
-                  </div>
-                  <LockIcon className="h-4 w-4 text-muted-foreground" />
-                </div>
-              )}
-              <div className="flex items-center justify-between mt-4">
-                {canOverridePrioritizeRecent || !props.tenantSearchSettings ? (
-                  <>
+                  >
+                    <div className="flex flex-col space-y-1">
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem
+                          value="breadth"
+                          id="breadth"
+                          className="text-[#D946EF] border-[#D7D7D7] data-[state=checked]:bg-[#D946EF]"
+                        />
+                        <label htmlFor="breadth" className="text-sm">
+                          Breadth
+                        </label>
+                      </div>
+                      <span className="text-xs text-muted-foreground ml-6">
+                        Searches a wider range of documents for a broader response (slower)
+                      </span>
+                    </div>
+                    <div className="flex flex-col space-y-1">
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem
+                          value="depth"
+                          id="depth"
+                          className="text-[#D946EF] border-[#D7D7D7] data-[state=checked]:bg-[#D946EF]"
+                        />
+                        <label htmlFor="depth" className="text-sm">
+                          Depth
+                        </label>
+                      </div>
+                      <span className="text-xs text-muted-foreground ml-6">
+                        Retrieves results from a smaller range of documents for more depth (faster)
+                      </span>
+                    </div>
+                  </RadioGroup>
+                )}
+              </div>
+              <div className="flex flex-col gap-2">
+                {canOverrideRerank || !props.tenantSearchSettings ? (
+                  <div className="flex items-center justify-between">
                     <div className="flex flex-col">
-                      <span className="text-sm font-medium">Prioritize recent data</span>
+                      <span className="text-sm font-medium">Rerank</span>
                     </div>
                     <Switch
-                      checked={prioritizeRecent}
+                      checked={rerankEnabled}
                       onCheckedChange={(checked: boolean) => {
-                        setPrioritizeRecent(checked);
-                        props.onPrioritizeRecentChange?.(checked);
+                        setRerankEnabled(checked);
+                        props.onRerankChange?.(checked);
                       }}
                       className="data-[state=checked]:bg-[#D946EF]"
                     />
-                  </>
-                ) : (
-                  <div className="flex items-center justify-between py-2 w-full">
-                    <div className="flex flex-col">
-                      <span className="text-sm font-medium">Prioritize recent data</span>
-                      <span className="text-xs text-muted-foreground">
-                        {defaultPrioritizeRecent ? "Enabled (set by admin)" : "Disabled (set by admin)"}
-                      </span>
-                    </div>
-                    <LockIcon className="h-4 w-4 text-muted-foreground" />
                   </div>
+                ) : (
+                  <></>
+                )}
+                {canOverridePrioritizeRecent || !props.tenantSearchSettings ? (
+                  <div className="flex items-center justify-between mt-4">
+                    <>
+                      <div className="flex flex-col">
+                        <span className="text-sm font-medium">Prioritize recent data</span>
+                      </div>
+                      <Switch
+                        checked={prioritizeRecent}
+                        onCheckedChange={(checked: boolean) => {
+                          setPrioritizeRecent(checked);
+                          props.onPrioritizeRecentChange?.(checked);
+                        }}
+                        className="data-[state=checked]:bg-[#D946EF]"
+                      />
+                    </>
+                  </div>
+                ) : (
+                  <></>
                 )}
               </div>
+
+              {canSwitchModel && (
+                <>
+                  <div className="h-[1px] w-full bg-[#D7D7D7] my-4" />
+                  <div className="flex flex-col gap-2">
+                    <span className="text-sm font-medium text-black">Switch model</span>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <button className="flex items-center justify-between w-full text-sm text-muted-foreground hover:text-foreground">
+                          <span className="text-[#6B7280]">{LLM_DISPLAY_NAMES[props.selectedModel]}</span>
+                          <ChevronRight className="h-4 w-4" />
+                        </button>
+                      </PopoverTrigger>
+
+                      <ModelPopoverContent isStandalone={false}>
+                        <div className="flex flex-col gap-1">
+                          {props.enabledModels.map((model) => {
+                            const [_, logoPath] = LLM_LOGO_MAP[model];
+                            return (
+                              <button
+                                key={model}
+                                className="flex items-center rounded-sm px-4 py-3 text-sm text-left hover:bg-black hover:bg-opacity-5"
+                                onClick={() => props.onModelChange(model)}
+                              >
+                                <div className="w-4">
+                                  {props.selectedModel === model && <Image src={CheckIcon} alt="selected" />}
+                                </div>
+                                <div className="flex items-center ml-3">
+                                  <Image
+                                    src={logoPath}
+                                    alt={LLM_DISPLAY_NAMES[model]}
+                                    width={16}
+                                    height={16}
+                                    className="mr-2"
+                                  />
+                                  <span>{LLM_DISPLAY_NAMES[model]}</span>
+                                </div>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </ModelPopoverContent>
+                    </Popover>
+                  </div>
+                </>
+              )}
             </div>
-            {props.enabledModels.length > 1 && (
-              <>
-                <div className="h-[1px] w-full bg-[#D7D7D7] my-4" />
-                <div className="flex flex-col gap-2">
-                  <span className="text-sm font-medium text-black">Switch model</span>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <button className="flex items-center justify-between w-full text-sm text-muted-foreground hover:text-foreground">
-                        <span className="text-[#6B7280]">{LLM_DISPLAY_NAMES[props.selectedModel]}</span>
-                        <ChevronRight className="h-4 w-4" />
-                      </button>
-                    </PopoverTrigger>
-                    <ModelPopoverContent>
-                      <div className="flex flex-col gap-1">
-                        {props.enabledModels.map((model) => {
-                          const [_, logoPath] = LLM_LOGO_MAP[model];
-                          return (
-                            <button
-                              key={model}
-                              className="flex items-center rounded-sm px-4 py-3 text-sm text-left hover:bg-black hover:bg-opacity-5"
-                              onClick={() => props.onModelChange(model)}
-                            >
-                              <div className="w-4">
-                                {props.selectedModel === model && <Image src={CheckIcon} alt="selected" />}
-                              </div>
-                              <div className="flex items-center ml-3">
-                                <Image
-                                  src={logoPath}
-                                  alt={LLM_DISPLAY_NAMES[model]}
-                                  width={16}
-                                  height={16}
-                                  className="mr-2"
-                                />
-                                <span>{LLM_DISPLAY_NAMES[model]}</span>
-                              </div>
-                            </button>
-                          );
-                        })}
-                      </div>
-                    </ModelPopoverContent>
-                  </Popover>
-                </div>
-              </>
-            )}
-          </div>
-        </SettingsPopoverContent>
+          </SettingsPopoverContent>
+        ) : canSwitchModel ? (
+          <ModelPopoverContent isStandalone={true}>
+            <div className="flex flex-col gap-1">
+              {props.enabledModels.map((model) => {
+                const [_, logoPath] = LLM_LOGO_MAP[model];
+                return (
+                  <button
+                    key={model}
+                    className="flex items-center rounded-sm px-4 py-3 text-sm text-left hover:bg-black hover:bg-opacity-5"
+                    onClick={() => props.onModelChange(model)}
+                  >
+                    <div className="w-4">
+                      {props.selectedModel === model && <Image src={CheckIcon} alt="selected" />}
+                    </div>
+                    <div className="flex items-center ml-3">
+                      <Image src={logoPath} alt={LLM_DISPLAY_NAMES[model]} width={16} height={16} className="mr-2" />
+                      <span>{LLM_DISPLAY_NAMES[model]}</span>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          </ModelPopoverContent>
+        ) : null}
       </Popover>
     </div>
   );
