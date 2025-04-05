@@ -23,12 +23,14 @@ import {
   LLMModel,
   modelArraySchema,
   getEnabledModels,
+  modelSchema,
 } from "@/lib/llm/types";
 import * as schema from "@/lib/server/db/schema";
 import { cn } from "@/lib/utils";
 
 const modelsFormSchema = z.object({
   enabledModels: modelArraySchema,
+  defaultModel: modelSchema,
 });
 
 type FormValues = z.infer<typeof modelsFormSchema>;
@@ -36,27 +38,52 @@ type FormValues = z.infer<typeof modelsFormSchema>;
 type ModelsFieldProps = {
   form: UseFormReturn<FormValues>;
   className?: string;
+  defaultModel: LLMModel | null;
 };
 
-const ModelsField = ({ form, className }: ModelsFieldProps) => {
+const ModelsField = ({ form, className, defaultModel }: ModelsFieldProps) => {
+  const [hoveredModel, setHoveredModel] = useState<LLMModel | null>(null);
+
   const handleToggleModel = (model: LLMModel, isEnabled: boolean) => {
     const currentModels = getEnabledModels(form.getValues("enabledModels"));
 
     if (isEnabled && !currentModels.includes(model)) {
-      form.setValue("enabledModels", [...currentModels, model], {
+      const newEnabledModels = [...currentModels, model];
+      form.setValue("enabledModels", newEnabledModels, {
         shouldDirty: true,
         shouldValidate: true,
       });
-    } else if (!isEnabled && currentModels.includes(model)) {
-      form.setValue(
-        "enabledModels",
-        currentModels.filter((m) => m !== model),
-        {
+
+      // If this is now the only enabled model, set it as default
+      if (newEnabledModels.length === 1) {
+        form.setValue("defaultModel", model, {
           shouldDirty: true,
           shouldValidate: true,
-        },
-      );
+        });
+      }
+    } else if (!isEnabled && currentModels.includes(model)) {
+      const newEnabledModels = currentModels.filter((m) => m !== model);
+      form.setValue("enabledModels", newEnabledModels, {
+        shouldDirty: true,
+        shouldValidate: true,
+      });
+
+      // If we're disabling the current default model and there's exactly one model left,
+      // set the remaining model as default
+      if (model === form.getValues("defaultModel") && newEnabledModels.length === 1) {
+        form.setValue("defaultModel", newEnabledModels[0], {
+          shouldDirty: true,
+          shouldValidate: true,
+        });
+      }
     }
+  };
+
+  const handleSetDefault = (model: LLMModel) => {
+    form.setValue("defaultModel", model, {
+      shouldDirty: true,
+      shouldValidate: true,
+    });
   };
 
   return (
@@ -72,9 +99,10 @@ const ModelsField = ({ form, className }: ModelsFieldProps) => {
           <div className="space-y-5 pl-8">
             {ALL_VALID_MODELS.map((model) => {
               const isEnabled = field.value?.includes(model);
+              const isDefault = model === form.getValues("defaultModel");
               const [_, logoPath] = LLM_LOGO_MAP[model as string];
               return (
-                <div key={model}>
+                <div key={model} onMouseEnter={() => setHoveredModel(model)} onMouseLeave={() => setHoveredModel(null)}>
                   <div className="flex items-center justify-between">
                     <div className="flex items-center">
                       <Image
@@ -86,11 +114,29 @@ const ModelsField = ({ form, className }: ModelsFieldProps) => {
                       />
                       <div className="text-base">{LLM_DISPLAY_NAMES[model as string]}</div>
                     </div>
-                    <Switch
-                      checked={isEnabled}
-                      onCheckedChange={(checked) => handleToggleModel(model, checked)}
-                      className="data-[state=checked]:bg-[#D946EF]"
-                    />
+                    <div className="flex items-center gap-4">
+                      <div className="w-24 text-right">
+                        {isDefault ? (
+                          <span className="text-xs text-muted-foreground bg-muted px-2 py-1 rounded">Default</span>
+                        ) : (
+                          hoveredModel === model &&
+                          isEnabled && (
+                            <button
+                              type="button"
+                              onClick={() => handleSetDefault(model)}
+                              className="text-sm text-[#D946EF] hover:text-[#D946EF]/80"
+                            >
+                              Set as default
+                            </button>
+                          )
+                        )}
+                      </div>
+                      <Switch
+                        checked={isEnabled}
+                        onCheckedChange={(checked) => handleToggleModel(model, checked)}
+                        className="data-[state=checked]:bg-[#D946EF]"
+                      />
+                    </div>
                   </div>
                   <hr className="w-full my-4" />
                 </div>
@@ -155,19 +201,23 @@ export default function ModelSettings({ tenant }: Props) {
   }, [tenant]);
 
   const formattedTenant = useMemo(() => {
-    const { enabledModels, ...otherFields } = tenant;
+    const { enabledModels, defaultModel, ...otherFields } = tenant;
 
     // Zod only uses default values when the value is undefined. They come in as null
     // Change fields you want to have defaults to undefined.
     return {
       enabledModels: enabledModels,
+      defaultModel: defaultModel ?? undefined,
       ...otherFields,
     };
   }, [tenant]);
 
   const modelsForm = useForm<FormValues>({
     resolver: zodResolver(modelsFormSchema),
-    defaultValues: modelsFormSchema.parse(formattedTenant),
+    defaultValues: modelsFormSchema.parse({
+      enabledModels: formattedTenant.enabledModels,
+      defaultModel: formattedTenant.defaultModel ?? undefined,
+    }),
   });
 
   const searchSettingsForm = useForm<SearchSettingsFormValues>({
@@ -189,7 +239,10 @@ export default function ModelSettings({ tenant }: Props) {
 
     try {
       // Update models
-      const modelsPayload = updateTenantSchema.parse({ enabledModels: values.enabledModels });
+      const modelsPayload = updateTenantSchema.parse({
+        enabledModels: values.enabledModels,
+        defaultModel: values.defaultModel,
+      });
       const modelsRes = await fetch("/api/tenants/current", {
         method: "PATCH",
         headers: { tenant: tenant.slug },
@@ -216,7 +269,10 @@ export default function ModelSettings({ tenant }: Props) {
       if (searchSettingsRes.status !== 200) throw new Error("Failed to save search settings");
 
       toast.success("Changes saved");
-      modelsForm.reset({ enabledModels: values.enabledModels });
+      modelsForm.reset({
+        enabledModels: values.enabledModels,
+        defaultModel: values.defaultModel,
+      });
       searchSettingsForm.reset({
         isBreadth: values.isBreadth,
         overrideBreadth: values.overrideBreadth,
@@ -234,7 +290,10 @@ export default function ModelSettings({ tenant }: Props) {
   }
 
   async function handleCancel() {
-    modelsForm.reset();
+    modelsForm.reset({
+      enabledModels: formattedTenant.enabledModels,
+      defaultModel: formattedTenant.defaultModel ?? undefined,
+    });
     searchSettingsForm.reset();
   }
 
@@ -270,7 +329,7 @@ export default function ModelSettings({ tenant }: Props) {
       <Form {...modelsForm}>
         <form onSubmit={modelsForm.handleSubmit(() => {})}>
           <div>
-            <ModelsField form={modelsForm} />
+            <ModelsField form={modelsForm} defaultModel={modelsForm.getValues("defaultModel")} />
           </div>
         </form>
       </Form>

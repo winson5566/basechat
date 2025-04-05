@@ -75,6 +75,7 @@ export const tenants = pgTable("tenants", {
   logoUrl: text("logo_url"), // The publicly accessible URL of the object
   enabledModels: text("enabled_models").array().default(ALL_VALID_MODELS).$type<z.infer<typeof modelArraySchema>>(),
   searchSettingsId: uuid("search_settings_id").references(() => searchSettings.id, { onDelete: "cascade" }),
+  defaultModel: text("default_model").default(DEFAULT_MODEL).$type<z.infer<typeof modelSchema>>(),
 });
 
 export const rolesEnum = pgEnum("roles", ["admin", "user", "guest"]);

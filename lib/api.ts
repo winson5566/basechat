@@ -61,6 +61,7 @@ export const updateTenantSchema = z.object({
   isPublic: z.boolean().optional(),
   name: z.string().optional(),
   enabledModels: modelArraySchema.optional(),
+  defaultModel: modelSchema.optional(),
 });
 
 export type MemberType = "profile" | "invite";
