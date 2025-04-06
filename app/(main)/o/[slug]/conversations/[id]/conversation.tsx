@@ -16,6 +16,7 @@ interface Props {
     slug: string;
     id: string;
     enabledModels: LLMModel[];
+    defaultModel?: LLMModel | null;
   };
 }
 

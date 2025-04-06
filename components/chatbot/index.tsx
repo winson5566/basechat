@@ -37,6 +37,7 @@ interface Props {
     id: string;
     enabledModels: LLMModel[];
     searchSettingsId?: string | null;
+    defaultModel?: LLMModel | null;
   };
   initMessage?: string;
   onSelectedDocumentId: (id: string) => void;
@@ -57,7 +58,7 @@ export default function Chatbot({ tenant, conversationId, initMessage, onSelecte
         return initialModel;
       }
       // if initial model from global state is no longer enabled by this tenant, change to one that is
-      return tenant.enabledModels[0];
+      return tenant.defaultModel || tenant.enabledModels[0];
     }
     return initialModel;
   });
