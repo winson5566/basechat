@@ -189,7 +189,6 @@ export default function ModelSettings({ tenant }: Props) {
             });
           }
         } catch (error) {
-          console.error("Failed to fetch search settings:", error);
           toast.error("Failed to load search settings");
         } finally {
           setIsLoadingSettings(false);
@@ -285,7 +284,6 @@ export default function ModelSettings({ tenant }: Props) {
       });
     } catch (error) {
       toast.error("Failed to save changes");
-      console.error(error);
     } finally {
       setLoading(false);
     }
