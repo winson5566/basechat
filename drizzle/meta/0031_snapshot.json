@@ -1,5 +1,5 @@
 {
-  "id": "eb3dfdfe-c1e4-4ee2-936b-acdfc3e2755d",
+  "id": "5fc908f5-d908-4831-89d6-705917d66853",
   "prevId": "a7d82937-f79a-434e-8c67-ab3b36c95c38",
   "version": "7",
   "dialect": "postgresql",
@@ -1047,6 +1047,13 @@
           "type": "uuid",
           "primaryKey": false,
           "notNull": false
+        },
+        "default_model": {
+          "name": "default_model",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "'claude-3-7-sonnet-latest'"
         }
       },
       "indexes": {},

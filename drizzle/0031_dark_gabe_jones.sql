@@ -11,6 +11,7 @@ CREATE TABLE IF NOT EXISTS "search_settings" (
 );
 --> statement-breakpoint
 ALTER TABLE "tenants" ADD COLUMN "search_settings_id" uuid;--> statement-breakpoint
+ALTER TABLE "tenants" ADD COLUMN "default_model" text DEFAULT 'claude-3-7-sonnet-latest';--> statement-breakpoint
 DO $$ BEGIN
  ALTER TABLE "tenants" ADD CONSTRAINT "tenants_search_settings_id_search_settings_id_fk" FOREIGN KEY ("search_settings_id") REFERENCES "public"."search_settings"("id") ON DELETE cascade ON UPDATE no action;
 EXCEPTION
