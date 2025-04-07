@@ -78,7 +78,7 @@ export default function Chatbot({ tenant, conversationId, initMessage, onSelecte
           return;
         }
 
-        const res = await fetch(`/api/tenants/current`, {
+        const res = await fetch(`/api/tenants/search-settings`, {
           headers: { tenant: tenant.slug },
         });
 

@@ -170,7 +170,7 @@ export default function ModelSettings({ tenant }: Props) {
     async function fetchSearchSettings() {
       if (tenant.searchSettingsId) {
         try {
-          const res = await fetch(`/api/tenants/current`, {
+          const res = await fetch(`/api/tenants/search-settings`, {
             headers: { tenant: tenant.slug },
           });
 
@@ -262,7 +262,7 @@ export default function ModelSettings({ tenant }: Props) {
         prioritizeRecent: values.prioritizeRecent,
         overridePrioritizeRecent: values.overridePrioritizeRecent,
       });
-      const searchSettingsRes = await fetch(`/api/tenants/current`, {
+      const searchSettingsRes = await fetch(`/api/tenants/search-settings`, {
         method: "PUT",
         headers: { tenant: tenant.slug },
         body: JSON.stringify(searchSettingsPayload),

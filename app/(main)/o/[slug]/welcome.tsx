@@ -64,7 +64,7 @@ export default function Welcome({ tenant, className }: Props) {
         setIsLoadingSettings(false);
         return;
       }
-      const res = await fetch(`/api/tenants/current`, {
+      const res = await fetch(`/api/tenants/search-settings`, {
         headers: { tenant: tenant.slug },
       });
 
