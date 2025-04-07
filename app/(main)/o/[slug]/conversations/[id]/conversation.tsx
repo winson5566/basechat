@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 
 import { useGlobalState } from "@/app/(main)/o/[slug]/context";
 import Chatbot from "@/components/chatbot";
+import { SearchSettings } from "@/lib/api";
 import { LLMModel } from "@/lib/llm/types";
 
 import Summary from "./summary";
@@ -17,6 +18,7 @@ interface Props {
     id: string;
     enabledModels: LLMModel[];
     defaultModel: LLMModel | null;
+    searchSettings: SearchSettings | null;
   };
 }
 

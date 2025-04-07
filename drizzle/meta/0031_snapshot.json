@@ -1,5 +1,5 @@
 {
-  "id": "5fc908f5-d908-4831-89d6-705917d66853",
+  "id": "f962954a-8bed-4f7b-a715-082163a6ca58",
   "prevId": "a7d82937-f79a-434e-8c67-ab3b36c95c38",
   "version": "7",
   "dialect": "postgresql",
@@ -800,6 +800,12 @@
           "notNull": true,
           "default": "now()"
         },
+        "tenant_id": {
+          "name": "tenant_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
         "is_breadth": {
           "name": "is_breadth",
           "type": "boolean",
@@ -844,9 +850,31 @@
         }
       },
       "indexes": {},
-      "foreignKeys": {},
+      "foreignKeys": {
+        "search_settings_tenant_id_tenants_id_fk": {
+          "name": "search_settings_tenant_id_tenants_id_fk",
+          "tableFrom": "search_settings",
+          "tableTo": "tenants",
+          "columnsFrom": [
+            "tenant_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
       "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
+      "uniqueConstraints": {
+        "search_settings_tenant_id_unique": {
+          "name": "search_settings_tenant_id_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "tenant_id"
+          ]
+        }
+      },
       "policies": {},
       "checkConstraints": {},
       "isRLSEnabled": false
@@ -1042,12 +1070,6 @@
           "notNull": false,
           "default": "'{\"gpt-4o\",\"gpt-3.5-turbo\",\"gemini-2.0-flash\",\"gemini-1.5-pro\",\"claude-3-7-sonnet-latest\",\"claude-3-5-haiku-latest\"}'"
         },
-        "search_settings_id": {
-          "name": "search_settings_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": false
-        },
         "default_model": {
           "name": "default_model",
           "type": "text",
@@ -1057,21 +1079,7 @@
         }
       },
       "indexes": {},
-      "foreignKeys": {
-        "tenants_search_settings_id_search_settings_id_fk": {
-          "name": "tenants_search_settings_id_search_settings_id_fk",
-          "tableFrom": "tenants",
-          "tableTo": "search_settings",
-          "columnsFrom": [
-            "search_settings_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        }
-      },
+      "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {
         "tenants_slug_unique": {

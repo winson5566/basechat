@@ -7,7 +7,6 @@ import { z } from "zod";
 
 import ChatInput from "@/components/chatbot/chat-input";
 import Logo from "@/components/tenant/logo/logo";
-import { SearchSettings, searchSettingsSchema } from "@/lib/api";
 import { DEFAULT_WELCOME_MESSAGE } from "@/lib/constants";
 import { DEFAULT_MODEL, LLMModel, modelSchema, getEnabledModels } from "@/lib/llm/types";
 import { getConversationPath } from "@/lib/paths";
@@ -20,18 +19,20 @@ const inter = Inter({ subsets: ["latin"] });
 const conversationResponseSchema = z.object({ id: z.string() });
 
 interface Props {
-  tenant: typeof schema.tenants.$inferSelect;
+  tenant: typeof schema.tenants.$inferSelect & { searchSettings: typeof schema.searchSettings.$inferSelect };
   className?: string;
 }
 
 export default function Welcome({ tenant, className }: Props) {
   const router = useRouter();
   const { setInitialMessage, setInitialModel } = useGlobalState();
-  const [tenantSearchSettings, setTenantSearchSettings] = useState<SearchSettings | null>(null);
-  const [isLoadingSettings, setIsLoadingSettings] = useState(true);
+  const tenantSearchSettings = tenant.searchSettings;
+  const [isBreadth, setIsBreadth] = useState(tenantSearchSettings?.isBreadth ?? false);
+  const [rerankEnabled, setRerankEnabled] = useState(tenantSearchSettings?.rerankEnabled ?? false);
+  const [prioritizeRecent, setPrioritizeRecent] = useState(tenantSearchSettings?.prioritizeRecent ?? false);
+  const enabledModels = getEnabledModels(tenant.enabledModels);
 
   const [selectedModel, setSelectedModel] = useState<LLMModel>(() => {
-    const enabledModels = getEnabledModels(tenant.enabledModels);
     if (typeof window !== "undefined") {
       const saved = localStorage.getItem("chatSettings");
       if (saved) {
@@ -52,48 +53,8 @@ export default function Welcome({ tenant, className }: Props) {
     return DEFAULT_MODEL;
   });
 
-  const [isBreadth, setIsBreadth] = useState(false);
-  const [rerankEnabled, setRerankEnabled] = useState(false);
-  const [prioritizeRecent, setPrioritizeRecent] = useState(false);
-
-  // Fetch tenant search settings
-  useEffect(() => {
-    const fetchTenantSearchSettings = async () => {
-      // Only fetch if the tenant has a searchSettingsId
-      if (!tenant.searchSettingsId) {
-        setIsLoadingSettings(false);
-        return;
-      }
-      const res = await fetch(`/api/tenants/search-settings`, {
-        headers: { tenant: tenant.slug },
-      });
-
-      if (res.ok) {
-        const data = await res.json();
-        const settings = searchSettingsSchema.parse(data);
-        setTenantSearchSettings(settings);
-
-        // Apply tenant defaults for non-overridable settings immediately
-        if (!settings.overrideBreadth) {
-          setIsBreadth(settings.isBreadth);
-        }
-        if (!settings.overrideRerank) {
-          setRerankEnabled(settings.rerankEnabled);
-        }
-        if (!settings.overridePrioritizeRecent) {
-          setPrioritizeRecent(settings.prioritizeRecent);
-        }
-      }
-      setIsLoadingSettings(false);
-    };
-
-    fetchTenantSearchSettings();
-  }, [tenant.slug, tenant.searchSettingsId]);
-
   // Load user settings from localStorage after initial render and tenant settings are loaded
   useEffect(() => {
-    if (isLoadingSettings) return;
-
     if (typeof window !== "undefined") {
       const saved = localStorage.getItem("chatSettings");
       if (saved) {
@@ -110,29 +71,27 @@ export default function Welcome({ tenant, className }: Props) {
         }
         const savedModel = settings.selectedModel;
         const parsed = modelSchema.safeParse(savedModel);
-        const enabledModels = getEnabledModels(tenant.enabledModels);
         if (parsed.success && enabledModels.includes(savedModel)) {
           setSelectedModel(savedModel);
+        } else {
+          setSelectedModel(tenant.defaultModel || enabledModels[0]);
         }
       }
     }
-  }, [isLoadingSettings, tenant.enabledModels, tenantSearchSettings, tenant.searchSettingsId]);
+  }, [enabledModels, tenantSearchSettings]);
 
   // Save settings to localStorage whenever they change
   useEffect(() => {
-    // Only save if tenant settings are loaded and we're not in the initial loading phase
-    if (isLoadingSettings) return;
+    // Only save settings that can be overridden
+    const settingsToSave = {
+      selectedModel,
+      ...(tenantSearchSettings?.overrideBreadth ? { isBreadth } : {}),
+      ...(tenantSearchSettings?.overrideRerank ? { rerankEnabled } : {}),
+      ...(tenantSearchSettings?.overridePrioritizeRecent ? { prioritizeRecent } : {}),
+    };
 
-    localStorage.setItem(
-      "chatSettings",
-      JSON.stringify({
-        isBreadth,
-        rerankEnabled,
-        prioritizeRecent,
-        selectedModel,
-      }),
-    );
-  }, [isBreadth, rerankEnabled, prioritizeRecent, selectedModel, isLoadingSettings]);
+    localStorage.setItem("chatSettings", JSON.stringify(settingsToSave));
+  }, [isBreadth, rerankEnabled, prioritizeRecent, selectedModel, tenantSearchSettings]);
 
   const handleSubmit = async (content: string, model: LLMModel = DEFAULT_MODEL) => {
     const res = await fetch("/api/conversations", {
@@ -193,7 +152,7 @@ export default function Welcome({ tenant, className }: Props) {
           onRerankChange={setRerankEnabled}
           prioritizeRecent={prioritizeRecent}
           onPrioritizeRecentChange={setPrioritizeRecent}
-          enabledModels={getEnabledModels(tenant.enabledModels)}
+          enabledModels={enabledModels}
           tenantSearchSettings={tenantSearchSettings || undefined}
         />
       </div>

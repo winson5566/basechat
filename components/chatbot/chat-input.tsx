@@ -233,7 +233,7 @@ export default function ChatInput(props: ChatInputProps) {
                 )}
               </div>
               <div className="flex flex-col gap-2">
-                {canOverrideRerank || !props.tenantSearchSettings ? (
+                {(canOverrideRerank || !props.tenantSearchSettings) && (
                   <div className="flex items-center justify-between">
                     <div className="flex flex-col">
                       <span className="text-sm font-medium">Rerank</span>
@@ -247,10 +247,8 @@ export default function ChatInput(props: ChatInputProps) {
                       className="data-[state=checked]:bg-[#D946EF]"
                     />
                   </div>
-                ) : (
-                  <></>
                 )}
-                {canOverridePrioritizeRecent || !props.tenantSearchSettings ? (
+                {(canOverridePrioritizeRecent || !props.tenantSearchSettings) && (
                   <div className="flex items-center justify-between mt-4">
                     <>
                       <div className="flex flex-col">
@@ -266,8 +264,6 @@ export default function ChatInput(props: ChatInputProps) {
                       />
                     </>
                   </div>
-                ) : (
-                  <></>
                 )}
               </div>
 

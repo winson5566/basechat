@@ -105,6 +105,7 @@ export const setupSchema = z.object({
 
 export const searchSettingsSchema = z.object({
   id: z.string(),
+  tenantId: z.string(),
   isBreadth: z.boolean(),
   rerankEnabled: z.boolean(),
   prioritizeRecent: z.boolean(),

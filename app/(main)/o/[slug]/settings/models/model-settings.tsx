@@ -149,50 +149,13 @@ const ModelsField = ({ form, className }: ModelsFieldProps) => {
 };
 
 type Props = {
-  tenant: typeof schema.tenants.$inferSelect;
+  tenant: typeof schema.tenants.$inferSelect & { searchSettings: typeof schema.searchSettings.$inferSelect };
 };
 
 type CombinedFormValues = FormValues & SearchSettingsFormValues;
 
 export default function ModelSettings({ tenant }: Props) {
-  const [mounted, setMounted] = useState(false);
   const [isLoading, setLoading] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  useEffect(() => {
-    async function fetchSearchSettings() {
-      if (!tenant.searchSettingsId) {
-        return;
-      }
-
-      try {
-        const res = await fetch(`/api/tenants/search-settings`, {
-          headers: { tenant: tenant.slug },
-        });
-
-        if (res.ok) {
-          const data = await res.json();
-          const settings = searchSettingsSchema.parse(data);
-
-          searchSettingsForm.reset({
-            isBreadth: settings.isBreadth,
-            overrideBreadth: settings.overrideBreadth,
-            rerankEnabled: settings.rerankEnabled,
-            overrideRerank: settings.overrideRerank,
-            prioritizeRecent: settings.prioritizeRecent,
-            overridePrioritizeRecent: settings.overridePrioritizeRecent,
-          });
-        }
-      } catch (error) {
-        toast.error("Failed to load search settings");
-      }
-    }
-
-    fetchSearchSettings();
-  }, [tenant]);
 
   const formattedTenant = useMemo(() => {
     const { enabledModels, defaultModel, ...otherFields } = tenant;
@@ -217,16 +180,14 @@ export default function ModelSettings({ tenant }: Props) {
   const searchSettingsForm = useForm<SearchSettingsFormValues>({
     resolver: zodResolver(searchSettingsFormSchema),
     defaultValues: {
-      isBreadth: false,
-      overrideBreadth: true,
-      rerankEnabled: false,
-      overrideRerank: true,
-      prioritizeRecent: false,
-      overridePrioritizeRecent: true,
+      isBreadth: tenant.searchSettings?.isBreadth ?? false,
+      overrideBreadth: tenant.searchSettings?.overrideBreadth ?? true,
+      rerankEnabled: tenant.searchSettings?.rerankEnabled ?? false,
+      overrideRerank: tenant.searchSettings?.overrideRerank ?? true,
+      prioritizeRecent: tenant.searchSettings?.prioritizeRecent ?? false,
+      overridePrioritizeRecent: tenant.searchSettings?.overridePrioritizeRecent ?? true,
     },
   });
-
-  if (!mounted) return null;
 
   async function onSubmit(values: CombinedFormValues) {
     setLoading(true);
@@ -254,7 +215,7 @@ export default function ModelSettings({ tenant }: Props) {
         prioritizeRecent: values.prioritizeRecent,
         overridePrioritizeRecent: values.overridePrioritizeRecent,
       });
-      const searchSettingsRes = await fetch(`/api/tenants/search-settings`, {
+      const searchSettingsRes = await fetch(`/api/tenants/current`, {
         method: "PUT",
         headers: { tenant: tenant.slug },
         body: JSON.stringify(searchSettingsPayload),
