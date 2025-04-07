@@ -13,7 +13,7 @@ import {
   searchSettingsFormSchema,
   SearchSettingsFormValues,
 } from "@/app/(main)/o/[slug]/settings/models/search-settings-field";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Form, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Switch } from "@/components/ui/switch";
 import { updateTenantSchema, updateSearchSettingsSchema, searchSettingsSchema, SearchSettings } from "@/lib/api";
 import {
@@ -38,12 +38,9 @@ type FormValues = z.infer<typeof modelsFormSchema>;
 type ModelsFieldProps = {
   form: UseFormReturn<FormValues>;
   className?: string;
-  defaultModel: LLMModel | null;
 };
 
-const ModelsField = ({ form, className, defaultModel }: ModelsFieldProps) => {
-  const [hoveredModel, setHoveredModel] = useState<LLMModel | null>(null);
-
+const ModelsField = ({ form, className }: ModelsFieldProps) => {
   const handleToggleModel = (model: LLMModel, isEnabled: boolean) => {
     const currentModels = getEnabledModels(form.getValues("enabledModels"));
 
@@ -68,9 +65,9 @@ const ModelsField = ({ form, className, defaultModel }: ModelsFieldProps) => {
         shouldValidate: true,
       });
 
-      // If we're disabling the current default model and there's exactly one model left,
-      // set the remaining model as default
-      if (model === form.getValues("defaultModel") && newEnabledModels.length === 1) {
+      // If we're disabling the current default model and there are other models available,
+      // set the first remaining enabled model as default
+      if (model === form.getValues("defaultModel") && newEnabledModels.length > 0) {
         form.setValue("defaultModel", newEnabledModels[0], {
           shouldDirty: true,
           shouldValidate: true,
@@ -102,7 +99,7 @@ const ModelsField = ({ form, className, defaultModel }: ModelsFieldProps) => {
               const isDefault = model === form.getValues("defaultModel");
               const [_, logoPath] = LLM_LOGO_MAP[model as string];
               return (
-                <div key={model} onMouseEnter={() => setHoveredModel(model)} onMouseLeave={() => setHoveredModel(null)}>
+                <div key={model} className="group">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center">
                       <Image
@@ -121,12 +118,11 @@ const ModelsField = ({ form, className, defaultModel }: ModelsFieldProps) => {
                             Default
                           </span>
                         ) : (
-                          hoveredModel === model &&
                           isEnabled && (
                             <button
                               type="button"
                               onClick={() => handleSetDefault(model)}
-                              className="text-sm text-[#7749F8] hover:text-[#7749F8]/80"
+                              className="text-sm text-[#7749F8] hover:text-[#7749F8]/80 hidden group-hover:block"
                             >
                               Set as default
                             </button>
@@ -161,40 +157,37 @@ type CombinedFormValues = FormValues & SearchSettingsFormValues;
 export default function ModelSettings({ tenant }: Props) {
   const [mounted, setMounted] = useState(false);
   const [isLoading, setLoading] = useState(false);
-  const [isLoadingSettings, setIsLoadingSettings] = useState(true);
 
   useEffect(() => {
     setMounted(true);
+  }, []);
 
-    // Fetch search settings when component mounts
+  useEffect(() => {
     async function fetchSearchSettings() {
-      if (tenant.searchSettingsId) {
-        try {
-          const res = await fetch(`/api/tenants/search-settings`, {
-            headers: { tenant: tenant.slug },
+      if (!tenant.searchSettingsId) {
+        return;
+      }
+
+      try {
+        const res = await fetch(`/api/tenants/search-settings`, {
+          headers: { tenant: tenant.slug },
+        });
+
+        if (res.ok) {
+          const data = await res.json();
+          const settings = searchSettingsSchema.parse(data);
+
+          searchSettingsForm.reset({
+            isBreadth: settings.isBreadth,
+            overrideBreadth: settings.overrideBreadth,
+            rerankEnabled: settings.rerankEnabled,
+            overrideRerank: settings.overrideRerank,
+            prioritizeRecent: settings.prioritizeRecent,
+            overridePrioritizeRecent: settings.overridePrioritizeRecent,
           });
-
-          if (res.ok) {
-            const data = await res.json();
-            const settings = searchSettingsSchema.parse(data);
-
-            // Update the form with fetched settings
-            searchSettingsForm.reset({
-              isBreadth: settings.isBreadth,
-              overrideBreadth: settings.overrideBreadth,
-              rerankEnabled: settings.rerankEnabled,
-              overrideRerank: settings.overrideRerank,
-              prioritizeRecent: settings.prioritizeRecent,
-              overridePrioritizeRecent: settings.overridePrioritizeRecent,
-            });
-          }
-        } catch (error) {
-          toast.error("Failed to load search settings");
-        } finally {
-          setIsLoadingSettings(false);
         }
-      } else {
-        setIsLoadingSettings(false);
+      } catch (error) {
+        toast.error("Failed to load search settings");
       }
     }
 
@@ -329,7 +322,7 @@ export default function ModelSettings({ tenant }: Props) {
       <Form {...modelsForm}>
         <form onSubmit={modelsForm.handleSubmit(() => {})}>
           <div>
-            <ModelsField form={modelsForm} defaultModel={modelsForm.getValues("defaultModel")} />
+            <ModelsField form={modelsForm} />
           </div>
         </form>
       </Form>
