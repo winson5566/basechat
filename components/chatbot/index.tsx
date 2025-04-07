@@ -262,9 +262,13 @@ export default function Chatbot({ tenant, conversationId, initMessage, onSelecte
   useEffect(() => {
     if (!tenant.enabledModels.includes(selectedModel)) {
       // Update to first enabled model
-      setSelectedModel(tenant.enabledModels[0]);
+      if (tenant.defaultModel && tenant.enabledModels.includes(tenant.defaultModel)) {
+        setSelectedModel(tenant.defaultModel);
+      } else {
+        setSelectedModel(tenant.enabledModels[0]);
+      }
     }
-  }, [selectedModel, tenant.enabledModels]);
+  }, [selectedModel, tenant.enabledModels, tenant.defaultModel]);
 
   return (
     <div className="flex h-full w-full items-center flex-col">

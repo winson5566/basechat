@@ -30,10 +30,10 @@ export default function Conversation({ id, tenant }: Props) {
       // If the initial model is not in the enabled models list, update it
       if (!tenant.enabledModels.includes(initialModel)) {
         // Set to the first enabled model
-        setInitialModel(tenant.enabledModels[0]);
+        setInitialModel(tenant.defaultModel || tenant.enabledModels[0]);
       }
     }
-  }, [initialModel, tenant.enabledModels, setInitialModel]);
+  }, [initialModel, tenant.enabledModels, tenant.defaultModel, setInitialModel]);
 
   useEffect(() => {
     setInitialMessage("");
