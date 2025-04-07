@@ -1,12 +1,11 @@
 import { eq } from "drizzle-orm";
 import { NextRequest } from "next/server";
 
-import { updateTenantSchema, updateSearchSettingsSchema } from "@/lib/api";
+import { updateTenantSchema } from "@/lib/api";
 import { modelArraySchema } from "@/lib/llm/types";
 import db from "@/lib/server/db";
 import * as schema from "@/lib/server/db/schema";
-import { getSearchSettingsById, updateSearchSettingsById } from "@/lib/server/service";
-import { requireAdminContextFromRequest, requireAuthContextFromRequest } from "@/lib/server/utils";
+import { requireAdminContextFromRequest } from "@/lib/server/utils";
 
 export async function PATCH(request: NextRequest) {
   const { tenant } = await requireAdminContextFromRequest(request);
