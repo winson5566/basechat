@@ -117,14 +117,16 @@ const ModelsField = ({ form, className, defaultModel }: ModelsFieldProps) => {
                     <div className="flex items-center gap-4">
                       <div className="w-24 text-right">
                         {isDefault ? (
-                          <span className="text-xs text-muted-foreground bg-muted px-2 py-1 rounded">Default</span>
+                          <span className="text-[13px] line-height-[20px] text-black bg-muted px-2 py-1 gap-2 rounded">
+                            Default
+                          </span>
                         ) : (
                           hoveredModel === model &&
                           isEnabled && (
                             <button
                               type="button"
                               onClick={() => handleSetDefault(model)}
-                              className="text-sm text-[#D946EF] hover:text-[#D946EF]/80"
+                              className="text-sm text-[#7749F8] hover:text-[#7749F8]/80"
                             >
                               Set as default
                             </button>
@@ -134,7 +136,7 @@ const ModelsField = ({ form, className, defaultModel }: ModelsFieldProps) => {
                       <Switch
                         checked={isEnabled}
                         onCheckedChange={(checked) => handleToggleModel(model, checked)}
-                        className="data-[state=checked]:bg-[#D946EF]"
+                        className="data-[state=checked]:bg-[#7749F8]"
                       />
                     </div>
                   </div>
