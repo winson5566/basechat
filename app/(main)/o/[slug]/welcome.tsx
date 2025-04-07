@@ -31,23 +31,25 @@ export default function Welcome({ tenant, className }: Props) {
   const [isLoadingSettings, setIsLoadingSettings] = useState(true);
 
   const [selectedModel, setSelectedModel] = useState<LLMModel>(() => {
+    const enabledModels = getEnabledModels(tenant.enabledModels);
     if (typeof window !== "undefined") {
       const saved = localStorage.getItem("chatSettings");
       if (saved) {
         const settings = JSON.parse(saved);
         const savedModel = settings.selectedModel;
         const parsed = modelSchema.safeParse(savedModel);
-        const enabledModels = getEnabledModels(tenant.enabledModels);
         if (parsed.success && enabledModels.includes(savedModel)) {
           return savedModel;
         }
       }
     }
     // Validate first enabled model or default model
-    const enabledModels = getEnabledModels(tenant.enabledModels);
     const firstModel = enabledModels[0];
     const parsed = modelSchema.safeParse(firstModel);
-    return parsed.success ? firstModel : DEFAULT_MODEL;
+    if (parsed.success) {
+      return tenant.defaultModel || firstModel;
+    }
+    return DEFAULT_MODEL;
   });
 
   const [isBreadth, setIsBreadth] = useState(false);
@@ -57,41 +59,32 @@ export default function Welcome({ tenant, className }: Props) {
   // Fetch tenant search settings
   useEffect(() => {
     const fetchTenantSearchSettings = async () => {
-      try {
-        // Only fetch if the tenant has a searchSettingsId
-        if (!tenant.searchSettingsId) {
-          setIsLoadingSettings(false);
-          return;
-        }
-
-        const res = await fetch(`/api/tenants/current`, {
-          headers: { tenant: tenant.slug },
-        });
-
-        if (res.ok) {
-          const data = await res.json();
-          const settings = searchSettingsSchema.parse(data);
-          setTenantSearchSettings(settings);
-
-          // Apply tenant defaults for non-overridable settings immediately
-          if (!settings.overrideBreadth) {
-            setIsBreadth(settings.isBreadth);
-          }
-          if (!settings.overrideRerank) {
-            setRerankEnabled(settings.rerankEnabled);
-          }
-          if (!settings.overridePrioritizeRecent) {
-            setPrioritizeRecent(settings.prioritizeRecent);
-          }
-        } else if (res.status === 404) {
-          // Tenant doesn't have search settings yet, proceed without them
-          console.log("No search settings found for tenant");
-        }
-      } catch (error) {
-        console.error("Failed to fetch tenant search settings:", error);
-      } finally {
+      // Only fetch if the tenant has a searchSettingsId
+      if (!tenant.searchSettingsId) {
         setIsLoadingSettings(false);
+        return;
       }
+      const res = await fetch(`/api/tenants/current`, {
+        headers: { tenant: tenant.slug },
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        const settings = searchSettingsSchema.parse(data);
+        setTenantSearchSettings(settings);
+
+        // Apply tenant defaults for non-overridable settings immediately
+        if (!settings.overrideBreadth) {
+          setIsBreadth(settings.isBreadth);
+        }
+        if (!settings.overrideRerank) {
+          setRerankEnabled(settings.rerankEnabled);
+        }
+        if (!settings.overridePrioritizeRecent) {
+          setPrioritizeRecent(settings.prioritizeRecent);
+        }
+      }
+      setIsLoadingSettings(false);
     };
 
     fetchTenantSearchSettings();
@@ -104,29 +97,22 @@ export default function Welcome({ tenant, className }: Props) {
     if (typeof window !== "undefined") {
       const saved = localStorage.getItem("chatSettings");
       if (saved) {
-        try {
-          const settings = JSON.parse(saved);
-
-          // Apply user settings only if overrides are allowed
-          if (!tenantSearchSettings || tenantSearchSettings.overrideBreadth) {
-            setIsBreadth(settings.isBreadth ?? false);
-          }
-          if (!tenantSearchSettings || tenantSearchSettings.overrideRerank) {
-            setRerankEnabled(settings.rerankEnabled ?? false);
-          }
-          if (!tenantSearchSettings || tenantSearchSettings.overridePrioritizeRecent) {
-            setPrioritizeRecent(settings.prioritizeRecent ?? false);
-          }
-
-          // Model selection is always allowed
-          const savedModel = settings.selectedModel;
-          const parsed = modelSchema.safeParse(savedModel);
-          const enabledModels = getEnabledModels(tenant.enabledModels);
-          if (parsed.success && enabledModels.includes(savedModel)) {
-            setSelectedModel(savedModel);
-          }
-        } catch (error) {
-          console.error("Error parsing saved chat settings:", error);
+        const settings = JSON.parse(saved);
+        // Apply user settings only if overrides are allowed
+        if (!tenantSearchSettings || tenantSearchSettings.overrideBreadth) {
+          setIsBreadth(settings.isBreadth ?? false);
+        }
+        if (!tenantSearchSettings || tenantSearchSettings.overrideRerank) {
+          setRerankEnabled(settings.rerankEnabled ?? false);
+        }
+        if (!tenantSearchSettings || tenantSearchSettings.overridePrioritizeRecent) {
+          setPrioritizeRecent(settings.prioritizeRecent ?? false);
+        }
+        const savedModel = settings.selectedModel;
+        const parsed = modelSchema.safeParse(savedModel);
+        const enabledModels = getEnabledModels(tenant.enabledModels);
+        if (parsed.success && enabledModels.includes(savedModel)) {
+          setSelectedModel(savedModel);
         }
       }
     }

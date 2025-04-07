@@ -97,12 +97,7 @@ export default function Chatbot({ tenant, conversationId, initMessage, onSelecte
           if (!settings.overridePrioritizeRecent) {
             setPrioritizeRecent(settings.prioritizeRecent);
           }
-        } else if (res.status === 404) {
-          // Tenant doesn't have search settings yet, proceed without them
-          console.log("No search settings found for tenant");
         }
-      } catch (error) {
-        console.error("Failed to fetch tenant search settings:", error);
       } finally {
         setIsLoadingSettings(false);
       }
@@ -117,42 +112,45 @@ export default function Chatbot({ tenant, conversationId, initMessage, onSelecte
 
     const saved = localStorage.getItem("chatSettings");
     if (saved) {
-      try {
-        const settings = JSON.parse(saved);
+      const settings = JSON.parse(saved);
 
-        // Apply user settings only if overrides are allowed
-        if (!tenantSearchSettings || tenantSearchSettings.overrideBreadth) {
-          setIsBreadth(settings.isBreadth ?? false);
-        }
-        if (!tenantSearchSettings || tenantSearchSettings.overrideRerank) {
-          setRerankEnabled(settings.rerankEnabled ?? false);
-        }
-        if (!tenantSearchSettings || tenantSearchSettings.overridePrioritizeRecent) {
-          setPrioritizeRecent(settings.prioritizeRecent ?? false);
-        }
+      // Apply user settings only if overrides are allowed
+      if (!tenantSearchSettings || tenantSearchSettings.overrideBreadth) {
+        setIsBreadth(settings.isBreadth ?? false);
+      }
+      if (!tenantSearchSettings || tenantSearchSettings.overrideRerank) {
+        setRerankEnabled(settings.rerankEnabled ?? false);
+      }
+      if (!tenantSearchSettings || tenantSearchSettings.overridePrioritizeRecent) {
+        setPrioritizeRecent(settings.prioritizeRecent ?? false);
+      }
 
-        setSelectedModel(settings.selectedModel ?? initialModel);
-      } catch (error) {
-        console.error("Error parsing saved chat settings:", error);
+      // Model selection is always allowed
+      const savedModel = settings.selectedModel;
+      const parsed = modelSchema.safeParse(savedModel);
+      if (parsed.success && tenant.enabledModels.includes(savedModel)) {
+        setSelectedModel(savedModel);
+      } else {
+        setSelectedModel(tenant.defaultModel || tenant.enabledModels[0]);
       }
     }
-  }, [isLoadingSettings, initialModel, tenantSearchSettings, tenant.searchSettingsId]);
+  }, [isLoadingSettings, tenant.enabledModels, tenantSearchSettings, tenant.searchSettingsId]);
 
   // Save user settings to localStorage whenever they change
   useEffect(() => {
     // Only save if tenant settings are loaded and we're not in the initial loading phase
     if (isLoadingSettings) return;
 
-    localStorage.setItem(
-      "chatSettings",
-      JSON.stringify({
-        isBreadth,
-        rerankEnabled,
-        prioritizeRecent,
-        selectedModel,
-      }),
-    );
-  }, [isBreadth, rerankEnabled, prioritizeRecent, selectedModel, isLoadingSettings]);
+    // Only save settings that can be overridden
+    const settingsToSave = {
+      selectedModel,
+      ...(tenantSearchSettings?.overrideBreadth ? { isBreadth } : {}),
+      ...(tenantSearchSettings?.overrideRerank ? { rerankEnabled } : {}),
+      ...(tenantSearchSettings?.overridePrioritizeRecent ? { prioritizeRecent } : {}),
+    };
+
+    localStorage.setItem("chatSettings", JSON.stringify(settingsToSave));
+  }, [isBreadth, rerankEnabled, prioritizeRecent, selectedModel, isLoadingSettings, tenantSearchSettings]);
 
   const { isLoading, object, submit } = useObject({
     api: `/api/conversations/${conversationId}/messages`,
@@ -183,7 +181,6 @@ export default function Chatbot({ tenant, conversationId, initMessage, onSelecte
   const handleSubmit = (content: string, model: LLMModel) => {
     const provider = getProviderForModel(model);
     if (!provider) {
-      console.error(`No provider found for model ${model}`);
       return;
     }
 

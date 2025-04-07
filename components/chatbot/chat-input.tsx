@@ -132,6 +132,13 @@ export default function ChatInput(props: ChatInputProps) {
     props.onPrioritizeRecentChange,
   ]);
 
+  // sync with prop changes
+  useEffect(() => {
+    setIsBreadth(props.isBreadth);
+    setRerankEnabled(props.rerankEnabled ?? false);
+    setPrioritizeRecent(props.prioritizeRecent ?? false);
+  }, [props.isBreadth, props.rerankEnabled, props.prioritizeRecent]);
+
   const handleSubmit = (value: string) => {
     setValue("");
 
