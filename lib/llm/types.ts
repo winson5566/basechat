@@ -26,6 +26,20 @@ export const PROVIDER_CONFIG = {
       "claude-3-5-haiku-latest": "Claude 3.5 Haiku",
     } as const,
   },
+  groq: {
+    models: ["meta-llama/llama-4-scout-17b-16e-instruct"] as const,
+    logo: "/openai.svg", // TODO: add logo
+    displayNames: {
+      "meta-llama/llama-4-scout-17b-16e-instruct": "Llama 4 Scout 17B",
+    } as const,
+  },
+  deepseek: {
+    models: ["deepseek-chat"] as const,
+    logo: "/gemini.svg", // TODO: add logo
+    displayNames: {
+      "deepseek-chat": "DeepSeek V3",
+    } as const,
+  },
 } as const;
 
 // Default values

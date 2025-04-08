@@ -1,5 +1,7 @@
 import { anthropic } from "@ai-sdk/anthropic";
+import { deepseek } from "@ai-sdk/deepseek";
 import { google } from "@ai-sdk/google";
+import { groq } from "@ai-sdk/groq";
 import { openai } from "@ai-sdk/openai";
 import { CoreMessage, generateText, streamObject } from "ai";
 import Handlebars from "handlebars";
@@ -81,8 +83,14 @@ export async function generate(tenantId: string, profileId: string, conversation
     case "anthropic":
       model = anthropic(context.model);
       break;
+    case "groq":
+      model = groq(context.model);
+      break;
+    case "deepseek":
+      model = deepseek(context.model);
+      break;
     default:
-      model = openai(DEFAULT_MODEL);
+      model = anthropic(DEFAULT_MODEL);
   }
 
   let result;
