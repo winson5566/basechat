@@ -35,7 +35,7 @@ export const PROVIDER_CONFIG = {
   },
   deepseek: {
     models: ["deepseek-chat"] as const,
-    logo: "/gemini.svg", // TODO: add logo
+    logo: "/deepseek.svg",
     displayNames: {
       "deepseek-chat": "DeepSeek V3",
     } as const,
