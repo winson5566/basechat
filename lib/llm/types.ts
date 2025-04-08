@@ -28,7 +28,7 @@ export const PROVIDER_CONFIG = {
   },
   groq: {
     models: ["meta-llama/llama-4-scout-17b-16e-instruct"] as const,
-    logo: "/openai.svg", // TODO: add logo
+    logo: "/meta.svg",
     displayNames: {
       "meta-llama/llama-4-scout-17b-16e-instruct": "Llama 4 Scout 17B",
     } as const,
