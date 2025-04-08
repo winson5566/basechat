@@ -7,7 +7,7 @@ import nodemailer from "nodemailer";
 import SMTPConnection from "nodemailer/lib/smtp-connection";
 
 import auth from "@/auth";
-import { Member, MemberType } from "@/lib/api";
+import { Member, MemberType, UpdateSearchSettingsRequest } from "@/lib/api";
 import { getEnabledModels } from "@/lib/llm/types";
 import * as settings from "@/lib/server/settings";
 
@@ -66,6 +66,17 @@ export async function createTenant(userId: string, name: string) {
   const tenantId = tenants[0].id;
 
   const profile = await createProfile(tenantId, userId, "admin");
+
+  // Create default search settings for the tenant
+  await db.insert(schema.searchSettings).values({
+    tenantId,
+    isBreadth: false,
+    rerankEnabled: false,
+    prioritizeRecent: false,
+    overrideBreadth: true,
+    overrideRerank: true,
+    overridePrioritizeRecent: true,
+  });
 
   return { tenant: tenants[0], profile };
 }
@@ -222,6 +233,7 @@ export async function getAuthContextByUserId(userId: string, slug: string) {
     .from(schema.tenants)
     .innerJoin(schema.users, eq(schema.users.id, userId))
     .innerJoin(schema.profiles, eq(schema.tenants.id, schema.profiles.tenantId))
+    .innerJoin(schema.searchSettings, eq(schema.tenants.id, schema.searchSettings.tenantId))
     .where(and(eq(schema.profiles.userId, userId), eq(schema.tenants.slug, slug)));
 
   assert(rs.length === 1, "expected single record");
@@ -232,6 +244,7 @@ export async function getAuthContextByUserId(userId: string, slug: string) {
     tenant: {
       ...row.tenants,
       enabledModels: getEnabledModels(row.tenants.enabledModels),
+      searchSettings: row.search_settings,
     },
   };
 }
@@ -559,4 +572,33 @@ export async function deleteTenantLogo(tenantId: string) {
 
 export function linkUsers(fromUserId: string, toUserId: string) {
   return db.update(schema.profiles).set({ userId: toUserId }).where(eq(schema.profiles.userId, fromUserId));
+}
+
+export async function getSearchSettingsByTenantId(tenantId: string) {
+  const rs = await db.select().from(schema.searchSettings).where(eq(schema.searchSettings.tenantId, tenantId));
+  assert(rs.length === 1);
+  return rs[0];
+}
+
+export async function updateSearchSettingsByTenantId(tenantId: string, params: UpdateSearchSettingsRequest) {
+  await db
+    .update(schema.searchSettings)
+    .set({
+      ...params,
+      updatedAt: new Date(),
+    })
+    .where(eq(schema.searchSettings.tenantId, tenantId));
+}
+
+export async function createSearchSettings(tenantId: string, params: UpdateSearchSettingsRequest) {
+  const [settings] = await db
+    .insert(schema.searchSettings)
+    .values({
+      tenantId,
+      ...params,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    })
+    .returning();
+  return settings;
 }

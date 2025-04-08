@@ -10,8 +10,9 @@ import {
   conversationMessagesResponseSchema,
   CreateConversationMessageRequest,
   createConversationMessageResponseSchema,
+  SearchSettings,
 } from "@/lib/api";
-import { getProviderForModel, LLMModel, modelSchema } from "@/lib/llm/types";
+import { DEFAULT_MODEL, getEnabledModels, getProviderForModel, LLMModel, modelSchema } from "@/lib/llm/types";
 
 import AssistantMessage from "./assistant-message";
 import ChatInput from "./chat-input";
@@ -34,6 +35,8 @@ interface Props {
     slug: string;
     id: string;
     enabledModels: LLMModel[];
+    defaultModel: LLMModel | null;
+    searchSettings: SearchSettings | null;
   };
   initMessage?: string;
   onSelectedDocumentId: (id: string) => void;
@@ -46,46 +49,74 @@ export default function Chatbot({ tenant, conversationId, initMessage, onSelecte
   const [pendingMessage, setPendingMessage] = useState<null | { id: string; model: LLMModel }>(null);
   const pendingMessageRef = useRef<null | { id: string; model: LLMModel }>(null);
   pendingMessageRef.current = pendingMessage;
-  const { initialModel } = useGlobalState();
+
+  const tenantSearchSettings = tenant.searchSettings;
+  const enabledModels = useMemo(() => getEnabledModels(tenant.enabledModels), [tenant.enabledModels]);
+  const [isBreadth, setIsBreadth] = useState(tenantSearchSettings?.isBreadth ?? false);
+  const [rerankEnabled, setRerankEnabled] = useState(tenantSearchSettings?.rerankEnabled ?? false);
+  const [prioritizeRecent, setPrioritizeRecent] = useState(tenantSearchSettings?.prioritizeRecent ?? false);
+
   const [selectedModel, setSelectedModel] = useState<LLMModel>(() => {
-    if (tenant.enabledModels.length > 0) {
-      const parsed = modelSchema.safeParse(initialModel);
-      if (parsed.success && tenant.enabledModels.includes(initialModel)) {
-        return initialModel;
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem("chatSettings");
+      if (saved) {
+        const settings = JSON.parse(saved);
+        const savedModel = settings.selectedModel;
+        const parsed = modelSchema.safeParse(savedModel);
+        if (parsed.success && enabledModels.includes(savedModel)) {
+          return savedModel;
+        }
       }
-      // if initial model from global state is no longer enabled by this tenant, change to one that is
-      return tenant.enabledModels[0];
     }
-    return initialModel;
+    // Validate first enabled model or default model
+    const firstModel = enabledModels[0];
+    const parsed = modelSchema.safeParse(firstModel);
+    if (parsed.success) {
+      return tenant.defaultModel || firstModel;
+    }
+    return DEFAULT_MODEL;
   });
-  const [isBreadth, setIsBreadth] = useState(false);
-  const [rerankEnabled, setRerankEnabled] = useState(false);
-  const [prioritizeRecent, setPrioritizeRecent] = useState(false);
 
-  // Load settings from localStorage after initial render
+  // Load user settings from localStorage after initial render and tenant settings are loaded
   useEffect(() => {
-    const saved = localStorage.getItem("chatSettings");
-    if (saved) {
-      const settings = JSON.parse(saved);
-      setSelectedModel(settings.selectedModel ?? initialModel);
-      setIsBreadth(settings.isBreadth ?? false);
-      setRerankEnabled(settings.rerankEnabled ?? false);
-      setPrioritizeRecent(settings.prioritizeRecent ?? false);
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem("chatSettings");
+      if (saved) {
+        const settings = JSON.parse(saved);
+        // Apply user settings only if overrides are allowed
+        if (!tenantSearchSettings || tenantSearchSettings.overrideBreadth) {
+          setIsBreadth(settings.isBreadth ?? false);
+        }
+        if (!tenantSearchSettings || tenantSearchSettings.overrideRerank) {
+          setRerankEnabled(settings.rerankEnabled ?? false);
+        }
+        if (!tenantSearchSettings || tenantSearchSettings.overridePrioritizeRecent) {
+          setPrioritizeRecent(settings.prioritizeRecent ?? false);
+        }
+        // Model selection is always allowed
+        const savedModel = settings.selectedModel;
+        const parsed = modelSchema.safeParse(savedModel);
+        if (parsed.success && enabledModels.includes(savedModel)) {
+          setSelectedModel(savedModel);
+        } else {
+          setSelectedModel(tenant.defaultModel || enabledModels[0]);
+        }
+      }
     }
-  }, [initialModel]);
+  }, [enabledModels, tenantSearchSettings]);
 
-  // Save settings to localStorage whenever they change
+  // Save user settings to localStorage whenever they change
   useEffect(() => {
-    localStorage.setItem(
-      "chatSettings",
-      JSON.stringify({
-        isBreadth,
-        rerankEnabled,
-        prioritizeRecent,
-        selectedModel,
-      }),
-    );
-  }, [isBreadth, rerankEnabled, prioritizeRecent, selectedModel]);
+    // Only save settings that can be overridden
+    const settingsToSave = {
+      selectedModel,
+      ...(tenantSearchSettings?.overrideBreadth ? { isBreadth } : {}),
+      ...(tenantSearchSettings?.overrideRerank ? { rerankEnabled } : {}),
+      ...(tenantSearchSettings?.overridePrioritizeRecent ? { prioritizeRecent } : {}),
+    };
+
+    localStorage.setItem("chatSettings", JSON.stringify(settingsToSave));
+  }, [isBreadth, rerankEnabled, prioritizeRecent, selectedModel, tenantSearchSettings]);
 
   const { isLoading, object, submit } = useObject({
     api: `/api/conversations/${conversationId}/messages`,
@@ -116,7 +147,6 @@ export default function Chatbot({ tenant, conversationId, initMessage, onSelecte
   const handleSubmit = (content: string, model: LLMModel) => {
     const provider = getProviderForModel(model);
     if (!provider) {
-      console.error(`No provider found for model ${model}`);
       return;
     }
 
@@ -191,14 +221,6 @@ export default function Chatbot({ tenant, conversationId, initMessage, onSelecte
     [messages, sourceCache],
   );
 
-  // Ensure selected model is in enabled models list
-  useEffect(() => {
-    if (!tenant.enabledModels.includes(selectedModel)) {
-      // Update to first enabled model
-      setSelectedModel(tenant.enabledModels[0]);
-    }
-  }, [selectedModel, tenant.enabledModels]);
-
   return (
     <div className="flex h-full w-full items-center flex-col">
       <div ref={container} className="flex flex-col h-full w-full items-center overflow-y-auto">
@@ -249,7 +271,10 @@ export default function Chatbot({ tenant, conversationId, initMessage, onSelecte
             onRerankChange={setRerankEnabled}
             prioritizeRecent={prioritizeRecent}
             onPrioritizeRecentChange={setPrioritizeRecent}
-            enabledModels={tenant.enabledModels}
+            enabledModels={enabledModels}
+            canSetIsBreadth={tenantSearchSettings?.overrideBreadth ?? true}
+            canSetRerankEnabled={tenantSearchSettings?.overrideRerank ?? true}
+            canSetPrioritizeRecent={tenantSearchSettings?.overridePrioritizeRecent ?? true}
           />
         </div>
       </div>

@@ -52,7 +52,11 @@ export const modelArraySchema = z.array(modelSchema).min(1, "At least one model 
 
 // Helper function to get enabled models, handling null case
 export function getEnabledModels(enabledModels: string[] | null): string[] {
-  return enabledModels ?? ALL_VALID_MODELS;
+  if (enabledModels === null) {
+    return ALL_VALID_MODELS;
+  }
+  // Filter out any models that aren't in ALL_VALID_MODELS
+  return enabledModels.filter((model) => ALL_VALID_MODELS.includes(model));
 }
 
 export function getProviderForModel(model: string): LLMProvider | null {

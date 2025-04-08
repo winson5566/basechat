@@ -3,15 +3,19 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2 } from "lucide-react";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
 import { useMemo, useState, useEffect } from "react";
 import { useForm, UseFormReturn } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import {
+  SearchSettingsField,
+  searchSettingsFormSchema,
+  SearchSettingsFormValues,
+} from "@/app/(main)/o/[slug]/settings/models/search-settings-field";
+import { Form, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Switch } from "@/components/ui/switch";
-import { updateTenantSchema } from "@/lib/api";
+import { updateTenantSchema, updateSearchSettingsSchema, searchSettingsSchema, SearchSettings } from "@/lib/api";
 import {
   ALL_VALID_MODELS,
   LLM_DISPLAY_NAMES,
@@ -19,15 +23,17 @@ import {
   LLMModel,
   modelArraySchema,
   getEnabledModels,
+  modelSchema,
 } from "@/lib/llm/types";
 import * as schema from "@/lib/server/db/schema";
 import { cn } from "@/lib/utils";
 
-const formSchema = z.object({
+const modelsFormSchema = z.object({
   enabledModels: modelArraySchema,
+  defaultModel: modelSchema,
 });
 
-type FormValues = z.infer<typeof formSchema>;
+type FormValues = z.infer<typeof modelsFormSchema>;
 
 type ModelsFieldProps = {
   form: UseFormReturn<FormValues>;
@@ -39,20 +45,42 @@ const ModelsField = ({ form, className }: ModelsFieldProps) => {
     const currentModels = getEnabledModels(form.getValues("enabledModels"));
 
     if (isEnabled && !currentModels.includes(model)) {
-      form.setValue("enabledModels", [...currentModels, model], {
+      const newEnabledModels = [...currentModels, model];
+      form.setValue("enabledModels", newEnabledModels, {
         shouldDirty: true,
         shouldValidate: true,
       });
-    } else if (!isEnabled && currentModels.includes(model)) {
-      form.setValue(
-        "enabledModels",
-        currentModels.filter((m) => m !== model),
-        {
+
+      // If this is now the only enabled model, set it as default
+      if (newEnabledModels.length === 1) {
+        form.setValue("defaultModel", model, {
           shouldDirty: true,
           shouldValidate: true,
-        },
-      );
+        });
+      }
+    } else if (!isEnabled && currentModels.includes(model)) {
+      const newEnabledModels = currentModels.filter((m) => m !== model);
+      form.setValue("enabledModels", newEnabledModels, {
+        shouldDirty: true,
+        shouldValidate: true,
+      });
+
+      // If we're disabling the current default model and there are other models available,
+      // set the first remaining enabled model as default
+      if (model === form.getValues("defaultModel") && newEnabledModels.length > 0) {
+        form.setValue("defaultModel", newEnabledModels[0], {
+          shouldDirty: true,
+          shouldValidate: true,
+        });
+      }
     }
+  };
+
+  const handleSetDefault = (model: LLMModel) => {
+    form.setValue("defaultModel", model, {
+      shouldDirty: true,
+      shouldValidate: true,
+    });
   };
 
   return (
@@ -68,9 +96,10 @@ const ModelsField = ({ form, className }: ModelsFieldProps) => {
           <div className="space-y-5 pl-8">
             {ALL_VALID_MODELS.map((model) => {
               const isEnabled = field.value?.includes(model);
+              const isDefault = model === form.getValues("defaultModel");
               const [_, logoPath] = LLM_LOGO_MAP[model as string];
               return (
-                <div key={model}>
+                <div key={model} className="group">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center">
                       <Image
@@ -82,11 +111,30 @@ const ModelsField = ({ form, className }: ModelsFieldProps) => {
                       />
                       <div className="text-base">{LLM_DISPLAY_NAMES[model as string]}</div>
                     </div>
-                    <Switch
-                      checked={isEnabled}
-                      onCheckedChange={(checked) => handleToggleModel(model, checked)}
-                      className="data-[state=checked]:bg-[#D946EF]"
-                    />
+                    <div className="flex items-center gap-4">
+                      <div className="w-24 text-right">
+                        {isDefault ? (
+                          <span className="text-[13px] line-height-[20px] text-black bg-muted px-2 py-1 gap-2 rounded">
+                            Default
+                          </span>
+                        ) : (
+                          isEnabled && (
+                            <button
+                              type="button"
+                              onClick={() => handleSetDefault(model)}
+                              className="text-sm text-[#7749F8] hover:text-[#7749F8]/80 hidden group-hover:block"
+                            >
+                              Set as default
+                            </button>
+                          )
+                        )}
+                      </div>
+                      <Switch
+                        checked={isEnabled}
+                        onCheckedChange={(checked) => handleToggleModel(model, checked)}
+                        className="data-[state=checked]:bg-[#7749F8]"
+                      />
+                    </div>
                   </div>
                   <hr className="w-full my-4" />
                 </div>
@@ -101,58 +149,106 @@ const ModelsField = ({ form, className }: ModelsFieldProps) => {
 };
 
 type Props = {
-  tenant: typeof schema.tenants.$inferSelect;
+  tenant: typeof schema.tenants.$inferSelect & { searchSettings: typeof schema.searchSettings.$inferSelect };
 };
 
+type CombinedFormValues = FormValues & SearchSettingsFormValues;
+
 export default function ModelSettings({ tenant }: Props) {
-  const [mounted, setMounted] = useState(false);
   const [isLoading, setLoading] = useState(false);
 
-  useEffect(() => setMounted(true), []);
-
   const formattedTenant = useMemo(() => {
-    const { enabledModels, ...otherFields } = tenant;
+    const { enabledModels, defaultModel, ...otherFields } = tenant;
 
     // Zod only uses default values when the value is undefined. They come in as null
     // Change fields you want to have defaults to undefined.
     return {
       enabledModels: enabledModels,
+      defaultModel: defaultModel ?? undefined,
       ...otherFields,
     };
   }, [tenant]);
 
-  const form = useForm<FormValues>({
-    resolver: zodResolver(formSchema),
-    defaultValues: formSchema.parse(formattedTenant),
+  const modelsForm = useForm<FormValues>({
+    resolver: zodResolver(modelsFormSchema),
+    defaultValues: modelsFormSchema.parse({
+      enabledModels: formattedTenant.enabledModels,
+      defaultModel: formattedTenant.defaultModel ?? undefined,
+    }),
   });
 
-  if (!mounted) return null;
+  const searchSettingsForm = useForm<SearchSettingsFormValues>({
+    resolver: zodResolver(searchSettingsFormSchema),
+    defaultValues: {
+      isBreadth: tenant.searchSettings?.isBreadth ?? false,
+      overrideBreadth: tenant.searchSettings?.overrideBreadth ?? true,
+      rerankEnabled: tenant.searchSettings?.rerankEnabled ?? false,
+      overrideRerank: tenant.searchSettings?.overrideRerank ?? true,
+      prioritizeRecent: tenant.searchSettings?.prioritizeRecent ?? false,
+      overridePrioritizeRecent: tenant.searchSettings?.overridePrioritizeRecent ?? true,
+    },
+  });
 
-  async function onSubmit(values: FormValues) {
+  async function onSubmit(values: CombinedFormValues) {
     setLoading(true);
 
     try {
-      const payload = updateTenantSchema.parse(values);
-      const res = await fetch("/api/tenants/current", {
+      // Update models
+      const modelsPayload = updateTenantSchema.parse({
+        enabledModels: values.enabledModels,
+        defaultModel: values.defaultModel,
+      });
+      const modelsRes = await fetch("/api/tenants/current", {
         method: "PATCH",
         headers: { tenant: tenant.slug },
-        body: JSON.stringify(payload),
+        body: JSON.stringify(modelsPayload),
       });
 
-      if (res.status !== 200) throw new Error("Failed to save");
+      if (modelsRes.status !== 200) throw new Error("Failed to save models");
+
+      // Update search settings
+      const searchSettingsPayload = updateSearchSettingsSchema.parse({
+        isBreadth: values.isBreadth,
+        overrideBreadth: values.overrideBreadth,
+        rerankEnabled: values.rerankEnabled,
+        overrideRerank: values.overrideRerank,
+        prioritizeRecent: values.prioritizeRecent,
+        overridePrioritizeRecent: values.overridePrioritizeRecent,
+      });
+      const searchSettingsRes = await fetch(`/api/tenants/current`, {
+        method: "PUT",
+        headers: { tenant: tenant.slug },
+        body: JSON.stringify(searchSettingsPayload),
+      });
+
+      if (searchSettingsRes.status !== 200) throw new Error("Failed to save search settings");
 
       toast.success("Changes saved");
-      form.reset(values);
+      modelsForm.reset({
+        enabledModels: values.enabledModels,
+        defaultModel: values.defaultModel,
+      });
+      searchSettingsForm.reset({
+        isBreadth: values.isBreadth,
+        overrideBreadth: values.overrideBreadth,
+        rerankEnabled: values.rerankEnabled,
+        overrideRerank: values.overrideRerank,
+        prioritizeRecent: values.prioritizeRecent,
+        overridePrioritizeRecent: values.overridePrioritizeRecent,
+      });
     } catch (error) {
       toast.error("Failed to save changes");
-      console.error(error);
     } finally {
       setLoading(false);
     }
   }
 
   async function handleCancel() {
-    form.reset();
+    modelsForm.reset({
+      enabledModels: formattedTenant.enabledModels,
+      defaultModel: formattedTenant.defaultModel ?? undefined,
+    });
+    searchSettingsForm.reset();
   }
 
   return (
@@ -163,7 +259,7 @@ export default function ModelSettings({ tenant }: Props) {
           <button
             type="reset"
             className="rounded-lg disabled:opacity-[55%] px-4 py-2.5 mr-3"
-            disabled={!form.formState.isDirty}
+            disabled={!modelsForm.formState.isDirty && !searchSettingsForm.formState.isDirty}
             onClick={handleCancel}
           >
             Cancel
@@ -171,8 +267,12 @@ export default function ModelSettings({ tenant }: Props) {
           <button
             type="button"
             className="rounded-lg bg-[#D946EF] text-white disabled:opacity-[55%] px-4 py-2.5 flex items-center"
-            disabled={!form.formState.isDirty || isLoading}
-            onClick={form.handleSubmit(onSubmit)}
+            disabled={(!modelsForm.formState.isDirty && !searchSettingsForm.formState.isDirty) || isLoading}
+            onClick={() => {
+              const modelsValues = modelsForm.getValues();
+              const searchSettingsValues = searchSettingsForm.getValues();
+              onSubmit({ ...modelsValues, ...searchSettingsValues });
+            }}
           >
             Save
             {isLoading && <Loader2 size={18} className="ml-2 animate-spin" />}
@@ -180,14 +280,17 @@ export default function ModelSettings({ tenant }: Props) {
         </div>
       </div>
 
-      <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)}>
+      <Form {...modelsForm}>
+        <form onSubmit={modelsForm.handleSubmit(() => {})}>
           <div>
-            <ModelsField form={form} />
+            <ModelsField form={modelsForm} />
           </div>
         </form>
       </Form>
-      <div className="h-32" />
+
+      <div className="h-16" />
+
+      <SearchSettingsField form={searchSettingsForm} />
     </div>
   );
 }

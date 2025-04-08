@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 
 import { useGlobalState } from "@/app/(main)/o/[slug]/context";
 import Chatbot from "@/components/chatbot";
+import { SearchSettings } from "@/lib/api";
 import { LLMModel } from "@/lib/llm/types";
 
 import Summary from "./summary";
@@ -16,6 +17,8 @@ interface Props {
     slug: string;
     id: string;
     enabledModels: LLMModel[];
+    defaultModel: LLMModel | null;
+    searchSettings: SearchSettings | null;
   };
 }
 
@@ -23,16 +26,17 @@ export default function Conversation({ id, tenant }: Props) {
   const [documentId, setDocumentId] = useState<string | null>(null);
   const { initialMessage, setInitialMessage, initialModel, setInitialModel } = useGlobalState();
 
-  // Check if the initial model is still in the enabled models list
+  // Move the default model logic outside useEffect
+  const defaultModel = tenant.defaultModel || tenant.enabledModels[0];
+
+  // Simplified useEffect that only handles validation
   useEffect(() => {
-    if (initialModel && tenant.enabledModels && tenant.enabledModels.length > 0) {
-      // If the initial model is not in the enabled models list, update it
+    if (initialModel && tenant.enabledModels.length > 0) {
       if (!tenant.enabledModels.includes(initialModel)) {
-        // Set to the first enabled model
-        setInitialModel(tenant.enabledModels[0]);
+        setInitialModel(defaultModel);
       }
     }
-  }, [initialModel, tenant.enabledModels, setInitialModel]);
+  }, [initialModel, tenant.enabledModels, setInitialModel, defaultModel]);
 
   useEffect(() => {
     setInitialMessage("");
