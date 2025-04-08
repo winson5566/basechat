@@ -26,7 +26,16 @@ export const PROVIDER_CONFIG = {
       "claude-3-5-haiku-latest": "Claude 3.5 Haiku",
     } as const,
   },
+  groq: {
+    models: ["meta-llama/llama-4-scout-17b-16e-instruct"] as const,
+    logo: "/meta.svg",
+    displayNames: {
+      "meta-llama/llama-4-scout-17b-16e-instruct": "Llama 4 Scout",
+    } as const,
+  },
 } as const;
+
+export const SPECIAL_LLAMA_PROMPT = `It is extremely important that you only respond in the "message" field in JSON format. Use the "usedSourceIndexes" field for any sources used, or an empty array if no sources are used. Do not return any fields that do not match the given schema.`;
 
 // Default values
 // If adding a new provider, update app/api/conversations/[conversationId]/messages/utils.ts using the vercel ai-sdk
