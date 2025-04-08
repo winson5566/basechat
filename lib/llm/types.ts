@@ -33,13 +33,6 @@ export const PROVIDER_CONFIG = {
       "meta-llama/llama-4-scout-17b-16e-instruct": "Llama 4 Scout",
     } as const,
   },
-  // deepseek: {
-  //   models: ["deepseek-chat"] as const,
-  //   logo: "/deepseek.svg",
-  //   displayNames: {
-  //     "deepseek-chat": "DeepSeek V3",
-  //   } as const,
-  // },
 } as const;
 
 export const SPECIAL_LLAMA_PROMPT = `It is extremely important that you only respond in the "message" field in JSON format. Use the "usedSourceIndexes" field for any sources used, or an empty array if no sources are used. Do not return any fields that do not match the given schema.`;

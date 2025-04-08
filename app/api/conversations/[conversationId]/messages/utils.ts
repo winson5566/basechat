@@ -1,5 +1,4 @@
 import { anthropic } from "@ai-sdk/anthropic";
-import { deepseek } from "@ai-sdk/deepseek";
 import { google } from "@ai-sdk/google";
 import { groq } from "@ai-sdk/groq";
 import { openai } from "@ai-sdk/openai";
@@ -66,7 +65,6 @@ export async function generate(tenantId: string, profileId: string, conversation
   });
 
   // Move system messages to the beginning for providers that require it
-  // google and anthropic require system messages to be ONLY in the beginning
   const systemMessages = context.messages.filter((msg) => msg.role === "system");
   const nonSystemMessages = context.messages.filter((msg) => msg.role !== "system");
 
@@ -74,7 +72,6 @@ export async function generate(tenantId: string, profileId: string, conversation
   context.messages = filterEmptyMessages(context.messages);
 
   // Rename conversation on 2nd user message
-
   const userMessageCount = context.messages.filter((msg) => msg.role === "user").length;
   if (userMessageCount === 2) {
     const title = await createConversationTitle(context.messages);
@@ -88,18 +85,17 @@ export async function generate(tenantId: string, profileId: string, conversation
       break;
     case "google":
       model = google(context.model);
+      // google requires system messages to be ONLY in the beginning
       context.messages = [...systemMessages, ...nonSystemMessages];
       break;
     case "anthropic":
       model = anthropic(context.model);
+      // anthropic requires system messages to be ONLY in the beginning
       context.messages = [...systemMessages, ...nonSystemMessages];
       break;
     case "groq":
       model = groq(context.model);
       break;
-    // case "deepseek":
-    //   model = deepseek(context.model);
-    //   break;
     default:
       model = anthropic(DEFAULT_MODEL);
   }
