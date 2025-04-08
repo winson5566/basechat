@@ -8,7 +8,14 @@ import Handlebars from "handlebars";
 
 import { createConversationMessageResponseSchema } from "@/lib/api";
 import { DEFAULT_GROUNDING_PROMPT, DEFAULT_SYSTEM_PROMPT, NAMING_SYSTEM_PROMPT } from "@/lib/constants";
-import { DEFAULT_NAMING_MODEL, DEFAULT_MODEL, DEFAULT_PROVIDER, getProviderForModel, LLMModel } from "@/lib/llm/types";
+import {
+  DEFAULT_NAMING_MODEL,
+  DEFAULT_MODEL,
+  DEFAULT_PROVIDER,
+  getProviderForModel,
+  LLMModel,
+  SPECIAL_LLAMA_PROMPT,
+} from "@/lib/llm/types";
 import { getRagieClient } from "@/lib/server/ragie";
 import {
   createConversationMessage,
@@ -59,15 +66,17 @@ export async function generate(tenantId: string, profileId: string, conversation
   });
 
   // Move system messages to the beginning for providers that require it
+  // google and anthropic require system messages to be ONLY in the beginning
   const systemMessages = context.messages.filter((msg) => msg.role === "system");
   const nonSystemMessages = context.messages.filter((msg) => msg.role !== "system");
-  context.messages = [...systemMessages, ...nonSystemMessages];
 
   // Filter out empty messages before sending to API
   context.messages = filterEmptyMessages(context.messages);
 
   // Rename conversation on 2nd user message
-  if (context.messages.length === 6) {
+
+  const userMessageCount = context.messages.filter((msg) => msg.role === "user").length;
+  if (userMessageCount === 2) {
     const title = await createConversationTitle(context.messages);
     await updateConversationTitle(tenantId, conversationId, title);
   }
@@ -79,16 +88,18 @@ export async function generate(tenantId: string, profileId: string, conversation
       break;
     case "google":
       model = google(context.model);
+      context.messages = [...systemMessages, ...nonSystemMessages];
       break;
     case "anthropic":
       model = anthropic(context.model);
+      context.messages = [...systemMessages, ...nonSystemMessages];
       break;
     case "groq":
       model = groq(context.model);
       break;
-    case "deepseek":
-      model = deepseek(context.model);
-      break;
+    // case "deepseek":
+    //   model = deepseek(context.model);
+    //   break;
     default:
       model = anthropic(DEFAULT_MODEL);
   }
@@ -99,6 +110,7 @@ export async function generate(tenantId: string, profileId: string, conversation
       messages: context.messages,
       model,
       temperature: 0.3,
+      system: provider === "groq" ? SPECIAL_LLAMA_PROMPT : undefined,
       schema: createConversationMessageResponseSchema,
       onFinish: async (event) => {
         if (!event.object) {
