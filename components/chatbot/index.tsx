@@ -35,7 +35,7 @@ interface Props {
     slug: string;
     id: string;
     enabledModels: LLMModel[];
-    defaultModel?: LLMModel | null;
+    defaultModel: LLMModel | null;
     searchSettings: SearchSettings | null;
   };
   initMessage?: string;
