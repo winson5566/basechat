@@ -24,7 +24,9 @@ interface ChatInputProps {
   prioritizeRecent?: boolean;
   onPrioritizeRecentChange?: (enabled: boolean) => void;
   enabledModels: LLMModel[];
-  tenantSearchSettings?: SearchSettings;
+  canSetIsBreadth: boolean;
+  canSetRerankEnabled: boolean;
+  canSetPrioritizeRecent: boolean;
 }
 
 const useIsDesktop = () => {
@@ -87,57 +89,11 @@ const ModelPopoverContent = ({
 
 export default function ChatInput(props: ChatInputProps) {
   const [value, setValue] = useState("");
-  const [isBreadth, setIsBreadth] = useState(props.isBreadth);
-  const [rerankEnabled, setRerankEnabled] = useState(props.rerankEnabled ?? false);
-  const [prioritizeRecent, setPrioritizeRecent] = useState(props.prioritizeRecent ?? false);
+
+  const { isBreadth, rerankEnabled, prioritizeRecent } = props;
   const ref = useRef<AutosizeTextAreaRef>(null);
-
-  // Determine which settings can be overridden based on tenant settings
-  const canOverrideBreadth = props.tenantSearchSettings?.overrideBreadth ?? true;
-  const canOverrideRerank = props.tenantSearchSettings?.overrideRerank ?? true;
-  const canOverridePrioritizeRecent = props.tenantSearchSettings?.overridePrioritizeRecent ?? true;
-
-  const canOverrideSomething = canOverrideBreadth || canOverrideRerank || canOverridePrioritizeRecent;
+  const canOverrideSomething = props.canSetIsBreadth || props.canSetRerankEnabled || props.canSetPrioritizeRecent;
   const canSwitchModel = props.enabledModels.length > 1;
-
-  // Get default values from tenant settings if they exist
-  const defaultIsBreadth = props.tenantSearchSettings?.isBreadth ?? false;
-  const defaultRerankEnabled = props.tenantSearchSettings?.rerankEnabled ?? false;
-  const defaultPrioritizeRecent = props.tenantSearchSettings?.prioritizeRecent ?? false;
-
-  // Update local state if tenant settings change
-  useEffect(() => {
-    if (!canOverrideBreadth) {
-      setIsBreadth(defaultIsBreadth);
-      props.onBreadthChange(defaultIsBreadth);
-    }
-    if (!canOverrideRerank) {
-      setRerankEnabled(defaultRerankEnabled);
-      props.onRerankChange?.(defaultRerankEnabled);
-    }
-    if (!canOverridePrioritizeRecent) {
-      setPrioritizeRecent(defaultPrioritizeRecent);
-      props.onPrioritizeRecentChange?.(defaultPrioritizeRecent);
-    }
-  }, [
-    props.tenantSearchSettings,
-    canOverrideBreadth,
-    canOverrideRerank,
-    canOverridePrioritizeRecent,
-    defaultIsBreadth,
-    defaultRerankEnabled,
-    defaultPrioritizeRecent,
-    props.onBreadthChange,
-    props.onRerankChange,
-    props.onPrioritizeRecentChange,
-  ]);
-
-  // sync with prop changes
-  useEffect(() => {
-    setIsBreadth(props.isBreadth);
-    setRerankEnabled(props.rerankEnabled ?? false);
-    setPrioritizeRecent(props.prioritizeRecent ?? false);
-  }, [props.isBreadth, props.rerankEnabled, props.prioritizeRecent]);
 
   const handleSubmit = (value: string) => {
     setValue("");
@@ -190,12 +146,11 @@ export default function ChatInput(props: ChatInputProps) {
             <div className="flex flex-col gap-4">
               <span className="text-sm text-muted-foreground">Chat settings</span>
               <div className="flex flex-col gap-2">
-                {(canOverrideBreadth || !props.tenantSearchSettings) && (
+                {props.canSetIsBreadth && (
                   <RadioGroup
                     value={isBreadth ? "breadth" : "depth"}
                     onValueChange={(value) => {
                       const newIsBreadth = value === "breadth";
-                      setIsBreadth(newIsBreadth);
                       props.onBreadthChange(newIsBreadth);
                     }}
                   >
@@ -233,7 +188,7 @@ export default function ChatInput(props: ChatInputProps) {
                 )}
               </div>
               <div className="flex flex-col gap-2">
-                {(canOverrideRerank || !props.tenantSearchSettings) && (
+                {props.canSetRerankEnabled && (
                   <div className="flex items-center justify-between">
                     <div className="flex flex-col">
                       <span className="text-sm font-medium">Rerank</span>
@@ -241,14 +196,13 @@ export default function ChatInput(props: ChatInputProps) {
                     <Switch
                       checked={rerankEnabled}
                       onCheckedChange={(checked: boolean) => {
-                        setRerankEnabled(checked);
                         props.onRerankChange?.(checked);
                       }}
                       className="data-[state=checked]:bg-[#D946EF]"
                     />
                   </div>
                 )}
-                {(canOverridePrioritizeRecent || !props.tenantSearchSettings) && (
+                {props.canSetPrioritizeRecent && (
                   <div className="flex items-center justify-between mt-4">
                     <>
                       <div className="flex flex-col">
@@ -257,7 +211,6 @@ export default function ChatInput(props: ChatInputProps) {
                       <Switch
                         checked={prioritizeRecent}
                         onCheckedChange={(checked: boolean) => {
-                          setPrioritizeRecent(checked);
                           props.onPrioritizeRecentChange?.(checked);
                         }}
                         className="data-[state=checked]:bg-[#D946EF]"

@@ -2,7 +2,7 @@
 
 import { Inter } from "next/font/google";
 import { useRouter } from "next/navigation";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { z } from "zod";
 
 import ChatInput from "@/components/chatbot/chat-input";
@@ -30,7 +30,7 @@ export default function Welcome({ tenant, className }: Props) {
   const [isBreadth, setIsBreadth] = useState(tenantSearchSettings?.isBreadth ?? false);
   const [rerankEnabled, setRerankEnabled] = useState(tenantSearchSettings?.rerankEnabled ?? false);
   const [prioritizeRecent, setPrioritizeRecent] = useState(tenantSearchSettings?.prioritizeRecent ?? false);
-  const enabledModels = getEnabledModels(tenant.enabledModels);
+  const enabledModels = useMemo(() => getEnabledModels(tenant.enabledModels), [tenant.enabledModels]);
 
   const [selectedModel, setSelectedModel] = useState<LLMModel>(() => {
     if (typeof window !== "undefined") {
@@ -153,7 +153,9 @@ export default function Welcome({ tenant, className }: Props) {
           prioritizeRecent={prioritizeRecent}
           onPrioritizeRecentChange={setPrioritizeRecent}
           enabledModels={enabledModels}
-          tenantSearchSettings={tenantSearchSettings || undefined}
+          canSetIsBreadth={tenantSearchSettings?.overrideBreadth ?? true}
+          canSetRerankEnabled={tenantSearchSettings?.overrideRerank ?? true}
+          canSetPrioritizeRecent={tenantSearchSettings?.overridePrioritizeRecent ?? true}
         />
       </div>
     </div>

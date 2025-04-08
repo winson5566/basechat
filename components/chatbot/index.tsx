@@ -12,7 +12,7 @@ import {
   createConversationMessageResponseSchema,
   SearchSettings,
 } from "@/lib/api";
-import { getEnabledModels, getProviderForModel, LLMModel, modelSchema } from "@/lib/llm/types";
+import { DEFAULT_MODEL, getEnabledModels, getProviderForModel, LLMModel, modelSchema } from "@/lib/llm/types";
 
 import AssistantMessage from "./assistant-message";
 import ChatInput from "./chat-input";
@@ -49,24 +49,32 @@ export default function Chatbot({ tenant, conversationId, initMessage, onSelecte
   const [pendingMessage, setPendingMessage] = useState<null | { id: string; model: LLMModel }>(null);
   const pendingMessageRef = useRef<null | { id: string; model: LLMModel }>(null);
   pendingMessageRef.current = pendingMessage;
-  const { initialModel } = useGlobalState();
 
   const tenantSearchSettings = tenant.searchSettings;
-  const enabledModels = getEnabledModels(tenant.enabledModels);
+  const enabledModels = useMemo(() => getEnabledModels(tenant.enabledModels), [tenant.enabledModels]);
   const [isBreadth, setIsBreadth] = useState(tenantSearchSettings?.isBreadth ?? false);
   const [rerankEnabled, setRerankEnabled] = useState(tenantSearchSettings?.rerankEnabled ?? false);
   const [prioritizeRecent, setPrioritizeRecent] = useState(tenantSearchSettings?.prioritizeRecent ?? false);
 
   const [selectedModel, setSelectedModel] = useState<LLMModel>(() => {
-    if (enabledModels.length > 0) {
-      const parsed = modelSchema.safeParse(initialModel);
-      if (parsed.success && enabledModels.includes(initialModel)) {
-        return initialModel;
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem("chatSettings");
+      if (saved) {
+        const settings = JSON.parse(saved);
+        const savedModel = settings.selectedModel;
+        const parsed = modelSchema.safeParse(savedModel);
+        if (parsed.success && enabledModels.includes(savedModel)) {
+          return savedModel;
+        }
       }
-      // if initial model from global state is no longer enabled by this tenant, change to one that is
-      return tenant.defaultModel || enabledModels[0];
     }
-    return initialModel;
+    // Validate first enabled model or default model
+    const firstModel = enabledModels[0];
+    const parsed = modelSchema.safeParse(firstModel);
+    if (parsed.success) {
+      return tenant.defaultModel || firstModel;
+    }
+    return DEFAULT_MODEL;
   });
 
   // Load user settings from localStorage after initial render and tenant settings are loaded
@@ -213,18 +221,6 @@ export default function Chatbot({ tenant, conversationId, initMessage, onSelecte
     [messages, sourceCache],
   );
 
-  // Ensure selected model is in enabled models list
-  useEffect(() => {
-    if (!enabledModels.includes(selectedModel)) {
-      // Update to first enabled model
-      if (tenant.defaultModel && enabledModels.includes(tenant.defaultModel)) {
-        setSelectedModel(tenant.defaultModel);
-      } else {
-        setSelectedModel(enabledModels[0]);
-      }
-    }
-  }, [selectedModel, enabledModels, tenant.defaultModel]);
-
   return (
     <div className="flex h-full w-full items-center flex-col">
       <div ref={container} className="flex flex-col h-full w-full items-center overflow-y-auto">
@@ -276,7 +272,9 @@ export default function Chatbot({ tenant, conversationId, initMessage, onSelecte
             prioritizeRecent={prioritizeRecent}
             onPrioritizeRecentChange={setPrioritizeRecent}
             enabledModels={enabledModels}
-            tenantSearchSettings={tenantSearchSettings || undefined}
+            canSetIsBreadth={tenantSearchSettings?.overrideBreadth ?? true}
+            canSetRerankEnabled={tenantSearchSettings?.overrideRerank ?? true}
+            canSetPrioritizeRecent={tenantSearchSettings?.overridePrioritizeRecent ?? true}
           />
         </div>
       </div>
