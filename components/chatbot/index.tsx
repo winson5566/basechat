@@ -5,12 +5,10 @@ import assert from "assert";
 import { experimental_useObject as useObject } from "ai/react";
 import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 
-import { useGlobalState } from "@/app/(main)/o/[slug]/context";
 import {
   conversationMessagesResponseSchema,
   CreateConversationMessageRequest,
   createConversationMessageResponseSchema,
-  SearchSettings,
 } from "@/lib/api";
 import { DEFAULT_MODEL, getEnabledModels, getProviderForModel, LLMModel, modelSchema } from "@/lib/llm/types";
 
@@ -36,7 +34,12 @@ interface Props {
     id: string;
     enabledModels: LLMModel[];
     defaultModel: LLMModel | null;
-    searchSettings: SearchSettings | null;
+    isBreadth: boolean | null;
+    rerankEnabled: boolean | null;
+    prioritizeRecent: boolean | null;
+    overrideBreadth: boolean | null;
+    overrideRerank: boolean | null;
+    overridePrioritizeRecent: boolean | null;
   };
   initMessage?: string;
   onSelectedDocumentId: (id: string) => void;
@@ -50,11 +53,48 @@ export default function Chatbot({ tenant, conversationId, initMessage, onSelecte
   const pendingMessageRef = useRef<null | { id: string; model: LLMModel }>(null);
   pendingMessageRef.current = pendingMessage;
 
-  const tenantSearchSettings = tenant.searchSettings;
   const enabledModels = useMemo(() => getEnabledModels(tenant.enabledModels), [tenant.enabledModels]);
-  const [isBreadth, setIsBreadth] = useState(tenantSearchSettings?.isBreadth ?? false);
-  const [rerankEnabled, setRerankEnabled] = useState(tenantSearchSettings?.rerankEnabled ?? false);
-  const [prioritizeRecent, setPrioritizeRecent] = useState(tenantSearchSettings?.prioritizeRecent ?? false);
+
+  // Get initial settings from localStorage if they exist
+  const [isBreadth, setIsBreadth] = useState(() => {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem("initialSettings");
+      if (saved && tenant.overrideBreadth) {
+        const settings = JSON.parse(saved);
+        return settings.isBreadth;
+      }
+    }
+    return tenant.isBreadth ?? false;
+  });
+
+  const [rerankEnabled, setRerankEnabled] = useState(() => {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem("initialSettings");
+      if (saved && tenant.overrideRerank) {
+        const settings = JSON.parse(saved);
+        return settings.rerankEnabled;
+      }
+    }
+    return tenant.rerankEnabled ?? false;
+  });
+
+  const [prioritizeRecent, setPrioritizeRecent] = useState(() => {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem("initialSettings");
+      if (saved && tenant.overridePrioritizeRecent) {
+        const settings = JSON.parse(saved);
+        return settings.prioritizeRecent;
+      }
+    }
+    return tenant.prioritizeRecent ?? false;
+  });
+
+  // Clear initial settings from localStorage after first use
+  useEffect(() => {
+    if (localInitMessage) {
+      localStorage.removeItem("initialSettings");
+    }
+  }, [localInitMessage]);
 
   const [selectedModel, setSelectedModel] = useState<LLMModel>(() => {
     if (typeof window !== "undefined") {
@@ -84,13 +124,13 @@ export default function Chatbot({ tenant, conversationId, initMessage, onSelecte
       if (saved) {
         const settings = JSON.parse(saved);
         // Apply user settings only if overrides are allowed
-        if (!tenantSearchSettings || tenantSearchSettings.overrideBreadth) {
+        if (!tenant.isBreadth || tenant.overrideBreadth) {
           setIsBreadth(settings.isBreadth ?? false);
         }
-        if (!tenantSearchSettings || tenantSearchSettings.overrideRerank) {
+        if (!tenant.rerankEnabled || tenant.overrideRerank) {
           setRerankEnabled(settings.rerankEnabled ?? false);
         }
-        if (!tenantSearchSettings || tenantSearchSettings.overridePrioritizeRecent) {
+        if (!tenant.prioritizeRecent || tenant.overridePrioritizeRecent) {
           setPrioritizeRecent(settings.prioritizeRecent ?? false);
         }
         // Model selection is always allowed
@@ -103,20 +143,20 @@ export default function Chatbot({ tenant, conversationId, initMessage, onSelecte
         }
       }
     }
-  }, [enabledModels, tenantSearchSettings]);
+  }, [enabledModels, tenant.overrideBreadth, tenant.overrideRerank, tenant.overridePrioritizeRecent]);
 
   // Save user settings to localStorage whenever they change
   useEffect(() => {
     // Only save settings that can be overridden
     const settingsToSave = {
       selectedModel,
-      ...(tenantSearchSettings?.overrideBreadth ? { isBreadth } : {}),
-      ...(tenantSearchSettings?.overrideRerank ? { rerankEnabled } : {}),
-      ...(tenantSearchSettings?.overridePrioritizeRecent ? { prioritizeRecent } : {}),
+      ...(tenant?.overrideBreadth ? { isBreadth } : {}),
+      ...(tenant?.overrideRerank ? { rerankEnabled } : {}),
+      ...(tenant?.overridePrioritizeRecent ? { prioritizeRecent } : {}),
     };
 
     localStorage.setItem("chatSettings", JSON.stringify(settingsToSave));
-  }, [isBreadth, rerankEnabled, prioritizeRecent, selectedModel, tenantSearchSettings]);
+  }, [isBreadth, rerankEnabled, prioritizeRecent, selectedModel, tenant]);
 
   const { isLoading, object, submit } = useObject({
     api: `/api/conversations/${conversationId}/messages`,
@@ -272,9 +312,9 @@ export default function Chatbot({ tenant, conversationId, initMessage, onSelecte
             prioritizeRecent={prioritizeRecent}
             onPrioritizeRecentChange={setPrioritizeRecent}
             enabledModels={enabledModels}
-            canSetIsBreadth={tenantSearchSettings?.overrideBreadth ?? true}
-            canSetRerankEnabled={tenantSearchSettings?.overrideRerank ?? true}
-            canSetPrioritizeRecent={tenantSearchSettings?.overridePrioritizeRecent ?? true}
+            canSetIsBreadth={tenant?.overrideBreadth ?? true}
+            canSetRerankEnabled={tenant?.overrideRerank ?? true}
+            canSetPrioritizeRecent={tenant?.overridePrioritizeRecent ?? true}
           />
         </div>
       </div>
