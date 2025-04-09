@@ -4,8 +4,7 @@ import { KeyboardEvent, useRef, useState, useEffect } from "react";
 
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Switch } from "@/components/ui/switch";
-import { SearchSettings } from "@/lib/api";
-import { LLMModel, modelSchema, LLM_LOGO_MAP, LLM_DISPLAY_NAMES, ALL_VALID_MODELS } from "@/lib/llm/types";
+import { LLMModel, LLM_LOGO_MAP, LLM_DISPLAY_NAMES } from "@/lib/llm/types";
 import { cn } from "@/lib/utils";
 
 import CheckIcon from "../../public/icons/check.svg";
