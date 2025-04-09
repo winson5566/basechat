@@ -89,13 +89,6 @@ export default function Chatbot({ tenant, conversationId, initMessage, onSelecte
     return tenant.prioritizeRecent ?? false;
   });
 
-  // Clear initial settings from localStorage after first use
-  useEffect(() => {
-    if (localInitMessage) {
-      localStorage.removeItem("initialSettings");
-    }
-  }, [localInitMessage]);
-
   const [selectedModel, setSelectedModel] = useState<LLMModel>(() => {
     if (typeof window !== "undefined") {
       const saved = localStorage.getItem("chatSettings");
