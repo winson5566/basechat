@@ -15,7 +15,8 @@ import {
   LLMModel,
   SPECIAL_LLAMA_PROMPT,
 } from "@/lib/llm/types";
-import { getRagieClient } from "@/lib/server/ragie";
+import { getRagieClient, getTenantRagieSettings } from "@/lib/server/ragie";
+import { getTenantRagieClient, getTenantPartition } from "@/lib/server/ragie";
 import {
   createConversationMessage,
   updateConversationMessageContent,
@@ -164,8 +165,23 @@ export async function getRetrievalSystemPrompt(
   rerankEnabled: boolean,
   prioritizeRecent: boolean,
 ) {
-  const response = await getRagieClient().retrievals.retrieve({
-    partition: tenantId,
+  const { ragieApiKey, ragiePartition } = await getTenantRagieSettings(tenantId);
+
+  let client;
+  let partition;
+  if (ragieApiKey) {
+    client = await getTenantRagieClient(ragieApiKey);
+    partition = ragiePartition || undefined;
+  } else {
+    client = getRagieClient();
+    partition = tenantId;
+  }
+  if (!client) {
+    throw new Error("No client found");
+  }
+
+  const response = await client.retrievals.retrieve({
+    partition,
     query,
     topK: isBreadth ? 32 : 6,
     rerank: rerankEnabled,
