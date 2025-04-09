@@ -2,12 +2,8 @@ import { CoreMessage } from "ai";
 import assertNever from "assert-never";
 import { NextRequest } from "next/server";
 
-import {
-  conversationMessagesResponseSchema,
-  createConversationMessageRequestSchema,
-  createConversationMessageResponseSchema,
-} from "@/lib/api";
-import { DEFAULT_MODEL, DEFAULT_PROVIDER, getProviderForModel, modelSchema } from "@/lib/llm/types";
+import { conversationMessagesResponseSchema, createConversationMessageRequestSchema } from "@/lib/api";
+import { DEFAULT_MODEL, DEFAULT_PROVIDER, getProviderForModel } from "@/lib/llm/types";
 import { createConversationMessage, getConversation, getConversationMessages } from "@/lib/server/service";
 import { requireAuthContextFromRequest } from "@/lib/server/utils";
 

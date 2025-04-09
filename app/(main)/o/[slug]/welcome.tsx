@@ -19,17 +19,17 @@ const inter = Inter({ subsets: ["latin"] });
 const conversationResponseSchema = z.object({ id: z.string() });
 
 interface Props {
-  tenant: typeof schema.tenants.$inferSelect & { searchSettings: typeof schema.searchSettings.$inferSelect };
+  tenant: typeof schema.tenants.$inferSelect;
   className?: string;
 }
 
 export default function Welcome({ tenant, className }: Props) {
   const router = useRouter();
   const { setInitialMessage, setInitialModel } = useGlobalState();
-  const tenantSearchSettings = tenant.searchSettings;
-  const [isBreadth, setIsBreadth] = useState(tenantSearchSettings?.isBreadth ?? false);
-  const [rerankEnabled, setRerankEnabled] = useState(tenantSearchSettings?.rerankEnabled ?? false);
-  const [prioritizeRecent, setPrioritizeRecent] = useState(tenantSearchSettings?.prioritizeRecent ?? false);
+  const [isBreadth, setIsBreadth] = useState(tenant.isBreadth ?? false);
+  const [rerankEnabled, setRerankEnabled] = useState(tenant.rerankEnabled ?? false);
+  const [prioritizeRecent, setPrioritizeRecent] = useState(tenant.prioritizeRecent ?? false);
+  const [settingsLoaded, setSettingsLoaded] = useState(false);
   const enabledModels = useMemo(() => getEnabledModels(tenant.enabledModels), [tenant.enabledModels]);
 
   const [selectedModel, setSelectedModel] = useState<LLMModel>(() => {
@@ -60,13 +60,13 @@ export default function Welcome({ tenant, className }: Props) {
       if (saved) {
         const settings = JSON.parse(saved);
         // Apply user settings only if overrides are allowed
-        if (!tenantSearchSettings || tenantSearchSettings.overrideBreadth) {
+        if (!tenant.isBreadth || tenant.overrideBreadth) {
           setIsBreadth(settings.isBreadth ?? false);
         }
-        if (!tenantSearchSettings || tenantSearchSettings.overrideRerank) {
+        if (!tenant.rerankEnabled || tenant.overrideRerank) {
           setRerankEnabled(settings.rerankEnabled ?? false);
         }
-        if (!tenantSearchSettings || tenantSearchSettings.overridePrioritizeRecent) {
+        if (!tenant.prioritizeRecent || tenant.overridePrioritizeRecent) {
           setPrioritizeRecent(settings.prioritizeRecent ?? false);
         }
         const savedModel = settings.selectedModel;
@@ -77,21 +77,22 @@ export default function Welcome({ tenant, className }: Props) {
           setSelectedModel(tenant.defaultModel || enabledModels[0]);
         }
       }
+      setSettingsLoaded(true);
     }
-  }, [enabledModels, tenantSearchSettings]);
+  }, [enabledModels, tenant.overrideBreadth, tenant.overrideRerank, tenant.overridePrioritizeRecent]);
 
   // Save settings to localStorage whenever they change
   useEffect(() => {
     // Only save settings that can be overridden
     const settingsToSave = {
       selectedModel,
-      ...(tenantSearchSettings?.overrideBreadth ? { isBreadth } : {}),
-      ...(tenantSearchSettings?.overrideRerank ? { rerankEnabled } : {}),
-      ...(tenantSearchSettings?.overridePrioritizeRecent ? { prioritizeRecent } : {}),
+      ...(tenant.overrideBreadth ? { isBreadth } : {}),
+      ...(tenant.overrideRerank ? { rerankEnabled } : {}),
+      ...(tenant.overridePrioritizeRecent ? { prioritizeRecent } : {}),
     };
 
     localStorage.setItem("chatSettings", JSON.stringify(settingsToSave));
-  }, [isBreadth, rerankEnabled, prioritizeRecent, selectedModel, tenantSearchSettings]);
+  }, [isBreadth, rerankEnabled, prioritizeRecent, selectedModel, tenant]);
 
   const handleSubmit = async (content: string, model: LLMModel = DEFAULT_MODEL) => {
     const res = await fetch("/api/conversations", {
@@ -99,9 +100,6 @@ export default function Welcome({ tenant, className }: Props) {
       body: JSON.stringify({
         title: content,
         initialModel: model,
-        isBreadth,
-        rerankEnabled,
-        prioritizeRecent,
       }),
       headers: {
         tenant: tenant.slug,
@@ -113,6 +111,15 @@ export default function Welcome({ tenant, className }: Props) {
     const conversation = conversationResponseSchema.parse(json);
     setInitialMessage(content);
     setInitialModel(model);
+    // Store the settings in localStorage so they can be retrieved in the conversation page
+    localStorage.setItem(
+      "initialSettings",
+      JSON.stringify({
+        isBreadth,
+        rerankEnabled,
+        prioritizeRecent,
+      }),
+    );
     router.push(getConversationPath(tenant.slug, conversation.id));
   };
 
@@ -132,8 +139,10 @@ export default function Welcome({ tenant, className }: Props) {
             {questions.map((question, i) => (
               <div
                 key={i}
-                className="rounded-md border p-4 w-full md:w-1/3 h-full cursor-pointer"
-                onClick={() => handleSubmit(question, selectedModel)}
+                className={`rounded-md border p-4 w-full md:w-1/3 h-full cursor-pointer ${
+                  !settingsLoaded ? "opacity-50 cursor-not-allowed" : ""
+                }`}
+                onClick={() => settingsLoaded && handleSubmit(question, selectedModel)}
               >
                 {question}
               </div>
@@ -153,9 +162,9 @@ export default function Welcome({ tenant, className }: Props) {
           prioritizeRecent={prioritizeRecent}
           onPrioritizeRecentChange={setPrioritizeRecent}
           enabledModels={enabledModels}
-          canSetIsBreadth={tenantSearchSettings?.overrideBreadth ?? true}
-          canSetRerankEnabled={tenantSearchSettings?.overrideRerank ?? true}
-          canSetPrioritizeRecent={tenantSearchSettings?.overridePrioritizeRecent ?? true}
+          canSetIsBreadth={tenant.overrideBreadth ?? true}
+          canSetRerankEnabled={tenant.overrideRerank ?? true}
+          canSetPrioritizeRecent={tenant.overridePrioritizeRecent ?? true}
         />
       </div>
     </div>
