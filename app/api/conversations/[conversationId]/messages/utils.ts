@@ -15,8 +15,7 @@ import {
   LLMModel,
   SPECIAL_LLAMA_PROMPT,
 } from "@/lib/llm/types";
-import { getRagieClient, getTenantRagieSettings } from "@/lib/server/ragie";
-import { getTenantRagieClient, getTenantPartition } from "@/lib/server/ragie";
+import { getRagieClient, getTenantRagieSettings, getTenantRagieClient } from "@/lib/server/ragie";
 import {
   createConversationMessage,
   updateConversationMessageContent,

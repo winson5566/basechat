@@ -1,12 +1,7 @@
 import crypto from "crypto";
 
-import { eq } from "drizzle-orm";
-
-import db from "./db";
-import { tenants, users } from "./db/schema";
-// Store this in your environment variables
 const ENCRYPTION_KEY = process.env.ENCRYPTION_KEY!; // Must be 32 bytes (256 bits)
-const ENCRYPTION_IV_LENGTH = 16; // For AES, this is always 16 bytes
+const ENCRYPTION_IV_LENGTH = 16; // 16 bytes for AES
 
 if (!ENCRYPTION_KEY) {
   throw new Error("ENCRYPTION_KEY environment variable is required");
@@ -79,28 +74,6 @@ export function decryptApiKey(encryptedApiKey: EncryptedApiKey): string {
   } catch (error) {
     throw new EncryptionError(`Failed to decrypt API key: ${error instanceof Error ? error.message : "Unknown error"}`);
   }
-}
-
-export async function validateApiKey(providedApiKey: string): Promise<string | null> {
-  // Get all users - in a real app, you'd have a more efficient lookup
-  const allTenants = await db.select().from(tenants);
-
-  // Find user with matching API key
-  for (const tenant of allTenants) {
-    if (!tenant.ragieApiKey) continue;
-
-    try {
-      const decryptedKey = decryptApiKey(tenant.ragieApiKey);
-      if (decryptedKey === providedApiKey) {
-        return tenant.id;
-      }
-    } catch (e) {
-      // Handle decryption errors gracefully
-      console.error("Error decrypting API key", e);
-    }
-  }
-
-  return null; // No matching API key found
 }
 
 // Helper function to generate a new encryption key
