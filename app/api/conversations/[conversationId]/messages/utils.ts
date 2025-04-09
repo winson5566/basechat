@@ -1,3 +1,5 @@
+import assert from "assert";
+
 import { anthropic } from "@ai-sdk/anthropic";
 import { google } from "@ai-sdk/google";
 import { groq } from "@ai-sdk/groq";
@@ -175,9 +177,8 @@ export async function getRetrievalSystemPrompt(
     client = getRagieClient();
     partition = tenantId;
   }
-  if (!client) {
-    throw new Error("No client found");
-  }
+
+  assert(!!client, "No client found");
 
   const response = await client.retrievals.retrieve({
     partition,

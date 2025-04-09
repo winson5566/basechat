@@ -1,15 +1,12 @@
+import "server-only";
+import assert from "assert";
 import crypto from "crypto";
 
 const ENCRYPTION_KEY = process.env.ENCRYPTION_KEY!; // Must be 32 bytes (256 bits)
 const ENCRYPTION_IV_LENGTH = 16; // 16 bytes for AES
 
-if (!ENCRYPTION_KEY) {
-  throw new Error("ENCRYPTION_KEY environment variable is required");
-}
-
-if (Buffer.from(ENCRYPTION_KEY, "hex").length !== 32) {
-  throw new Error("ENCRYPTION_KEY must be 32 bytes (64 hex characters)");
-}
+assert(!!ENCRYPTION_KEY, "ENCRYPTION_KEY environment variable is required");
+assert(Buffer.from(ENCRYPTION_KEY, "hex").length === 32, "ENCRYPTION_KEY must be 32 bytes (64 hex characters)");
 
 export type EncryptedApiKey = string;
 
