@@ -24,16 +24,15 @@ import {
 } from "@/lib/llm/types";
 import * as schema from "@/lib/server/db/schema";
 
-
 const formSchema = z.object({
   enabledModels: modelArraySchema,
   defaultModel: modelSchema,
-  isBreadth: z.boolean(),
-  overrideBreadth: z.boolean(),
-  rerankEnabled: z.boolean(),
-  overrideRerank: z.boolean(),
-  prioritizeRecent: z.boolean(),
-  overridePrioritizeRecent: z.boolean(),
+  isBreadth: z.boolean().default(false),
+  overrideBreadth: z.boolean().default(true),
+  rerankEnabled: z.boolean().default(false),
+  overrideRerank: z.boolean().default(true),
+  prioritizeRecent: z.boolean().default(false),
+  overridePrioritizeRecent: z.boolean().default(true),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -332,12 +331,12 @@ export default function ModelSettings({ tenant }: Props) {
     return {
       enabledModels: enabledModels,
       defaultModel: defaultModel ?? undefined,
-      isBreadth: isBreadth ?? false, // TODO: do we need the 6 new values here?
-      overrideBreadth: overrideBreadth ?? true,
-      rerankEnabled: rerankEnabled ?? false,
-      overrideRerank: overrideRerank ?? true,
-      prioritizeRecent: prioritizeRecent ?? false,
-      overridePrioritizeRecent: overridePrioritizeRecent ?? true,
+      isBreadth: isBreadth ?? undefined,
+      overrideBreadth: overrideBreadth ?? undefined,
+      rerankEnabled: rerankEnabled ?? undefined,
+      overrideRerank: overrideRerank ?? undefined,
+      prioritizeRecent: prioritizeRecent ?? undefined,
+      overridePrioritizeRecent: overridePrioritizeRecent ?? undefined,
       ...otherFields,
     };
   }, [tenant]);
