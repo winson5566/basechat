@@ -225,11 +225,11 @@ export default function ChatInput(props: ChatInputProps) {
                 <>
                   <div className="h-[1px] w-full bg-[#D7D7D7] my-4" />
                   <div className="flex flex-col gap-2">
-                    <span className="text-sm font-medium text-black">Switch model</span>
+                    <span className="text-sm font-medium text-muted-foreground">Switch model</span>
                     <Popover>
                       <PopoverTrigger asChild>
-                        <button className="flex items-center justify-between w-full text-sm text-muted-foreground hover:text-foreground">
-                          <span className="text-[#6B7280]">{LLM_DISPLAY_NAMES[props.selectedModel]}</span>
+                        <button className="flex items-center justify-between w-full text-sm text-black hover:text-foreground">
+                          <span>{LLM_DISPLAY_NAMES[props.selectedModel]}</span>
                           <ChevronRight className="h-4 w-4" />
                         </button>
                       </PopoverTrigger>
