@@ -117,7 +117,14 @@ export async function generate(tenantId: string, profileId: string, conversation
       onFinish: async (event) => {
         if (!event.object) {
           console.log("No object in event");
-          throw new Error("No object in event");
+          await updateConversationMessageContent(
+            tenantId,
+            profileId,
+            conversationId,
+            pendingMessage.id,
+            FAILED_MESSAGE_CONTENT,
+          );
+          return;
         }
 
         await updateConversationMessageContent(
