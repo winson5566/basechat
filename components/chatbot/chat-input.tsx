@@ -135,11 +135,13 @@ export default function ChatInput(props: ChatInputProps) {
         </button>
       </div>
       <Popover>
-        <PopoverTrigger className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
-          {canOverrideSomething && <Image src={GearIcon} alt="settings" className="h-4 w-4" />}
-          {canSwitchModel && LLM_DISPLAY_NAMES[props.selectedModel]}
-          {(canOverrideSomething || canSwitchModel) && <ChevronDown className="h-4 w-4" />}
-        </PopoverTrigger>
+        {(canOverrideSomething || canSwitchModel) && (
+          <PopoverTrigger className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
+            {canOverrideSomething && <Image src={GearIcon} alt="settings" className="h-4 w-4" />}
+            {canSwitchModel && LLM_DISPLAY_NAMES[props.selectedModel]}
+            {(canOverrideSomething || canSwitchModel) && <ChevronDown className="h-4 w-4" />}
+          </PopoverTrigger>
+        )}
         {canOverrideSomething ? (
           <SettingsPopoverContent>
             <div className="flex flex-col gap-4">
