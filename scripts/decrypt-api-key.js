@@ -48,3 +48,4 @@ function decryptApiKey(encryptedApiKey) {
 
 const decryptedKey = decryptApiKey(encryptedApiKey);
 console.log("Decrypted API key:", decryptedKey);
+process.exit(0);

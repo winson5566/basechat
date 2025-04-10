@@ -13,7 +13,8 @@
     "prepare": "husky",
     "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js",
     "update-api-key": "node scripts/update-api-key.js",
-    "decrypt-api-key": "node scripts/decrypt-api-key.js"
+    "decrypt-api-key": "node scripts/decrypt-api-key.js",
+    "remove-api-key": "node scripts/remove-api-key.js"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^1.2.1",

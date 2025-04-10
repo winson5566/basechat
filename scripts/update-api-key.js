@@ -8,6 +8,7 @@ import "dotenv/config";
 // run with: npm run update-api-key myApiKey123 myPartition
 // API key will be encrypted
 // Partition is optional
+// If partition is not provided, it will be set to null
 const ENCRYPTION_IV_LENGTH = 16; // 16 bytes for AES
 const databaseUrl = process.env.DATABASE_URL;
 const ENCRYPTION_KEY = process.env.ENCRYPTION_KEY; // Must be 32 bytes (256 bits)
@@ -82,3 +83,4 @@ export function encryptApiKey(apiKey) {
 }
 
 updateRagieApiKey(tenantId, apiKey, partition);
+process.exit(0);
