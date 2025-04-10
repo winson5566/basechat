@@ -1,8 +1,8 @@
 import { Inter, Inter_Tight } from "next/font/google";
+import Image from "next/image";
 
 import RagieLogo from "@/components/ragie-logo";
 import * as settings from "@/lib/server/settings";
-import { cn } from "@/lib/utils";
 
 const inter_tight = Inter_Tight({
   subsets: ["latin"],
@@ -15,12 +15,16 @@ export default function Layout({ children }: Readonly<{ children: React.ReactNod
   return (
     <div className="h-screen w-full flex flex-col items-center bg-white overflow-hidden">
       <div className="flex-1 w-full overflow-y-auto">
-        <div className="w-full max-w-[460px] px-4 mx-auto h-full flex flex-col items-center justify-center">
-          <div className="flex items-center mb-16">
-            <div className="max-h-[64px] max-w-[64px] max-[460px]:max-h-[38px] max-[460px]:max-w-[38px] avatar-1 mr-3" />
-            <h1 className={cn(inter_tight.className, "text-[75px] max-[460px]:text-[45px] font-bold")}>
-              {settings.APP_NAME}
-            </h1>
+        <div className="w-full max-w-[460px] px-4 pt-10 mx-auto h-full flex flex-col items-center justify-center max-[460px]:px-8">
+          <div className="flex items-center mb-16 w-full max-[460px]:justify-start max-[460px]:mr-6">
+            <Image
+              src="/title-logo.svg"
+              alt={settings.APP_NAME}
+              width={442}
+              height={64}
+              className="max-w-[442px] max-h-[64px] max-[460px]:max-w-[185px] max-[460px]:max-h-[24px]"
+              priority
+            />
           </div>
           <div className="flex flex-col items-center w-full">{children}</div>
         </div>

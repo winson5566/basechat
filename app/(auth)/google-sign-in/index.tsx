@@ -1,6 +1,6 @@
 "use client";
 
-import { Roboto } from "next/font/google";
+import { Inter } from "next/font/google";
 import Image from "next/image";
 
 import { signIn } from "@/lib/auth-client";
@@ -11,7 +11,7 @@ interface Props {
   redirectTo?: string;
 }
 
-const roboto = Roboto({ subsets: ["latin"], weight: "400" });
+const inter = Inter({ subsets: ["latin"] });
 
 export default function GoogleSignIn({ redirectTo }: Props) {
   async function handleClick() {
@@ -28,7 +28,7 @@ export default function GoogleSignIn({ redirectTo }: Props) {
       onClick={handleClick}
     >
       <Image src={GoogleMarkSVG} alt="Continue with Google" />
-      <div className={`ml-2.5 text-md drop-shadow-md ${roboto.className}`}>Continue with Google</div>
+      <div className={`ml-2.5 text-base drop-shadow-md ${inter.className}`}>Continue with Google</div>
     </button>
   );
 }

@@ -24,17 +24,16 @@ const Layout = ({ children, preview }: { children: React.ReactElement; preview: 
       <Body className="m-0 p-0 bg-gray-100 font-sans">
         <Section className="text-center mt-10">
           <div className="flex justify-center items-center">
-            <div
-              className="mr-2"
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={`${settings.BASE_URL}/title-logo.svg`}
+              alt={settings.APP_NAME}
               style={{
-                width: "32px",
+                width: "220px",
                 height: "32px",
-                display: "inline-block",
-                borderRadius: "50%", // make a complete circle
-                background: "linear-gradient(90deg, #f5c3af 0%, #ea89d7 46.87%, #6767d9 100%)",
+                maxWidth: "100%",
               }}
             />
-            <Heading className="text-[32px] font-bold text-black">{settings.APP_NAME}</Heading>
           </div>
         </Section>
 
@@ -71,7 +70,8 @@ export const ResetPasswordHtml = ({ name, link }: { name: string | null; link: s
         </Button>
 
         <Text className="text-[#1D1D1F] text-[18px]">
-          If you don’t want to reset your password or didn’t request this, just ignore and delete this message.
+          If you don&apos;t want to reset your password or didn&apos;t request this, just ignore and delete this
+          message.
         </Text>
       </Section>
     </Layout>
