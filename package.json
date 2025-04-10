@@ -11,7 +11,9 @@
     "db:generate": "npx drizzle-kit generate",
     "db:migrate": "npx drizzle-kit migrate",
     "prepare": "husky",
-    "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js"
+    "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js",
+    "update-api-key": "node scripts/update-api-key.js",
+    "decrypt-api-key": "node scripts/decrypt-api-key.js"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^1.2.1",
