@@ -71,9 +71,15 @@ export async function generate(tenantId: string, profileId: string, conversation
   // Filter out empty messages before sending to API
   context.messages = filterEmptyMessages(context.messages);
 
-  // Rename conversation on 2nd user message
-  const userMessageCount = context.messages.filter((msg) => msg.role === "user").length;
-  if (userMessageCount === 2) {
+  // Rename conversation on 1st user message
+  let userMessageCount = 0;
+  for (const msg of context.messages) {
+    if (msg.role === "user") {
+      userMessageCount++;
+      if (userMessageCount > 1) break; // Fail fast
+    }
+  }
+  if (userMessageCount === 1) {
     const title = await createConversationTitle(context.messages);
     await updateConversationTitle(tenantId, conversationId, title);
   }

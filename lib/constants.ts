@@ -35,4 +35,4 @@ export const DEFAULT_EXPAND_SYSTEM_PROMPT = `The user would like you to provide 
 export const DEFAULT_WELCOME_MESSAGE = `Hello, I'm {{company.name}}'s AI. What would you like to know?`;
 
 export const NAMING_SYSTEM_PROMPT =
-  "You are an expert at naming conversations. The name should be a short PROFESSIONAL phrase that captures the essence of the conversation. MAXIMUM 10 characters. Name is better too short than too long. Do not include words like 'chat' or 'conversation'. Return ONLY the name, no other text.";
+  "You are an expert at naming conversations. The name should be a short PROFESSIONAL phrase that captures the essence of the conversation. MAXIMUM 10 characters. Do not include words like 'chat' or 'conversation'. Return ONLY the name, no other text.";

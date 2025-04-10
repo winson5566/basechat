@@ -149,12 +149,12 @@ export default function ConversationHistory({ className, tenant }: Props) {
               {/* Today's conversations */}
               {groupedConversations.today.length > 0 && (
                 <div>
-                  <div className="font-bold text-xs mb-2">Today</div>
+                  <div className="font-bold text-xs mb-2 pl-4">Today</div>
                   <div className="space-y-2">
                     {groupedConversations.today.map((conversation, i) => (
                       <div
                         key={i}
-                        className="py-2 px-4 flex justify-between items-center hover:bg-gray-200 rounded-md transition-colors"
+                        className="py-2 px-4 flex justify-between items-center hover:bg-gray-200 rounded-md transition-colors group"
                       >
                         <Link href={getConversationPath(tenant.slug, conversation.id)} className="flex-1 min-w-0">
                           <div className="truncate pr-2 max-w-[calc(100%-24px)]">{conversation.title}</div>
@@ -166,7 +166,7 @@ export default function ConversationHistory({ className, tenant }: Props) {
                               height={16}
                               width={16}
                               alt="Options"
-                              className="flex-shrink-0 cursor-pointer"
+                              className="flex-shrink-0 cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity"
                             />
                           </PopoverTrigger>
                           <ConversationPopoverContent>
@@ -187,12 +187,12 @@ export default function ConversationHistory({ className, tenant }: Props) {
               {/* This month's conversations */}
               {groupedConversations.thisMonth.length > 0 && (
                 <div>
-                  <div className="font-bold text-xs mb-2">This month</div>
+                  <div className="font-bold text-xs mb-2 pl-4">This month</div>
                   <div className="space-y-2">
                     {groupedConversations.thisMonth.map((conversation, i) => (
                       <div
                         key={i}
-                        className="py-2 px-4 flex justify-between items-center hover:bg-gray-200 rounded-md transition-colors"
+                        className="py-2 px-4 flex justify-between items-center hover:bg-gray-200 rounded-md transition-colors group"
                       >
                         <Link href={getConversationPath(tenant.slug, conversation.id)} className="flex-1 min-w-0">
                           <div className="truncate pr-2 max-w-[calc(100%-24px)]">{conversation.title}</div>
@@ -204,7 +204,7 @@ export default function ConversationHistory({ className, tenant }: Props) {
                               height={16}
                               width={16}
                               alt="Options"
-                              className="flex-shrink-0 cursor-pointer"
+                              className="flex-shrink-0 cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity"
                             />
                           </PopoverTrigger>
                           <ConversationPopoverContent>
@@ -232,12 +232,12 @@ export default function ConversationHistory({ className, tenant }: Props) {
 
                 return (
                   <div key={month}>
-                    <div className="font-bold text-xs mb-2">{formattedMonth}</div>
+                    <div className="font-bold text-xs mb-2 pl-4">{formattedMonth}</div>
                     <div className="space-y-2">
                       {monthConversations.map((conversation, i) => (
                         <div
                           key={i}
-                          className="py-2 px-4 flex justify-between items-center hover:bg-gray-200 rounded-md transition-colors"
+                          className="py-2 px-4 flex justify-between items-center hover:bg-gray-200 rounded-md transition-colors group"
                         >
                           <Link href={getConversationPath(tenant.slug, conversation.id)} className="flex-1 min-w-0">
                             <div className="truncate pr-2 max-w-[calc(100%-24px)]">{conversation.title}</div>
@@ -249,7 +249,7 @@ export default function ConversationHistory({ className, tenant }: Props) {
                                 height={16}
                                 width={16}
                                 alt="Options"
-                                className="flex-shrink-0 cursor-pointer"
+                                className="flex-shrink-0 cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity"
                               />
                             </PopoverTrigger>
                             <ConversationPopoverContent>
