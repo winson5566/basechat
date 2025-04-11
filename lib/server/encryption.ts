@@ -1,12 +1,8 @@
 import "server-only";
-import assert from "assert";
 import crypto from "crypto";
 
-const ENCRYPTION_KEY = process.env.ENCRYPTION_KEY!; // Must be 32 bytes (256 bits)
+import { ENCRYPTION_KEY } from "./settings"; // Must be 32 bytes (256 bits)
 const ENCRYPTION_IV_LENGTH = 16; // 16 bytes for AES
-
-assert(!!ENCRYPTION_KEY, "ENCRYPTION_KEY environment variable is required");
-assert(Buffer.from(ENCRYPTION_KEY, "hex").length === 32, "ENCRYPTION_KEY must be 32 bytes (64 hex characters)");
 
 export type CipherText = string;
 
@@ -76,12 +72,3 @@ export function decrypt(cipherText: CipherText): string {
     );
   }
 }
-
-// Helper function to generate a new encryption key
-export function generateEncryptionKey(): string {
-  return crypto.randomBytes(32).toString("hex");
-}
-
-// Example usage:
-// const key = generateEncryptionKey();
-// console.log('Use this as your ENCRYPTION_KEY:', key);
