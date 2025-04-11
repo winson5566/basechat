@@ -3,7 +3,7 @@ import { Ragie } from "ragie";
 
 import db from "./db";
 import { tenants } from "./db/schema";
-import { decryptApiKey } from "./encryption";
+import { decrypt } from "./encryption";
 import * as settings from "./settings";
 
 export function getRagieClient() {
@@ -12,7 +12,7 @@ export function getRagieClient() {
 
 export async function getTenantRagieClient(apiKey: string) {
   try {
-    const decryptedApiKey = decryptApiKey(apiKey);
+    const decryptedApiKey = decrypt(apiKey);
     return new Ragie({
       auth: decryptedApiKey,
       serverURL: settings.RAGIE_API_BASE_URL,
@@ -23,7 +23,7 @@ export async function getTenantRagieClient(apiKey: string) {
   return null;
 }
 
-export async function getTenantRagieSettings(tenantId: string) {
+export async function getRagieSettingsByTenantId(tenantId: string) {
   const [tenant] = await db
     .select({
       ragieApiKey: tenants.ragieApiKey,

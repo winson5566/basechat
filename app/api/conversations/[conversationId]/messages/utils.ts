@@ -17,7 +17,7 @@ import {
   LLMModel,
   SPECIAL_LLAMA_PROMPT,
 } from "@/lib/llm/types";
-import { getRagieClient, getTenantRagieSettings, getTenantRagieClient } from "@/lib/server/ragie";
+import { getRagieClient, getRagieSettingsByTenantId, getTenantRagieClient } from "@/lib/server/ragie";
 import {
   createConversationMessage,
   updateConversationMessageContent,
@@ -166,7 +166,7 @@ export async function getRetrievalSystemPrompt(
   rerankEnabled: boolean,
   prioritizeRecent: boolean,
 ) {
-  const { ragieApiKey, ragiePartition } = await getTenantRagieSettings(tenantId);
+  const { ragieApiKey, ragiePartition } = await getRagieSettingsByTenantId(tenantId);
 
   let client;
   let partition;

@@ -8,7 +8,7 @@ const ENCRYPTION_IV_LENGTH = 16; // 16 bytes for AES
 assert(!!ENCRYPTION_KEY, "ENCRYPTION_KEY environment variable is required");
 assert(Buffer.from(ENCRYPTION_KEY, "hex").length === 32, "ENCRYPTION_KEY must be 32 bytes (64 hex characters)");
 
-export type EncryptedApiKey = string;
+export type CipherText = string;
 
 export class EncryptionError extends Error {
   constructor(message: string) {
@@ -17,9 +17,9 @@ export class EncryptionError extends Error {
   }
 }
 
-export function encryptApiKey(apiKey: string): EncryptedApiKey {
-  if (!apiKey) {
-    throw new EncryptionError("API key cannot be empty");
+export function encrypt(plainText: string): CipherText {
+  if (!plainText) {
+    throw new EncryptionError("Plain text cannot be empty");
   }
 
   try {
@@ -30,7 +30,7 @@ export function encryptApiKey(apiKey: string): EncryptedApiKey {
     const cipher = crypto.createCipheriv("aes-256-gcm", Buffer.from(ENCRYPTION_KEY, "hex"), iv);
 
     // Encrypt the API key
-    let encrypted = cipher.update(apiKey, "utf8", "hex");
+    let encrypted = cipher.update(plainText, "utf8", "hex");
     encrypted += cipher.final("hex");
 
     // Get the authentication tag
@@ -39,20 +39,22 @@ export function encryptApiKey(apiKey: string): EncryptedApiKey {
     // Return iv:authTag:encryptedData format
     return `${iv.toString("hex")}:${authTag}:${encrypted}`;
   } catch (error) {
-    throw new EncryptionError(`Failed to encrypt API key: ${error instanceof Error ? error.message : "Unknown error"}`);
+    throw new EncryptionError(
+      `Failed to encrypt plain text: ${error instanceof Error ? error.message : "Unknown error"}`,
+    );
   }
 }
 
-export function decryptApiKey(encryptedApiKey: EncryptedApiKey): string {
-  if (!encryptedApiKey) {
-    throw new EncryptionError("Encrypted API key cannot be empty");
+export function decrypt(cipherText: CipherText): string {
+  if (!cipherText) {
+    throw new EncryptionError("Cipher text cannot be empty");
   }
 
   try {
-    const [ivHex, authTagHex, encryptedHex] = encryptedApiKey.split(":");
+    const [ivHex, authTagHex, encryptedHex] = cipherText.split(":");
 
     if (!ivHex || !authTagHex || !encryptedHex) {
-      throw new EncryptionError("Invalid encrypted API key format");
+      throw new EncryptionError("Invalid cipher text format");
     }
 
     const iv = Buffer.from(ivHex, "hex");
@@ -69,7 +71,9 @@ export function decryptApiKey(encryptedApiKey: EncryptedApiKey): string {
 
     return decrypted.toString("utf8");
   } catch (error) {
-    throw new EncryptionError(`Failed to decrypt API key: ${error instanceof Error ? error.message : "Unknown error"}`);
+    throw new EncryptionError(
+      `Failed to decrypt cipher text: ${error instanceof Error ? error.message : "Unknown error"}`,
+    );
   }
 }
 
