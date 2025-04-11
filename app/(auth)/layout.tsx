@@ -18,7 +18,7 @@ export default function Layout({ children }: Readonly<{ children: React.ReactNod
         <div className="w-full max-w-[460px] px-4 pt-10 mx-auto h-full flex flex-col items-center justify-center max-[460px]:px-8">
           <div className="flex items-center mb-16 w-full max-[460px]:justify-start max-[460px]:mr-6">
             <Image
-              src="/title-logo.svg"
+              src="/images/title-logo.svg"
               alt={settings.APP_NAME}
               width={442}
               height={64}
