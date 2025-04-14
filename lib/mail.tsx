@@ -26,7 +26,7 @@ const Layout = ({ children, preview }: { children: React.ReactElement; preview: 
           <div className="flex justify-center items-center">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
-              src={`${settings.BASE_URL}/images/title-logo.png`}
+              src={new URL("/images/title-logo.png", settings.BASE_URL).toString()}
               alt={settings.APP_NAME}
               style={{
                 width: "220px",
