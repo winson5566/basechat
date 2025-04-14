@@ -22,16 +22,23 @@ const Layout = ({ children, preview }: { children: React.ReactElement; preview: 
     </Head>
     <Tailwind>
       <Body className="m-0 p-0 bg-gray-100 font-sans">
-        <Section className="text-center mt-10">
+        <Section className="text-center" style={{ paddingTop: "36px" }}>
           <div className="flex justify-center items-center">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
-              src={`${settings.BASE_URL}/images/title-logo.svg`}
+              src={`${settings.BASE_URL}/images/title-logo.png`}
               alt={settings.APP_NAME}
               style={{
                 width: "220px",
                 height: "32px",
                 maxWidth: "100%",
+                display: "block",
+                margin: "0 auto",
+                border: "0",
+                outline: "none",
+                textDecoration: "none",
+                textAlign: "center",
+                verticalAlign: "middle",
               }}
             />
           </div>
