@@ -22,7 +22,7 @@ const Layout = ({ children, preview }: { children: React.ReactElement; preview: 
     </Head>
     <Tailwind>
       <Body className="m-0 p-0 bg-gray-100 font-sans">
-        <Section className="text-center mt-10">
+        <Section className="text-center" style={{ paddingTop: "36px" }}>
           <div className="flex justify-center items-center">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
