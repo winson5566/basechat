@@ -32,6 +32,13 @@ const Layout = ({ children, preview }: { children: React.ReactElement; preview: 
                 width: "220px",
                 height: "32px",
                 maxWidth: "100%",
+                display: "block",
+                margin: "0 auto",
+                border: "0",
+                outline: "none",
+                textDecoration: "none",
+                textAlign: "center",
+                verticalAlign: "middle",
               }}
             />
           </div>
