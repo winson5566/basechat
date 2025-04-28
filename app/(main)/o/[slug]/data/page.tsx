@@ -11,6 +11,7 @@ import ManageDataPreviewIcons from "@/public/manage-data-preview-icons.svg";
 
 import AddConnectionMenu from "./add-connection-menu";
 import ManageConnectionMenu from "./manage-connection-menu";
+import UploadFileButton from "./upload-file-button";
 
 interface Props {
   params: Promise<{ slug: string }>;
@@ -25,7 +26,10 @@ export default async function DataIndexPage({ params }: Props) {
     <div className="max-w-[1140px] w-full p-4 flex-grow flex flex-col">
       <div className="flex w-full justify-between items-center pt-2">
         <h1 className="font-bold text-[32px]">Manage data</h1>
-        <AddConnectionMenu tenant={tenant} />
+        <div className="flex gap-2">
+          <AddConnectionMenu tenant={tenant} />
+          <UploadFileButton tenant={tenant} />
+        </div>
       </div>
       <>
         {connections.length > 0 ? (
