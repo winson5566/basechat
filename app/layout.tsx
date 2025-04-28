@@ -1,13 +1,13 @@
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
-import { useState } from "react";
 import { Toaster } from "sonner";
+
 
 import { GaTags } from "@/components/ga-tags";
 
 import { GlobalStateProvider } from "./(main)/o/[slug]/context";
+import { Providers } from "./providers";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -19,23 +19,12 @@ export const metadata: Metadata = {
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
-  const [queryClient] = useState(
-    () =>
-      new QueryClient({
-        defaultOptions: {
-          queries: {
-            staleTime: 60 * 1000, // 1 minute
-          },
-        },
-      }),
-  );
-
   return (
     <GlobalStateProvider>
       <html lang="en" className="h-full w-full">
         <GaTags gaKey={process.env.GOOGLE_ANALYTICS_KEY} />
         <body className={`${inter.className} antialiased h-full w-full bg-white`}>
-          <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+          <Providers>{children}</Providers>
           <Toaster position="bottom-center" />
         </body>
       </html>
