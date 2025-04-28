@@ -1,8 +1,9 @@
+import { useInfiniteQuery } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useRef } from "react";
 import { toast } from "sonner";
 import { z } from "zod";
 
@@ -24,6 +25,7 @@ type ConversationsByDate = {
   today: Conversation[];
   thisMonth: Conversation[];
   byMonth: Record<string, Conversation[]>;
+  byYear: Record<string, Conversation[]>;
 };
 
 const ConversationPopoverContent = ({ children }: { children: React.ReactNode }) => (
@@ -38,28 +40,55 @@ const ConversationPopoverContent = ({ children }: { children: React.ReactNode })
   </PopoverContent>
 );
 
+const useConversations = (tenantSlug: string) => {
+  return useInfiniteQuery({
+    queryKey: ["conversations", tenantSlug],
+    queryFn: async ({ pageParam = 1 }) => {
+      const url = new URL("/api/conversations", window.location.origin);
+      url.searchParams.set("page", pageParam.toString());
+      url.searchParams.set("limit", "20");
+
+      const res = await fetch(url.toString(), { headers: { tenant: tenantSlug } });
+      const json = await res.json();
+      return json;
+    },
+    getNextPageParam: (lastPage) => {
+      if (lastPage.page < lastPage.totalPages) {
+        return lastPage.page + 1;
+      }
+      return undefined;
+    },
+    initialPageParam: 1,
+  });
+};
+
 export default function ConversationHistory({ className, tenant }: Props) {
   const router = useRouter();
-  const [conversations, setConversations] = useState<Conversation[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading, isError } = useConversations(tenant.slug);
 
-  const fetchConversations = useCallback(async () => {
-    setIsLoading(true);
-    try {
-      const res = await fetch("/api/conversations", { headers: { tenant: tenant.slug } });
-      const json = await res.json();
-      const conversations = conversationListResponseSchema.parse(json);
-      setConversations(conversations);
-    } catch (error) {
-      console.error("Error fetching conversations:", error);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [tenant.slug]);
+  const observerRef = useRef<IntersectionObserver | null>(null);
+  const loadMoreRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    fetchConversations();
-  }, [fetchConversations]);
+    if (!loadMoreRef.current) return;
+
+    observerRef.current = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && hasNextPage && !isFetchingNextPage) {
+          fetchNextPage();
+        }
+      },
+      { threshold: 1.0 },
+    );
+
+    observerRef.current.observe(loadMoreRef.current);
+
+    return () => {
+      if (observerRef.current) {
+        observerRef.current.disconnect();
+      }
+    };
+  }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
   const handleDelete = async (conversationId: string) => {
     try {
@@ -78,9 +107,6 @@ export default function ConversationHistory({ className, tenant }: Props) {
 
       toast.success("Conversation deleted");
 
-      // Refresh the conversation list
-      await fetchConversations();
-
       // Check if we're currently viewing the deleted conversation
       const currentPath = location.pathname;
       const deletedConversationPath = getConversationPath(tenant.slug, conversationId);
@@ -93,10 +119,13 @@ export default function ConversationHistory({ className, tenant }: Props) {
     }
   };
 
+  // Flatten all conversations from all pages
+  const allConversations = data?.pages.flatMap((page) => page.items) || [];
+
   // Group conversations by date
-  const groupedConversations = conversations.reduce<ConversationsByDate>(
+  const groupedConversations = allConversations.reduce<ConversationsByDate>(
     (acc, conversation) => {
-      const updatedAt = conversation.updatedAt;
+      const updatedAt = new Date(conversation.updatedAt);
       const now = new Date();
 
       // Check if conversation is from today
@@ -115,16 +144,25 @@ export default function ConversationHistory({ className, tenant }: Props) {
         return acc;
       }
 
-      // Group by month
-      const monthYear = updatedAt.toLocaleString("default", { month: "long", year: "numeric" });
-      if (!acc.byMonth[monthYear]) {
-        acc.byMonth[monthYear] = [];
+      // If conversation is from current year, group by month
+      if (updatedAt.getFullYear() === now.getFullYear()) {
+        const monthYear = updatedAt.toLocaleString("default", { month: "long", year: "numeric" });
+        if (!acc.byMonth[monthYear]) {
+          acc.byMonth[monthYear] = [];
+        }
+        acc.byMonth[monthYear].push(conversation);
+        return acc;
       }
-      acc.byMonth[monthYear].push(conversation);
 
+      // For previous years, group by year only
+      const year = updatedAt.getFullYear().toString();
+      if (!acc.byYear[year]) {
+        acc.byYear[year] = [];
+      }
+      acc.byYear[year].push(conversation);
       return acc;
     },
-    { today: [], thisMonth: [], byMonth: {} },
+    { today: [], thisMonth: [], byMonth: {}, byYear: {} },
   );
 
   return (
@@ -142,7 +180,9 @@ export default function ConversationHistory({ className, tenant }: Props) {
             <div className="flex justify-center items-center mt-8">
               <Loader2 className="h-6 w-6 animate-spin" />
             </div>
-          ) : conversations.length === 0 ? (
+          ) : isError ? (
+            <div className="mt-4 text-gray-500">Failed to load conversations.</div>
+          ) : allConversations.length === 0 ? (
             <div className="mt-4 text-gray-500">No chat history yet.</div>
           ) : (
             <div className="space-y-4">
@@ -225,10 +265,11 @@ export default function ConversationHistory({ className, tenant }: Props) {
               {/* Previous months */}
               {Object.entries(groupedConversations.byMonth).map(([month, monthConversations]) => {
                 // Format month to have only first letter capitalized
-                const formattedMonth = month
-                  .split(" ")
-                  .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
-                  .join(" ");
+                const formattedMonth =
+                  month
+                    .split(" ")[0] // Take only the month
+                    .charAt(0)
+                    .toUpperCase() + month.split(" ")[0].slice(1).toLowerCase();
 
                 return (
                   <div key={month}>
@@ -267,6 +308,55 @@ export default function ConversationHistory({ className, tenant }: Props) {
                   </div>
                 );
               })}
+
+              {/* Previous years */}
+              {Object.entries(groupedConversations.byYear)
+                .sort(([yearA], [yearB]) => Number(yearB) - Number(yearA))
+                .map(([year, yearConversations]) => (
+                  <div key={year}>
+                    <div className="font-bold text-xs mb-2 pl-4">{year}</div>
+                    <div className="space-y-2">
+                      {yearConversations.map((conversation, i) => (
+                        <div
+                          key={i}
+                          className="py-2 px-4 flex justify-between items-center hover:bg-gray-200 rounded-md transition-colors group"
+                        >
+                          <Link href={getConversationPath(tenant.slug, conversation.id)} className="flex-1 min-w-0">
+                            <div className="truncate pr-2 max-w-[calc(100%-24px)]">{conversation.title}</div>
+                          </Link>
+                          <Popover>
+                            <PopoverTrigger asChild>
+                              <Image
+                                src={EllipsesIcon}
+                                height={16}
+                                width={16}
+                                alt="Options"
+                                className="flex-shrink-0 cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity"
+                              />
+                            </PopoverTrigger>
+                            <ConversationPopoverContent>
+                              <button
+                                className="text-sm text-black hover:text-gray-700"
+                                onClick={() => handleDelete(conversation.id)}
+                              >
+                                Delete
+                              </button>
+                            </ConversationPopoverContent>
+                          </Popover>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+
+              {/* Load more trigger */}
+              <div ref={loadMoreRef} className="h-4">
+                {isFetchingNextPage && (
+                  <div className="flex justify-center items-center">
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  </div>
+                )}
+              </div>
             </div>
           )}
         </div>
