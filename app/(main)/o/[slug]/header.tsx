@@ -194,7 +194,7 @@ export default function Header({ isAnonymous, tenant, name, email, onNavClick = 
                                 />
                               </TooltipTrigger>
                               {tenantItem.lastAdmin && (
-                                <TooltipContent>
+                                <TooltipContent className="max-w-[200px] whitespace-normal">
                                   <p>You are the sole admin for this chatbot and cannot leave it.</p>
                                 </TooltipContent>
                               )}
