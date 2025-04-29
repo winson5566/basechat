@@ -137,35 +137,6 @@ export async function saveConnection(tenantId: string, ragieConnectionId: string
   }
 }
 
-export async function saveFile(tenantId: string, ragieDocumentId: string, status: string) {
-  const qs = await db
-    .select()
-    .from(schema.files)
-    .where(and(eq(schema.files.tenantId, tenantId), eq(schema.files.ragieDocumentId, ragieDocumentId)))
-    .for("update");
-  const file = qs.length === 1 ? qs[0] : null;
-
-  const lastSyncedAt = status === "ready" ? new Date() : null;
-
-  if (!file) {
-    const { client } = await getRagieClientAndPartition(tenantId);
-    // do we need to get from the client here?
-    const ragieFile = await client.documents.get({ documentId: ragieDocumentId });
-    await db.insert(schema.files).values({
-      tenantId,
-      ragieDocumentId,
-      name: ragieFile.name,
-      status,
-      lastSyncedAt,
-    });
-  } else {
-    await db
-      .update(schema.files)
-      .set({ status, lastSyncedAt })
-      .where(and(eq(schema.files.tenantId, tenantId), eq(schema.files.ragieDocumentId, ragieDocumentId)));
-  }
-}
-
 export async function getMembersByTenantId(tenantId: string): Promise<Member[]> {
   return union(
     db

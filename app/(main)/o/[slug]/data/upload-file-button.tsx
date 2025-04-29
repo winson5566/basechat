@@ -2,44 +2,48 @@
 
 import { toast } from "sonner";
 
+const VALID_FILE_TYPES = {
+  // Plain Text
+  ".txt": "text/plain",
+  ".eml": "message/rfc822",
+  ".html": "text/html",
+  ".json": "application/json",
+  ".md": "text/markdown",
+  ".msg": "application/vnd.ms-outlook",
+  ".rst": "text/x-rst",
+  ".rtf": "application/rtf",
+  ".xml": "application/xml",
+
+  // Images
+  ".png": "image/png",
+  ".webp": "image/webp",
+  ".jpg": "image/jpeg",
+  ".jpeg": "image/jpeg",
+  ".tiff": "image/tiff",
+  ".bmp": "image/bmp",
+  ".heic": "image/heic",
+
+  // Documents
+  ".csv": "text/csv",
+  ".doc": "application/msword",
+  ".docx": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  ".epub": "application/epub+zip",
+  ".odt": "application/vnd.oasis.opendocument.text",
+  ".pdf": "application/pdf",
+  ".ppt": "application/vnd.ms-powerpoint",
+  ".pptx": "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+  ".tsv": "text/tab-separated-values",
+  ".xls": "application/vnd.ms-excel",
+  ".xlsx": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+} as const;
+
 export default function UploadFileButton({ tenant }: { tenant: { slug: string } }) {
   const validateFile = (file: File): { isValid: boolean; error?: string } => {
-    // Check file type
-    const validFileTypes = [
-      // Plain Text
-      "text/plain", // .txt
-      "message/rfc822", // .eml
-      "text/html", // .html
-      "application/json", // .json
-      "text/markdown", // .md
-      "application/vnd.ms-outlook", // .msg
-      "text/x-rst", // .rst
-      "application/rtf", // .rtf
-      "application/xml", // .xml
+    const fileExtension = `.${file.name.split(".").pop()?.toLowerCase()}`;
+    const isValidExtension = fileExtension in VALID_FILE_TYPES;
+    const isValidMimeType = Object.values(VALID_FILE_TYPES).includes(file.type as any);
 
-      // Images
-      "image/png", // .png
-      "image/webp", // .webp
-      "image/jpeg", // .jpg, .jpeg
-      "image/tiff", // .tiff
-      "image/bmp", // .bmp
-      "image/heic", // .heic
-
-      // Documents
-      "text/csv", // .csv
-      "application/msword", // .doc
-      "application/vnd.openxmlformats-officedocument.wordprocessingml.document", // .docx
-      "application/epub+zip", // .epub
-      "application/vnd.oasis.opendocument.text", // .odt
-      "application/pdf", // .pdf
-      "application/vnd.ms-powerpoint", // .ppt
-      "application/vnd.openxmlformats-officedocument.presentationml.presentation", // .pptx
-      "text/tab-separated-values", // .tsv
-      "application/vnd.ms-excel", // .xls
-      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", // .xlsx
-    ];
-
-    if (!validFileTypes.includes(file.type)) {
+    if (!isValidExtension && !isValidMimeType) {
       return {
         isValid: false,
         error: "Please upload a supported file type",
@@ -62,6 +66,7 @@ export default function UploadFileButton({ tenant }: { tenant: { slug: string } 
     const input = document.createElement("input");
     input.type = "file";
     input.multiple = true;
+    input.accept = [...Object.keys(VALID_FILE_TYPES), ...Object.values(VALID_FILE_TYPES)].join(",");
     input.click();
 
     input.onchange = async (e) => {
@@ -96,13 +101,9 @@ export default function UploadFileButton({ tenant }: { tenant: { slug: string } 
       },
       body: formData,
     });
-
     if (!response.ok) {
       throw new Error("Failed to upload file");
     }
-
-    const result = await response.json();
-    return result;
   };
 
   return (
