@@ -73,11 +73,11 @@ export default function UploadFileButton({ tenant }: { tenant: { slug: string } 
       const files = (e.target as HTMLInputElement).files;
       if (!files || files.length === 0) return;
 
-      for (const file of Array.from(files)) {
+      const uploadPromises = Array.from(files).map(async (file) => {
         const validation = validateFile(file);
         if (!validation.isValid) {
           toast.error(validation.error);
-          continue;
+          return;
         }
 
         try {
@@ -86,7 +86,9 @@ export default function UploadFileButton({ tenant }: { tenant: { slug: string } 
         } catch (err) {
           toast.error(`Failed to upload ${file.name}`);
         }
-      }
+      });
+
+      await Promise.all(uploadPromises);
     };
   };
 
