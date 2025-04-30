@@ -1,5 +1,6 @@
 "use client";
 
+import { useQueryClient } from "@tanstack/react-query";
 import { Inter } from "next/font/google";
 import { useRouter } from "next/navigation";
 import { useState, useEffect, useMemo } from "react";
@@ -25,6 +26,7 @@ interface Props {
 
 export default function Welcome({ tenant, className }: Props) {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const { setInitialMessage, setInitialModel } = useGlobalState();
   const [isBreadth, setIsBreadth] = useState(tenant.isBreadth ?? false);
   const [rerankEnabled, setRerankEnabled] = useState(tenant.rerankEnabled ?? false);
@@ -107,8 +109,7 @@ export default function Welcome({ tenant, className }: Props) {
     const res = await fetch("/api/conversations", {
       method: "POST",
       body: JSON.stringify({
-        title: content,
-        initialModel: model,
+        content,
       }),
       headers: {
         tenant: tenant.slug,
@@ -129,6 +130,10 @@ export default function Welcome({ tenant, className }: Props) {
         prioritizeRecent,
       }),
     );
+
+    // Invalidate the conversations query to trigger a refetch
+    await queryClient.invalidateQueries({ queryKey: ["conversations", tenant.slug] });
+
     router.push(getConversationPath(tenant.slug, conversation.id));
   };
 

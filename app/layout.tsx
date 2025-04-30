@@ -18,7 +18,7 @@ export const metadata: Metadata = {
   description: "Base Chat powered by Ragie",
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <GlobalStateProvider>
       <html lang="en" className="h-full w-full">

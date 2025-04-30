@@ -193,15 +193,17 @@ export default function ConversationHistory({ className, tenant }: Props) {
               {/* Today's conversations */}
               {groupedConversations.today.length > 0 && (
                 <div>
-                  <div className="font-bold text-xs mb-2 pl-2">Today</div>
+                  <div className="font-semibold text-[13px] mb-2 pl-3">Today</div>
                   <div className="space-y-2">
                     {groupedConversations.today.map((conversation, i) => (
                       <div
                         key={i}
                         className="py-2 flex justify-between items-center hover:bg-gray-200 rounded-md transition-colors group pr-2"
                       >
-                        <Link href={getConversationPath(tenant.slug, conversation.id)} className="flex-1 min-w-0 pl-2">
-                          <div className="truncate pr-2 max-w-[calc(100%-24px)]">{conversation.title}</div>
+                        <Link href={getConversationPath(tenant.slug, conversation.id)} className="flex-1 min-w-0 pl-3">
+                          <div className="truncate pr-2 max-w-[calc(100%-24px)] text-[14px] font-medium">
+                            {conversation.title}
+                          </div>
                         </Link>
                         <Popover>
                           <PopoverTrigger asChild>
@@ -231,15 +233,17 @@ export default function ConversationHistory({ className, tenant }: Props) {
               {/* This month's conversations */}
               {groupedConversations.thisMonth.length > 0 && (
                 <div>
-                  <div className="font-bold text-xs mb-2 pl-2">This month</div>
+                  <div className="font-semibold text-[13px] mb-2 pl-3">This month</div>
                   <div className="space-y-2">
                     {groupedConversations.thisMonth.map((conversation, i) => (
                       <div
                         key={i}
                         className="py-2 flex justify-between items-center hover:bg-gray-200 rounded-md transition-colors group pr-2"
                       >
-                        <Link href={getConversationPath(tenant.slug, conversation.id)} className="flex-1 min-w-0 pl-2">
-                          <div className="truncate pr-2 max-w-[calc(100%-24px)]">{conversation.title}</div>
+                        <Link href={getConversationPath(tenant.slug, conversation.id)} className="flex-1 min-w-0 pl-3">
+                          <div className="truncate pr-2 max-w-[calc(100%-24px)] text-[14px] font-medium">
+                            {conversation.title}
+                          </div>
                         </Link>
                         <Popover>
                           <PopoverTrigger asChild>
@@ -277,7 +281,7 @@ export default function ConversationHistory({ className, tenant }: Props) {
 
                 return (
                   <div key={month}>
-                    <div className="font-bold text-xs mb-2 pl-2">{formattedMonth}</div>
+                    <div className="font-semibold text-[13px] mb-2 pl-3">{formattedMonth}</div>
                     <div className="space-y-2">
                       {monthConversations.map((conversation, i) => (
                         <div
@@ -286,9 +290,11 @@ export default function ConversationHistory({ className, tenant }: Props) {
                         >
                           <Link
                             href={getConversationPath(tenant.slug, conversation.id)}
-                            className="flex-1 min-w-0 pl-2"
+                            className="flex-1 min-w-0 pl-3"
                           >
-                            <div className="truncate pr-2 max-w-[calc(100%-24px)]">{conversation.title}</div>
+                            <div className="truncate pr-2 max-w-[calc(100%-24px)] text-[14px] font-medium">
+                              {conversation.title}
+                            </div>
                           </Link>
                           <Popover>
                             <PopoverTrigger asChild>
@@ -321,7 +327,7 @@ export default function ConversationHistory({ className, tenant }: Props) {
                 .sort(([yearA], [yearB]) => Number(yearB) - Number(yearA))
                 .map(([year, yearConversations]) => (
                   <div key={year}>
-                    <div className="font-bold text-xs mb-2 pl-2">{year}</div>
+                    <div className="font-semibold text-[13px] mb-2 pl-3">{year}</div>
                     <div className="space-y-2">
                       {yearConversations.map((conversation, i) => (
                         <div
@@ -330,9 +336,11 @@ export default function ConversationHistory({ className, tenant }: Props) {
                         >
                           <Link
                             href={getConversationPath(tenant.slug, conversation.id)}
-                            className="flex-1 min-w-0 pl-2"
+                            className="flex-1 min-w-0 pl-3"
                           >
-                            <div className="truncate pr-2 max-w-[calc(100%-24px)]">{conversation.title}</div>
+                            <div className="truncate pr-2 max-w-[calc(100%-24px)] text-[14px] font-medium">
+                              {conversation.title}
+                            </div>
                           </Link>
                           <Popover>
                             <PopoverTrigger asChild>
