@@ -3,11 +3,11 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "sonner";
 
-
 import { GaTags } from "@/components/ga-tags";
 
+import { QueryClientProvider } from "../lib/query-client-provider";
+
 import { GlobalStateProvider } from "./(main)/o/[slug]/context";
-import { Providers } from "./providers";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -24,7 +24,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <html lang="en" className="h-full w-full">
         <GaTags gaKey={process.env.GOOGLE_ANALYTICS_KEY} />
         <body className={`${inter.className} antialiased h-full w-full bg-white`}>
-          <Providers>{children}</Providers>
+          <QueryClientProvider>{children}</QueryClientProvider>
           <Toaster position="bottom-center" />
         </body>
       </html>
