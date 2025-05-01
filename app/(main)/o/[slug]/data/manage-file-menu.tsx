@@ -20,13 +20,12 @@ export default function ManageFileMenu({ id, tenant }: Props) {
   const router = useRouter();
 
   async function deleteFile() {
-    // TODO: create route handler to delete this file
-    const res = await fetch(`/api/files/${id}`, {
+    const res = await fetch(`/api/documents/${id}`, {
       headers: { tenant: tenant.slug },
       method: "DELETE",
     });
 
-    if (!res.ok) throw new Error("delete failed");
+    if (!res.ok) throw new Error("Failed to delete file");
     router.refresh();
   }
 

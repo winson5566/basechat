@@ -1,6 +1,7 @@
 import { eq } from "drizzle-orm";
 import Image from "next/image";
 
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import db from "@/lib/server/db";
 import * as schema from "@/lib/server/db/schema";
 import { decrypt } from "@/lib/server/encryption";
@@ -12,6 +13,7 @@ import ManageDataPreviewIcons from "@/public/manage-data-preview-icons.svg";
 
 import AddConnectionMenu from "./add-connection-menu";
 import ConnectionsTable from "./connections-table";
+import FileDropzone from "./file-dropzone";
 import FilesTable from "./files-table";
 import UploadFileButton from "./upload-file-button";
 
@@ -41,34 +43,49 @@ export default async function DataIndexPage({ params }: Props) {
   return (
     <div className="max-w-[1140px] w-full p-4 flex-grow flex flex-col">
       <div className="flex w-full justify-between items-center pt-2">
-        <h1 className="font-bold text-[32px]">Manage data</h1>
+        <h1 className="font-bold text-[32px] text-[#343A40]">Chatbot data</h1>
         <div className="flex gap-2">
-          <AddConnectionMenu tenant={tenant} />
           <UploadFileButton tenant={tenant} />
+          <AddConnectionMenu tenant={tenant} />
         </div>
       </div>
-      {hasData ? (
-        <div className="flex-grow w-full flex flex-col">
-          {connections.length > 0 && (
-            <>
-              <h2 className="text-xl font-semibold mt-10 mb-4">Connections</h2>
-              <ConnectionsTable tenant={tenant} connections={connections} />
-            </>
+      <Tabs defaultValue="files" className="flex-grow w-full flex flex-col mt-8">
+        <TabsList className="w-full justify-start bg-transparent gap-2">
+          <TabsTrigger
+            value="files"
+            className="text-sm font-medium text-[#1D1D1F] data-[state=active]:bg-[#27272A] data-[state=active]:text-white data-[state=active]:rounded-[32px] data-[state=active]:w-[55px] data-[state=active]:h-[36px] data-[state=active]:py-[8px] data-[state=active]:px-[12px]"
+          >
+            Files
+          </TabsTrigger>
+          <TabsTrigger
+            value="connections"
+            className="text-sm font-medium text-[#1D1D1F] data-[state=active]:bg-[#27272A] data-[state=active]:text-white data-[state=active]:rounded-[32px] data-[state=active]:w-[109px] data-[state=active]:h-[36px] data-[state=active]:py-[8px] data-[state=active]:px-[12px]"
+          >
+            Connections
+          </TabsTrigger>
+        </TabsList>
+        <TabsContent value="files" className="flex-grow">
+          {/* TODO: remove this files.length > 0 */}
+          {false ? (
+            <FilesTable tenant={tenant} files={files} />
+          ) : (
+            <div className="flex-grow w-full flex flex-col items-center justify-center h-[calc(100vh-400px)]">
+              <FileDropzone tenant={tenant} />
+            </div>
           )}
-          {files.length > 0 && (
-            <>
-              <h2 className="text-xl font-semibold mt-10 mb-4">Uploaded Files</h2>
-              <FilesTable tenant={tenant} files={files} />
-            </>
+        </TabsContent>
+        <TabsContent value="connections" className="flex-grow">
+          {connections.length > 0 ? (
+            <ConnectionsTable tenant={tenant} connections={connections} />
+          ) : (
+            <div className="flex-grow w-full flex flex-col items-center justify-center h-[calc(100vh-400px)]">
+              <Image alt="Manage data" src={ManageDataPreviewIcons} />
+              <h1 className="font-bold text-[32px] mb-3">Add a connection</h1>
+              <div className="text-[16px]">Click &apos;Add Connection&apos; above to get started</div>
+            </div>
           )}
-        </div>
-      ) : (
-        <div className="flex-grow w-full flex flex-col items-center justify-center">
-          <Image alt="Manage data" src={ManageDataPreviewIcons} />
-          <h1 className="font-bold text-[32px] mb-3">Chat with your own data</h1>
-          <div className="text-[16px]">Click &apos;Add data&apos; above to get started</div>
-        </div>
-      )}
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

@@ -19,7 +19,9 @@ export default async function FilesTable({ tenant, files }: Props) {
   return (
     <div className="flex-grow w-full flex flex-col items-center mt-10">
       <div className="w-full mb-8">
-        <h2 className="text-lg font-semibold mb-4">Uploaded Files</h2>
+        <div className="text-[14px] font-[500] text-[#1D1D1F] mb-4 pl-1">
+          {files.length} {files.length === 1 ? "file" : "files"}
+        </div>
         <Table>
           <TableHeader>
             <TableRow>
@@ -49,7 +51,7 @@ export default async function FilesTable({ tenant, files }: Props) {
         </Table>
       </div>
 
-      <div className="w-full">
+      {/* <div className="w-full">
         <h2 className="text-lg font-semibold mb-4">Connector Files</h2>
         <Table>
           <TableHeader>
@@ -78,7 +80,7 @@ export default async function FilesTable({ tenant, files }: Props) {
             ))}
           </TableBody>
         </Table>
-      </div>
+      </div> */}
     </div>
   );
 }
