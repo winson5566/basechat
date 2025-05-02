@@ -38,7 +38,7 @@ export default function Summary({ className, documentId, slug, onCloseClick = ()
             updatedAt: new Date().toISOString(),
             summary: "Document summary not available",
           });
-          throw new Error("could not retrieve summary");
+          throw new Error("could not retrieve document with summary");
         }
 
         const json = (await res.json()) as DocumentResponse;
