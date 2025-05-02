@@ -81,5 +81,11 @@ export function encryptApiKey(apiKey) {
   }
 }
 
-updateRagieApiKey(tenantId, apiKey, partition);
-process.exit(0);
+updateRagieApiKey(tenantId, apiKey, partition)
+  .then(() => {
+    process.exit(0);
+  })
+  .catch((error) => {
+    console.error("Failed to update Ragie API key:", error);
+    process.exit(1);
+  });
