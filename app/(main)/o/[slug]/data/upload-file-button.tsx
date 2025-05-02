@@ -1,10 +1,12 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
 import { VALID_FILE_TYPES, uploadFile, validateFile } from "@/lib/file-utils";
 
 export default function UploadFileButton({ tenant }: { tenant: { slug: string } }) {
+  const router = useRouter();
   const handleUpload = () => {
     const input = document.createElement("input");
     input.type = "file";
@@ -23,11 +25,20 @@ export default function UploadFileButton({ tenant }: { tenant: { slug: string } 
           return;
         }
 
+        // Show a persistent toast for the upload
+        const toastId = toast.loading(`Uploading ${file.name}...`);
+
         try {
           await uploadFile(file, tenant.slug);
-          toast.success(`Successfully uploaded ${file.name}`);
+          toast.success(`Successfully uploaded ${file.name}`, {
+            id: toastId,
+          });
+          // Refresh the page to update the server component
+          router.refresh();
         } catch (err) {
-          toast.error(`Failed to upload ${file.name}`);
+          toast.error(`Failed to upload ${file.name}`, {
+            id: toastId,
+          });
         }
       });
 

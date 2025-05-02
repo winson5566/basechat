@@ -4,10 +4,7 @@ import Image from "next/image";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import db from "@/lib/server/db";
 import * as schema from "@/lib/server/db/schema";
-import { decrypt } from "@/lib/server/encryption";
-import { getRagieClientAndPartition, getRagieSettingsByTenantId } from "@/lib/server/ragie";
-import { RAGIE_API_KEY } from "@/lib/server/settings";
-import { RAGIE_API_BASE_URL } from "@/lib/server/settings";
+import { getRagieClientAndPartition } from "@/lib/server/ragie";
 import { adminOrRedirect } from "@/lib/server/utils";
 import ManageDataPreviewIcons from "@/public/manage-data-preview-icons.svg";
 
@@ -25,19 +22,18 @@ export default async function DataIndexPage({ params }: Props) {
   const p = await params;
   const { tenant } = await adminOrRedirect(p.slug);
   const connections = await db.select().from(schema.connections).where(eq(schema.connections.tenantId, tenant.id));
-  const { client, partition } = await getRagieClientAndPartition(tenant.id);
-  let files: any[] = [];
 
+  let files: any[] = [];
   try {
+    const { client, partition } = await getRagieClientAndPartition(tenant.id);
     const res = await client.documents.list({
       partition: partition || "",
     });
     files = res.result.documents;
   } catch (error) {
-    console.error(error);
+    console.error("Error fetching documents:", error);
   }
   // TODO: get pages of files from res.result.pagination.nextCursor
-
   const hasData = connections.length > 0 || files.length > 0;
 
   return (
@@ -65,9 +61,9 @@ export default async function DataIndexPage({ params }: Props) {
           </TabsTrigger>
         </TabsList>
         <TabsContent value="files" className="flex-grow">
-          {/* TODO: remove this files.length > 0 */}
-          {false ? (
-            <FilesTable tenant={tenant} files={files} />
+          {/* TODO: remove this files.length > 0 to show dropzone */}
+          {files.length > 0 ? (
+            <FilesTable tenant={tenant} initialFiles={files} />
           ) : (
             <div className="flex-grow w-full flex flex-col items-center justify-center h-[calc(100vh-400px)]">
               <FileDropzone tenant={tenant} />

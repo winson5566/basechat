@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import Dropzone from "react-dropzone";
 import { toast } from "sonner";
 
@@ -12,6 +13,8 @@ interface FileDropzoneProps {
 }
 
 export default function FileDropzone({ tenant }: FileDropzoneProps) {
+  const router = useRouter();
+
   return (
     <Dropzone
       onDrop={async (acceptedFiles: File[]) => {
@@ -21,12 +24,20 @@ export default function FileDropzone({ tenant }: FileDropzoneProps) {
             toast.error(validation.error);
             return;
           }
+          // Show a persistent toast for the upload
+          const toastId = toast.loading(`Uploading ${file.name}...`);
 
           try {
             await uploadFile(file, tenant.slug);
-            toast.success(`Successfully uploaded ${file.name}`);
+            toast.success(`Successfully uploaded ${file.name}`, {
+              id: toastId,
+            });
+            // Refresh the page to update the server component
+            router.refresh();
           } catch (err) {
-            toast.error(`Failed to upload ${file.name}`);
+            toast.error(`Failed to upload ${file.name}`, {
+              id: toastId,
+            });
           }
         });
 
