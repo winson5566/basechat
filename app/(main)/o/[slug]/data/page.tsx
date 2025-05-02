@@ -35,7 +35,7 @@ export default async function DataIndexPage({ params }: Props) {
   }
 
   return (
-    <div className="max-w-[1140px] w-full p-4 flex-grow flex flex-col">
+    <div className="max-w-[1140px] w-full p-4 flex flex-col h-full">
       <div className="flex w-full justify-between items-center pt-2">
         <h1 className="font-bold text-[32px] text-[#343A40]">Chatbot data</h1>
         <div className="flex gap-2">
@@ -43,7 +43,7 @@ export default async function DataIndexPage({ params }: Props) {
           <AddConnectionMenu tenant={tenant} />
         </div>
       </div>
-      <Tabs defaultValue="files" className="flex-grow w-full flex flex-col mt-8">
+      <Tabs defaultValue="files" className="flex flex-col h-full mt-8">
         <TabsList className="w-full justify-start bg-transparent gap-2">
           <TabsTrigger
             value="files"
@@ -58,7 +58,7 @@ export default async function DataIndexPage({ params }: Props) {
             Connections
           </TabsTrigger>
         </TabsList>
-        <TabsContent value="files" className="flex-grow">
+        <TabsContent value="files" className="flex-1 overflow-hidden">
           {files.length > 0 ? (
             <FilesTable tenant={tenant} initialFiles={files} />
           ) : (
@@ -67,7 +67,7 @@ export default async function DataIndexPage({ params }: Props) {
             </div>
           )}
         </TabsContent>
-        <TabsContent value="connections" className="flex-grow">
+        <TabsContent value="connections" className="flex-1 overflow-hidden">
           {connections.length > 0 ? (
             <ConnectionsTable tenant={tenant} connections={connections} />
           ) : (

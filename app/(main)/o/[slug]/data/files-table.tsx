@@ -23,7 +23,7 @@ export default function FilesTable({ tenant, initialFiles }: Props) {
   const [files, setFiles] = useState(initialFiles);
   const [currentPage, setCurrentPage] = useState(1); // basic pagination
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
-  const ITEMS_PER_PAGE = 5; // basic pagination
+  const ITEMS_PER_PAGE = 12; // basic pagination
 
   useEffect(() => {
     const checkFilesStatus = async () => {
@@ -67,7 +67,7 @@ export default function FilesTable({ tenant, initialFiles }: Props) {
     };
   }, [initialFiles, tenant.slug]);
 
-  //   TODO: implement pagination
+  //   TODO: implement cursor based pagination
   // TODO: get pages of files from res.result.pagination.nextCursor
   const totalPages = Math.ceil(files.length / ITEMS_PER_PAGE);
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
@@ -75,35 +75,34 @@ export default function FilesTable({ tenant, initialFiles }: Props) {
   const currentFiles = files.slice(startIndex, endIndex);
 
   return (
-    <div className="flex-grow w-full flex flex-col items-center mt-10">
-      <div className="w-full mb-8">
-        <div className="flex justify-between items-center mb-4">
-          <div className="text-[14px] font-[500] text-[#1D1D1F] pl-1">
-            {files.length} {files.length === 1 ? "file" : "files"}
-          </div>
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-              disabled={currentPage === 1}
-              className={`p-1 rounded-md ${currentPage === 1 ? "text-gray-400 cursor-not-allowed" : "text-gray-600 hover:bg-gray-100"}`}
-            >
-              <ChevronLeft className="h-5 w-5" />
-            </button>
-            <button
-              onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
-              disabled={currentPage === totalPages}
-              className={`p-1 rounded-md ${currentPage === totalPages ? "text-gray-400 cursor-not-allowed" : "text-gray-600 hover:bg-gray-100"}`}
-            >
-              <ChevronRight className="h-5 w-5" />
-            </button>
-          </div>
+    <div className="h-full w-full flex flex-col">
+      <div className="flex justify-between items-center mb-4">
+        <div className="text-[14px] font-[500] text-[#1D1D1F] pl-1">
+          {files.length} {files.length === 1 ? "file" : "files"}
         </div>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+            disabled={currentPage === 1}
+            className={`p-1 rounded-md ${currentPage === 1 ? "text-gray-400 cursor-not-allowed" : "text-gray-600 hover:bg-gray-100"}`}
+          >
+            <ChevronLeft className="h-5 w-5" />
+          </button>
+          <button
+            onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+            disabled={currentPage === totalPages}
+            className={`p-1 rounded-md ${currentPage === totalPages ? "text-gray-400 cursor-not-allowed" : "text-gray-600 hover:bg-gray-100"}`}
+          >
+            <ChevronRight className="h-5 w-5" />
+          </button>
+        </div>
+      </div>
+      <div className="flex-1 overflow-y-auto">
         <Table>
           <TableHeader>
             <TableRow>
               <TableHead className="w-[600px]">Name</TableHead>
               <TableHead className="w-[200px]">Connection</TableHead>
-              <TableHead className="w-[200px]">Added by</TableHead>
               <TableHead className="w-[200px]">Date added</TableHead>
               <TableHead className="w-[200px]">Date modified</TableHead>
               <TableHead className="w-[100px]">Status</TableHead>
@@ -129,7 +128,6 @@ export default function FilesTable({ tenant, initialFiles }: Props) {
                     "-"
                   )}
                 </TableCell>
-                <TableCell>-</TableCell>
                 <TableCell>{formatDistanceToNow(new Date(file.createdAt), { addSuffix: true })}</TableCell>
                 <TableCell>{formatDistanceToNow(new Date(file.updatedAt), { addSuffix: true })}</TableCell>
                 <TableCell>

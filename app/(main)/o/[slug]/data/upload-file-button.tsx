@@ -48,7 +48,7 @@ export default function UploadFileButton({ tenant }: { tenant: { slug: string } 
 
   return (
     <button
-      className="flex items-center rounded-[40px] h-[40px] px-5 bg-[#FFFFFF] border border-[#D7D7D7] font-semibold"
+      className="flex items-center rounded-[40px] h-[40px] px-5 bg-[#FFFFFF] border border-[#D7D7D7] font-semibold hover:bg-[#F5F5F7]"
       onClick={handleUpload}
     >
       <div>Upload File</div>

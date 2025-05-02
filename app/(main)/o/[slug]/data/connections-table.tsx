@@ -21,21 +21,19 @@ export default async function ConnectionsTable({ tenant, connections }: Props) {
     return null;
   }
 
-  //   TODO: implement pagination
+  //   TODO: implement cursor based pagination
   // TODO: get pages of files from res.result.pagination.nextCursor
 
   return (
-    <div className="flex-grow w-full flex flex-col items-center">
-      <div className="w-full mb-8">
-        <div className="text-[14px] font-[500] text-[#1D1D1F] mb-4 pl-1">
-          {connections.length} {connections.length === 1 ? "connection" : "connections"}
-        </div>
+    <div className="h-full w-full flex flex-col">
+      <div className="text-[14px] font-[500] text-[#1D1D1F] mb-4 pl-1">
+        {connections.length} {connections.length === 1 ? "connection" : "connections"}
+      </div>
+      <div className="flex-1 overflow-y-auto">
         <Table>
           <TableHeader>
             <TableRow>
               <TableHead className="w-[600px]">Name</TableHead>
-              <TableHead className="w-[200px]">Document count</TableHead>
-              <TableHead className="w-[200px]">Added by</TableHead>
               <TableHead className="w-[200px]">Date added</TableHead>
               <TableHead className="w-[200px]">Last synced</TableHead>
               <TableHead className="w-[100px]">Status</TableHead>
@@ -52,9 +50,7 @@ export default async function ConnectionsTable({ tenant, connections }: Props) {
                   />
                   <div>{connection.name}</div>
                 </TableCell>
-                {/**TODO: fix these table cells with real info from connections */}
-                <TableCell>document count</TableCell>
-                <TableCell>added by</TableCell>
+                {/**TODO: add document count and added by TableCell s here */}
                 <TableCell>{formatDistanceToNow(connection.createdAt, { addSuffix: true })}</TableCell>
                 <TableCell>
                   {connection.lastSyncedAt ? formatDistanceToNow(connection.lastSyncedAt, { addSuffix: true }) : "-"}
