@@ -7,10 +7,24 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
   const { tenant } = await requireAuthContextFromRequest(request);
   const { id } = await params;
   const { client, partition } = await getRagieClientAndPartition(tenant.id);
-
-  const document = await client.documents.get({ partition, documentId: id });
-  const summary = await client.documents.getSummary({ partition, documentId: id });
-
+  let document;
+  let summary;
+  try {
+    document = await client.documents.get({ partition, documentId: id });
+  } catch (error) {
+    if (error instanceof Error && error.message.includes("not found")) {
+      return new Response("Document not found", { status: 404 });
+    }
+    throw error;
+  }
+  try {
+    summary = await client.documents.getSummary({ partition, documentId: id });
+  } catch (error) {
+    if (error instanceof Error && error.message.includes("not found")) {
+      return new Response("Document summary not found", { status: 404 });
+    }
+    throw error;
+  }
   return Response.json({ ...document, summary: summary.summary });
 }
 
