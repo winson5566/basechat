@@ -4,14 +4,15 @@ import { anthropic } from "@ai-sdk/anthropic";
 import { google } from "@ai-sdk/google";
 import { groq } from "@ai-sdk/groq";
 import { openai } from "@ai-sdk/openai";
-import { CoreMessage, generateText, streamObject } from "ai";
+import { CoreMessage, streamObject } from "ai";
 import Handlebars from "handlebars";
 
 import { createConversationMessageResponseSchema } from "@/lib/api";
-import { DEFAULT_GROUNDING_PROMPT, DEFAULT_SYSTEM_PROMPT, NAMING_SYSTEM_PROMPT } from "@/lib/constants";
+import { DEFAULT_GROUNDING_PROMPT, DEFAULT_SYSTEM_PROMPT } from "@/lib/constants";
 import { DEFAULT_MODEL, DEFAULT_PROVIDER, getProviderForModel, LLMModel, SPECIAL_LLAMA_PROMPT } from "@/lib/llm/types";
-import { getRagieClient, getRagieSettingsByTenantId, getTenantRagieClient } from "@/lib/server/ragie";
 import { createConversationMessage, updateConversationMessageContent } from "@/lib/server/service";
+import { getRagieClientAndPartition } from "@/lib/server/ragie";
+
 
 type GenerateContext = {
   messages: CoreMessage[];
@@ -148,19 +149,7 @@ export async function getRetrievalSystemPrompt(
   rerankEnabled: boolean,
   prioritizeRecent: boolean,
 ) {
-  const { ragieApiKey, ragiePartition } = await getRagieSettingsByTenantId(tenantId);
-
-  let client;
-  let partition;
-  if (ragieApiKey) {
-    client = await getTenantRagieClient(ragieApiKey);
-    partition = ragiePartition || undefined;
-  } else {
-    client = getRagieClient();
-    partition = tenantId;
-  }
-
-  assert(!!client, "No client found");
+  const { client, partition } = await getRagieClientAndPartition(tenantId);
 
   const response = await client.retrievals.retrieve({
     partition,
