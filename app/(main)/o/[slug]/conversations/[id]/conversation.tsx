@@ -61,7 +61,7 @@ export default function Conversation({ id, tenant }: Props) {
       {documentId && (
         <div className="absolute top-0 left-0 right-0 lg:static lg:h-full">
           <Summary
-            className="flex-1 w-full lg:min-w-[400px] lg:w-[400px] rounded-[24px] p-8 mr-6 mb-4 bg-[#F5F5F7] max-h-[calc(100vh-150px)] overflow-y-auto"
+            className="flex-1 w-full lg:min-w-[400px] lg:w-[400px] rounded-[24px] p-8 mr-6 mb-4 bg-[#F5F5F7] max-h-[calc(100vh-155px)] overflow-y-auto"
             documentId={documentId}
             slug={tenant.slug}
             onCloseClick={() => setDocumentId(null)}

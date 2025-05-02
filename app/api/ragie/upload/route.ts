@@ -22,8 +22,6 @@ export async function POST(request: NextRequest) {
       partition: partition || "",
       mode: "hi_res",
     });
-    console.log(res);
-    // TODO: what is res and what should this route.ts return here?
     return Response.json(res);
   } catch (error) {
     console.error("Error uploading file:", error);

@@ -33,8 +33,6 @@ export default async function DataIndexPage({ params }: Props) {
   } catch (error) {
     console.error("Error fetching documents:", error);
   }
-  // TODO: get pages of files from res.result.pagination.nextCursor
-  const hasData = connections.length > 0 || files.length > 0;
 
   return (
     <div className="max-w-[1140px] w-full p-4 flex-grow flex flex-col">
@@ -61,7 +59,6 @@ export default async function DataIndexPage({ params }: Props) {
           </TabsTrigger>
         </TabsList>
         <TabsContent value="files" className="flex-grow">
-          {/* TODO: remove this files.length > 0 to show dropzone */}
           {files.length > 0 ? (
             <FilesTable tenant={tenant} initialFiles={files} />
           ) : (

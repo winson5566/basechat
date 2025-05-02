@@ -1,7 +1,7 @@
 "use client";
 
 import { formatDistanceToNow } from "date-fns";
-import { Loader2 } from "lucide-react";
+import { ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
 import Image from "next/image";
 import { useEffect, useState, useRef } from "react";
 
@@ -21,7 +21,9 @@ interface Props {
 
 export default function FilesTable({ tenant, initialFiles }: Props) {
   const [files, setFiles] = useState(initialFiles);
+  const [currentPage, setCurrentPage] = useState(1); // basic pagination
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const ITEMS_PER_PAGE = 12; // basic pagination
 
   useEffect(() => {
     const checkFilesStatus = async () => {
@@ -65,15 +67,36 @@ export default function FilesTable({ tenant, initialFiles }: Props) {
     };
   }, [initialFiles, tenant.slug]);
 
-  const uploadedFiles = files.filter((file) => Object.keys(file.metadata || {}).length === 0);
-  const connectorFiles = files.filter((file) => Object.keys(file.metadata || {}).length > 0);
-  console.log(connectorFiles);
+  //   TODO: implement pagination
+  // TODO: get pages of files from res.result.pagination.nextCursor
+  const totalPages = Math.ceil(files.length / ITEMS_PER_PAGE);
+  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+  const endIndex = startIndex + ITEMS_PER_PAGE;
+  const currentFiles = files.slice(startIndex, endIndex);
 
   return (
     <div className="flex-grow w-full flex flex-col items-center mt-10">
       <div className="w-full mb-8">
-        <div className="text-[14px] font-[500] text-[#1D1D1F] mb-4 pl-1">
-          {files.length} {files.length === 1 ? "file" : "files"}
+        <div className="flex justify-between items-center mb-4">
+          <div className="text-[14px] font-[500] text-[#1D1D1F] pl-1">
+            {files.length} {files.length === 1 ? "file" : "files"}
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+              disabled={currentPage === 1}
+              className={`p-1 rounded-md ${currentPage === 1 ? "text-gray-400 cursor-not-allowed" : "text-gray-600 hover:bg-gray-100"}`}
+            >
+              <ChevronLeft className="h-5 w-5" />
+            </button>
+            <button
+              onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+              disabled={currentPage === totalPages}
+              className={`p-1 rounded-md ${currentPage === totalPages ? "text-gray-400 cursor-not-allowed" : "text-gray-600 hover:bg-gray-100"}`}
+            >
+              <ChevronRight className="h-5 w-5" />
+            </button>
+          </div>
         </div>
         <Table>
           <TableHeader>
@@ -87,7 +110,7 @@ export default function FilesTable({ tenant, initialFiles }: Props) {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {files.map((file) => (
+            {currentFiles.map((file) => (
               <TableRow key={file.id}>
                 <TableCell className="font-medium flex items-center">
                   <div>{file.name}</div>
@@ -125,37 +148,6 @@ export default function FilesTable({ tenant, initialFiles }: Props) {
           </TableBody>
         </Table>
       </div>
-
-      {/* <div className="w-full">
-        <h2 className="text-lg font-semibold mb-4">Connector Files</h2>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead className="w-[600px]">Name</TableHead>
-              <TableHead className="w-[200px]">Date added</TableHead>
-              <TableHead className="w-[200px]">Last synced</TableHead>
-              <TableHead className="w-[100px]">Status</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {connectorFiles.map((file) => (
-              <TableRow key={file.id}>
-                <TableCell className="font-medium flex items-center">
-                  <div>{file.name}</div>
-                </TableCell>
-                <TableCell>{formatDistanceToNow(new Date(file.created_at), { addSuffix: true })}</TableCell>
-                <TableCell>
-                  {file.lastSyncedAt ? formatDistanceToNow(file.lastSyncedAt, { addSuffix: true }) : "-"}
-                </TableCell>
-                <TableCell>{file.status}</TableCell>
-                <TableCell className="text-right">
-                  <ManageFileMenu id={file.id} tenant={tenant} />
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </div> */}
     </div>
   );
 }

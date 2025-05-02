@@ -7,8 +7,8 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem } from "@/components/ui/dropdown-menu";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
-
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -58,15 +58,24 @@ export default function ManageFileMenu({ id, tenant, isConnectorFile }: Props) {
         </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className={inter.className}>
-        <DropdownMenuItem
-          onSelect={deleteFile}
-          className={cn(isConnectorFile && "cursor-not-allowed opacity-50")}
-          title={isConnectorFile ? "This file is from a connector and cannot be deleted" : undefined}
-        >
-          <Trash />
-          {/* TODO: use tooltip from shadcn instead */}
-          Delete
-        </DropdownMenuItem>
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <DropdownMenuItem
+                onSelect={deleteFile}
+                className={cn(isConnectorFile && "cursor-not-allowed opacity-50")}
+              >
+                <Trash />
+                Delete
+              </DropdownMenuItem>
+            </TooltipTrigger>
+            {isConnectorFile && (
+              <TooltipContent>
+                <p>This file is from a connector and cannot be deleted.</p>
+              </TooltipContent>
+            )}
+          </Tooltip>
+        </TooltipProvider>
       </DropdownMenuContent>
     </DropdownMenu>
   );

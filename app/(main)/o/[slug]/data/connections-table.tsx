@@ -21,6 +21,9 @@ export default async function ConnectionsTable({ tenant, connections }: Props) {
     return null;
   }
 
+  //   TODO: implement pagination
+  // TODO: get pages of files from res.result.pagination.nextCursor
+
   return (
     <div className="flex-grow w-full flex flex-col items-center">
       <div className="w-full mb-8">
