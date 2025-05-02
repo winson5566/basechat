@@ -12,7 +12,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
   try {
     document = await client.documents.get({ partition, documentId: id });
   } catch (error) {
-    if (error instanceof Error && error.message.includes("404")) {
+    if (error instanceof Error && error.message.includes("not found")) {
       return new Response("Document not found", { status: 404 });
     }
     throw error;
@@ -20,7 +20,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
   try {
     summary = await client.documents.getSummary({ partition, documentId: id });
   } catch (error) {
-    if (error instanceof Error && error.message.includes("404")) {
+    if (error instanceof Error && error.message.includes("not found")) {
       return new Response("Document summary not found", { status: 404 });
     }
     throw error;
