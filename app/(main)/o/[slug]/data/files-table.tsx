@@ -23,7 +23,7 @@ export default function FilesTable({ tenant, initialFiles }: Props) {
   const [files, setFiles] = useState(initialFiles);
   const [currentPage, setCurrentPage] = useState(1); // basic pagination
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
-  const ITEMS_PER_PAGE = 12; // basic pagination
+  const ITEMS_PER_PAGE = 5; // basic pagination
 
   useEffect(() => {
     const checkFilesStatus = async () => {
