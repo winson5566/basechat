@@ -31,6 +31,14 @@ export const VALID_FILE_TYPES = {
   ".tsv": "text/tab-separated-values",
   ".xls": "application/vnd.ms-excel",
   ".xlsx": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+
+  // Audio
+  ".mp3": "audio/mpeg",
+  ".wav": "audio/wav",
+  ".m4a": "audio/mp4",
+  ".ogg": "audio/ogg",
+  ".oga": "audio/ogg",
+  ".opus": "audio/opus",
 } as const;
 
 export const MAX_FILE_SIZE = 500 * 1024 * 1024; // 500MB
