@@ -10,6 +10,7 @@ import Handlebars from "handlebars";
 import { createConversationMessageResponseSchema } from "@/lib/api";
 import { DEFAULT_GROUNDING_PROMPT, DEFAULT_SYSTEM_PROMPT } from "@/lib/constants";
 import { DEFAULT_MODEL, DEFAULT_PROVIDER, getProviderForModel, LLMModel, SPECIAL_LLAMA_PROMPT } from "@/lib/llm/types";
+import * as schema from "@/lib/server/db/schema";
 import { getRagieClientAndPartition } from "@/lib/server/ragie";
 import { createConversationMessage, updateConversationMessageContent } from "@/lib/server/service";
 
@@ -141,14 +142,13 @@ export async function generate(tenantId: string, profileId: string, conversation
 }
 
 export async function getRetrievalSystemPrompt(
-  tenantId: string,
-  name: string,
+  tenant: typeof schema.tenants.$inferSelect,
   query: string,
   isBreadth: boolean,
   rerankEnabled: boolean,
   prioritizeRecent: boolean,
 ) {
-  const { client, partition } = await getRagieClientAndPartition(tenantId);
+  const { client, partition } = await getRagieClientAndPartition(tenant.id);
 
   const response = await client.retrievals.retrieve({
     partition,
@@ -169,11 +169,9 @@ export async function getRetrievalSystemPrompt(
     documentName: chunk.documentName,
   }));
 
+  const company = { name: tenant.name };
   return {
-    content: getSystemPrompt({
-      company: { name },
-      chunks,
-    }),
+    content: renderSystemPrompt({ company, chunks }, tenant.systemPrompt),
     sources,
   };
 }
@@ -191,7 +189,7 @@ export type SystemPromptContext = {
   chunks: string;
 };
 
-export function getGroundingSystemPrompt(context: GroundingSystemPromptContext, prompt?: string | null) {
+export function renderGroundingSystemPrompt(context: GroundingSystemPromptContext, prompt?: string | null) {
   const groundingPrompt = prompt ? prompt : DEFAULT_GROUNDING_PROMPT;
 
   const template = Handlebars.compile(groundingPrompt);
@@ -200,10 +198,8 @@ export function getGroundingSystemPrompt(context: GroundingSystemPromptContext, 
   return template({ ...context, now });
 }
 
-function getSystemPrompt(context: SystemPromptContext, prompt?: string | null) {
-  const systemPrompt = prompt ? prompt : DEFAULT_SYSTEM_PROMPT;
+function renderSystemPrompt(context: SystemPromptContext, template?: string | null) {
+  const compiled = Handlebars.compile(template ?? DEFAULT_SYSTEM_PROMPT);
 
-  const template = Handlebars.compile(systemPrompt);
-
-  return template({ ...context });
+  return compiled({ ...context });
 }
