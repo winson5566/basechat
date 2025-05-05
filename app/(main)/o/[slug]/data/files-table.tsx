@@ -3,10 +3,14 @@
 import { formatDistanceToNow } from "date-fns";
 import { ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import { useEffect, useState, useRef } from "react";
+import Dropzone from "react-dropzone";
+import { toast } from "sonner";
 
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import CONNECTOR_MAP from "@/lib/connector-map";
+import { MAX_FILE_SIZE, getDropzoneAcceptConfig, uploadFile, validateFile } from "@/lib/file-utils";
 import { getStatusDisplayName } from "@/lib/utils";
 
 import ManageFileMenu from "./manage-file-menu";
@@ -21,12 +25,14 @@ interface Props {
 }
 
 export default function FilesTable({ tenant, initialFiles, nextCursor }: Props) {
+  const router = useRouter();
   const [allFiles, setAllFiles] = useState(initialFiles);
   const [currentNextCursor, setCurrentNextCursor] = useState<string | null>(nextCursor);
   const [isLoading, setIsLoading] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const ITEMS_PER_PAGE = 12;
+  const [isDragActive, setIsDragActive] = useState(false);
 
   const loadNextPage = async () => {
     if (!currentNextCursor || isLoading) return;
@@ -119,87 +125,126 @@ export default function FilesTable({ tenant, initialFiles, nextCursor }: Props) 
   }, [initialFiles, tenant.slug]);
 
   return (
-    <div className="h-full w-full flex flex-col">
-      <div className="flex justify-between items-center mb-4">
-        <div className="text-[14px] font-[500] text-[#1D1D1F] pl-1">
-          {allFiles.length} {allFiles.length === 1 ? "file" : "files"}
-        </div>
-        <div className="flex items-center gap-2">
-          <button
-            onClick={goToPreviousPage}
-            disabled={currentPage === 1}
-            className={`p-1 rounded-md ${currentPage === 1 ? "text-gray-400 cursor-not-allowed" : "text-gray-600 hover:bg-gray-100"}`}
-          >
-            <ChevronLeft className="h-5 w-5" />
-          </button>
-          <button
-            onClick={goToNextPage}
-            disabled={!currentNextCursor && currentPage * ITEMS_PER_PAGE >= allFiles.length}
-            className={`p-1 rounded-md ${
-              !currentNextCursor && currentPage * ITEMS_PER_PAGE >= allFiles.length
-                ? "text-gray-400 cursor-not-allowed"
-                : "text-gray-600 hover:bg-gray-100"
-            }`}
-          >
-            <ChevronRight className="h-5 w-5" />
-          </button>
-        </div>
-      </div>
-      <div className="flex-1 overflow-y-auto">
-        {isLoading ? (
-          <div className="h-full w-full flex items-center justify-center">
-            <Loader2 className="h-8 w-8 animate-spin text-[#006EDB]" />
+    <Dropzone
+      onDrop={async (acceptedFiles: File[]) => {
+        const uploadPromises = acceptedFiles.map(async (file) => {
+          const validation = validateFile(file);
+          if (!validation.isValid) {
+            toast.error(validation.error);
+            return;
+          }
+          const toastId = toast.loading(`Uploading ${file.name}...`);
+
+          try {
+            await uploadFile(file, tenant.slug);
+            toast.success(`Successfully uploaded ${file.name}`, {
+              id: toastId,
+            });
+            router.refresh();
+          } catch (err) {
+            toast.error(`Failed to upload ${file.name}`, {
+              id: toastId,
+            });
+          }
+        });
+
+        await Promise.all(uploadPromises);
+      }}
+      accept={getDropzoneAcceptConfig()}
+      maxSize={MAX_FILE_SIZE}
+      onDragEnter={() => setIsDragActive(true)}
+      onDragLeave={() => setIsDragActive(false)}
+      onDropAccepted={() => setIsDragActive(false)}
+      onDropRejected={() => setIsDragActive(false)}
+      noClick
+    >
+      {({ getRootProps, getInputProps }) => (
+        <div className="h-full w-full flex flex-col" {...getRootProps()}>
+          <input {...getInputProps()} />
+          <div className="flex justify-between items-center mb-4">
+            <div className="text-[14px] font-[500] text-[#1D1D1F] pl-1">
+              {allFiles.length} {allFiles.length === 1 ? "file" : "files"}
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={goToPreviousPage}
+                disabled={currentPage === 1}
+                className={`p-1 rounded-md ${currentPage === 1 ? "text-gray-400 cursor-not-allowed" : "text-gray-600 hover:bg-gray-100"}`}
+              >
+                <ChevronLeft className="h-5 w-5" />
+              </button>
+              <button
+                onClick={goToNextPage}
+                disabled={!currentNextCursor && currentPage * ITEMS_PER_PAGE >= allFiles.length}
+                className={`p-1 rounded-md ${
+                  !currentNextCursor && currentPage * ITEMS_PER_PAGE >= allFiles.length
+                    ? "text-gray-400 cursor-not-allowed"
+                    : "text-gray-600 hover:bg-gray-100"
+                }`}
+              >
+                <ChevronRight className="h-5 w-5" />
+              </button>
+            </div>
           </div>
-        ) : (
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-[600px]">Name</TableHead>
-                <TableHead className="w-[200px]">Connection</TableHead>
-                <TableHead className="w-[200px]">Date added</TableHead>
-                <TableHead className="w-[200px]">Date modified</TableHead>
-                <TableHead className="w-[100px]">Status</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {currentFiles.map((file) => (
-                <TableRow key={file.id}>
-                  <TableCell className="font-medium flex items-center">
-                    <div>{file.name}</div>
-                  </TableCell>
-                  <TableCell>
-                    {file.metadata.source_type ? (
-                      <div className="flex items-center gap-2">
-                        <Image
-                          src={CONNECTOR_MAP[file.metadata.source_type][1]}
-                          alt={CONNECTOR_MAP[file.metadata.source_type][0]}
-                          className="mr-1"
-                        />
-                        {CONNECTOR_MAP[file.metadata.source_type][0]}
-                      </div>
-                    ) : (
-                      "-"
-                    )}
-                  </TableCell>
-                  <TableCell>{formatDistanceToNow(new Date(file.createdAt), { addSuffix: true })}</TableCell>
-                  <TableCell>{formatDistanceToNow(new Date(file.updatedAt), { addSuffix: true })}</TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-2">
-                      {file.status !== "ready" && file.status !== "failed" && (
-                        <Loader2 className="h-4 w-4 animate-spin text-[#006EDB]" />
-                      )}
-                      {getStatusDisplayName(file.status)}
-                    </div>
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <ManageFileMenu id={file.id} tenant={tenant} isConnectorFile={!!file.metadata?.source_type} />
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        )}
-      </div>
-    </div>
+          <div
+            className={`flex-1 overflow-y-auto relative ${isDragActive ? "after:content-[''] after:absolute after:inset-0 after:bg-[#F0F7FF] after:border-2 after:border-[#007AFF] after:border-dashed after:rounded-lg after:pointer-events-none" : ""}`}
+          >
+            {isLoading ? (
+              <div className="h-full w-full flex items-center justify-center">
+                <Loader2 className="h-8 w-8 animate-spin text-[#006EDB]" />
+              </div>
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-[600px]">Name</TableHead>
+                    <TableHead className="w-[200px]">Connection</TableHead>
+                    <TableHead className="w-[200px]">Date added</TableHead>
+                    <TableHead className="w-[200px]">Date modified</TableHead>
+                    <TableHead className="w-[100px]">Status</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {currentFiles.map((file) => (
+                    <TableRow key={file.id}>
+                      <TableCell className="font-medium flex items-center">
+                        <div>{file.name}</div>
+                      </TableCell>
+                      <TableCell>
+                        {file.metadata.source_type ? (
+                          <div className="flex items-center gap-2">
+                            <Image
+                              src={CONNECTOR_MAP[file.metadata.source_type][1]}
+                              alt={CONNECTOR_MAP[file.metadata.source_type][0]}
+                              className="mr-1"
+                            />
+                            {CONNECTOR_MAP[file.metadata.source_type][0]}
+                          </div>
+                        ) : (
+                          "-"
+                        )}
+                      </TableCell>
+                      <TableCell>{formatDistanceToNow(new Date(file.createdAt), { addSuffix: true })}</TableCell>
+                      <TableCell>{formatDistanceToNow(new Date(file.updatedAt), { addSuffix: true })}</TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          {file.status !== "ready" && file.status !== "failed" && (
+                            <Loader2 className="h-4 w-4 animate-spin text-[#006EDB]" />
+                          )}
+                          {getStatusDisplayName(file.status)}
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <ManageFileMenu id={file.id} tenant={tenant} isConnectorFile={!!file.metadata?.source_type} />
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            )}
+          </div>
+        </div>
+      )}
+    </Dropzone>
   );
 }
