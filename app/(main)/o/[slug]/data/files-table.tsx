@@ -34,6 +34,17 @@ export default function FilesTable({ tenant, initialFiles, nextCursor }: Props) 
   const ITEMS_PER_PAGE = 12;
   const [isDragActive, setIsDragActive] = useState(false);
 
+  // update the table if a file has been deleted
+  const handleFileRemoved = (fileId: string) => {
+    setAllFiles((prev) => {
+      const index = prev.findIndex((file) => file.id === fileId);
+      if (index === -1) return prev; // File not found
+      const newFiles = [...prev];
+      newFiles.splice(index, 1);
+      return newFiles;
+    });
+  };
+
   const loadNextPage = async () => {
     if (!currentNextCursor || isLoading) return;
 
@@ -235,7 +246,12 @@ export default function FilesTable({ tenant, initialFiles, nextCursor }: Props) 
                         </div>
                       </TableCell>
                       <TableCell className="text-right">
-                        <ManageFileMenu id={file.id} tenant={tenant} isConnectorFile={!!file.metadata?.source_type} />
+                        <ManageFileMenu
+                          id={file.id}
+                          tenant={tenant}
+                          isConnectorFile={!!file.metadata?.source_type}
+                          onFileRemoved={handleFileRemoved}
+                        />
                       </TableCell>
                     </TableRow>
                   ))}
