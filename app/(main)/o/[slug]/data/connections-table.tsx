@@ -27,8 +27,6 @@ export default function ConnectionsTable({ tenant, connections }: Props) {
     return null;
   }
 
-  //   TODO: implement cursor based pagination
-  // TODO: get pages of files from res.result.pagination.nextCursor
   const totalPages = Math.ceil(connections.length / ITEMS_PER_PAGE);
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
   const endIndex = startIndex + ITEMS_PER_PAGE;
