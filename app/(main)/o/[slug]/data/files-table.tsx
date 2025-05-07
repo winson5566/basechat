@@ -22,9 +22,17 @@ interface Props {
   };
   initialFiles: any[];
   nextCursor: string | null;
+  userName: string;
+  connectionMap: Record<
+    string,
+    {
+      sourceType: string;
+      addedBy: string | null;
+    }
+  >;
 }
 
-export default function FilesTable({ tenant, initialFiles, nextCursor }: Props) {
+export default function FilesTable({ tenant, initialFiles, nextCursor, userName, connectionMap }: Props) {
   const router = useRouter();
   const [allFiles, setAllFiles] = useState(initialFiles);
   const [currentNextCursor, setCurrentNextCursor] = useState<string | null>(nextCursor);
@@ -147,7 +155,7 @@ export default function FilesTable({ tenant, initialFiles, nextCursor }: Props) 
           const toastId = toast.loading(`Uploading ${file.name}...`);
 
           try {
-            await uploadFile(file, tenant.slug);
+            await uploadFile(file, tenant.slug, userName);
             toast.success(`Successfully uploaded ${file.name}`, {
               id: toastId,
             });
@@ -172,6 +180,7 @@ export default function FilesTable({ tenant, initialFiles, nextCursor }: Props) 
       {({ getRootProps, getInputProps }) => (
         <div className="h-full w-full flex flex-col" {...getRootProps()}>
           <input {...getInputProps()} />
+          <hr className="my-4" />
           <div className="flex justify-between items-center mb-4">
             <div className="text-[14px] font-[500] text-[#1D1D1F] pl-1">
               {allFiles.length} {allFiles.length === 1 ? "file" : "files"}
@@ -210,6 +219,7 @@ export default function FilesTable({ tenant, initialFiles, nextCursor }: Props) 
                   <TableRow>
                     <TableHead className="w-[600px]">Name</TableHead>
                     <TableHead className="w-[200px]">Connection</TableHead>
+                    <TableHead className="w-[200px]">Added by</TableHead>
                     <TableHead className="w-[200px]">Date added</TableHead>
                     <TableHead className="w-[200px]">Date modified</TableHead>
                     <TableHead className="w-[100px]">Status</TableHead>
@@ -222,7 +232,7 @@ export default function FilesTable({ tenant, initialFiles, nextCursor }: Props) 
                         <div>{file.name}</div>
                       </TableCell>
                       <TableCell>
-                        {file.metadata.source_type ? (
+                        {file.metadata?.source_type && file.metadata.source_type !== "manual" ? (
                           <div className="flex items-center gap-2">
                             <Image
                               src={CONNECTOR_MAP[file.metadata.source_type][1]}
@@ -233,6 +243,13 @@ export default function FilesTable({ tenant, initialFiles, nextCursor }: Props) 
                           </div>
                         ) : (
                           "-"
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        {file.metadata?.source_type && file.metadata.source_type !== "manual" ? (
+                          <div>{connectionMap[file.metadata.source_type]?.addedBy || "-"}</div>
+                        ) : (
+                          file.metadata.added_by || "-"
                         )}
                       </TableCell>
                       <TableCell>{formatDistanceToNow(new Date(file.createdAt), { addSuffix: true })}</TableCell>
@@ -249,7 +266,7 @@ export default function FilesTable({ tenant, initialFiles, nextCursor }: Props) 
                         <ManageFileMenu
                           id={file.id}
                           tenant={tenant}
-                          isConnectorFile={!!file.metadata?.source_type}
+                          isConnectorFile={file.metadata?.source_type && file.metadata.source_type !== "manual"}
                           onFileRemoved={handleFileRemoved}
                         />
                       </TableCell>
