@@ -41,7 +41,8 @@ export default function FilesTable({ tenant, initialFiles, nextCursor, userName,
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
   const currentCursor = searchParams.get("cursor") || null;
-  const [cursorHistory, setCursorHistory] = useState<string[]>([]);
+  const historyParam = searchParams.get("history") || "";
+  const cursorHistory = historyParam ? historyParam.split(",") : [];
 
   // update the table if a file has been deleted
   const handleFileRemoved = (fileId: string) => {
@@ -132,11 +133,10 @@ export default function FilesTable({ tenant, initialFiles, nextCursor, userName,
     if (cursor === null) {
       // Going back to first page
       router.push("?cursor=");
-      setCursorHistory([]);
     } else {
       // Going forward
-      router.push(`?cursor=${cursor}`);
-      setCursorHistory((prev) => [...prev, currentCursor || ""]);
+      const newHistory = [...cursorHistory, currentCursor || ""].filter(Boolean);
+      router.push(`?cursor=${cursor}&history=${newHistory.join(",")}`);
     }
   };
 
@@ -147,8 +147,8 @@ export default function FilesTable({ tenant, initialFiles, nextCursor, userName,
     } else {
       // Get the last cursor from history
       const previousCursor = cursorHistory[cursorHistory.length - 1];
-      router.push(`?cursor=${previousCursor}`);
-      setCursorHistory((prev) => prev.slice(0, -1));
+      const newHistory = cursorHistory.slice(0, -1);
+      router.push(`?cursor=${previousCursor}${newHistory.length ? `&history=${newHistory.join(",")}` : ""}`);
     }
   };
 
