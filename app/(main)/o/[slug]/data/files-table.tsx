@@ -36,17 +36,12 @@ export default function FilesTable({ tenant, initialFiles, nextCursor, userName,
   const router = useRouter();
   const searchParams = useSearchParams();
   const [allFiles, setAllFiles] = useState(initialFiles);
-  const [pageToCursorMap, setPageToCursorMap] = useState<{ [page: number]: string | null }>({
-    1: null,
-    2: nextCursor ?? null,
-  });
   const [isLoading, setIsLoading] = useState(false);
   const [isDragActive, setIsDragActive] = useState(false);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
-  const ITEMS_PER_PAGE = 10;
 
-  const pageParam = parseInt(searchParams.get("page") || "1", 10);
-  const currentPage = isNaN(pageParam) ? 1 : pageParam;
+  const currentCursor = searchParams.get("cursor") || null;
+  const [cursorHistory, setCursorHistory] = useState<string[]>([]);
 
   // update the table if a file has been deleted
   const handleFileRemoved = (fileId: string) => {
@@ -59,12 +54,11 @@ export default function FilesTable({ tenant, initialFiles, nextCursor, userName,
     });
   };
 
-  const fetchFilesForPage = async (page: number) => {
+  const fetchFiles = async (cursor: string | null) => {
     if (isLoading) return;
     setIsLoading(true);
 
     try {
-      const cursor = pageToCursorMap[page];
       const response = await fetch(`/api/tenants/current/documents?cursor=${cursor ?? ""}`, {
         headers: { tenant: tenant.slug },
       });
@@ -72,14 +66,6 @@ export default function FilesTable({ tenant, initialFiles, nextCursor, userName,
 
       if (data.documents) {
         setAllFiles(data.documents);
-
-        // Store cursor for next page if we have one
-        if (data.nextCursor && !pageToCursorMap[page + 1]) {
-          setPageToCursorMap((prev) => ({
-            ...prev,
-            [page + 1]: data.nextCursor,
-          }));
-        }
       }
     } catch (error) {
       console.error("Error loading files:", error);
@@ -88,10 +74,10 @@ export default function FilesTable({ tenant, initialFiles, nextCursor, userName,
     }
   };
 
-  // Fetch files when page changes
+  // Fetch files when cursor changes
   useEffect(() => {
-    fetchFilesForPage(currentPage);
-  }, [currentPage]);
+    fetchFiles(currentCursor);
+  }, [currentCursor]);
 
   // Poll for file status updates
   useEffect(() => {
@@ -142,9 +128,28 @@ export default function FilesTable({ tenant, initialFiles, nextCursor, userName,
     };
   }, [initialFiles, tenant.slug]);
 
-  const handlePageChange = (newPage: number) => {
-    if (newPage < 1) return;
-    router.push(`?page=${newPage}`);
+  const handleNavigation = (cursor: string | null) => {
+    if (cursor === null) {
+      // Going back to first page
+      router.push("?cursor=");
+      setCursorHistory([]);
+    } else {
+      // Going forward
+      router.push(`?cursor=${cursor}`);
+      setCursorHistory((prev) => [...prev, currentCursor || ""]);
+    }
+  };
+
+  const handlePreviousPage = () => {
+    if (cursorHistory.length === 0) {
+      // If no history, go to first page
+      router.push("?cursor=");
+    } else {
+      // Get the last cursor from history
+      const previousCursor = cursorHistory[cursorHistory.length - 1];
+      router.push(`?cursor=${previousCursor}`);
+      setCursorHistory((prev) => prev.slice(0, -1));
+    }
   };
 
   return (
@@ -188,16 +193,16 @@ export default function FilesTable({ tenant, initialFiles, nextCursor, userName,
           <div className="flex justify-end items-center mb-4">
             <div className="flex items-center gap-2">
               <button
-                onClick={() => handlePageChange(currentPage - 1)}
-                disabled={currentPage === 1}
-                className={`p-1 rounded-md ${currentPage === 1 ? "text-gray-400 cursor-not-allowed" : "text-gray-600 hover:bg-gray-100"}`}
+                onClick={handlePreviousPage}
+                disabled={!currentCursor && cursorHistory.length === 0}
+                className={`p-1 rounded-md ${!currentCursor && cursorHistory.length === 0 ? "text-gray-400 cursor-not-allowed" : "text-gray-600 hover:bg-gray-100"}`}
               >
                 <ChevronLeft className="h-5 w-5" />
               </button>
               <button
-                onClick={() => handlePageChange(currentPage + 1)}
-                disabled={!pageToCursorMap[currentPage + 1]}
-                className={`p-1 rounded-md ${!pageToCursorMap[currentPage + 1] ? "text-gray-400 cursor-not-allowed" : "text-gray-600 hover:bg-gray-100"}`}
+                onClick={() => handleNavigation(nextCursor)}
+                disabled={!nextCursor}
+                className={`p-1 rounded-md ${!nextCursor ? "text-gray-400 cursor-not-allowed" : "text-gray-600 hover:bg-gray-100"}`}
               >
                 <ChevronRight className="h-5 w-5" />
               </button>
