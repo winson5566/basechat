@@ -39,7 +39,7 @@ export default function FilesTable({ tenant, initialFiles, nextCursor, userName,
   const [isLoading, setIsLoading] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
-  const ITEMS_PER_PAGE = 12;
+  const ITEMS_PER_PAGE = 10;
   const [isDragActive, setIsDragActive] = useState(false);
 
   // update the table if a file has been deleted
@@ -181,10 +181,7 @@ export default function FilesTable({ tenant, initialFiles, nextCursor, userName,
         <div className="h-full w-full flex flex-col" {...getRootProps()}>
           <input {...getInputProps()} />
           <hr className="my-4" />
-          <div className="flex justify-between items-center mb-4">
-            <div className="text-[14px] font-[500] text-[#1D1D1F] pl-1">
-              {allFiles.length} {allFiles.length === 1 ? "file" : "files"}
-            </div>
+          <div className="flex justify-end items-center mb-4">
             <div className="flex items-center gap-2">
               <button
                 onClick={goToPreviousPage}
