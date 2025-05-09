@@ -3,7 +3,7 @@
 import { formatDistanceToNow } from "date-fns";
 import { ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState, useRef } from "react";
 import Dropzone from "react-dropzone";
 import { toast } from "sonner";
@@ -34,13 +34,15 @@ interface Props {
 
 export default function FilesTable({ tenant, initialFiles, nextCursor, userName, connectionMap }: Props) {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [allFiles, setAllFiles] = useState(initialFiles);
-  const [currentNextCursor, setCurrentNextCursor] = useState<string | null>(nextCursor);
   const [isLoading, setIsLoading] = useState(false);
-  const [currentPage, setCurrentPage] = useState(1);
-  const intervalRef = useRef<NodeJS.Timeout | null>(null);
-  const ITEMS_PER_PAGE = 12;
   const [isDragActive, setIsDragActive] = useState(false);
+  const intervalRef = useRef<NodeJS.Timeout | null>(null);
+
+  const currentCursor = searchParams.get("cursor") || null;
+  const historyParam = searchParams.get("history") || "";
+  const cursorHistory = historyParam ? historyParam.split(",") : [];
 
   // update the table if a file has been deleted
   const handleFileRemoved = (fileId: string) => {
@@ -53,48 +55,32 @@ export default function FilesTable({ tenant, initialFiles, nextCursor, userName,
     });
   };
 
-  const loadNextPage = async () => {
-    if (!currentNextCursor || isLoading) return;
-
+  const fetchFiles = async (cursor: string | null) => {
+    if (isLoading) return;
     setIsLoading(true);
+
     try {
-      const response = await fetch(`/api/tenants/current/documents?cursor=${currentNextCursor}`, {
+      const response = await fetch(`/api/tenants/current/documents?cursor=${cursor ?? ""}`, {
         headers: { tenant: tenant.slug },
       });
       const data = await response.json();
 
       if (data.documents) {
-        setAllFiles((prev) => [...prev, ...data.documents]);
-        setCurrentNextCursor(data.nextCursor);
+        setAllFiles(data.documents);
       }
     } catch (error) {
-      console.error("Error loading more files:", error);
+      console.error("Error loading files:", error);
     } finally {
       setIsLoading(false);
     }
   };
 
-  const goToNextPage = async () => {
-    // If we're on the last page and have a next cursor, load more files
-    if (currentPage * ITEMS_PER_PAGE >= allFiles.length && currentNextCursor) {
-      await loadNextPage();
-    }
-    setCurrentPage((prev) => prev + 1);
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  };
+  // Fetch files when cursor changes
+  useEffect(() => {
+    fetchFiles(currentCursor);
+  }, [currentCursor]);
 
-  const goToPreviousPage = () => {
-    if (currentPage > 1) {
-      setCurrentPage((prev) => prev - 1);
-      window.scrollTo({ top: 0, behavior: "smooth" });
-    }
-  };
-
-  // Calculate the current page's files
-  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-  const endIndex = startIndex + ITEMS_PER_PAGE;
-  const currentFiles = allFiles.slice(startIndex, endIndex);
-
+  // Poll for file status updates
   useEffect(() => {
     const checkFilesStatus = async () => {
       try {
@@ -143,6 +129,29 @@ export default function FilesTable({ tenant, initialFiles, nextCursor, userName,
     };
   }, [initialFiles, tenant.slug]);
 
+  const handleNavigation = (cursor: string | null) => {
+    if (cursor === null) {
+      // Going back to first page
+      router.push("?cursor=");
+    } else {
+      // Going forward
+      const newHistory = [...cursorHistory, currentCursor || ""].filter(Boolean);
+      router.push(`?cursor=${cursor}&history=${newHistory.join(",")}`);
+    }
+  };
+
+  const handlePreviousPage = () => {
+    if (cursorHistory.length === 0) {
+      // If no history, go to first page
+      router.push("?cursor=");
+    } else {
+      // Get the last cursor from history
+      const previousCursor = cursorHistory[cursorHistory.length - 1];
+      const newHistory = cursorHistory.slice(0, -1);
+      router.push(`?cursor=${previousCursor}${newHistory.length ? `&history=${newHistory.join(",")}` : ""}`);
+    }
+  };
+
   return (
     <Dropzone
       onDrop={async (acceptedFiles: File[]) => {
@@ -181,26 +190,19 @@ export default function FilesTable({ tenant, initialFiles, nextCursor, userName,
         <div className="h-full w-full flex flex-col" {...getRootProps()}>
           <input {...getInputProps()} />
           <hr className="my-4" />
-          <div className="flex justify-between items-center mb-4">
-            <div className="text-[14px] font-[500] text-[#1D1D1F] pl-1">
-              {allFiles.length} {allFiles.length === 1 ? "file" : "files"}
-            </div>
+          <div className="flex justify-end items-center mb-4">
             <div className="flex items-center gap-2">
               <button
-                onClick={goToPreviousPage}
-                disabled={currentPage === 1}
-                className={`p-1 rounded-md ${currentPage === 1 ? "text-gray-400 cursor-not-allowed" : "text-gray-600 hover:bg-gray-100"}`}
+                onClick={handlePreviousPage}
+                disabled={!currentCursor && cursorHistory.length === 0}
+                className={`p-1 rounded-md ${!currentCursor && cursorHistory.length === 0 ? "text-gray-400 cursor-not-allowed" : "text-gray-600 hover:bg-gray-100"}`}
               >
                 <ChevronLeft className="h-5 w-5" />
               </button>
               <button
-                onClick={goToNextPage}
-                disabled={!currentNextCursor && currentPage * ITEMS_PER_PAGE >= allFiles.length}
-                className={`p-1 rounded-md ${
-                  !currentNextCursor && currentPage * ITEMS_PER_PAGE >= allFiles.length
-                    ? "text-gray-400 cursor-not-allowed"
-                    : "text-gray-600 hover:bg-gray-100"
-                }`}
+                onClick={() => handleNavigation(nextCursor)}
+                disabled={!nextCursor}
+                className={`p-1 rounded-md ${!nextCursor ? "text-gray-400 cursor-not-allowed" : "text-gray-600 hover:bg-gray-100"}`}
               >
                 <ChevronRight className="h-5 w-5" />
               </button>
@@ -226,7 +228,7 @@ export default function FilesTable({ tenant, initialFiles, nextCursor, userName,
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {currentFiles.map((file) => (
+                  {allFiles.map((file) => (
                     <TableRow key={file.id}>
                       <TableCell className="font-medium flex items-center">
                         <div>{file.name}</div>

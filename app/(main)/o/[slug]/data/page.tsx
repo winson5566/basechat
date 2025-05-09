@@ -16,10 +16,12 @@ import UploadFileButton from "./upload-file-button";
 
 interface Props {
   params: Promise<{ slug: string }>;
+  searchParams: Promise<{ cursor?: string }>;
 }
 
-export default async function DataIndexPage({ params }: Props) {
+export default async function DataIndexPage({ params, searchParams }: Props) {
   const p = await params;
+  const sp = await searchParams;
   const { tenant, session } = await adminOrRedirect(p.slug);
   const connections = await db.select().from(schema.connections).where(eq(schema.connections.tenantId, tenant.id));
 
@@ -38,7 +40,8 @@ export default async function DataIndexPage({ params }: Props) {
     const { client, partition } = await getRagieClientAndPartition(tenant.id);
     const res = await client.documents.list({
       partition: partition || "",
-      pageSize: 12,
+      pageSize: 10,
+      cursor: sp.cursor || undefined,
     });
     files = res.result.documents;
     nextCursor = res.result.pagination.nextCursor || null;
