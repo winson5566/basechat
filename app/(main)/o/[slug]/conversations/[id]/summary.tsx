@@ -1,3 +1,5 @@
+import assert from "assert";
+
 import { format } from "date-fns";
 import Image from "next/image";
 import { useEffect, useState, useRef } from "react";
@@ -104,6 +106,7 @@ interface Props {
 
 export default function Summary({ className, source, slug, onCloseClick = () => {} }: Props) {
   const [documentData, setDocumentData] = useState<DocumentResponse | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
   const videoRef = useRef<HTMLVideoElement>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -113,6 +116,10 @@ export default function Summary({ className, source, slug, onCloseClick = () => 
   const [isMediaLoaded, setIsMediaLoaded] = useState(false);
 
   useEffect(() => {
+    setIsLoading(true);
+    setIsMediaLoaded(false);
+    setDocumentData(null);
+
     (async () => {
       try {
         const res = await fetch(`/api/documents/${source.documentId}`, {
@@ -136,71 +143,11 @@ export default function Summary({ className, source, slug, onCloseClick = () => 
         setDocumentData(json);
       } catch (error) {
         console.error("Error fetching document:", error);
+      } finally {
+        setIsLoading(false);
       }
     })();
   }, [source.documentId, slug]);
-
-  useEffect(() => {
-    const media = videoRef.current || audioRef.current;
-    if (!media) return;
-
-    const handleLoadedMetadata = () => {
-      console.log("Media metadata loaded, duration:", media.duration, "isFinite:", isFinite(media.duration));
-      if (isFinite(media.duration)) {
-        setDuration(media.duration);
-        setIsMediaLoaded(true);
-      }
-    };
-
-    const handleLoadedData = () => {
-      console.log("Media data loaded, duration:", media.duration, "isFinite:", isFinite(media.duration));
-      if (isFinite(media.duration)) {
-        setDuration(media.duration);
-        setIsMediaLoaded(true);
-      }
-    };
-
-    const handleTimeUpdate = () => {
-      console.log("Time update:", media.currentTime, "duration:", media.duration);
-      setCurrentTime(media.currentTime);
-    };
-
-    const handleEnded = () => {
-      console.log("Media ended");
-      setIsPlaying(false);
-      setCurrentTime(0);
-    };
-
-    const handleDurationChange = () => {
-      console.log("Duration changed:", media.duration, "isFinite:", isFinite(media.duration));
-      if (isFinite(media.duration)) {
-        setDuration(media.duration);
-        setIsMediaLoaded(true);
-      }
-    };
-
-    // Add event listeners
-    media.addEventListener("loadedmetadata", handleLoadedMetadata);
-    media.addEventListener("loadeddata", handleLoadedData);
-    media.addEventListener("timeupdate", handleTimeUpdate);
-    media.addEventListener("ended", handleEnded);
-    media.addEventListener("durationchange", handleDurationChange);
-
-    // If media is already loaded, set duration
-    if (media.readyState >= 2 && isFinite(media.duration)) {
-      console.log("Media already loaded, duration:", media.duration);
-      setDuration(media.duration);
-      setIsMediaLoaded(true);
-    }
-
-    return () => {
-      media.removeEventListener("loadedmetadata", handleLoadedMetadata);
-      media.removeEventListener("loadeddata", handleLoadedData);
-      media.removeEventListener("timeupdate", handleTimeUpdate);
-      media.removeEventListener("ended", handleEnded);
-      media.removeEventListener("durationchange", handleDurationChange);
-    };
-  }, []);
 
   const handleProgressClick = (e: React.MouseEvent<HTMLDivElement>) => {
     const media = videoRef.current || audioRef.current;
@@ -219,238 +166,227 @@ export default function Summary({ className, source, slug, onCloseClick = () => 
       ? CONNECTOR_MAP[documentData.metadata.source_type][1]
       : null;
 
-  if (documentData) {
+  if (isLoading || !documentData) {
     return (
       <div className={cn(className, "relative")}>
         <div className="absolute top-4 right-4">
           <Image className="cursor-pointer" src={CloseIcon} alt="Close" onClick={onCloseClick} />
         </div>
-        {icon && <Image src={icon} alt="source" width={48} />}
-        <div className="wrap text-[24px] font-bold mb-4 break-all">{documentData.name}</div>
-        <div className="flex justify-between mb-6">
-          <div className="text-[#74747A]">Updated {format(documentData.updatedAt, "MM/dd/yyyy")}</div>
-          {!source.streamUrl && (
-            <a href={documentData.metadata.source_url} target="_blank" className="text-[#7749F8] flex">
-              View in source
-              <Image src={ExternalLinkIcon} alt="Open in new window" />
-            </a>
-          )}
+        <div className="flex flex-col justify-center items-center h-full w-full">
+          {[1, 2, 3, 4, 5, 6, 7].map((n) => (
+            <div key={n} className="w-full flex flex-col">
+              <Skeleton className="h-4 w-full mb-1" />
+              <Skeleton className="h-4 w-full mb-1" />
+              <Skeleton className="h-4 w-[85%] mb-7" />
+            </div>
+          ))}
         </div>
-        <hr className="mb-6" />
-        {source.streamUrl && (
-          <div className="mb-6">
-            {(() => {
-              const audioExtensions = [".mp3", ".wav", ".m4a", ".ogg", ".oga", ".opus"];
-              const videoExtensions = [".mp4", ".webm", ".mov"];
-              const isAudio =
-                source.documentName?.toLowerCase() &&
-                audioExtensions.some((ext) => source.documentName?.toLowerCase().endsWith(ext));
-              const isVideo =
-                source.documentName?.toLowerCase() &&
-                videoExtensions.some((ext) => source.documentName?.toLowerCase().endsWith(ext));
-
-              if (isAudio) {
-                console.log("Audio player state:", {
-                  isMediaLoaded,
-                  duration,
-                  currentTime,
-                  isPlaying,
-                  readyState: audioRef.current?.readyState,
-                });
-
-                return (
-                  <div className="flex flex-col">
-                    <audio
-                      ref={audioRef}
-                      className="w-full"
-                      src={getRagieStreamPath(slug, source.streamUrl)}
-                      controls={false}
-                      preload="metadata"
-                      onLoadedMetadata={() => {
-                        if (audioRef.current) {
-                          console.log("Audio metadata loaded (inline), duration:", audioRef.current.duration);
-                          setDuration(audioRef.current.duration);
-                          setIsMediaLoaded(true);
-                        }
-                      }}
-                      onLoadedData={() => {
-                        if (audioRef.current) {
-                          console.log("Audio data loaded (inline), duration:", audioRef.current.duration);
-                          setDuration(audioRef.current.duration);
-                          setIsMediaLoaded(true);
-                        }
-                      }}
-                      onDurationChange={() => {
-                        if (audioRef.current) {
-                          console.log("Audio duration changed (inline):", audioRef.current.duration);
-                          setDuration(audioRef.current.duration);
-                          setIsMediaLoaded(true);
-                        }
-                      }}
-                      onTimeUpdate={() => {
-                        if (audioRef.current) {
-                          console.log("Audio time update (inline):", audioRef.current.currentTime);
-                          setCurrentTime(audioRef.current.currentTime);
-                        }
-                      }}
-                    />
-                    {isMediaLoaded && (
-                      <PlayerControls
-                        isPlaying={isPlaying}
-                        isMuted={isMuted}
-                        currentTime={currentTime}
-                        duration={duration}
-                        onProgressClick={handleProgressClick}
-                        onPlayPause={() => {
-                          if (audioRef.current) {
-                            if (audioRef.current.paused) {
-                              audioRef.current.play();
-                              setIsPlaying(true);
-                            } else {
-                              audioRef.current.pause();
-                              setIsPlaying(false);
-                            }
-                          }
-                        }}
-                        onMute={() => {
-                          if (audioRef.current) {
-                            audioRef.current.muted = !audioRef.current.muted;
-                            setIsMuted(!isMuted);
-                          }
-                        }}
-                        onForward={() => {
-                          if (audioRef.current) {
-                            const newTime = Math.min(audioRef.current.duration, audioRef.current.currentTime + 10);
-                            audioRef.current.currentTime = newTime;
-                            setCurrentTime(newTime);
-                          }
-                        }}
-                        onReplay={() => {
-                          if (audioRef.current) {
-                            const newTime = Math.max(0, audioRef.current.currentTime - 10);
-                            audioRef.current.currentTime = newTime;
-                            setCurrentTime(newTime);
-                          }
-                        }}
-                        onFullscreen={() => {}}
-                      />
-                    )}
-                  </div>
-                );
-              }
-
-              if (isVideo) {
-                return (
-                  <div className="flex flex-col">
-                    <video
-                      ref={videoRef}
-                      className="w-full rounded-lg"
-                      src={getRagieStreamPath(slug, source.streamUrl)}
-                      controls={false}
-                      onLoadedMetadata={() => {
-                        if (videoRef.current) {
-                          console.log("Video metadata loaded (inline), duration:", videoRef.current.duration);
-                          setDuration(videoRef.current.duration);
-                          setIsMediaLoaded(true);
-                        }
-                      }}
-                      onLoadedData={() => {
-                        if (videoRef.current) {
-                          console.log("Video data loaded (inline), duration:", videoRef.current.duration);
-                          setDuration(videoRef.current.duration);
-                          setIsMediaLoaded(true);
-                        }
-                      }}
-                      onTimeUpdate={() => {
-                        if (videoRef.current) {
-                          console.log("Video time update (inline):", videoRef.current.currentTime);
-                          setCurrentTime(videoRef.current.currentTime);
-                        }
-                      }}
-                    />
-                    {isMediaLoaded && duration > 0 && (
-                      <PlayerControls
-                        isPlaying={isPlaying}
-                        isMuted={isMuted}
-                        currentTime={currentTime}
-                        duration={duration}
-                        onProgressClick={handleProgressClick}
-                        onPlayPause={() => {
-                          if (videoRef.current) {
-                            if (videoRef.current.paused) {
-                              videoRef.current.play();
-                              setIsPlaying(true);
-                            } else {
-                              videoRef.current.pause();
-                              setIsPlaying(false);
-                            }
-                          }
-                        }}
-                        onMute={() => {
-                          if (videoRef.current) {
-                            videoRef.current.muted = !videoRef.current.muted;
-                            setIsMuted(!isMuted);
-                          }
-                        }}
-                        onForward={() => {
-                          if (videoRef.current) {
-                            const newTime = Math.min(videoRef.current.duration, videoRef.current.currentTime + 10);
-                            videoRef.current.currentTime = newTime;
-                            setCurrentTime(newTime);
-                          }
-                        }}
-                        onReplay={() => {
-                          if (videoRef.current) {
-                            const newTime = Math.max(0, videoRef.current.currentTime - 10);
-                            videoRef.current.currentTime = newTime;
-                            setCurrentTime(newTime);
-                          }
-                        }}
-                        onFullscreen={() => {
-                          if (videoRef.current) {
-                            if (document.fullscreenElement) {
-                              document.exitFullscreen();
-                            } else {
-                              videoRef.current.requestFullscreen();
-                            }
-                          }
-                        }}
-                      />
-                    )}
-                  </div>
-                );
-              }
-
-              return null;
-            })()}
-            {source.downloadUrl && (
-              <a
-                href={getRagieStreamPath(slug, source.downloadUrl)}
-                download
-                target="_blank"
-                className="text-[#7749F8] flex items-center mt-2"
-              >
-                Download {source.documentName?.toLowerCase().endsWith(".mp4") ? "video" : "audio"}
-                <Image src={ExternalLinkIcon} alt="Download" className="ml-1" />
-              </a>
-            )}
-          </div>
-        )}
-        <div className="text-[12px] font-bold mb-4">Summary</div>
-        <Markdown className="markdown">{documentData.summary}</Markdown>
-      </div>
-    );
-  } else {
-    return (
-      <div className="flex flex-col justify-center items-center h-full w-full">
-        {[1, 2, 3, 4, 5, 6, 7].map((n) => (
-          <div key={n} className="w-full flex flex-col">
-            <Skeleton className="h-4 w-full mb-1" />
-            <Skeleton className="h-4 w-full mb-1" />
-            <Skeleton className="h-4 w-[85%] mb-7" />
-          </div>
-        ))}
       </div>
     );
   }
+
+  return (
+    <div className={cn(className, "relative")}>
+      <div className="absolute top-4 right-4">
+        <Image className="cursor-pointer" src={CloseIcon} alt="Close" onClick={onCloseClick} />
+      </div>
+      {icon && <Image src={icon} alt="source" width={48} />}
+      <div className="wrap text-[24px] font-bold mb-4 break-all">{documentData.name}</div>
+      <div className="flex justify-between mb-6">
+        <div className="text-[#74747A]">Updated {format(documentData.updatedAt, "MM/dd/yyyy")}</div>
+        {!source.streamUrl && (
+          <a href={documentData.metadata.source_url} target="_blank" className="text-[#7749F8] flex">
+            View in source
+            <Image src={ExternalLinkIcon} alt="Open in new window" />
+          </a>
+        )}
+      </div>
+      <hr className="mb-6" />
+      {source.streamUrl && (
+        <div className="mb-6">
+          {(() => {
+            const audioExtensions = [".mp3", ".wav", ".m4a", ".ogg", ".oga", ".opus"];
+            const videoExtensions = [".mp4", ".webm", ".mov"];
+            const isAudio =
+              source.documentName?.toLowerCase() &&
+              audioExtensions.some((ext) => source.documentName?.toLowerCase().endsWith(ext));
+            const isVideo =
+              source.documentName?.toLowerCase() &&
+              videoExtensions.some((ext) => source.documentName?.toLowerCase().endsWith(ext));
+
+            if (isAudio) {
+              console.log("Audio player state:", {
+                isMediaLoaded,
+                duration,
+                currentTime,
+                isPlaying,
+                readyState: audioRef.current?.readyState,
+              });
+
+              return (
+                <div className="flex flex-col">
+                  <audio
+                    ref={audioRef}
+                    className="w-full"
+                    src={getRagieStreamPath(slug, source.streamUrl)}
+                    controls={false}
+                    preload="metadata"
+                    onLoadedMetadata={() => {
+                      assert(audioRef.current, "audioRef not loaded");
+                      console.log("Audio metadata loaded (inline), duration:", audioRef.current.duration);
+                      setDuration(audioRef.current.duration);
+                      setIsMediaLoaded(true);
+                    }}
+                    onLoadedData={() => {
+                      assert(audioRef.current, "audioRef not loaded");
+                      console.log("Audio data loaded (inline), duration:", audioRef.current.duration);
+                      setDuration(audioRef.current.duration);
+                      setIsMediaLoaded(true);
+                    }}
+                    onDurationChange={() => {
+                      assert(audioRef.current, "audioRef not loaded");
+                      console.log("Audio duration changed (inline):", audioRef.current.duration);
+                      setDuration(audioRef.current.duration);
+                      setIsMediaLoaded(true);
+                    }}
+                    onTimeUpdate={() => {
+                      assert(audioRef.current, "audioRef not loaded");
+                      console.log("Audio time update (inline):", audioRef.current.currentTime);
+                      setCurrentTime(audioRef.current.currentTime);
+                    }}
+                  />
+                  {isMediaLoaded && (
+                    <PlayerControls
+                      isPlaying={isPlaying}
+                      isMuted={isMuted}
+                      currentTime={currentTime}
+                      duration={duration}
+                      onProgressClick={handleProgressClick}
+                      onPlayPause={() => {
+                        assert(audioRef.current, "audioRef not loaded");
+                        if (audioRef.current.paused) {
+                          audioRef.current.play();
+                          setIsPlaying(true);
+                        } else {
+                          audioRef.current.pause();
+                          setIsPlaying(false);
+                        }
+                      }}
+                      onMute={() => {
+                        assert(audioRef.current, "audioRef not loaded");
+                        audioRef.current.muted = !audioRef.current.muted;
+                        setIsMuted(!isMuted);
+                      }}
+                      onForward={() => {
+                        assert(audioRef.current, "audioRef not loaded");
+                        const newTime = Math.min(audioRef.current.duration, audioRef.current.currentTime + 10);
+                        audioRef.current.currentTime = newTime;
+                        setCurrentTime(newTime);
+                      }}
+                      onReplay={() => {
+                        assert(audioRef.current, "audioRef not loaded");
+                        const newTime = Math.max(0, audioRef.current.currentTime - 10);
+                        audioRef.current.currentTime = newTime;
+                        setCurrentTime(newTime);
+                      }}
+                      onFullscreen={() => {}}
+                    />
+                  )}
+                </div>
+              );
+            }
+
+            if (isVideo) {
+              return (
+                <div className="flex flex-col">
+                  <video
+                    ref={videoRef}
+                    className="w-full rounded-lg"
+                    src={getRagieStreamPath(slug, source.streamUrl)}
+                    controls={false}
+                    onLoadedMetadata={() => {
+                      assert(videoRef.current, "videoRef not loaded");
+                      console.log("Video metadata loaded (inline), duration:", videoRef.current.duration);
+                      setDuration(videoRef.current.duration);
+                      setIsMediaLoaded(true);
+                    }}
+                    onLoadedData={() => {
+                      assert(videoRef.current, "videoRef not loaded");
+                      console.log("Video data loaded (inline), duration:", videoRef.current.duration);
+                      setDuration(videoRef.current.duration);
+                      setIsMediaLoaded(true);
+                    }}
+                    onTimeUpdate={() => {
+                      assert(videoRef.current, "videoRef not loaded");
+                      console.log("Video time update (inline):", videoRef.current.currentTime);
+                      setCurrentTime(videoRef.current.currentTime);
+                    }}
+                  />
+                  {isMediaLoaded && duration > 0 && (
+                    <PlayerControls
+                      isPlaying={isPlaying}
+                      isMuted={isMuted}
+                      currentTime={currentTime}
+                      duration={duration}
+                      onProgressClick={handleProgressClick}
+                      onPlayPause={() => {
+                        assert(videoRef.current, "videoRef not loaded");
+                        if (videoRef.current.paused) {
+                          videoRef.current.play();
+                          setIsPlaying(true);
+                        } else {
+                          videoRef.current.pause();
+                          setIsPlaying(false);
+                        }
+                      }}
+                      onMute={() => {
+                        assert(videoRef.current, "videoRef not loaded");
+                        videoRef.current.muted = !videoRef.current.muted;
+                        setIsMuted(!isMuted);
+                      }}
+                      onForward={() => {
+                        assert(videoRef.current, "videoRef not loaded");
+                        const newTime = Math.min(videoRef.current.duration, videoRef.current.currentTime + 10);
+                        videoRef.current.currentTime = newTime;
+                        setCurrentTime(newTime);
+                      }}
+                      onReplay={() => {
+                        assert(videoRef.current, "videoRef not loaded");
+                        const newTime = Math.max(0, videoRef.current.currentTime - 10);
+                        videoRef.current.currentTime = newTime;
+                        setCurrentTime(newTime);
+                      }}
+                      onFullscreen={() => {
+                        assert(videoRef.current, "videoRef not loaded");
+                        if (document.fullscreenElement) {
+                          document.exitFullscreen();
+                        } else {
+                          videoRef.current.requestFullscreen();
+                        }
+                      }}
+                    />
+                  )}
+                </div>
+              );
+            }
+
+            return null;
+          })()}
+          {source.downloadUrl && (
+            <a
+              href={getRagieStreamPath(slug, source.downloadUrl)}
+              download
+              target="_blank"
+              className="text-[#7749F8] flex items-center mt-2"
+            >
+              Download {source.documentName?.toLowerCase().endsWith(".mp4") ? "video" : "audio"}
+              <Image src={ExternalLinkIcon} alt="Download" className="ml-1" />
+            </a>
+          )}
+        </div>
+      )}
+      <div className="text-[12px] font-bold mb-4">Summary</div>
+      <Markdown className="markdown">{documentData.summary}</Markdown>
+    </div>
+  );
 }
