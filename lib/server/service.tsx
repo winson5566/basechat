@@ -142,10 +142,10 @@ export async function getMembersByTenantId(
   tenantId: string,
   page: number = 1,
   pageSize: number = 10,
-): Promise<{ members: Member[]; total: number }> {
+): Promise<{ members: Member[]; totalUsers: number; totalInvites: number }> {
   const offset = (page - 1) * pageSize;
 
-  const [members, total] = await Promise.all([
+  const [members, totalUsers, totalInvites] = await Promise.all([
     union(
       db
         .select({
@@ -178,9 +178,13 @@ export async function getMembersByTenantId(
       .select({ count: sql<number>`count(*)` })
       .from(schema.profiles)
       .where(and(eq(schema.profiles.tenantId, tenantId), ne(schema.profiles.role, "guest"))),
+    db
+      .select({ count: sql<number>`count(*)` })
+      .from(schema.invites)
+      .where(eq(schema.invites.tenantId, tenantId)),
   ]);
 
-  return { members, total: total[0].count };
+  return { members, totalUsers: totalUsers[0].count, totalInvites: totalInvites[0].count };
 }
 
 export async function getFirstTenantByUserId(id: string) {

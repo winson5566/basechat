@@ -22,9 +22,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Member, MemberRole, MemberType } from "@/lib/api";
 
+const THRESHOLD = 0.1;
+
 interface Props {
   initialMembers: Member[];
-  initialTotal: number;
+  initialTotalUsers: number;
+  initialTotalInvites: number;
   pageSize: number;
   tenant: {
     slug: string;
@@ -54,9 +57,16 @@ const RoleSelectItem = ({ item }: { item: { name: string; value: MemberRole; des
   </>
 );
 
-export default function UserSettings({ initialMembers, initialTotal, pageSize, tenant }: Props) {
+export default function UserSettings({
+  initialMembers,
+  initialTotalUsers,
+  initialTotalInvites,
+  pageSize,
+  tenant,
+}: Props) {
   const [members, setMembers] = useState(initialMembers);
-  const [total, setTotal] = useState(initialTotal);
+  const [totalUsers, setTotalUsers] = useState(initialTotalUsers);
+  const [totalInvites, setTotalInvites] = useState(initialTotalInvites);
   const [currentPage, setCurrentPage] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
   const [isDialogOpen, setDialogOpen] = useState(false);
@@ -87,12 +97,9 @@ export default function UserSettings({ initialMembers, initialTotal, pageSize, t
         headers: { tenant: tenant.slug },
       });
       const data = await res.json();
-      if (page === 1) {
-        setMembers(data.members);
-      } else {
-        setMembers((prev) => [...prev, ...data.members]);
-      }
-      setTotal(data.total);
+      setMembers((prev) => [...(prev || []), ...data.members]);
+      setTotalUsers(data.totalUsers);
+      setTotalInvites(data.totalInvites);
       setCurrentPage(page);
     } catch (error) {
       toast.error("Failed to fetch members");
@@ -102,9 +109,9 @@ export default function UserSettings({ initialMembers, initialTotal, pageSize, t
   };
 
   const loadMore = useCallback(() => {
-    if (isLoading || members.length >= total) return;
+    if (isLoading || members.length >= totalUsers) return;
     fetchMembers(currentPage + 1);
-  }, [currentPage, isLoading, members.length, total]);
+  }, [currentPage, isLoading, members.length, totalUsers]);
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -113,7 +120,7 @@ export default function UserSettings({ initialMembers, initialTotal, pageSize, t
           loadMore();
         }
       },
-      { threshold: 0.1 },
+      { threshold: THRESHOLD },
     );
 
     if (loadMoreRef.current) {
@@ -241,9 +248,6 @@ export default function UserSettings({ initialMembers, initialTotal, pageSize, t
     }
   };
 
-  const userCount = useMemo(() => members.filter((m) => m.type !== "invite").length, [members]);
-  const inviteCount = useMemo(() => members.filter((m) => m.type === "invite").length, [members]);
-
   return (
     <div className="w-full p-4 flex-grow flex flex-col">
       <div className="flex w-full justify-between items-center pt-2">
@@ -314,11 +318,11 @@ export default function UserSettings({ initialMembers, initialTotal, pageSize, t
       <div className="mt-16">
         <div className="text-[#74747A] mb-1.5 flex">
           <div>
-            {userCount} {userCount == 1 ? "user" : "users"}
+            {totalUsers} {totalUsers == 1 ? "user" : "users"}
           </div>
-          {inviteCount > 0 && (
+          {totalInvites > 0 && (
             <div className="ml-4">
-              {inviteCount} {inviteCount == 1 ? "invite" : "invites"}
+              {totalInvites} {totalInvites == 1 ? "invite" : "invites"}
             </div>
           )}
         </div>
