@@ -240,8 +240,14 @@ export default function Summary({ className, source, slug, onCloseClick = () => 
         {source.streamUrl && (
           <div className="mb-6">
             {(() => {
-              const isAudio = source.documentName?.toLowerCase().endsWith(".mp3");
-              const isVideo = source.documentName?.toLowerCase().endsWith(".mp4");
+              const audioExtensions = [".mp3", ".wav", ".m4a", ".ogg", ".oga", ".opus"];
+              const videoExtensions = [".mp4", ".webm", ".mov"];
+              const isAudio =
+                source.documentName?.toLowerCase() &&
+                audioExtensions.some((ext) => source.documentName?.toLowerCase().endsWith(ext));
+              const isVideo =
+                source.documentName?.toLowerCase() &&
+                videoExtensions.some((ext) => source.documentName?.toLowerCase().endsWith(ext));
 
               if (isAudio) {
                 console.log("Audio player state:", {
