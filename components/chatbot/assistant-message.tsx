@@ -10,7 +10,6 @@ import Logo from "../tenant/logo/logo";
 
 import { SourceMetadata } from "./types";
 
-
 const MAX_CITATION_LENGTH = 30;
 
 function format(totalSeconds: number): string {
@@ -25,12 +24,18 @@ function format(totalSeconds: number): string {
 
 const Citation = ({ source, onClick = () => {} }: { source: SourceMetadata; onClick?: () => void }) => {
   const connector = CONNECTOR_MAP[source.source_type];
-  const isAudio = source.documentName?.toLowerCase().endsWith(".mp3");
-  const isVideo = source.documentName?.toLowerCase().endsWith(".mp4");
+  const audioExtensions = [".mp3", ".wav", ".m4a", ".ogg", ".oga", ".opus"];
+  const videoExtensions = [".mp4", ".webm", ".mov"];
+  const imageExtensions = [".png", ".jpg", ".jpeg", ".webp", ".tiff", ".bmp", ".heic"];
+  const isAudio =
+    source.documentName?.toLowerCase() &&
+    audioExtensions.some((ext) => source.documentName?.toLowerCase().endsWith(ext));
+  const isVideo =
+    source.documentName?.toLowerCase() &&
+    videoExtensions.some((ext) => source.documentName?.toLowerCase().endsWith(ext));
   const isImage =
-    source.documentName?.toLowerCase().endsWith(".png") ||
-    source.documentName?.toLowerCase().endsWith(".jpg") ||
-    source.documentName?.toLowerCase().endsWith(".jpeg");
+    source.documentName?.toLowerCase() &&
+    imageExtensions.some((ext) => source.documentName?.toLowerCase().endsWith(ext));
 
   const formatSourceName = (input: string) => {
     if (input.length <= MAX_CITATION_LENGTH) return input;
