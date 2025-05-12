@@ -1,5 +1,6 @@
 import { eq } from "drizzle-orm";
 import Image from "next/image";
+import { redirect } from "next/navigation";
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import db from "@/lib/server/db";
@@ -47,6 +48,10 @@ export default async function DataIndexPage({ params, searchParams }: Props) {
     nextCursor = res.result.pagination.nextCursor || null;
   } catch (error) {
     console.error("Error fetching documents:", error);
+    // If there's an error and we have a cursor, redirect to the base data page
+    if (sp.cursor) {
+      redirect(`/o/${p.slug}/data`);
+    }
   }
 
   return (
