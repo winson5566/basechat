@@ -33,18 +33,41 @@ export const VALID_FILE_TYPES = {
   ".xlsx": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
 
   // Audio
-  ".mp3": "audio/mpeg",
+  ".mp3": "audio/mp3",
   ".wav": "audio/wav",
   ".m4a": "audio/mp4",
   ".ogg": "audio/ogg",
-  ".oga": "audio/ogg",
-  ".opus": "audio/opus",
+  ".acc": "audio/x-acc",
+  ".flac": "audio/flac",
 
   // Video
   ".mp4": "video/mp4",
   ".webm": "video/webm",
   ".mov": "video/quicktime",
+  ".avi": "video/x-msvideo",
+  ".flv": "video/x-flv",
+  ".mkv": "video/x-matroska",
+  ".mpeg": "video/mpeg",
+  ".mpegs": "video/mpegs",
+  ".mpg": "video/mpg",
+  ".wmv": "video/wmv",
+  ".3gpp": "video/3gpp",
 } as const;
+
+export const VIDEO_FILE_TYPES = [
+  ".mp4",
+  ".webm",
+  ".mov",
+  ".avi",
+  ".flv",
+  ".mkv",
+  ".mpeg",
+  ".mpegs",
+  ".mpg",
+  ".wmv",
+  ".3gpp",
+] as const;
+export const AUDIO_FILE_TYPES = [".mp3", ".wav", ".m4a", ".ogg", ".acc", ".flac"] as const;
 
 export const MAX_FILE_SIZE = 500 * 1024 * 1024; // 500MB
 
@@ -79,6 +102,16 @@ export async function uploadFile(file: File, tenantSlug: string, userName: strin
   const formData = new FormData();
   formData.append("file", file);
   formData.append("metadata", JSON.stringify({ added_by: userName, source_type: "manual" }));
+
+  // check the file type
+  const fileExtension = `.${file.name.split(".").pop()?.toLowerCase()}`;
+  if (VIDEO_FILE_TYPES.includes(fileExtension as any)) {
+    formData.append("file_mode", "video");
+  } else if (AUDIO_FILE_TYPES.includes(fileExtension as any)) {
+    formData.append("file_mode", "audio");
+  } else {
+    formData.append("file_mode", "static");
+  }
 
   const response = await fetch("/api/ragie/upload", {
     method: "POST",
