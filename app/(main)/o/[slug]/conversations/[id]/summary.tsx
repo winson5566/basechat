@@ -55,7 +55,7 @@ function PlayerControls({
 
   return (
     <div className="flex flex-col">
-      <div className="mt-2 px-2">
+      <div className="mt-4 px-2">
         <div className="h-1 bg-gray-200 rounded-full cursor-pointer relative" onClick={onProgressClick}>
           <div className="h-full bg-[#7749F8] rounded-full" style={{ width: `${(currentTime / duration) * 100}%` }} />
           <div
@@ -68,7 +68,7 @@ function PlayerControls({
           <span>{formatTime(duration)}</span>
         </div>
       </div>
-      <div className="flex items-center justify-between gap-4 mt-4">
+      <div className="flex items-center justify-between gap-4">
         <button onClick={onMute} className="p-2 hover:bg-gray-200 rounded-lg transition-colors duration-200">
           <Image
             src={VolumeUpIcon}
