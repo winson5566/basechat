@@ -166,12 +166,17 @@ export default function Summary({ className, source, slug, onCloseClick = () => 
       ? CONNECTOR_MAP[documentData.metadata.source_type][1]
       : null;
 
-  const isVideo =
-    source.documentName?.toLowerCase() &&
-    VIDEO_FILE_TYPES.some((ext) => source.documentName?.toLowerCase().endsWith(ext));
-  const isAudio =
-    source.documentName?.toLowerCase() &&
-    AUDIO_FILE_TYPES.some((ext) => source.documentName?.toLowerCase().endsWith(ext));
+  let mediaType: null | "audio" | "video" = null;
+  if (source.streamUrl) {
+    const streamUrl = new URL(source.streamUrl);
+    if (streamUrl.searchParams.get("media_type")?.startsWith("video")) {
+      mediaType = "video";
+    } else if (streamUrl.searchParams.get("media_type")?.startsWith("audio")) {
+      mediaType = "audio";
+    }
+  }
+
+  console.log({ source, steamUrl: source.streamUrl });
 
   if (isLoading || !documentData) {
     return (
@@ -212,7 +217,7 @@ export default function Summary({ className, source, slug, onCloseClick = () => 
       {source.streamUrl && (
         <div className="mb-6">
           {(() => {
-            if (isAudio) {
+            if (mediaType === "audio") {
               console.log("Audio player state:", {
                 isMediaLoaded,
                 duration,
@@ -294,7 +299,7 @@ export default function Summary({ className, source, slug, onCloseClick = () => 
               );
             }
 
-            if (isVideo) {
+            if (mediaType === "video") {
               return (
                 <div className="flex flex-col">
                   <video
@@ -377,7 +382,7 @@ export default function Summary({ className, source, slug, onCloseClick = () => 
               target="_blank"
               className="text-[#7749F8] flex items-center mt-2"
             >
-              Download {isVideo ? "video" : "audio"}
+              Download {mediaType}
               <Image src={ExternalLinkIcon} alt="Download" className="ml-1" />
             </a>
           )}

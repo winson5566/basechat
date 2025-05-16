@@ -182,8 +182,13 @@ export async function getRetrievalSystemPrompt(
 
   const sources = response.scoredChunks.map((chunk) => {
     const documentName = chunk.documentName;
-    const isVideo = documentName ? VIDEO_FILE_TYPES.some((ext) => documentName.toLowerCase().endsWith(ext)) : false;
-    const isAudio = documentName ? AUDIO_FILE_TYPES.some((ext) => documentName.toLowerCase().endsWith(ext)) : false;
+    let isVideo = false;
+    let isAudio = false;
+    if ("self_video_stream" in chunk.links) {
+      isVideo = chunk.links.self_video_stream !== null;
+    } else if ("self_audio_stream" in chunk.links) {
+      isAudio = chunk.links.self_audio_stream !== null;
+    }
 
     const streamUrl = isVideo
       ? chunk.links.self_video_stream?.href
