@@ -8,6 +8,7 @@ import Markdown from "react-markdown";
 import { SourceMetadata } from "@/components/chatbot/types";
 import { Skeleton } from "@/components/ui/skeleton";
 import CONNECTOR_MAP from "@/lib/connector-map";
+import { AUDIO_FILE_TYPES, VIDEO_FILE_TYPES } from "@/lib/file-utils";
 import { getRagieStreamPath } from "@/lib/paths";
 import { cn } from "@/lib/utils";
 import CloseIcon from "@/public/icons/close.svg";
@@ -20,7 +21,6 @@ import Replay10Icon from "@/public/icons/replay_10.svg";
 import VolumeUpIcon from "@/public/icons/volume_up.svg";
 
 import { DocumentResponse } from "./types";
-
 interface PlayerControlsProps {
   isPlaying: boolean;
   isMuted: boolean;
@@ -166,6 +166,13 @@ export default function Summary({ className, source, slug, onCloseClick = () => 
       ? CONNECTOR_MAP[documentData.metadata.source_type][1]
       : null;
 
+  const isVideo =
+    source.documentName?.toLowerCase() &&
+    VIDEO_FILE_TYPES.some((ext) => source.documentName?.toLowerCase().endsWith(ext));
+  const isAudio =
+    source.documentName?.toLowerCase() &&
+    AUDIO_FILE_TYPES.some((ext) => source.documentName?.toLowerCase().endsWith(ext));
+
   if (isLoading || !documentData) {
     return (
       <div className={cn(className, "relative")}>
@@ -205,15 +212,6 @@ export default function Summary({ className, source, slug, onCloseClick = () => 
       {source.streamUrl && (
         <div className="mb-6">
           {(() => {
-            const audioExtensions = [".mp3", ".wav", ".m4a", ".ogg", ".oga", ".opus"];
-            const videoExtensions = [".mp4", ".webm", ".mov"];
-            const isAudio =
-              source.documentName?.toLowerCase() &&
-              audioExtensions.some((ext) => source.documentName?.toLowerCase().endsWith(ext));
-            const isVideo =
-              source.documentName?.toLowerCase() &&
-              videoExtensions.some((ext) => source.documentName?.toLowerCase().endsWith(ext));
-
             if (isAudio) {
               console.log("Audio player state:", {
                 isMediaLoaded,
@@ -379,7 +377,7 @@ export default function Summary({ className, source, slug, onCloseClick = () => 
               target="_blank"
               className="text-[#7749F8] flex items-center mt-2"
             >
-              Download {source.documentName?.toLowerCase().endsWith(".mp4") ? "video" : "audio"}
+              Download {isVideo ? "video" : "audio"}
               <Image src={ExternalLinkIcon} alt="Download" className="ml-1" />
             </a>
           )}

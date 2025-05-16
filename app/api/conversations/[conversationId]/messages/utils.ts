@@ -9,6 +9,7 @@ import Handlebars from "handlebars";
 
 import { createConversationMessageResponseSchema } from "@/lib/api";
 import { DEFAULT_GROUNDING_PROMPT, DEFAULT_SYSTEM_PROMPT } from "@/lib/constants";
+import { VIDEO_FILE_TYPES, AUDIO_FILE_TYPES } from "@/lib/file-utils";
 import { DEFAULT_MODEL, DEFAULT_PROVIDER, getProviderForModel, LLMModel, SPECIAL_LLAMA_PROMPT } from "@/lib/llm/types";
 import * as schema from "@/lib/server/db/schema";
 import { getRagieClientAndPartition } from "@/lib/server/ragie";
@@ -181,17 +182,24 @@ export async function getRetrievalSystemPrompt(
 
   const sources = response.scoredChunks.map((chunk) => {
     const documentName = chunk.documentName;
-    const isVideo = documentName?.toLowerCase().endsWith(".mp4");
+    const isVideo = documentName ? VIDEO_FILE_TYPES.some((ext) => documentName.toLowerCase().endsWith(ext)) : false;
+    const isAudio = documentName ? AUDIO_FILE_TYPES.some((ext) => documentName.toLowerCase().endsWith(ext)) : false;
 
-    // Use video links for video files, audio links for audio files
-    const streamUrl = isVideo ? chunk.links.self_video_stream?.href : chunk.links.self_audio_stream?.href;
-
-    const downloadUrl = isVideo ? chunk.links.self_video_download?.href : chunk.links.self_audio_download?.href;
+    const streamUrl = isVideo
+      ? chunk.links.self_video_stream?.href
+      : isAudio
+        ? chunk.links.self_audio_stream?.href
+        : undefined;
+    const downloadUrl = isVideo
+      ? chunk.links.self_video_download?.href
+      : isAudio
+        ? chunk.links.self_audio_download?.href
+        : undefined;
 
     return {
       ...chunk.documentMetadata,
       documentId: chunk.documentId,
-      documentName: documentName,
+      documentName,
       streamUrl,
       downloadUrl,
       startTime: chunk.metadata?.start_time,

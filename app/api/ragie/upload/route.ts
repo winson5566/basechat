@@ -22,28 +22,20 @@ export async function POST(request: NextRequest) {
     let mode;
     if (fileMode === "audio") {
       mode = {
-        static: "hi_res",
         audio: true,
-        video: null,
       };
     } else if (fileMode === "video") {
       mode = {
-        static: "hi_res",
-        audio: null,
         video: "audio_video",
       };
     } else {
-      mode = {
-        static: "hi_res",
-        audio: null,
-        video: null,
-      };
+      mode = "hi_res";
     }
 
     const res = await client.documents.create({
       file: file,
       partition: partition || "",
-      mode: mode as any,
+      mode: mode as any, // TODO: remove 'as any'
       metadata,
     });
     return Response.json(res);

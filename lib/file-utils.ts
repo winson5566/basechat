@@ -54,6 +54,8 @@ export const VALID_FILE_TYPES = {
   ".3gpp": "video/3gpp",
 } as const;
 
+export const IMAGE_FILE_TYPES = [".png", ".webp", ".jpg", ".jpeg", ".tiff", ".bmp", ".heic"] as const;
+
 export const VIDEO_FILE_TYPES = [
   ".mp4",
   ".webm",

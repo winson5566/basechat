@@ -4,6 +4,7 @@ import Image from "next/image";
 import Markdown from "react-markdown";
 
 import CONNECTOR_MAP from "@/lib/connector-map";
+import { IMAGE_FILE_TYPES, VIDEO_FILE_TYPES, AUDIO_FILE_TYPES } from "@/lib/file-utils";
 import { LLM_DISPLAY_NAMES, LLMModel } from "@/lib/llm/types";
 
 import Logo from "../tenant/logo/logo";
@@ -24,18 +25,15 @@ function format(totalSeconds: number): string {
 
 const Citation = ({ source, onClick = () => {} }: { source: SourceMetadata; onClick?: () => void }) => {
   const connector = CONNECTOR_MAP[source.source_type];
-  const audioExtensions = [".mp3", ".wav", ".m4a", ".ogg", ".oga", ".opus"];
-  const videoExtensions = [".mp4", ".webm", ".mov"];
-  const imageExtensions = [".png", ".jpg", ".jpeg", ".webp", ".tiff", ".bmp", ".heic"];
   const isAudio =
     source.documentName?.toLowerCase() &&
-    audioExtensions.some((ext) => source.documentName?.toLowerCase().endsWith(ext));
+    AUDIO_FILE_TYPES.some((ext) => source.documentName?.toLowerCase().endsWith(ext));
   const isVideo =
     source.documentName?.toLowerCase() &&
-    videoExtensions.some((ext) => source.documentName?.toLowerCase().endsWith(ext));
+    VIDEO_FILE_TYPES.some((ext) => source.documentName?.toLowerCase().endsWith(ext));
   const isImage =
     source.documentName?.toLowerCase() &&
-    imageExtensions.some((ext) => source.documentName?.toLowerCase().endsWith(ext));
+    IMAGE_FILE_TYPES.some((ext) => source.documentName?.toLowerCase().endsWith(ext));
 
   const formatSourceName = (input: string) => {
     if (input.length <= MAX_CITATION_LENGTH) return input;
