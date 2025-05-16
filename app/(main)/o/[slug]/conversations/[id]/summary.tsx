@@ -176,8 +176,6 @@ export default function Summary({ className, source, slug, onCloseClick = () => 
     }
   }
 
-  console.log({ source, steamUrl: source.streamUrl });
-
   if (isLoading || !documentData) {
     return (
       <div className={cn(className, "relative")}>
