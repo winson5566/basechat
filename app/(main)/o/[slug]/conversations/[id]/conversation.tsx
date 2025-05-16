@@ -31,7 +31,15 @@ interface Props {
 export default function Conversation({ id, tenant }: Props) {
   const [source, setSource] = useState<SourceMetadata | null>(null);
   const [isMounted, setIsMounted] = useState(false);
-  const { initialMessage, setInitialMessage, initialModel, setInitialModel } = useGlobalState();
+  const {
+    initialMessage,
+    setInitialMessage,
+    initialModel,
+    setInitialModel,
+    isMessageConsumed,
+    setMessageConsumed,
+    clearInitialMessage,
+  } = useGlobalState();
 
   // Move the default model logic outside useEffect
   const defaultModel = tenant.defaultModel || tenant.enabledModels[0];
@@ -45,9 +53,12 @@ export default function Conversation({ id, tenant }: Props) {
     }
   }, [initialModel, tenant.enabledModels, setInitialModel, defaultModel]);
 
+  // Only clear the initial message if it has been consumed
   useEffect(() => {
-    setInitialMessage("");
-  }, [setInitialMessage]);
+    if (isMessageConsumed) {
+      clearInitialMessage();
+    }
+  }, [isMessageConsumed, clearInitialMessage]);
 
   useEffect(() => {
     setIsMounted(true);
@@ -66,6 +77,7 @@ export default function Conversation({ id, tenant }: Props) {
             conversationId={id}
             initMessage={initialMessage}
             onSelectedSource={handleSelectedSource}
+            onMessageConsumed={() => setMessageConsumed(true)}
           />
           {source && (
             <div className="absolute top-0 left-0 right-0 lg:static lg:h-full">
