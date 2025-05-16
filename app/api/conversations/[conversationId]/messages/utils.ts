@@ -1,5 +1,3 @@
-import assert from "assert";
-
 import { anthropic } from "@ai-sdk/anthropic";
 import { google } from "@ai-sdk/google";
 import { groq } from "@ai-sdk/groq";
@@ -9,7 +7,6 @@ import Handlebars from "handlebars";
 
 import { createConversationMessageResponseSchema } from "@/lib/api";
 import { DEFAULT_GROUNDING_PROMPT, DEFAULT_SYSTEM_PROMPT } from "@/lib/constants";
-import { VIDEO_FILE_TYPES, AUDIO_FILE_TYPES } from "@/lib/file-utils";
 import { DEFAULT_MODEL, DEFAULT_PROVIDER, getProviderForModel, LLMModel, SPECIAL_LLAMA_PROMPT } from "@/lib/llm/types";
 import * as schema from "@/lib/server/db/schema";
 import { getRagieClientAndPartition } from "@/lib/server/ragie";
@@ -191,7 +188,7 @@ export async function getRetrievalSystemPrompt(
     }
 
     const streamUrl = isVideo
-      ? chunk.links.self_video_stream?.href
+      ? chunk.links.document_video_stream?.href
       : isAudio
         ? chunk.links.self_audio_stream?.href
         : undefined;

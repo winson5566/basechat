@@ -226,7 +226,6 @@ export default function Chatbot({ tenant, conversationId, initMessage, onSelecte
       if (!res.ok) return;
 
       const json = (await res.json()) as { id: string; sources: SourceMetadata[] };
-      console.log("sources", json.sources);
       setSourceCache((prev) => ({ ...prev, [json.id]: json.sources }));
     })();
   }, [conversationId, pendingMessage, tenant.slug]);

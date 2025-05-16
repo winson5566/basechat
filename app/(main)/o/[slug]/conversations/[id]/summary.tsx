@@ -2,13 +2,12 @@ import assert from "assert";
 
 import { format } from "date-fns";
 import Image from "next/image";
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useCallback, useReducer } from "react";
 import Markdown from "react-markdown";
 
 import { SourceMetadata } from "@/components/chatbot/types";
 import { Skeleton } from "@/components/ui/skeleton";
 import CONNECTOR_MAP from "@/lib/connector-map";
-import { AUDIO_FILE_TYPES, VIDEO_FILE_TYPES } from "@/lib/file-utils";
 import { getRagieStreamPath } from "@/lib/paths";
 import { cn } from "@/lib/utils";
 import CloseIcon from "@/public/icons/close.svg";
@@ -32,6 +31,30 @@ interface PlayerControlsProps {
   onForward: () => void;
   onReplay: () => void;
   onFullscreen: () => void;
+  onDragStateChange: (isDragging: boolean) => void;
+}
+
+type DragState = {
+  isDragging: boolean;
+  previewTime: number | null;
+};
+
+type DragAction =
+  | { type: "START_DRAG"; time: number }
+  | { type: "UPDATE_PREVIEW"; time: number }
+  | { type: "END_DRAG" };
+
+function dragReducer(state: DragState, action: DragAction): DragState {
+  switch (action.type) {
+    case "START_DRAG":
+      return { isDragging: true, previewTime: action.time };
+    case "UPDATE_PREVIEW":
+      return { ...state, previewTime: action.time };
+    case "END_DRAG":
+      return { isDragging: false, previewTime: null };
+    default:
+      return state;
+  }
 }
 
 function PlayerControls({
@@ -45,7 +68,17 @@ function PlayerControls({
   onForward,
   onReplay,
   onFullscreen,
+  onDragStateChange,
 }: PlayerControlsProps) {
+  const [dragState, dispatch] = useReducer(dragReducer, { isDragging: false, previewTime: null });
+  const progressBarRef = useRef<HTMLDivElement>(null);
+  const dragTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const eventHandlersRef = useRef<{
+    handleDragOver: (e: DragEvent) => void;
+    handleDocumentDrop: (e: DragEvent) => void;
+    handleDocumentDragEnd: () => void;
+  } | null>(null);
+
   const formatTime = (time: number) => {
     if (isNaN(time) || !isFinite(time)) return "0:00";
     const minutes = Math.floor(time / 60);
@@ -53,18 +86,150 @@ function PlayerControls({
     return `${minutes}:${seconds.toString().padStart(2, "0")}`;
   };
 
+  const calculateNewTime = (clientX: number): number => {
+    const rect = progressBarRef.current?.getBoundingClientRect();
+    if (!rect) return currentTime;
+
+    // Calculate position relative to the progress bar
+    const relativeX = Math.max(0, Math.min(rect.width, clientX - rect.left));
+    const percent = relativeX / rect.width;
+    return Math.max(0, Math.min(duration, percent * duration));
+  };
+
+  const cleanupDrag = useCallback(() => {
+    dispatch({ type: "END_DRAG" });
+    if (eventHandlersRef.current) {
+      document.removeEventListener("dragover", eventHandlersRef.current.handleDragOver);
+      document.removeEventListener("drop", eventHandlersRef.current.handleDocumentDrop);
+      document.removeEventListener("dragend", eventHandlersRef.current.handleDocumentDragEnd);
+    }
+  }, []);
+
+  // Initialize event handlers
+  useEffect(() => {
+    eventHandlersRef.current = {
+      handleDragOver: (e: DragEvent) => {
+        e.preventDefault();
+        if (!dragState.isDragging || !progressBarRef.current) return;
+        const newTime = calculateNewTime(e.clientX);
+        dispatch({ type: "UPDATE_PREVIEW", time: newTime });
+      },
+      handleDocumentDrop: (e: DragEvent) => {
+        e.preventDefault();
+        if (!dragState.isDragging) return;
+        onProgressClick({
+          clientX: e.clientX,
+          currentTarget: progressBarRef.current,
+        } as React.MouseEvent<HTMLDivElement>);
+        cleanupDrag();
+      },
+      handleDocumentDragEnd: () => {
+        cleanupDrag();
+      },
+    };
+  }, [dragState.isDragging, onProgressClick, cleanupDrag]);
+
+  const handleDragStart = useCallback(
+    (e: React.DragEvent<HTMLDivElement>) => {
+      e.dataTransfer.setData("text/plain", ""); // Required for Firefox
+      e.dataTransfer.effectAllowed = "move";
+
+      const rect = progressBarRef.current?.getBoundingClientRect();
+      if (rect && eventHandlersRef.current) {
+        // Clean up any existing listeners before adding new ones
+        cleanupDrag();
+
+        dispatch({ type: "START_DRAG", time: currentTime });
+        onDragStateChange(true);
+
+        // Add event listeners for drag outside the window
+        document.addEventListener("dragover", eventHandlersRef.current.handleDragOver);
+        document.addEventListener("drop", eventHandlersRef.current.handleDocumentDrop);
+        document.addEventListener("dragend", eventHandlersRef.current.handleDocumentDragEnd);
+      }
+    },
+    [currentTime, cleanupDrag, onDragStateChange],
+  );
+
+  const handleDrag = useCallback(
+    (e: React.DragEvent<HTMLDivElement>) => {
+      if (!dragState.isDragging || !progressBarRef.current) return;
+
+      // Update immediately for better responsiveness
+      const newTime = calculateNewTime(e.clientX);
+      dispatch({ type: "UPDATE_PREVIEW", time: newTime });
+    },
+    [dragState.isDragging],
+  );
+
+  const handleDragEnd = useCallback(
+    (e: React.DragEvent<HTMLDivElement>) => {
+      if (!dragState.isDragging) return;
+
+      onProgressClick({
+        clientX: e.clientX,
+        currentTarget: progressBarRef.current,
+      } as React.MouseEvent<HTMLDivElement>);
+      onDragStateChange(false);
+      cleanupDrag();
+    },
+    [dragState.isDragging, onProgressClick, cleanupDrag, onDragStateChange],
+  );
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (dragTimeoutRef.current) {
+        clearTimeout(dragTimeoutRef.current);
+      }
+      cleanupDrag();
+      onDragStateChange(false);
+    };
+  }, [cleanupDrag, onDragStateChange]);
+
+  // Add cleanup on component update
+  useEffect(() => {
+    return () => {
+      cleanupDrag();
+      onDragStateChange(false);
+    };
+  }, [cleanupDrag, onDragStateChange]);
+
+  const currentProgress = dragState.previewTime !== null ? dragState.previewTime : currentTime;
+  const progressPercent = (currentProgress / duration) * 100;
+
   return (
     <div className="flex flex-col">
       <div className="mt-4 px-2">
-        <div className="h-1 bg-gray-200 rounded-full cursor-pointer relative" onClick={onProgressClick}>
-          <div className="h-full bg-[#7749F8] rounded-full" style={{ width: `${(currentTime / duration) * 100}%` }} />
+        <div
+          ref={progressBarRef}
+          className={cn(
+            "h-1 bg-gray-200 rounded-full cursor-pointer relative transition-colors duration-200",
+            dragState.isDragging && "bg-gray-300",
+          )}
+          onClick={onProgressClick}
+        >
           <div
-            className="absolute top-1/2 -translate-y-1/2 w-1 h-3 bg-black rounded-sm"
-            style={{ left: `${(currentTime / duration) * 100}%`, transform: "translate(-50%, -50%)" }}
+            className={cn(
+              "h-full bg-[#7749F8] rounded-full transition-all duration-200",
+              dragState.isDragging && "opacity-80",
+            )}
+            style={{ width: `${progressPercent}%` }}
+          />
+          <div
+            className={cn(
+              "absolute top-1/2 -translate-y-1/2 w-1 h-3 bg-black rounded-sm cursor-grab active:cursor-grabbing transition-all duration-200",
+              dragState.isDragging && "h-4 w-1.5 bg-[#7749F8]",
+            )}
+            style={{ left: `${progressPercent}%`, transform: "translate(-50%, -50%)" }}
+            draggable="true"
+            onDragStart={handleDragStart}
+            onDrag={handleDrag}
+            onDragEnd={handleDragEnd}
           />
         </div>
         <div className="flex justify-between text-sm text-gray-500 mt-1">
-          <span>{formatTime(currentTime)}</span>
+          <span>{formatTime(currentProgress)}</span>
           <span>{formatTime(duration)}</span>
         </div>
       </div>
@@ -114,6 +279,8 @@ export default function Summary({ className, source, slug, onCloseClick = () => 
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [isMediaLoaded, setIsMediaLoaded] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
+  const animationFrameRef = useRef<number | null>(null);
 
   useEffect(() => {
     setIsLoading(true);
@@ -155,9 +322,25 @@ export default function Summary({ className, source, slug, onCloseClick = () => 
       const rect = e.currentTarget.getBoundingClientRect();
       const pos = (e.clientX - rect.left) / rect.width;
       const newTime = pos * duration;
-      console.log("Seeking to:", newTime, "duration:", duration);
+
+      // Pause the media before seeking to prevent race conditions
+      const wasPlaying = !media.paused;
+      if (wasPlaying) {
+        media.pause();
+      }
+
       media.currentTime = newTime;
       setCurrentTime(newTime);
+
+      // Resume playback if it was playing before
+      if (wasPlaying) {
+        const playPromise = media.play();
+        if (playPromise !== undefined) {
+          playPromise.catch((error) => {
+            console.error("Error resuming playback:", error);
+          });
+        }
+      }
     }
   };
 
@@ -176,6 +359,30 @@ export default function Summary({ className, source, slug, onCloseClick = () => 
     }
   }
 
+  // Add effect to ensure progress bar updates after drag
+  useEffect(() => {
+    if (!isDragging) {
+      const media = videoRef.current || audioRef.current;
+      if (media && !media.paused) {
+        const updateProgress = () => {
+          if (media) {
+            setCurrentTime(media.currentTime);
+            animationFrameRef.current = requestAnimationFrame(updateProgress);
+          }
+        };
+        animationFrameRef.current = requestAnimationFrame(updateProgress);
+      }
+    }
+
+    return () => {
+      if (animationFrameRef.current !== null) {
+        cancelAnimationFrame(animationFrameRef.current);
+        animationFrameRef.current = null;
+      }
+    };
+  }, [isDragging]);
+
+  // Add effect to ensure progress bar updates after drag
   if (isLoading || !documentData) {
     return (
       <div className={cn(className, "relative")}>
@@ -216,14 +423,6 @@ export default function Summary({ className, source, slug, onCloseClick = () => 
         <div className="mb-6">
           {(() => {
             if (mediaType === "audio") {
-              console.log("Audio player state:", {
-                isMediaLoaded,
-                duration,
-                currentTime,
-                isPlaying,
-                readyState: audioRef.current?.readyState,
-              });
-
               return (
                 <div className="flex flex-col">
                   <audio
@@ -234,25 +433,21 @@ export default function Summary({ className, source, slug, onCloseClick = () => 
                     preload="metadata"
                     onLoadedMetadata={() => {
                       assert(audioRef.current, "audioRef not loaded");
-                      console.log("Audio metadata loaded (inline), duration:", audioRef.current.duration);
                       setDuration(audioRef.current.duration);
                       setIsMediaLoaded(true);
                     }}
                     onLoadedData={() => {
                       assert(audioRef.current, "audioRef not loaded");
-                      console.log("Audio data loaded (inline), duration:", audioRef.current.duration);
                       setDuration(audioRef.current.duration);
                       setIsMediaLoaded(true);
                     }}
                     onDurationChange={() => {
                       assert(audioRef.current, "audioRef not loaded");
-                      console.log("Audio duration changed (inline):", audioRef.current.duration);
                       setDuration(audioRef.current.duration);
                       setIsMediaLoaded(true);
                     }}
                     onTimeUpdate={() => {
                       assert(audioRef.current, "audioRef not loaded");
-                      console.log("Audio time update (inline):", audioRef.current.currentTime);
                       setCurrentTime(audioRef.current.currentTime);
                     }}
                   />
@@ -291,6 +486,7 @@ export default function Summary({ className, source, slug, onCloseClick = () => 
                         setCurrentTime(newTime);
                       }}
                       onFullscreen={() => {}}
+                      onDragStateChange={setIsDragging}
                     />
                   )}
                 </div>
@@ -307,19 +503,16 @@ export default function Summary({ className, source, slug, onCloseClick = () => 
                     controls={false}
                     onLoadedMetadata={() => {
                       assert(videoRef.current, "videoRef not loaded");
-                      console.log("Video metadata loaded (inline), duration:", videoRef.current.duration);
                       setDuration(videoRef.current.duration);
                       setIsMediaLoaded(true);
                     }}
                     onLoadedData={() => {
                       assert(videoRef.current, "videoRef not loaded");
-                      console.log("Video data loaded (inline), duration:", videoRef.current.duration);
                       setDuration(videoRef.current.duration);
                       setIsMediaLoaded(true);
                     }}
                     onTimeUpdate={() => {
                       assert(videoRef.current, "videoRef not loaded");
-                      console.log("Video time update (inline):", videoRef.current.currentTime);
                       setCurrentTime(videoRef.current.currentTime);
                     }}
                   />
@@ -365,6 +558,7 @@ export default function Summary({ className, source, slug, onCloseClick = () => 
                           videoRef.current.requestFullscreen();
                         }
                       }}
+                      onDragStateChange={setIsDragging}
                     />
                   )}
                 </div>
