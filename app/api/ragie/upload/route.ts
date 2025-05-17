@@ -35,7 +35,7 @@ export async function POST(request: NextRequest) {
     const res = await client.documents.create({
       file: file,
       partition: partition || "",
-      mode: mode as any, // TODO: remove 'as any'
+      mode,
       metadata,
     });
     return Response.json(res);

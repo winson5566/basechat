@@ -37,6 +37,7 @@ export default async function DataIndexPage({ params, searchParams }: Props) {
 
   let files: any[] = [];
   let nextCursor: string | null = null;
+  let totalDocuments: number = 0;
   try {
     const { client, partition } = await getRagieClientAndPartition(tenant.id);
     const res = await client.documents.list({
@@ -46,6 +47,7 @@ export default async function DataIndexPage({ params, searchParams }: Props) {
     });
     files = res.result.documents;
     nextCursor = res.result.pagination.nextCursor || null;
+    totalDocuments = res.result.pagination.totalCount;
   } catch (error) {
     console.error("Error fetching documents:", error);
     // If there's an error and we have a cursor, redirect to the base data page
@@ -84,6 +86,7 @@ export default async function DataIndexPage({ params, searchParams }: Props) {
               tenant={tenant}
               initialFiles={files}
               nextCursor={nextCursor}
+              initialTotalDocuments={totalDocuments}
               userName={session.user.name}
               connectionMap={connectionMap}
             />

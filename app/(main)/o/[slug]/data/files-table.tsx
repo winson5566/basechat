@@ -30,16 +30,24 @@ interface Props {
       addedBy: string | null;
     }
   >;
+  initialTotalDocuments: number;
 }
 
-export default function FilesTable({ tenant, initialFiles, nextCursor, userName, connectionMap }: Props) {
+export default function FilesTable({
+  tenant,
+  initialFiles,
+  nextCursor,
+  userName,
+  connectionMap,
+  initialTotalDocuments,
+}: Props) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [allFiles, setAllFiles] = useState(initialFiles);
   const [isLoading, setIsLoading] = useState(false);
   const [isDragActive, setIsDragActive] = useState(false);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
-
+  const [totalDocuments, setTotalDocuments] = useState(initialTotalDocuments);
   const currentCursor = searchParams.get("cursor") || null;
   const historyParam = searchParams.get("history") || "";
   const cursorHistory = historyParam ? historyParam.split(",") : [];
@@ -67,6 +75,9 @@ export default function FilesTable({ tenant, initialFiles, nextCursor, userName,
 
       if (data.documents) {
         setAllFiles(data.documents);
+      }
+      if (data.pagination) {
+        setTotalDocuments(data.pagination.totalCount);
       }
     } catch (error) {
       console.error("Error loading files:", error);
@@ -190,7 +201,10 @@ export default function FilesTable({ tenant, initialFiles, nextCursor, userName,
         <div className="h-full w-full flex flex-col" {...getRootProps()}>
           <input {...getInputProps()} />
           <hr className="my-4" />
-          <div className="flex justify-end items-center mb-4">
+          <div className="flex justify-between items-center mb-4">
+            <div className="text-sm text-gray-500">
+              {totalDocuments} {totalDocuments === 1 ? "file" : "files"}
+            </div>
             <div className="flex items-center gap-2">
               <button
                 onClick={handlePreviousPage}
