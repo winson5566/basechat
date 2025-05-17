@@ -10,6 +10,10 @@ const paramsSchema = z.object({
   url: z.string(),
 });
 
+// Important: The next edge runtime strips "simple headers" like "Range" from the request,
+// so we need to use the Node.js runtime to preserve them.
+export const runtime = "nodejs";
+
 export async function GET(request: NextRequest) {
   const params = paramsSchema.parse({
     tenant: request.nextUrl.searchParams.get("tenant"),
@@ -24,11 +28,19 @@ export async function GET(request: NextRequest) {
 
   try {
     const ragieApiKey = await getRagieApiKey(tenant);
+    // Forward Range if present
+    const reqRange = request.headers.get("range");
+    // Propagate stream cancel from player
+    const controller = new AbortController();
+    request.signal.addEventListener("abort", () => controller.abort());
+
     const upstreamResponse = await fetch(params.url, {
       headers: {
         authorization: `Bearer ${ragieApiKey}`,
         partition: tenant.ragiePartition || tenant.id,
+        ...(reqRange ? { Range: reqRange } : {}),
       },
+      signal: controller.signal,
     });
 
     // If there's no body, bail out:
@@ -38,11 +50,24 @@ export async function GET(request: NextRequest) {
     }
 
     // Stream the upstream response directly back to the client preserving status, headers, etc...
+    const passedThroughHeaders = [
+      "Content-Type",
+      "Accept-Ranges",
+      "Content-Length",
+      "Content-Range",
+      "Transfer-Encoding",
+    ];
+    const headers = new Headers();
+    passedThroughHeaders.forEach((header) => {
+      const value = upstreamResponse.headers.get(header);
+      if (value) {
+        headers.set(header, value);
+      }
+    });
+
     return new Response(upstreamResponse.body, {
       status: upstreamResponse.status,
-      headers: {
-        "Content-Type": upstreamResponse.headers.get("Content-Type") ?? "application/octet-stream",
-      },
+      headers,
     });
   } catch (error) {
     console.error("Error in transcription stream route:", error);

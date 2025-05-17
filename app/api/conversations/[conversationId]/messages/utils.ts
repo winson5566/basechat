@@ -1,5 +1,3 @@
-import assert from "assert";
-
 import { anthropic } from "@ai-sdk/anthropic";
 import { google } from "@ai-sdk/google";
 import { groq } from "@ai-sdk/groq";
@@ -179,15 +177,37 @@ export async function getRetrievalSystemPrompt(
 
   const chunks = JSON.stringify(response);
 
-  const sources = response.scoredChunks.map((chunk) => ({
-    ...chunk.documentMetadata,
-    documentId: chunk.documentId,
-    documentName: chunk.documentName,
-    streamUrl: chunk.links.self_audio_stream?.href,
-    downloadUrl: chunk.links.self_audio_download?.href,
-    startTime: chunk.metadata?.start_time,
-    endTime: chunk.metadata?.end_time,
-  }));
+  const sources = response.scoredChunks.map((chunk) => {
+    const documentName = chunk.documentName;
+    let isVideo = false;
+    let isAudio = false;
+    if ("self_video_stream" in chunk.links) {
+      isVideo = chunk.links.self_video_stream !== null;
+    } else if ("self_audio_stream" in chunk.links) {
+      isAudio = chunk.links.self_audio_stream !== null;
+    }
+
+    const streamUrl = isVideo
+      ? chunk.links.self_video_stream?.href
+      : isAudio
+        ? chunk.links.self_audio_stream?.href
+        : undefined;
+    const downloadUrl = isVideo
+      ? chunk.links.self_video_download?.href
+      : isAudio
+        ? chunk.links.self_audio_download?.href
+        : undefined;
+
+    return {
+      ...chunk.documentMetadata,
+      documentId: chunk.documentId,
+      documentName,
+      streamUrl,
+      downloadUrl,
+      startTime: chunk.metadata?.start_time,
+      endTime: chunk.metadata?.end_time,
+    };
+  });
 
   const company = { name: tenant.name };
   return {

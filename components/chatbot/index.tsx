@@ -43,9 +43,10 @@ interface Props {
   };
   initMessage?: string;
   onSelectedSource: (source: SourceMetadata) => void;
+  onMessageConsumed?: () => void;
 }
 
-export default function Chatbot({ tenant, conversationId, initMessage, onSelectedSource }: Props) {
+export default function Chatbot({ tenant, conversationId, initMessage, onSelectedSource, onMessageConsumed }: Props) {
   const [localInitMessage, setLocalInitMessage] = useState(initMessage);
   const [messages, setMessages] = useState<Message[]>([]);
   const [sourceCache, setSourceCache] = useState<Record<string, SourceMetadata[]>>({});
@@ -225,7 +226,6 @@ export default function Chatbot({ tenant, conversationId, initMessage, onSelecte
       if (!res.ok) return;
 
       const json = (await res.json()) as { id: string; sources: SourceMetadata[] };
-      console.log("sources", json.sources);
       setSourceCache((prev) => ({ ...prev, [json.id]: json.sources }));
     })();
   }, [conversationId, pendingMessage, tenant.slug]);
@@ -234,6 +234,7 @@ export default function Chatbot({ tenant, conversationId, initMessage, onSelecte
     if (localInitMessage) {
       handleSubmit(localInitMessage, selectedModel);
       setLocalInitMessage(undefined);
+      onMessageConsumed?.();
     } else {
       (async () => {
         const res = await fetch(`/api/conversations/${conversationId}/messages`, {

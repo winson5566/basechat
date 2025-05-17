@@ -1,8 +1,10 @@
 import "./style.css";
+import { FileAudio, FileImage, FileVideo } from "lucide-react";
 import Image from "next/image";
 import Markdown from "react-markdown";
 
 import CONNECTOR_MAP from "@/lib/connector-map";
+import { IMAGE_FILE_TYPES, VIDEO_FILE_TYPES, AUDIO_FILE_TYPES } from "@/lib/file-utils";
 import { LLM_DISPLAY_NAMES, LLMModel } from "@/lib/llm/types";
 
 import Logo from "../tenant/logo/logo";
@@ -23,6 +25,15 @@ function format(totalSeconds: number): string {
 
 const Citation = ({ source, onClick = () => {} }: { source: SourceMetadata; onClick?: () => void }) => {
   const connector = CONNECTOR_MAP[source.source_type];
+  const isAudio =
+    source.documentName?.toLowerCase() &&
+    AUDIO_FILE_TYPES.some((ext) => source.documentName?.toLowerCase().endsWith(ext));
+  const isVideo =
+    source.documentName?.toLowerCase() &&
+    VIDEO_FILE_TYPES.some((ext) => source.documentName?.toLowerCase().endsWith(ext));
+  const isImage =
+    source.documentName?.toLowerCase() &&
+    IMAGE_FILE_TYPES.some((ext) => source.documentName?.toLowerCase().endsWith(ext));
 
   const formatSourceName = (input: string) => {
     if (input.length <= MAX_CITATION_LENGTH) return input;
@@ -32,6 +43,13 @@ const Citation = ({ source, onClick = () => {} }: { source: SourceMetadata; onCl
   return (
     <button className="rounded-[20px] flex items-center border px-3 py-1.5 mr-3 mb-3" onClick={onClick}>
       {connector && <Image src={connector[1]} alt={connector[0]} className="mr-1" />}
+      {(!source.source_type || source.source_type === "manual") && (
+        <>
+          {isAudio && <FileAudio className="w-4 h-4 mr-1" />}
+          {isVideo && <FileVideo className="w-4 h-4 mr-1" />}
+          {isImage && <FileImage className="w-4 h-4 mr-1" />}
+        </>
+      )}
       {formatSourceName(source.documentName)}
       {source.startTime && source.endTime && (
         <span className="pl-2 text-xs text-muted-foreground">

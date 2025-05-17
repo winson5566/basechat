@@ -9,6 +9,9 @@ interface GlobalState {
   setInitialMessage: (content: string) => void;
   initialModel: LLMModel;
   setInitialModel: (model: LLMModel) => void;
+  isMessageConsumed: boolean;
+  setMessageConsumed: (consumed: boolean) => void;
+  clearInitialMessage: () => void;
 }
 
 const GlobalStateContext = createContext<GlobalState | undefined>(undefined);
@@ -16,6 +19,12 @@ const GlobalStateContext = createContext<GlobalState | undefined>(undefined);
 export const GlobalStateProvider = ({ children }: { children: ReactNode }) => {
   const [initialMessage, setInitialMessage] = useState("");
   const [initialModel, setInitialModel] = useState<LLMModel>(DEFAULT_MODEL);
+  const [isMessageConsumed, setMessageConsumed] = useState(false);
+
+  const clearInitialMessage = () => {
+    setInitialMessage("");
+    setMessageConsumed(false);
+  };
 
   return (
     <GlobalStateContext.Provider
@@ -24,6 +33,9 @@ export const GlobalStateProvider = ({ children }: { children: ReactNode }) => {
         setInitialMessage,
         initialModel,
         setInitialModel,
+        isMessageConsumed,
+        setMessageConsumed,
+        clearInitialMessage,
       }}
     >
       {children}

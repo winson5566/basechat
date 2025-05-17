@@ -68,6 +68,7 @@ export const AutosizeTextarea = React.forwardRef<AutosizeTextAreaRef, AutosizeTe
   ) => {
     const textAreaRef = React.useRef<HTMLTextAreaElement | null>(null);
     const [triggerAutoSize, setTriggerAutoSize] = React.useState("");
+    const [isMounted, setIsMounted] = React.useState(false);
 
     useAutosizeTextArea({
       textAreaRef,
@@ -84,14 +85,21 @@ export const AutosizeTextarea = React.forwardRef<AutosizeTextAreaRef, AutosizeTe
     }));
 
     React.useEffect(() => {
-      setTriggerAutoSize(value as string);
-    }, [props?.defaultValue, value]);
+      setIsMounted(true);
+    }, []);
+
+    React.useEffect(() => {
+      if (isMounted) {
+        setTriggerAutoSize(value as string);
+      }
+    }, [props?.defaultValue, value, isMounted]);
 
     return (
       <textarea
         {...props}
         value={value}
         ref={textAreaRef}
+        style={{ height: isMounted ? undefined : `${minHeight}px` }}
         className={cn(
           "w-full max-h-[100px] resize-none overflow-y-auto border-0 focus:outline-none focus:border-none",
           className,

@@ -3,7 +3,7 @@ import { Loader2 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { z } from "zod";
 
@@ -66,6 +66,7 @@ export default function ConversationHistory({ className, tenant }: Props) {
   const router = useRouter();
   const queryClient = useQueryClient();
   const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading, isError } = useConversations(tenant.slug);
+  const [openPopoverId, setOpenPopoverId] = useState<string | null>(null);
 
   const observerRef = useRef<IntersectionObserver | null>(null);
   const loadMoreRef = useRef<HTMLDivElement>(null);
@@ -107,6 +108,7 @@ export default function ConversationHistory({ className, tenant }: Props) {
       }
 
       toast.success("Conversation deleted");
+      setOpenPopoverId(null);
 
       // Invalidate the conversations query to trigger a refetch
       await queryClient.invalidateQueries({ queryKey: ["conversations", tenant.slug] });
@@ -205,7 +207,10 @@ export default function ConversationHistory({ className, tenant }: Props) {
                             {conversation.title}
                           </div>
                         </Link>
-                        <Popover>
+                        <Popover
+                          open={openPopoverId === conversation.id}
+                          onOpenChange={(open) => setOpenPopoverId(open ? conversation.id : null)}
+                        >
                           <PopoverTrigger asChild>
                             <Image
                               src={EllipsesIcon}
@@ -245,7 +250,10 @@ export default function ConversationHistory({ className, tenant }: Props) {
                             {conversation.title}
                           </div>
                         </Link>
-                        <Popover>
+                        <Popover
+                          open={openPopoverId === conversation.id}
+                          onOpenChange={(open) => setOpenPopoverId(open ? conversation.id : null)}
+                        >
                           <PopoverTrigger asChild>
                             <Image
                               src={EllipsesIcon}
@@ -296,7 +304,10 @@ export default function ConversationHistory({ className, tenant }: Props) {
                               {conversation.title}
                             </div>
                           </Link>
-                          <Popover>
+                          <Popover
+                            open={openPopoverId === conversation.id}
+                            onOpenChange={(open) => setOpenPopoverId(open ? conversation.id : null)}
+                          >
                             <PopoverTrigger asChild>
                               <Image
                                 src={EllipsesIcon}
@@ -342,7 +353,10 @@ export default function ConversationHistory({ className, tenant }: Props) {
                               {conversation.title}
                             </div>
                           </Link>
-                          <Popover>
+                          <Popover
+                            open={openPopoverId === conversation.id}
+                            onOpenChange={(open) => setOpenPopoverId(open ? conversation.id : null)}
+                          >
                             <PopoverTrigger asChild>
                               <Image
                                 src={EllipsesIcon}
