@@ -33,7 +33,7 @@ export const VALID_FILE_TYPES = {
   ".xlsx": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
 
   // Audio
-  ".mp3": "audio/mp3",
+  ".mp3": "audio/mpeg",
   ".wav": "audio/wav",
   ".m4a": "audio/mp4",
   ".ogg": "audio/ogg",
