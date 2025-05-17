@@ -188,7 +188,7 @@ export async function getRetrievalSystemPrompt(
     }
 
     const streamUrl = isVideo
-      ? chunk.links.document_video_stream?.href
+      ? chunk.links.self_video_stream?.href
       : isAudio
         ? chunk.links.self_audio_stream?.href
         : undefined;
