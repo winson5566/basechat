@@ -197,6 +197,11 @@ export async function getRetrievalSystemPrompt(
       : isAudio
         ? chunk.links.self_audio_download?.href
         : undefined;
+    const documentStreamUrl = isVideo
+      ? chunk.links.document_video_stream?.href
+      : isAudio
+        ? chunk.links.document_audio_stream?.href
+        : undefined;
 
     return {
       ...chunk.documentMetadata,
@@ -204,6 +209,7 @@ export async function getRetrievalSystemPrompt(
       documentName,
       streamUrl,
       downloadUrl,
+      documentStreamUrl,
       startTime: chunk.metadata?.start_time,
       endTime: chunk.metadata?.end_time,
     };
