@@ -280,6 +280,7 @@ export default function Summary({ className, source, slug, onCloseClick = () => 
   const [duration, setDuration] = useState(0);
   const [isMediaLoaded, setIsMediaLoaded] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
+  const [didInitialSeek, setDidInitialSeek] = useState(false);
   const animationFrameRef = useRef<number | null>(null);
 
   useEffect(() => {
@@ -494,13 +495,27 @@ export default function Summary({ className, source, slug, onCloseClick = () => 
             }
 
             if (mediaType === "video") {
+              // Some very early messages with video chunk will not have documentStreamUrl
+              // In that case, we fallback to streamUrl
+              const chunkStreamFallback = !source.documentStreamUrl;
+              const streamUrl = chunkStreamFallback ? source.streamUrl : source.documentStreamUrl;
+              assert(streamUrl, "documentStreamUrl not available");
               return (
                 <div className="flex flex-col">
                   <video
                     ref={videoRef}
                     className="w-full rounded-lg"
-                    src={getRagieStreamPath(slug, source.streamUrl)}
+                    src={getRagieStreamPath(slug, streamUrl)}
                     controls={false}
+                    onCanPlay={() => {
+                      assert(videoRef.current, "videoRef not loaded");
+                      const canSeek = videoRef.current.seekable.end(0) >= source.startTime!;
+                      if (canSeek && !didInitialSeek && !chunkStreamFallback) {
+                        videoRef.current.currentTime = source.startTime || 0;
+                        setCurrentTime(source.startTime || 0);
+                        setDidInitialSeek(true);
+                      }
+                    }}
                     onLoadedMetadata={() => {
                       assert(videoRef.current, "videoRef not loaded");
                       setDuration(videoRef.current.duration);
@@ -513,7 +528,9 @@ export default function Summary({ className, source, slug, onCloseClick = () => 
                     }}
                     onTimeUpdate={() => {
                       assert(videoRef.current, "videoRef not loaded");
-                      setCurrentTime(videoRef.current.currentTime);
+                      if (videoRef.current.currentTime !== currentTime) {
+                        setCurrentTime(videoRef.current.currentTime);
+                      }
                     }}
                   />
                   {isMediaLoaded && duration > 0 && (
