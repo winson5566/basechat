@@ -31,3 +31,6 @@ export const getRagieStreamPath = (slug: string, streamUrl: string) => {
 
   return `/api/ragie/stream?${params.toString()}`;
 };
+
+export const getSubscriptionPath = () => `/o/twitter/data`;
+//TODO: change when we get the subscription page, update tenantPaidStatus

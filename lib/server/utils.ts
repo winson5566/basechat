@@ -7,7 +7,7 @@ import { z } from "zod";
 
 import auth from "@/auth";
 
-import { getCheckPath, getSignInPath, getTenantPath } from "../paths";
+import { getCheckPath, getSignInPath, getSubscriptionPath, getTenantPath } from "../paths";
 
 import { findTenantBySlug, getAuthContextByUserId } from "./service";
 
@@ -25,6 +25,12 @@ export async function requireSession() {
 export async function requireAuthContext(slug: string) {
   const session = await requireSession();
   const { profile, tenant } = await getAuthContextByUserId(session.user.id, slug);
+
+  if ((tenant.paidStatus === "trial" && tenant.trialEndsAt < new Date()) || tenant.paidStatus === "expired") {
+    console.log("redirecting to subscription page");
+    //return redirect(getSubscriptionPath());
+  }
+
   return { profile, tenant, session };
 }
 

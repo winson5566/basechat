@@ -623,3 +623,7 @@ export async function deleteTenantLogo(tenantId: string) {
 export function linkUsers(fromUserId: string, toUserId: string) {
   return db.update(schema.profiles).set({ userId: toUserId }).where(eq(schema.profiles.userId, fromUserId));
 }
+
+export async function updateTenantPaidStatus(tenantId: string, paidStatus: "trial" | "active" | "expired") {
+  await db.update(schema.tenants).set({ paidStatus }).where(eq(schema.tenants.id, tenantId));
+}

@@ -61,6 +61,8 @@ export const conversations = pgTable(
   }),
 );
 
+export const paidStatusEnum = pgEnum("paid_status", ["trial", "active", "expired"]);
+
 export const tenants = pgTable("tenants", {
   ...baseFields,
   name: text("name").notNull(),
@@ -85,6 +87,10 @@ export const tenants = pgTable("tenants", {
   overridePrioritizeRecent: boolean("override_prioritize_recent").default(true),
   ragieApiKey: text("ragie_api_key"),
   ragiePartition: text("ragie_partition"),
+  trialEndsAt: timestamp("trial_ends_at", { withTimezone: true, mode: "date" })
+    .$defaultFn(() => new Date(Date.now() + 14 * 24 * 60 * 60 * 1000))
+    .notNull(),
+  paidStatus: paidStatusEnum("paid_status").default("trial").notNull(),
 });
 
 export const rolesEnum = pgEnum("roles", ["admin", "user", "guest"]);
