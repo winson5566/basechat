@@ -115,6 +115,7 @@ Distributed under the MIT License. See `LICENSE.txt` for more information.
 
 ## Links
 
+- [Base Chat Product Website](https://www.ragie.ai/basechat?utm_source=basechat-readme)
 - [Ragie Website](https://www.ragie.ai/?utm_source=basechat-readme)
 - [Ragie Documentation](https://docs.ragie.ai/?utm_source=basechat-readme)
 - [Ragie Connectors](https://www.ragie.ai/connectors?utm_source=basechat-readme)
