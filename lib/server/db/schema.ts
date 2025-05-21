@@ -61,7 +61,7 @@ export const conversations = pgTable(
   }),
 );
 
-export const paidStatusEnum = pgEnum("paid_status", ["trial", "active", "expired"]);
+export const paidStatusEnum = pgEnum("paid_status", ["trial", "active", "expired", "legacy"]);
 
 export const tenants = pgTable("tenants", {
   ...baseFields,
