@@ -263,10 +263,18 @@ export async function getAuthContextByUserId(userId: string, slug: string) {
   };
 }
 
-async function getInviteById(id: string) {
+export async function findInviteById(id: string) {
   const rs = await db.select().from(schema.invites).where(eq(schema.invites.id, id));
-  assert(rs.length === 1);
+  if (rs.length === 0) {
+    return null;
+  }
   return rs[0];
+}
+
+async function getInviteById(id: string) {
+  const rs = await findInviteById(id);
+  assert(rs, "expected invite");
+  return rs;
 }
 
 export async function acceptInvite(userId: string, inviteId: string) {

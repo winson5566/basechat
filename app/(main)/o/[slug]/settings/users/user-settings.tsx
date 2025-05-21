@@ -147,18 +147,19 @@ export default function UserSettings({
       setIsLoading(false);
       return;
     }
+    const payload = await res.json();
 
     setDialogOpen(false);
     setIsLoading(false);
     toast.success("Invites sent");
     resetForm();
 
-    const newMembers = values.emails.map((email) => ({
-      id: "",
+    const newMembers = payload.map((invite: any) => ({
+      id: invite.id,
       name: null,
-      email,
+      email: invite.email,
       type: "invite" as MemberType,
-      role: values.role as MemberRole,
+      role: invite.role as MemberRole,
     }));
 
     setMembers([...members, ...newMembers]);
@@ -335,8 +336,8 @@ export default function UserSettings({
               </TableRow>
             </TableHeader>
             <TableBody>
-              {members.map((member, i) => (
-                <TableRow key={i}>
+              {members.map((member) => (
+                <TableRow key={member.id}>
                   <TableCell className="flex items-center pl-0">
                     {member.type === "profile" ? (
                       <>

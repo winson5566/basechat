@@ -9,7 +9,13 @@ type Params = Promise<{ id: string }>;
 export async function DELETE(request: NextRequest, { params }: { params: Params }) {
   const { tenant } = await requireAdminContextFromRequest(request);
   const { id } = await params;
-  await deleteInviteById(tenant.id, id);
+  try {
+    await deleteInviteById(tenant.id, id);
+  } catch (error) {
+    console.error(error);
+    return new Response(null, { status: 500 });
+  }
+
   return new Response(null, { status: 200 });
 }
 
