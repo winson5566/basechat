@@ -2,7 +2,7 @@ import assert from "assert";
 
 import { redirect } from "next/navigation";
 
-import { acceptInvite, setCurrentProfileId } from "@/lib/server/service";
+import { acceptInvite, findInviteById, setCurrentProfileId } from "@/lib/server/service";
 import { requireSession } from "@/lib/server/utils";
 
 interface Props {
@@ -15,16 +15,22 @@ export default async function AcceptInvitePage({ searchParams }: Props) {
 
   assert(params.invite, "Bad request");
 
-  let acceptError;
+  const invite = await findInviteById(params.invite);
+
+  if (!invite) {
+    return (
+      <div className="h-full w-full flex flex-col justify-center items-center bg-white">
+        <p>Could not find invite.</p>
+      </div>
+    );
+  }
+
   try {
     const profile = await acceptInvite(session.user.id, params.invite);
     await setCurrentProfileId(session.user.id, profile.id);
-  } catch (e) {
-    acceptError = e;
-  }
-
-  if (!acceptError) {
     redirect("/");
+  } catch (e) {
+    console.error(e);
   }
 
   return (
