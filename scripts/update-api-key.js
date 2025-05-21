@@ -4,35 +4,46 @@ import { eq } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/node-postgres";
 import { pgTable, text } from "drizzle-orm/pg-core";
 
-// run with: npm run update-api-key myApiKey123 myPartition
-// API key will be encrypted
-// Partition is optional
-// If partition is not provided, it will be set to null
+// run with: npm run update-api-key <slug> <apiKey> [partition]
+// <slug> is the tenant identifier
+// <apiKey> will be encrypted
+// [partition] is optional, if not provided, it will be set to null
 const ENCRYPTION_IV_LENGTH = 16; // 16 bytes for AES
 const databaseUrl = process.env.DATABASE_URL;
 const ENCRYPTION_KEY = process.env.ENCRYPTION_KEY; // Must be 32 bytes (256 bits)
 
 if (!databaseUrl) throw new Error("DATABASE_URL environment variable is required");
 if (!ENCRYPTION_KEY) throw new Error("ENCRYPTION_KEY environment variable is required");
-if (process.argv.length < 3) {
-  console.log("tenantId is required");
+
+function showUsage() {
+  console.log("Usage: npm run update-api-key <slug> <apiKey> [partition]");
+  console.log("  slug      - The tenant slug to update");
+  console.log("  apiKey    - The API key to set (will be encrypted)");
+  console.log("  partition - (Optional) The partition to set");
   process.exit(1);
 }
 
+if (process.argv.length < 4) {
+  console.log("Error: Not enough arguments provided");
+  showUsage();
+}
+
 const db = drizzle(databaseUrl);
-const tenantId = process.argv[2];
+
+const slug = process.argv[2];
 const apiKey = process.argv[3];
 const partition = process.argv[4];
 
 const tenantsSchema = pgTable("tenants", {
   id: text("id").primaryKey(),
+  slug: text("slug").notNull(),
   ragieApiKey: text("ragie_api_key"),
   ragiePartition: text("ragie_partition"),
 });
 
-console.log(`Updating tenant ${tenantId} with API key ${apiKey} and partition ${partition}`);
+console.log(`Updating tenant ${slug} with API key ${apiKey} and partition ${partition}`);
 
-async function updateRagieApiKey(tenantId, apiKey, partition) {
+async function updateRagieApiKey(slug, apiKey, partition) {
   try {
     // Encrypt the API key
     const encryptedApiKey = encryptApiKey(apiKey);
@@ -44,9 +55,9 @@ async function updateRagieApiKey(tenantId, apiKey, partition) {
         ragieApiKey: encryptedApiKey,
         ragiePartition: partition || null,
       })
-      .where(eq(tenantsSchema.id, tenantId));
+      .where(eq(tenantsSchema.slug, slug));
 
-    console.log(`Successfully updated Ragie API key for tenant ${tenantId}`);
+    console.log(`Successfully updated Ragie API key for tenant ${slug}`);
   } catch (error) {
     console.error("Failed to update Ragie API key:", error);
     process.exit(1);
@@ -81,7 +92,7 @@ export function encryptApiKey(apiKey) {
   }
 }
 
-updateRagieApiKey(tenantId, apiKey, partition)
+updateRagieApiKey(slug, apiKey, partition)
   .then(() => {
     process.exit(0);
   })
