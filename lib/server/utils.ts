@@ -10,6 +10,7 @@ import auth from "@/auth";
 import { getCheckPath, getSignInPath, getTenantPath } from "../paths";
 
 import { findTenantBySlug, getAuthContextByUserId, updateTenantPaidStatus } from "./service";
+import { BILLING_ENABLED } from "./settings";
 
 const tenantSchema = z.string();
 
@@ -26,7 +27,11 @@ export async function requireAuthContext(slug: string) {
   const session = await requireSession();
   const { profile, tenant } = await getAuthContextByUserId(session.user.id, slug);
 
-  if ((tenant.paidStatus === "trial" || tenant.paidStatus === "legacy") && tenant.trialExpiresAt < new Date()) {
+  if (
+    BILLING_ENABLED &&
+    (tenant.paidStatus === "trial" || tenant.paidStatus === "legacy") &&
+    tenant.trialExpiresAt < new Date()
+  ) {
     await updateTenantPaidStatus(tenant.id, "expired");
   }
 
