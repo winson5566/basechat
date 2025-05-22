@@ -58,7 +58,7 @@ export async function createTenant(userId: string, name: string) {
 
   const tenants = await db
     .insert(schema.tenants)
-    .values({ name, slug })
+    .values({ name, slug, trialExpiresAt: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000) })
     .returning({ id: schema.tenants.id, slug: schema.tenants.slug });
 
   assert(tenants.length === 1);

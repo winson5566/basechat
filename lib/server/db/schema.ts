@@ -63,35 +63,39 @@ export const conversations = pgTable(
 
 export const paidStatusEnum = pgEnum("paid_status", ["trial", "active", "expired", "legacy"]);
 
-export const tenants = pgTable("tenants", {
-  ...baseFields,
-  name: text("name").notNull(),
-  slug: text("slug").notNull().unique(),
-  isPublic: boolean("is_public").notNull().default(false),
-  question1: text("question1"),
-  question2: text("question2"),
-  question3: text("question3"),
-  groundingPrompt: text("grounding_prompt"),
-  systemPrompt: text("system_prompt"),
-  welcomeMessage: text("welcome_message"),
-  logoFileName: text("logo_file_name"), // The name of the file that was uploaded
-  logoObjectName: text("logo_object_name"), // The name of the object in the bucket
-  logoUrl: text("logo_url"), // The publicly accessible URL of the object
-  enabledModels: text("enabled_models").array().default(ALL_VALID_MODELS).$type<z.infer<typeof modelArraySchema>>(),
-  defaultModel: text("default_model").default(DEFAULT_MODEL).$type<z.infer<typeof modelSchema>>(),
-  isBreadth: boolean("is_breadth").default(false),
-  rerankEnabled: boolean("rerank_enabled").default(false),
-  prioritizeRecent: boolean("prioritize_recent").default(false),
-  overrideBreadth: boolean("override_breadth").default(true),
-  overrideRerank: boolean("override_rerank").default(true),
-  overridePrioritizeRecent: boolean("override_prioritize_recent").default(true),
-  ragieApiKey: text("ragie_api_key"),
-  ragiePartition: text("ragie_partition"),
-  trialEndsAt: timestamp("trial_ends_at", { withTimezone: true, mode: "date" })
-    .$defaultFn(() => new Date(Date.now() + 14 * 24 * 60 * 60 * 1000))
-    .notNull(),
-  paidStatus: paidStatusEnum("paid_status").default("trial").notNull(),
-});
+export const tenants = pgTable(
+  "tenants",
+  {
+    ...baseFields,
+    name: text("name").notNull(),
+    slug: text("slug").notNull().unique(),
+    isPublic: boolean("is_public").notNull().default(false),
+    question1: text("question1"),
+    question2: text("question2"),
+    question3: text("question3"),
+    groundingPrompt: text("grounding_prompt"),
+    systemPrompt: text("system_prompt"),
+    welcomeMessage: text("welcome_message"),
+    logoFileName: text("logo_file_name"), // The name of the file that was uploaded
+    logoObjectName: text("logo_object_name"), // The name of the object in the bucket
+    logoUrl: text("logo_url"), // The publicly accessible URL of the object
+    enabledModels: text("enabled_models").array().default(ALL_VALID_MODELS).$type<z.infer<typeof modelArraySchema>>(),
+    defaultModel: text("default_model").default(DEFAULT_MODEL).$type<z.infer<typeof modelSchema>>(),
+    isBreadth: boolean("is_breadth").default(false),
+    rerankEnabled: boolean("rerank_enabled").default(false),
+    prioritizeRecent: boolean("prioritize_recent").default(false),
+    overrideBreadth: boolean("override_breadth").default(true),
+    overrideRerank: boolean("override_rerank").default(true),
+    overridePrioritizeRecent: boolean("override_prioritize_recent").default(true),
+    ragieApiKey: text("ragie_api_key"),
+    ragiePartition: text("ragie_partition"),
+    trialExpiresAt: timestamp("trial_expires_at", { withTimezone: true, mode: "date" }).notNull(),
+    paidStatus: paidStatusEnum("paid_status").default("trial").notNull(),
+  },
+  (t) => ({
+    paidStatusIdx: index("tenants_paid_status_idx").on(t.paidStatus),
+  }),
+);
 
 export const rolesEnum = pgEnum("roles", ["admin", "user", "guest"]);
 
