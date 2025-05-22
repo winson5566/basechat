@@ -13,7 +13,7 @@ export async function GET(request: NextRequest) {
 
   try {
     const res = await client.documents.list({
-      partition: partition || "",
+      partition,
       pageSize: 10,
       cursor,
     });

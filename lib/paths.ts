@@ -1,5 +1,3 @@
-import { BASE_URL, RAGIE_API_BASE_URL } from "@/lib/server/settings";
-
 export const getTenantPath = (slug: string) => `/o/${slug}`;
 
 export const getConversationPath = (slug: string, id: string) => `${getTenantPath(slug)}/conversations/${id}`;

@@ -2,6 +2,7 @@ import { ReactNode } from "react";
 
 import RagieLogo from "@/components/ragie-logo";
 import { getUserById } from "@/lib/server/service";
+import { BILLING_ENABLED } from "@/lib/server/settings";
 import { authOrRedirect } from "@/lib/server/utils";
 
 import Footer from "./footer";
@@ -19,7 +20,14 @@ export default async function MainLayout({ children, params }: Props) {
 
   return (
     <div className="h-screen w-full flex flex-col items-center bg-white overflow-hidden">
-      <Header isAnonymous={user.isAnonymous} tenant={tenant} name={session.user.name} email={user.email} />
+      <Header
+        isAnonymous={user.isAnonymous}
+        tenant={tenant}
+        name={session.user.name}
+        email={user.email}
+        role={profile.role}
+        billingEnabled={BILLING_ENABLED}
+      />
       <main className="flex-1 w-full overflow-y-auto">
         <div className="w-full max-w-[717px] lg:max-w-full px-4 mx-auto h-full flex flex-col items-center justify-center">
           {children}

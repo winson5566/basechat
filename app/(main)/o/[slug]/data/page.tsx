@@ -41,7 +41,7 @@ export default async function DataIndexPage({ params, searchParams }: Props) {
   try {
     const { client, partition } = await getRagieClientAndPartition(tenant.id);
     const res = await client.documents.list({
-      partition: partition || "",
+      partition,
       pageSize: 10,
       cursor: sp.cursor || undefined,
     });

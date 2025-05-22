@@ -53,7 +53,7 @@ export async function getRagieClientAndPartition(tenantId: string) {
   let partition;
   if (ragieApiKey) {
     client = await getTenantRagieClient(ragieApiKey);
-    partition = ragiePartition || undefined;
+    partition = ragiePartition || "default";
   } else {
     client = getRagieClient();
     partition = tenantId;

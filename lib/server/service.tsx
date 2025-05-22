@@ -58,7 +58,7 @@ export async function createTenant(userId: string, name: string) {
 
   const tenants = await db
     .insert(schema.tenants)
-    .values({ name, slug })
+    .values({ name, slug, trialExpiresAt: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000) })
     .returning({ id: schema.tenants.id, slug: schema.tenants.slug });
 
   assert(tenants.length === 1);
@@ -630,4 +630,8 @@ export async function deleteTenantLogo(tenantId: string) {
 
 export function linkUsers(fromUserId: string, toUserId: string) {
   return db.update(schema.profiles).set({ userId: toUserId }).where(eq(schema.profiles.userId, fromUserId));
+}
+
+export async function updateTenantPaidStatus(tenantId: string, paidStatus: "trial" | "active" | "expired") {
+  await db.update(schema.tenants).set({ paidStatus }).where(eq(schema.tenants.id, tenantId));
 }

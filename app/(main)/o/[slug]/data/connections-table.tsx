@@ -35,7 +35,10 @@ export default function ConnectionsTable({ tenant, connections }: Props) {
   return (
     <div className="h-full w-full flex flex-col">
       <hr className="my-4" />
-      <div className="flex justify-end items-center mb-4">
+      <div className="flex justify-between items-center mb-4">
+        <div className="text-sm text-gray-500">
+          {connections.length} {connections.length === 1 ? "connection" : "connections"}
+        </div>
         <div className="flex items-center gap-2">
           <button
             onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}

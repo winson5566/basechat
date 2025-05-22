@@ -22,6 +22,7 @@ import LogOutIcon from "@/public/icons/log-out.svg";
 import NewChatIcon from "@/public/icons/new-chat.svg";
 import PlusIcon from "@/public/icons/plus.svg";
 
+import { Banner, BannerLink } from "./banner";
 import ConversationHistory from "./conversation-history";
 
 const errorSchema = z.object({
@@ -34,10 +35,14 @@ interface Props {
     logoUrl?: string | null;
     slug: string;
     id: string;
+    paidStatus: "active" | "trial" | "expired" | "legacy";
+    trialExpiresAt: Date;
   };
   name: string | undefined | null;
   email: string | undefined | null;
   isAnonymous: boolean;
+  role: "admin" | "user" | "guest";
+  billingEnabled: boolean;
   className?: string;
   onNavClick?: () => void;
 }
@@ -71,9 +76,21 @@ const TenantPopoverContent = ({ children }: { children: React.ReactNode }) => (
   </PopoverContent>
 );
 
-export default function Header({ isAnonymous, tenant, name, email, onNavClick = () => {} }: Props) {
+export default function Header({
+  isAnonymous,
+  tenant,
+  name,
+  email,
+  role,
+  billingEnabled,
+  onNavClick = () => {},
+}: Props) {
   const router = useRouter();
   const [tenants, setTenants] = useState<z.infer<typeof tenantListResponseSchema>>([]);
+
+  const daysRemaining = tenant.trialExpiresAt
+    ? Math.ceil((tenant.trialExpiresAt.getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))
+    : 0;
 
   useEffect(() => {
     (async () => {
@@ -117,6 +134,42 @@ export default function Header({ isAnonymous, tenant, name, email, onNavClick = 
           <Image src={NewChatIcon} alt="New chat" />
         </Link>
       </div>
+      {billingEnabled && (
+        <>
+          {tenant.paidStatus === "trial" && role === "admin" && (
+            <Banner bubble>
+              You have {daysRemaining} {daysRemaining === 1 ? "day" : "days"} left of your free trial.{" "}
+              <BannerLink href="https://www.ragie.ai/basechat">View pricing</BannerLink> or{" "}
+              <BannerLink href="https://calendly.com/d/crhj-b4f-d4v/ragie-basechat-discussion">
+                contact sales
+              </BannerLink>{" "}
+              to upgrade.
+            </Banner>
+          )}
+          {tenant.paidStatus === "legacy" && role === "admin" && (
+            <Banner>
+              We hope you enjoyed Base Chat Early Access!{" "}
+              <BannerLink href="https://www.ragie.ai/basechat">New pricing</BannerLink> starts June 5. To upgrade,{" "}
+              <BannerLink href="https://calendly.com/d/crhj-b4f-d4v/ragie-basechat-discussion">
+                contact sales.
+              </BannerLink>
+            </Banner>
+          )}
+          {tenant.paidStatus === "expired" && role === "admin" && (
+            <Banner>
+              Your Base Chat trial has expired. You can{" "}
+              <BannerLink href="https://www.ragie.ai/basechat">view pricing</BannerLink> or{" "}
+              <BannerLink href="https://calendly.com/d/crhj-b4f-d4v/ragie-basechat-discussion">
+                contact sales
+              </BannerLink>{" "}
+              to upgrade.
+            </Banner>
+          )}
+          {tenant.paidStatus === "expired" && role !== "admin" && (
+            <Banner>This chatbot is currently inactive. For support, please reach out to the admin.</Banner>
+          )}
+        </>
+      )}
 
       {isAnonymous ? (
         <div className="flex">

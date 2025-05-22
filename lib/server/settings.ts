@@ -31,6 +31,8 @@ export const RAGIE_WEBHOOK_SECRET = process.env.RAGIE_WEBHOOK_SECRET!;
 //assert(process.env.ENCRYPTION_KEY)
 export const ENCRYPTION_KEY = process.env.ENCRYPTION_KEY!;
 
+export const BILLING_ENABLED = process.env.BILLING_ENABLED === "true";
+
 export const SMTP_FROM = process.env.SMTP_FROM!;
 export const SMTP_HOST = process.env.SMTP_HOST!;
 export const SMTP_PORT = Number(process.env.SMTP_PORT!);
