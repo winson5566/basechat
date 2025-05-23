@@ -33,8 +33,6 @@ export default function FileDropzone({ tenant, userName }: FileDropzoneProps) {
             toast.success(`Successfully uploaded ${file.name}`, {
               id: toastId,
             });
-            // Refresh the page to update the server component
-            router.refresh();
           } catch (err) {
             toast.error(`Failed to upload ${file.name}`, {
               id: toastId,
@@ -43,6 +41,7 @@ export default function FileDropzone({ tenant, userName }: FileDropzoneProps) {
         });
 
         await Promise.all(uploadPromises);
+        router.refresh();
       }}
       accept={getDropzoneAcceptConfig()}
       maxSize={MAX_FILE_SIZE}
