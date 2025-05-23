@@ -18,26 +18,13 @@ export async function POST(request: NextRequest) {
       return Response.json({ error: "No file provided" }, { status: 400 });
     }
 
-    const fileMode = formData.get("file_mode") as string;
-    let mode;
-    if (fileMode === "audio") {
-      mode = {
-        audio: true,
-      };
-    } else if (fileMode === "video") {
-      mode = {
-        video: "audio_video",
-      };
-    } else {
-      mode = "hi_res";
-    }
-
     const res = await client.documents.create({
       file: file,
       partition,
-      mode,
+      mode: "all",
       metadata,
     });
+
     return Response.json(res);
   } catch (error) {
     console.error("Error uploading file:", JSON.stringify(error));

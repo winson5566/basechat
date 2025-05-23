@@ -105,16 +105,6 @@ export async function uploadFile(file: File, tenantSlug: string, userName: strin
   formData.append("file", file);
   formData.append("metadata", JSON.stringify({ added_by: userName, source_type: "manual" }));
 
-  // check the file type
-  const fileExtension = `.${file.name.split(".").pop()?.toLowerCase()}`;
-  if (VIDEO_FILE_TYPES.includes(fileExtension as any)) {
-    formData.append("file_mode", "video");
-  } else if (AUDIO_FILE_TYPES.includes(fileExtension as any)) {
-    formData.append("file_mode", "audio");
-  } else {
-    formData.append("file_mode", "static");
-  }
-
   const response = await fetch("/api/ragie/upload", {
     method: "POST",
     headers: {

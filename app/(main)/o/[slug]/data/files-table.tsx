@@ -179,7 +179,6 @@ export default function FilesTable({
             toast.success(`Successfully uploaded ${file.name}`, {
               id: toastId,
             });
-            router.refresh();
           } catch (err) {
             toast.error(`Failed to upload ${file.name}`, {
               id: toastId,
@@ -188,6 +187,7 @@ export default function FilesTable({
         });
 
         await Promise.all(uploadPromises);
+        router.refresh();
       }}
       accept={getDropzoneAcceptConfig()}
       maxSize={MAX_FILE_SIZE}

@@ -33,8 +33,6 @@ export default function UploadFileButton({ tenant, userName }: { tenant: { slug:
           toast.success(`Successfully uploaded ${file.name}`, {
             id: toastId,
           });
-          // Refresh the page to update the server component
-          router.refresh();
         } catch (err) {
           toast.error(`Failed to upload ${file.name}`, {
             id: toastId,
@@ -43,6 +41,7 @@ export default function UploadFileButton({ tenant, userName }: { tenant: { slug:
       });
 
       await Promise.all(uploadPromises);
+      router.refresh();
     };
   };
 
