@@ -18,10 +18,16 @@ export async function POST(request: NextRequest) {
       return Response.json({ error: "No file provided" }, { status: 400 });
     }
 
+    const mode = {
+      static: "hi_res",
+      audio: true,
+      video: "audio_video",
+    };
+
     const res = await client.documents.create({
       file: file,
       partition,
-      mode: "all",
+      mode,
       metadata,
     });
 
