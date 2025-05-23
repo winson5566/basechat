@@ -33,15 +33,18 @@ export default function SlackSettings({ tenant }: Props) {
   const [isLoading, setLoading] = useState(false);
 
   const formattedTenant = useMemo(() => {
-    // Since we don't have these fields in the tenant schema yet,
-    // we'll use default values for now
+    const { slackEnabled, slackWebhookUrl, slackChannel, slackBotToken, ...otherFields } = tenant;
+
+    // Zod only uses default values when the value is undefined. They come in as null
+    // Change fields you want to have defaults to undefined.
     return {
-      slackEnabled: false,
-      slackWebhookUrl: "",
-      slackChannel: "",
-      slackBotToken: "",
+      slackEnabled: slackEnabled ?? undefined,
+      slackWebhookUrl: slackWebhookUrl ? slackWebhookUrl : undefined,
+      slackChannel: slackChannel ? slackChannel : undefined,
+      slackBotToken: slackBotToken ? slackBotToken : undefined,
+      ...otherFields,
     };
-  }, []);
+  }, [tenant]);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -52,10 +55,24 @@ export default function SlackSettings({ tenant }: Props) {
     setLoading(true);
 
     try {
-      // For now, we'll just show a success message since the backend integration
-      // would need to be implemented to actually save these settings
-      toast.success("Slack settings saved (demo)");
-      form.reset(values);
+      const payload = updateTenantSchema.parse(values);
+      const res = await fetch("/api/tenants/current", {
+        method: "PATCH",
+        headers: { tenant: tenant.slug },
+        body: JSON.stringify(payload),
+      });
+
+      if (res.status !== 200) throw new Error("Failed to save");
+
+      toast.success("Slack settings saved");
+
+      // Reset form with the values to mark it as pristine
+      form.reset({
+        ...values,
+        slackWebhookUrl: values.slackWebhookUrl.length ? values.slackWebhookUrl : undefined,
+        slackChannel: values.slackChannel.length ? values.slackChannel : undefined,
+        slackBotToken: values.slackBotToken.length ? values.slackBotToken : undefined,
+      });
     } catch (error) {
       toast.error("Failed to save changes");
     } finally {
