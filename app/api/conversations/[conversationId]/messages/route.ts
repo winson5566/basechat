@@ -69,17 +69,13 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     model: model,
   });
 
-  let sources: { documentId: string; documentName: string; streamUrl?: string; downloadUrl?: string }[] = [];
-
-  const { content: systemMessageContent, sources: ragSources } = await getRetrievalSystemPrompt(
+  const { content: systemMessageContent, sources } = await getRetrievalSystemPrompt(
     tenant,
     content,
     isBreadth,
     rerankEnabled,
     prioritizeRecent,
   );
-
-  sources = ragSources;
 
   await createConversationMessage({
     tenantId: tenant.id,
@@ -112,6 +108,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     rerankEnabled,
     prioritizeRecent,
   });
+
   if (!stream) {
     return new Response(
       new ReadableStream({
