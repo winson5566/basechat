@@ -1,3 +1,4 @@
+import { WebClient } from "@slack/web-api";
 import { eq } from "drizzle-orm";
 import { NextRequest } from "next/server";
 
@@ -26,25 +27,22 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    // Exchange code for access token
-    const tokenResponse = await fetch("https://slack.com/api/oauth.v2.access", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/x-www-form-urlencoded",
-      },
-      body: new URLSearchParams({
-        client_id: SLACK_CLIENT_ID,
-        client_secret: SLACK_CLIENT_SECRET,
-        code,
-        redirect_uri: `${BASE_URL}/api/slack/callback`,
-      }),
-    });
+    // Create Slack OAuth client using the utility function
+    const slack = new WebClient();
 
-    const tokenData = await tokenResponse.json();
+    // Exchange code for access token using the SDK
+    const tokenData = await slack.oauth.v2.access({
+      client_id: SLACK_CLIENT_ID,
+      client_secret: SLACK_CLIENT_SECRET,
+      code,
+      redirect_uri: `${BASE_URL}/api/slack/callback`,
+    });
 
     if (!tokenData.ok) {
       console.error("Slack token exchange failed:", tokenData.error);
-      return Response.redirect(`${BASE_URL}/o/${state}/settings/slack?error=${encodeURIComponent(tokenData.error)}`);
+      return Response.redirect(
+        `${BASE_URL}/o/${state}/settings/slack?error=${encodeURIComponent(tokenData.error as string)}`,
+      );
     }
 
     // Update tenant with bot token and team info

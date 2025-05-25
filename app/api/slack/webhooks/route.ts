@@ -1,29 +1,27 @@
-import crypto from "crypto";
-
+import {
+  AllMessageEvents,
+  AppMentionEvent,
+  MemberJoinedChannelEvent,
+  MemberLeftChannelEvent,
+  ReactionAddedEvent,
+  ReactionRemovedEvent,
+  SlackEvent,
+} from "@slack/types";
+import { WebClient } from "@slack/web-api";
 import { NextRequest, NextResponse } from "next/server";
 
 import { getTenantBySlackTeamId } from "@/lib/server/service";
 import { SLACK_SIGNING_SECRET } from "@/lib/server/settings";
+import { verifySlackSignature } from "@/lib/server/slack";
 
-// Slack signing secret - this should be stored in environment variables
-
-interface SlackEvent {
-  type: string;
+// Webhook payload wrapper types (these are specific to webhook delivery, not individual events)
+interface SlackWebhookPayload {
+  type: "event_callback" | "url_verification";
   event_id?: string;
   event_time?: number;
   team_id?: string;
   api_app_id?: string;
-  event?: {
-    type: string;
-    channel?: string;
-    user?: string;
-    text?: string;
-    ts?: string;
-    thread_ts?: string;
-    bot_id?: string;
-    subtype?: string;
-    [key: string]: any;
-  };
+  event?: SlackEvent;
   challenge?: string;
   token?: string;
 }
@@ -34,39 +32,15 @@ interface SlackUrlVerification {
   token: string;
 }
 
-// Verify that the request came from Slack
-function verifySlackSignature(signingSecret: string, body: string, timestamp: string, signature: string): boolean {
-  if (!signingSecret) {
-    console.error("Slack signing secret not configured");
-    return false;
-  }
-
-  // Check if timestamp is not older than 5 minutes
-  const time = Math.floor(new Date().getTime() / 1000);
-  if (Math.abs(time - parseInt(timestamp)) > 300) {
-    console.error("Request timestamp too old");
-    return false;
-  }
-
-  // Create signature
-  const hmac = crypto.createHmac("sha256", signingSecret);
-  const [version, hash] = signature.split("=");
-  hmac.update(`${version}:${timestamp}:${body}`);
-  const expectedHash = hmac.digest("hex");
-
-  // Compare signatures
-  return crypto.timingSafeEqual(Buffer.from(hash, "hex"), Buffer.from(expectedHash, "hex"));
-}
-
 // Handle different types of Slack events
-async function handleSlackEvent(event: SlackEvent["event"]): Promise<void> {
+async function handleSlackEvent(event: SlackEvent | undefined): Promise<void> {
   if (!event) return;
 
   console.log(`Handling Slack event: ${event.type}`, event);
 
   switch (event.type) {
     case "message":
-      await handleMessage(event);
+      await handleMessage(event as AllMessageEvents);
       break;
 
     case "app_mention":
@@ -94,7 +68,13 @@ async function handleSlackEvent(event: SlackEvent["event"]): Promise<void> {
   }
 }
 
-async function handleMessage(event: any): Promise<void> {
+async function handleMessage(event: AllMessageEvents): Promise<void> {
+  // Only handle basic message events that have user and text properties
+  if (event.subtype && event.subtype !== undefined) {
+    console.log(`Skipping message with subtype: ${event.subtype}`);
+    return;
+  }
+
   console.log("Processing message event:", {
     channel: event.channel,
     user: event.user,
@@ -105,12 +85,6 @@ async function handleMessage(event: any): Promise<void> {
     subtype: event.subtype,
   });
 
-  // Skip bot messages to avoid loops
-  if (event.bot_id || event.subtype === "bot_message") {
-    console.log("Skipping bot message");
-    return;
-  }
-
   // Add your message processing logic here
   // For example: save to database, trigger AI response, etc.
 
@@ -118,7 +92,7 @@ async function handleMessage(event: any): Promise<void> {
   console.log(`User ${event.user} said: ${event.text} in channel ${event.channel}`);
 }
 
-async function handleAppMention(event: any): Promise<void> {
+async function handleAppMention(event: AppMentionEvent): Promise<void> {
   console.log("Processing app mention:", {
     channel: event.channel,
     user: event.user,
@@ -127,9 +101,22 @@ async function handleAppMention(event: any): Promise<void> {
     team: event.team,
   });
 
+  if (!event.team) {
+    console.error("No team ID found in app mention event");
+    return;
+  }
+
   const { slackBotToken } = await getTenantBySlackTeamId(event.team);
 
+  if (!slackBotToken) {
+    console.error("No Slack bot token found for team:", event.team);
+    return;
+  }
+
   try {
+    // Create Slack client using the utility function
+    const slack = new WebClient(slackBotToken);
+
     // Remove the bot mention from the text to get the actual message
     const mentionRegex = /<@[A-Z0-9]+>/g;
     const cleanText = event.text?.replace(mentionRegex, "").trim();
@@ -137,33 +124,24 @@ async function handleAppMention(event: any): Promise<void> {
     // Create the echo response
     const echoMessage = cleanText ? `Echo: ${cleanText}` : "Echo: (no message)";
 
-    // Send the echo response back to the channel
-    const response = await fetch("https://slack.com/api/chat.postMessage", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${slackBotToken}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        channel: event.channel,
-        text: echoMessage,
-        thread_ts: event.ts, // Reply in thread to the original message
-      }),
+    // Send the echo response back to the channel using the utility function
+    const result = await slack.chat.postMessage({
+      channel: event.channel,
+      text: echoMessage,
+      thread_ts: event.ts,
     });
 
-    const result = await response.json();
-
-    if (!result.ok) {
-      console.error("Failed to send Slack message:", result.error);
-    } else {
+    if (result.ok) {
       console.log("Echo message sent successfully");
+    } else {
+      console.error("Failed to send Slack message:", result.error);
     }
   } catch (error) {
     console.error("Error sending echo message:", error);
   }
 }
 
-async function handleMemberJoinedChannel(event: any): Promise<void> {
+async function handleMemberJoinedChannel(event: MemberJoinedChannelEvent): Promise<void> {
   console.log("Member joined channel:", {
     channel: event.channel,
     user: event.user,
@@ -173,7 +151,7 @@ async function handleMemberJoinedChannel(event: any): Promise<void> {
   // For example: send welcome message, notify admins, etc.
 }
 
-async function handleMemberLeftChannel(event: any): Promise<void> {
+async function handleMemberLeftChannel(event: MemberLeftChannelEvent): Promise<void> {
   console.log("Member left channel:", {
     channel: event.channel,
     user: event.user,
@@ -182,7 +160,7 @@ async function handleMemberLeftChannel(event: any): Promise<void> {
   // Add your member left logic here
 }
 
-async function handleReactionAdded(event: any): Promise<void> {
+async function handleReactionAdded(event: ReactionAddedEvent): Promise<void> {
   console.log("Reaction added:", {
     user: event.user,
     reaction: event.reaction,
@@ -192,7 +170,7 @@ async function handleReactionAdded(event: any): Promise<void> {
   // Add your reaction added logic here
 }
 
-async function handleReactionRemoved(event: any): Promise<void> {
+async function handleReactionRemoved(event: ReactionRemovedEvent): Promise<void> {
   console.log("Reaction removed:", {
     user: event.user,
     reaction: event.reaction,
@@ -222,7 +200,7 @@ export async function POST(request: NextRequest) {
       console.warn("Slack signing secret not configured - skipping signature verification");
     }
 
-    const slackEvent: SlackEvent = JSON.parse(body);
+    const slackEvent: SlackWebhookPayload = JSON.parse(body);
 
     // Handle URL verification challenge
     if (slackEvent.type === "url_verification") {
