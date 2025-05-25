@@ -292,6 +292,12 @@ export async function acceptInvite(userId: string, inviteId: string) {
   return profile;
 }
 
+export async function getTenantBySlackTeamId(teamId: string) {
+  const rs = await db.select().from(schema.tenants).where(eq(schema.tenants.slackTeamId, teamId));
+  assert(rs.length === 1, "expected single record");
+  return rs[0];
+}
+
 export async function getTenantsByUserId(userId: string) {
   const profileInfo = await db
     .select({

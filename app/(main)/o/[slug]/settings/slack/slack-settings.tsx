@@ -1,204 +1,188 @@
 "use client";
 
-import { zodResolver } from "@hookform/resolvers/zod";
-import { Loader2 } from "lucide-react";
-import { useState, useEffect, useMemo } from "react";
-import { useForm } from "react-hook-form";
+import { Loader2, ExternalLink, CheckCircle, AlertCircle } from "lucide-react";
+import { useSearchParams } from "next/navigation";
+import { useState, useEffect } from "react";
 import { toast } from "sonner";
-import { z } from "zod";
 
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { Switch } from "@/components/ui/switch";
-import { updateTenantSchema } from "@/lib/api";
+import { Button } from "@/components/ui/button";
 import * as schema from "@/lib/server/db/schema";
-
-// Transform null to empty string for form field handling
-const nullToEmptyString = (v: string | null) => v ?? "";
-
-const formSchema = z.object({
-  slackEnabled: z.boolean().default(false),
-  slackWebhookUrl: z.string().nullable().default("").transform(nullToEmptyString),
-  slackChannel: z.string().nullable().default("").transform(nullToEmptyString),
-  slackBotToken: z.string().nullable().default("").transform(nullToEmptyString),
-});
-
-type FormValues = z.infer<typeof formSchema>;
 
 type Props = {
   tenant: typeof schema.tenants.$inferSelect;
+  slackConfigured: boolean;
 };
 
-export default function SlackSettings({ tenant }: Props) {
+export default function SlackSettings({ tenant, slackConfigured }: Props) {
   const [isLoading, setLoading] = useState(false);
+  const searchParams = useSearchParams();
 
-  const formattedTenant = useMemo(() => {
-    const { slackEnabled, slackWebhookUrl, slackChannel, slackBotToken, ...otherFields } = tenant;
+  useEffect(() => {
+    // Handle OAuth callback success/error messages
+    const success = searchParams.get("success");
+    const error = searchParams.get("error");
 
-    // Zod only uses default values when the value is undefined. They come in as null
-    // Change fields you want to have defaults to undefined.
-    return {
-      slackEnabled: slackEnabled ?? undefined,
-      slackWebhookUrl: slackWebhookUrl ? slackWebhookUrl : undefined,
-      slackChannel: slackChannel ? slackChannel : undefined,
-      slackBotToken: slackBotToken ? slackBotToken : undefined,
-      ...otherFields,
-    };
-  }, [tenant]);
+    if (success) {
+      toast.success("Successfully connected to Slack!");
+    } else if (error) {
+      let errorMessage = "Failed to connect to Slack";
+      switch (error) {
+        case "oauth_not_configured":
+          errorMessage = "Slack OAuth is not configured on the server";
+          break;
+        case "missing_code_or_state":
+          errorMessage = "Invalid authorization response from Slack";
+          break;
+        case "callback_failed":
+          errorMessage = "Failed to complete Slack authorization";
+          break;
+        default:
+          errorMessage = `Slack authorization failed: ${error}`;
+      }
+      toast.error(errorMessage);
+    }
+  }, [searchParams]);
 
-  const form = useForm<FormValues>({
-    resolver: zodResolver(formSchema),
-    defaultValues: formSchema.parse(formattedTenant),
-  });
+  async function handleConnectSlack() {
+    window.location.href = `/api/slack/oauth?tenant=${tenant.slug}`;
+  }
 
-  async function onSubmit(values: FormValues) {
+  async function handleDisconnectSlack() {
     setLoading(true);
-
     try {
-      const payload = updateTenantSchema.parse(values);
-      const res = await fetch("/api/tenants/current", {
+      const response = await fetch("/api/tenants/current", {
         method: "PATCH",
-        headers: { tenant: tenant.slug },
-        body: JSON.stringify(payload),
+        headers: {
+          tenant: tenant.slug,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          slackEnabled: false,
+          slackBotToken: null,
+          slackTeamId: null,
+          slackTeamName: null,
+        }),
       });
 
-      if (res.status !== 200) throw new Error("Failed to save");
+      if (!response.ok) throw new Error("Failed to disconnect");
 
-      toast.success("Slack settings saved");
-
-      // Reset form with the values to mark it as pristine
-      form.reset({
-        ...values,
-        slackWebhookUrl: values.slackWebhookUrl.length ? values.slackWebhookUrl : undefined,
-        slackChannel: values.slackChannel.length ? values.slackChannel : undefined,
-        slackBotToken: values.slackBotToken.length ? values.slackBotToken : undefined,
-      });
+      toast.success("Disconnected from Slack");
+      window.location.reload(); // Simple way to refresh the state
     } catch (error) {
-      toast.error("Failed to save changes");
+      toast.error("Failed to disconnect from Slack");
     } finally {
       setLoading(false);
     }
   }
 
-  async function handleCancel() {
-    form.reset();
-  }
+  const isConnected = tenant.slackEnabled && tenant.slackBotToken;
 
   return (
     <div className="w-full p-4 flex-grow flex flex-col relative">
       <div className="flex w-full justify-between items-center mb-16">
         <h1 className="font-bold text-[32px] text-[#343A40]">Slack Integration</h1>
-        <div className="flex justify-end">
-          <button
-            type="reset"
-            className="rounded-lg disabled:opacity-[55%] px-4 py-2.5 mr-3"
-            disabled={!form.formState.isDirty}
-            onClick={handleCancel}
-          >
-            Cancel
-          </button>
-          <button
-            type="button"
-            className="rounded-lg bg-[#D946EF] text-white disabled:opacity-[55%] px-4 py-2.5 flex items-center"
-            disabled={!form.formState.isDirty || isLoading}
-            onClick={form.handleSubmit(onSubmit)}
-          >
-            Save
-            {isLoading && <Loader2 size={18} className="ml-2 animate-spin" />}
-          </button>
-        </div>
       </div>
 
-      <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-          <div className="space-y-6">
-            {/* Enable Slack Integration */}
-            <FormField
-              control={form.control}
-              name="slackEnabled"
-              render={({ field }) => (
-                <FormItem className="flex flex-row items-center justify-between">
-                  <div className="space-y-0.5">
-                    <FormLabel className="font-semibold text-base">Enable Slack Integration</FormLabel>
-                    <p className="text-sm text-muted-foreground">
-                      Allow this workspace to integrate with Slack for notifications and bot interactions
-                    </p>
-                  </div>
-                  <div className="flex-shrink-0 ml-4">
-                    <FormControl>
-                      <Switch
-                        checked={field.value}
-                        onCheckedChange={field.onChange}
-                        className="data-[state=checked]:bg-[#D946EF]"
-                      />
-                    </FormControl>
-                  </div>
-                </FormItem>
-              )}
-            />
+      <div className="space-y-8 max-w-2xl">
+        <div className="space-y-4">
+          <h2 className="text-xl font-semibold text-[#343A40]">Connect your Slack workspace</h2>
+          <p className="text-sm text-muted-foreground">
+            Add our AI assistant to your Slack workspace to enable chat interactions and notifications directly in
+            Slack.
+          </p>
+        </div>
 
-            <hr className="w-full my-1" />
-
-            {/* Slack Webhook URL */}
-            <FormField
-              control={form.control}
-              name="slackWebhookUrl"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="font-semibold text-base text-[#343A40]">Slack Webhook URL</FormLabel>
-                  <p className="text-sm text-muted-foreground mb-3">
-                    The incoming webhook URL from your Slack app for sending notifications
-                  </p>
-                  <FormControl>
-                    <Input
-                      placeholder="https://hooks.slack.com/services/..."
-                      {...field}
-                      disabled={!form.watch("slackEnabled")}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            {/* Slack Channel */}
-            <FormField
-              control={form.control}
-              name="slackChannel"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="font-semibold text-base text-[#343A40]">Default Channel</FormLabel>
-                  <p className="text-sm text-muted-foreground mb-3">
-                    The default Slack channel for notifications (e.g., #general, #ai-assistant)
-                  </p>
-                  <FormControl>
-                    <Input placeholder="#general" {...field} disabled={!form.watch("slackEnabled")} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            {/* Slack Bot Token */}
-            <FormField
-              control={form.control}
-              name="slackBotToken"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="font-semibold text-base text-[#343A40]">Bot User OAuth Token</FormLabel>
-                  <p className="text-sm text-muted-foreground mb-3">
-                    The bot token for advanced Slack integrations (starts with xoxb-)
-                  </p>
-                  <FormControl>
-                    <Input type="password" placeholder="xoxb-..." {...field} disabled={!form.watch("slackEnabled")} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+        {!slackConfigured ? (
+          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+            <div className="flex items-center gap-2">
+              <AlertCircle className="h-5 w-5 text-yellow-600" />
+              <h3 className="font-medium text-yellow-800">Slack OAuth Not Configured</h3>
+            </div>
+            <p className="text-sm text-yellow-700 mt-2">
+              The administrator needs to configure Slack OAuth credentials (SLACK_CLIENT_ID and SLACK_CLIENT_SECRET) to
+              enable Slack integration.
+            </p>
           </div>
-        </form>
-      </Form>
+        ) : isConnected ? (
+          <div className="space-y-6">
+            <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+              <div className="flex items-center gap-2">
+                <CheckCircle className="h-5 w-5 text-green-600" />
+                <h3 className="font-medium text-green-800">Connected to Slack</h3>
+              </div>
+              <div className="mt-2 text-sm text-green-700">
+                <p>
+                  Workspace: <strong>{tenant.slackTeamName || "Unknown"}</strong>
+                </p>
+                <p>Your AI assistant is ready to use in Slack!</p>
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              <h3 className="font-medium text-[#343A40]">Integration Status</h3>
+              <div className="bg-gray-50 rounded-lg p-4 space-y-2">
+                <div className="flex justify-between items-center">
+                  <span className="text-sm">Bot Status:</span>
+                  <span className="text-sm font-medium text-green-600">Connected</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-sm">Workspace:</span>
+                  <span className="text-sm font-medium">{tenant.slackTeamName || "Unknown"}</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="pt-4">
+              <Button
+                variant="outline"
+                onClick={handleDisconnectSlack}
+                disabled={isLoading}
+                className="text-red-600 border-red-200 hover:bg-red-50"
+              >
+                {isLoading && <Loader2 size={16} className="mr-2 animate-spin" />}
+                Disconnect from Slack
+              </Button>
+            </div>
+          </div>
+        ) : (
+          <div className="space-y-6">
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+              <h3 className="font-medium text-blue-800 mb-2">Getting Started</h3>
+              <ol className="text-sm text-blue-700 space-y-1">
+                <li>1. Click &quot;Connect to Slack&quot; below</li>
+                <li>2. Choose your Slack workspace</li>
+                <li>3. Authorize the AI assistant bot</li>
+                <li>4. Start chatting with the bot in any channel!</li>
+              </ol>
+            </div>
+
+            <div className="pt-4">
+              <Button
+                onClick={handleConnectSlack}
+                disabled={isLoading}
+                className="bg-[#4A154B] hover:bg-[#4A154B]/90 text-white"
+              >
+                {isLoading ? (
+                  <Loader2 size={16} className="mr-2 animate-spin" />
+                ) : (
+                  <ExternalLink size={16} className="mr-2" />
+                )}
+                Connect to Slack
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {slackConfigured && (
+          <div className="mt-8 pt-8 border-t border-gray-200">
+            <h3 className="font-medium text-[#343A40] mb-2">Need Help?</h3>
+            <p className="text-sm text-muted-foreground">
+              After connecting, you can interact with the AI assistant by mentioning it in any channel where it&apos;s
+              added, or by sending direct messages to the bot.
+            </p>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

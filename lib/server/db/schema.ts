@@ -93,6 +93,8 @@ export const tenants = pgTable(
     slackWebhookUrl: text("slack_webhook_url"),
     slackChannel: text("slack_channel"),
     slackBotToken: text("slack_bot_token"),
+    slackTeamId: text("slack_team_id"),
+    slackTeamName: text("slack_team_name"),
     trialExpiresAt: timestamp("trial_expires_at", { withTimezone: true, mode: "date" }).notNull(),
     paidStatus: paidStatusEnum("paid_status").default("trial").notNull(),
   },

@@ -72,6 +72,8 @@ export const updateTenantSchema = z.object({
   slackWebhookUrl: z.string().nullable().optional(),
   slackChannel: z.string().nullable().optional(),
   slackBotToken: z.string().nullable().optional(),
+  slackTeamId: z.string().nullable().optional(),
+  slackTeamName: z.string().nullable().optional(),
 });
 
 export type MemberType = "profile" | "invite";

@@ -43,3 +43,8 @@ export const SMTP_PASSWORD = process.env.SMTP_PASSWORD;
 // Google OAuth configs - Optional
 export const AUTH_GOOGLE_ID = process.env.AUTH_GOOGLE_ID;
 export const AUTH_GOOGLE_SECRET = process.env.AUTH_GOOGLE_SECRET;
+
+// Slack OAuth configs - Optional
+export const SLACK_CLIENT_ID = process.env.SLACK_CLIENT_ID;
+export const SLACK_CLIENT_SECRET = process.env.SLACK_CLIENT_SECRET;
+export const SLACK_SIGNING_SECRET = process.env.SLACK_SIGNING_SECRET;
