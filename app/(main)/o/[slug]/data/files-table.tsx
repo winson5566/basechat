@@ -31,6 +31,7 @@ interface Props {
     }
   >;
   initialTotalDocuments: number;
+  fileUploadCount: number;
 }
 
 export default function FilesTable({
@@ -40,6 +41,7 @@ export default function FilesTable({
   userName,
   connectionMap,
   initialTotalDocuments,
+  fileUploadCount: externalFileUploadCount = 0,
 }: Props) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -48,9 +50,13 @@ export default function FilesTable({
   const [isDragActive, setIsDragActive] = useState(false);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const [totalDocuments, setTotalDocuments] = useState(initialTotalDocuments);
+  const [internalFileUploadCount, setInternalFileUploadCount] = useState(0);
   const currentCursor = searchParams.get("cursor") || null;
   const historyParam = searchParams.get("history") || "";
   const cursorHistory = historyParam ? historyParam.split(",") : [];
+
+  // Combine external and internal file upload counts
+  const totalFileUploadCount = externalFileUploadCount + internalFileUploadCount;
 
   // update the table if a file has been deleted
   const handleFileRemoved = (fileId: string) => {
@@ -61,6 +67,7 @@ export default function FilesTable({
       newFiles.splice(index, 1);
       return newFiles;
     });
+    setTotalDocuments((prev) => prev - 1);
   };
 
   const fetchFiles = async (cursor: string | null) => {
@@ -76,8 +83,9 @@ export default function FilesTable({
       if (data.documents) {
         setAllFiles(data.documents);
       }
-      if (data.pagination) {
-        setTotalDocuments(data.pagination.totalCount);
+
+      if (data.totalCount) {
+        setTotalDocuments(data.totalCount);
       }
     } catch (error) {
       console.error("Error loading files:", error);
@@ -140,6 +148,13 @@ export default function FilesTable({
     };
   }, [initialFiles, tenant.slug]);
 
+  // Add this new useEffect to re-fetch files when fileUploadCount changes
+  useEffect(() => {
+    if (totalFileUploadCount > 0) {
+      fetchFiles(null);
+    }
+  }, [totalFileUploadCount]);
+
   const handleNavigation = (cursor: string | null) => {
     if (cursor === null) {
       // Going back to first page
@@ -188,6 +203,8 @@ export default function FilesTable({
 
         await Promise.all(uploadPromises);
         router.refresh();
+        // Trigger a re-fetch by incrementing internal file upload count
+        setInternalFileUploadCount((prev) => prev + 1);
       }}
       accept={getDropzoneAcceptConfig()}
       maxSize={MAX_FILE_SIZE}
@@ -209,15 +226,17 @@ export default function FilesTable({
               <button
                 onClick={handlePreviousPage}
                 disabled={!currentCursor && cursorHistory.length === 0}
-                className={`p-1 rounded-md ${!currentCursor && cursorHistory.length === 0 ? "text-gray-400 cursor-not-allowed" : "text-gray-600 hover:bg-gray-100"}`}
+                className={`p-1 rounded-md flex items-center gap-1 ${!currentCursor && cursorHistory.length === 0 ? "text-gray-400 cursor-not-allowed" : "text-gray-600 hover:bg-gray-100"}`}
               >
                 <ChevronLeft className="h-5 w-5" />
+                <span className="text-sm">Previous 50</span>
               </button>
               <button
                 onClick={() => handleNavigation(nextCursor)}
                 disabled={!nextCursor}
-                className={`p-1 rounded-md ${!nextCursor ? "text-gray-400 cursor-not-allowed" : "text-gray-600 hover:bg-gray-100"}`}
+                className={`p-1 rounded-md flex items-center gap-1 ${!nextCursor ? "text-gray-400 cursor-not-allowed" : "text-gray-600 hover:bg-gray-100"}`}
               >
+                <span className="text-sm">Next 50</span>
                 <ChevronRight className="h-5 w-5" />
               </button>
             </div>

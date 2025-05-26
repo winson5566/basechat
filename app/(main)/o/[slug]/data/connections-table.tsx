@@ -21,7 +21,7 @@ interface Props {
 
 export default function ConnectionsTable({ tenant, connections }: Props) {
   const [currentPage, setCurrentPage] = useState(1);
-  const ITEMS_PER_PAGE = 10;
+  const ITEMS_PER_PAGE = 50;
 
   if (connections.length === 0) {
     return null;
@@ -43,15 +43,17 @@ export default function ConnectionsTable({ tenant, connections }: Props) {
           <button
             onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
             disabled={currentPage === 1}
-            className={`p-1 rounded-md ${currentPage === 1 ? "text-gray-400 cursor-not-allowed" : "text-gray-600 hover:bg-gray-100"}`}
+            className={`p-1 rounded-md flex items-center gap-1 ${currentPage === 1 ? "text-gray-400 cursor-not-allowed" : "text-gray-600 hover:bg-gray-100"}`}
           >
             <ChevronLeft className="h-5 w-5" />
+            <span className="text-sm">Previous 50</span>
           </button>
           <button
             onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
             disabled={currentPage === totalPages}
-            className={`p-1 rounded-md ${currentPage === totalPages ? "text-gray-400 cursor-not-allowed" : "text-gray-600 hover:bg-gray-100"}`}
+            className={`p-1 rounded-md flex items-center gap-1 ${currentPage === totalPages ? "text-gray-400 cursor-not-allowed" : "text-gray-600 hover:bg-gray-100"}`}
           >
+            <span className="text-sm">Next 50</span>
             <ChevronRight className="h-5 w-5" />
           </button>
         </div>
