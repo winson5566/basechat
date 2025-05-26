@@ -474,15 +474,15 @@ export async function changeRole(tenantId: string, profileId: string, newRole: R
 }
 
 export async function deleteProfile(
+  principalProfile: { id: string; role: string },
   tenantId: string,
   targetProfileId: string,
-  currentProfile: { id: string; role: string },
 ) {
   const lastAdmin = await isLastAdmin(tenantId, targetProfileId);
   if (lastAdmin) {
     throw new ServiceError("Cannot delete the last admin");
   }
-  const isDeleteAllowed = isProfileDeleteAllowed(currentProfile, targetProfileId);
+  const isDeleteAllowed = isProfileDeleteAllowed(principalProfile, targetProfileId);
   if (!isDeleteAllowed) {
     throw new ServiceError("Cannot delete profile");
   }

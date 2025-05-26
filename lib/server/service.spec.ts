@@ -85,7 +85,7 @@ describe("deleteProfile", () => {
       )[0];
 
       expect(async () => {
-        await deleteProfile(tenant.id, admin.id, { id: admin.id, role: "admin" });
+        await deleteProfile({ id: admin.id, role: "admin" }, tenant.id, admin.id);
       }).rejects.toThrow("Cannot delete the last admin");
     });
   });
@@ -104,7 +104,7 @@ describe("deleteProfile", () => {
         await db.insert(schema.profiles).values({ tenantId: tenant.id, userId: user2.id, role: "admin" }).returning()
       )[0];
 
-      await deleteProfile(tenant.id, admin1.id, { id: admin1.id, role: "admin" });
+      await deleteProfile({ id: admin1.id, role: "admin" }, tenant.id, admin1.id);
 
       const rs = await db.select().from(schema.profiles).where(eq(schema.profiles.id, admin1.id));
       expect(rs.length).toBe(0);
