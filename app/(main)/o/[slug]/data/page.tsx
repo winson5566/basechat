@@ -69,13 +69,13 @@ export default async function DataIndexPage({ params, searchParams }: Props) {
         <TabsList className="w-full justify-start bg-transparent gap-2">
           <TabsTrigger
             value="files"
-            className="text-sm font-medium text-[#1D1D1F] data-[state=active]:bg-[#27272A] data-[state=active]:text-white data-[state=active]:rounded-[32px] data-[state=active]:w-[55px] data-[state=active]:h-[36px] data-[state=active]:py-[8px] data-[state=active]:px-[12px]"
+            className="text-sm font-medium text-[#1D1D1F] data-[state=active]:bg-[#27272A] data-[state=active]:text-white data-[state=active]:rounded-[32px] data-[state=active]:w-[55px] data-[state=active]:h-[36px] data-[state=active]:py-[8px] data-[state=active]:px-[12px] data-[state=active]:shadow-none"
           >
             Files
           </TabsTrigger>
           <TabsTrigger
             value="connections"
-            className="text-sm font-medium text-[#1D1D1F] data-[state=active]:bg-[#27272A] data-[state=active]:text-white data-[state=active]:rounded-[32px] data-[state=active]:w-[109px] data-[state=active]:h-[36px] data-[state=active]:py-[8px] data-[state=active]:px-[12px]"
+            className="text-sm font-medium text-[#1D1D1F] data-[state=active]:bg-[#27272A] data-[state=active]:text-white data-[state=active]:rounded-[32px] data-[state=active]:w-[109px] data-[state=active]:h-[36px] data-[state=active]:py-[8px] data-[state=active]:px-[12px] data-[state=active]:shadow-none"
           >
             Connections
           </TabsTrigger>
