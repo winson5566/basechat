@@ -31,9 +31,17 @@ export async function POST(request: NextRequest) {
       metadata,
     });
 
+    /**
+     * SDK throws error:
+     * Error uploading file: {"data$":{"detail":"Exceeded page processing limit for this partition. If this error is unexpected contact us at support@ragie.ai."},"detail":"Exceeded page processing limit for this partition. If this error is unexpected contact us at support@ragie.ai.","name":"ErrorMessage"}
+     */
+
     return Response.json(res);
   } catch (error) {
     console.error("Error uploading file:", JSON.stringify(error));
+    if (error instanceof Error && error.message.includes("limit for this partition")) {
+      return Response.json({ error: error.message }, { status: 402 });
+    }
     return Response.json({ error: "Failed to upload file" }, { status: 500 });
   }
 }
