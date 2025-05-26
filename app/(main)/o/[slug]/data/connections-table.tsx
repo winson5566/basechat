@@ -59,8 +59,7 @@ export default function ConnectionsTable({ tenant, connections }: Props) {
       <div className="flex-1 overflow-y-auto">
         <Table>
           <TableHeader>
-            <TableRow>
-              {/**TODO: fix spacing of columns in connections and files */}
+            <TableRow isHeader>
               <TableHead className="w-[600px]">Name</TableHead>
               <TableHead className="w-[200px]">Added by</TableHead>
               <TableHead className="w-[200px]">Date added</TableHead>
