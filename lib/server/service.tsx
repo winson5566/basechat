@@ -19,62 +19,65 @@ import { getRagieClientAndPartition } from "./ragie";
 type Role = (typeof schema.rolesEnum.enumValues)[number];
 
 export async function createTenant(userId: string, name: string) {
-  // Remove any non-alphanumeric characters except hyphens and spaces
-  let slug = name
-    .trim()
-    .toLowerCase()
-    .replace(/[^\w\s-]/g, "")
-    // Replace spaces and repeated hyphens with single hyphen
-    .replace(/[\s_-]+/g, "-")
-    // Remove leading/trailing hyphens
-    .replace(/^-+|-+$/g, "");
+  try {
+    // Remove any non-alphanumeric characters except hyphens and spaces
+    let slug = name
+      .trim()
+      .toLowerCase()
+      .replace(/[^\w\s-]/g, "")
+      // Replace spaces and repeated hyphens with single hyphen
+      .replace(/[\s_-]+/g, "-")
+      // Remove leading/trailing hyphens
+      .replace(/^-+|-+$/g, "");
 
-  // Ensure slug is not empty
-  if (!slug) {
-    slug = "tenant";
-  }
-
-  // Check if slug exists and append number if needed
-  const existingSlugs = await db
-    .select({ slug: schema.tenants.slug })
-    .from(schema.tenants)
-    .where(eq(schema.tenants.slug, slug));
-
-  if (existingSlugs.length > 0) {
-    let counter = 1;
-    let newSlug = `${slug}-${counter}`;
-
-    while (
-      (await db.select({ slug: schema.tenants.slug }).from(schema.tenants).where(eq(schema.tenants.slug, newSlug)))
-        .length > 0 &&
-      counter < 10
-    ) {
-      counter++;
-      newSlug = `${slug}-${counter}`;
+    // Ensure slug is not empty
+    if (!slug) {
+      slug = "tenant";
     }
 
-    slug = newSlug;
+    // Check if slug exists and append number if needed
+    const existingSlugs = await db
+      .select({ slug: schema.tenants.slug })
+      .from(schema.tenants)
+      .where(eq(schema.tenants.slug, slug));
+
+    if (existingSlugs.length > 0) {
+      let counter = 1;
+      let newSlug = `${slug}-${counter}`;
+
+      while (
+        (await db.select({ slug: schema.tenants.slug }).from(schema.tenants).where(eq(schema.tenants.slug, newSlug)))
+          .length > 0 &&
+        counter < 10
+      ) {
+        counter++;
+        newSlug = `${slug}-${counter}`;
+      }
+
+      slug = newSlug;
+    }
+
+    const tenants = await db
+      .insert(schema.tenants)
+      .values({ name, slug, trialExpiresAt: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000) })
+      .returning({ id: schema.tenants.id, slug: schema.tenants.slug });
+
+    assert(tenants.length === 1);
+    const tenantId = tenants[0].id;
+
+    const profile = await createProfile(tenantId, userId, "admin");
+
+    const { client, partition } = await getRagieClientAndPartition(tenantId);
+
+    await client.partitions.create({
+      name: partition,
+      pagesProcessedLimitMax: 10000,
+    });
+
+    return { tenant: tenants[0], profile };
+  } catch (error) {
+    throw new ServiceError(`Failed to create tenant: ${error instanceof Error ? error.message : String(error)}`);
   }
-
-  const tenants = await db
-    .insert(schema.tenants)
-    .values({ name, slug, trialExpiresAt: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000) })
-    .returning({ id: schema.tenants.id, slug: schema.tenants.slug });
-
-  assert(tenants.length === 1);
-  const tenantId = tenants[0].id;
-
-  const profile = await createProfile(tenantId, userId, "admin");
-
-  const { client, partition } = await getRagieClientAndPartition(tenantId);
-
-  const result = await client.partitions.create({
-    //TODO: test, what to do when the hit the limit?
-    name: partition,
-    pagesProcessedLimitMax: 10000,
-  });
-
-  return { tenant: tenants[0], profile };
 }
 
 export async function createProfile(tenantId: string, userId: string, role: Role) {

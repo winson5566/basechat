@@ -16,6 +16,7 @@ interface Props {
   tenant: {
     id: string;
     slug: string;
+    partitionLimitExceeded: boolean;
   };
   session: {
     user: {
@@ -59,6 +60,14 @@ export default function DataPageClient({
           <AddConnectionMenu tenant={tenant} />
         </div>
       </div>
+      {tenant.partitionLimitExceeded && (
+        <div className="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+          <p className="text-yellow-800">
+            You have reached the page processing limit for this chatbot. Please contact support@ragie.ai if you need
+            assistance.
+          </p>
+        </div>
+      )}
       <Tabs defaultValue="files" className="flex flex-col h-full mt-8">
         <TabsList className="w-full justify-start bg-transparent gap-2">
           <TabsTrigger
