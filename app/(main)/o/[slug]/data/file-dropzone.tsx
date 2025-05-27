@@ -11,9 +11,10 @@ interface FileDropzoneProps {
     slug: string;
   };
   userName: string;
+  onUploadComplete: () => void;
 }
 
-export default function FileDropzone({ tenant, userName }: FileDropzoneProps) {
+export default function FileDropzone({ tenant, userName, onUploadComplete }: FileDropzoneProps) {
   const router = useRouter();
 
   return (
@@ -42,6 +43,7 @@ export default function FileDropzone({ tenant, userName }: FileDropzoneProps) {
 
         await Promise.all(uploadPromises);
         router.refresh();
+        onUploadComplete();
       }}
       accept={getDropzoneAcceptConfig()}
       maxSize={MAX_FILE_SIZE}
