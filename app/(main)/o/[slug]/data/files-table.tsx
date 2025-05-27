@@ -99,6 +99,14 @@ export default function FilesTable({
     fetchFiles(currentCursor);
   }, [currentCursor]);
 
+  // Initial fetch when component mounts to respect URL cursor
+  useEffect(() => {
+    if (currentCursor) {
+      fetchFiles(currentCursor);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- intentionally run once
+  }, []);
+
   // Poll for file status updates
   useEffect(() => {
     const checkFilesStatus = async () => {
