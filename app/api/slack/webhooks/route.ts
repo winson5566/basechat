@@ -10,9 +10,20 @@ import {
 import { WebClient } from "@slack/web-api";
 import { NextRequest, NextResponse } from "next/server";
 
-import { getTenantBySlackTeamId } from "@/lib/server/service";
+import { auth } from "@/auth";
+import {
+  createProfile,
+  findProfileByTenantIdAndSlackUserId,
+  findProfileByTenantIdAndUserId,
+  findUserById,
+  findUserBySlackUserId,
+  getTenantBySlackTeamId,
+} from "@/lib/server/service";
 import { SLACK_SIGNING_SECRET } from "@/lib/server/settings";
 import { verifySlackSignature } from "@/lib/server/slack";
+
+import ConversationManager from "./conversation-manager";
+import { slackSignIn } from "./utils";
 
 // Webhook payload wrapper types (these are specific to webhook delivery, not individual events)
 interface SlackWebhookPayload {
@@ -75,15 +86,15 @@ async function handleMessage(event: AllMessageEvents): Promise<void> {
     return;
   }
 
-  console.log("Processing message event:", {
-    channel: event.channel,
-    user: event.user,
-    text: event.text,
-    timestamp: event.ts,
-    thread_ts: event.thread_ts,
-    bot_id: event.bot_id,
-    subtype: event.subtype,
-  });
+  if (!event.team) {
+    throw new Error("No team ID found in message event");
+  }
+
+  console.log("Processing message event:", event);
+
+  const { tenant, profile } = await slackSignIn(event.team, event.user);
+  const manager = await ConversationManager.fromMessageEvent(tenant.id, profile.id, event);
+  await manager.generate();
 
   // Add your message processing logic here
   // For example: save to database, trigger AI response, etc.

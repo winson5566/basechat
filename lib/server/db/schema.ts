@@ -54,6 +54,10 @@ export const conversations = pgTable(
       .references(() => profiles.id, { onDelete: "cascade" })
       .notNull(),
     title: text().notNull(),
+    slackChannelId: text("slack_channel_id"),
+    slackMessageId: text("slack_message_id"),
+    slackThreadId: text("slack_thread_id"),
+    slackUserId: text("slack_user_id"),
   },
   (t) => ({
     profileIdx: index("conversations_profile_idx").on(t.profileId),
@@ -166,6 +170,7 @@ export const users = pgTable("users", {
   email: text("email").unique(),
   isAnonymous: boolean("is_anonymous").notNull().default(false),
   emailVerified: boolean("email_verified").notNull().default(false),
+  slackUserId: text("slack_user_id"),
   image: text("image"),
   currentProfileId: uuid("current_profile_id").references((): AnyPgColumn => profiles.id, { onDelete: "set null" }),
 });

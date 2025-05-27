@@ -70,10 +70,7 @@ export async function createTenant(userId: string, name: string) {
 }
 
 export async function createProfile(tenantId: string, userId: string, role: Role) {
-  const profiles = await db
-    .insert(schema.profiles)
-    .values({ tenantId, userId, role })
-    .returning({ id: schema.profiles.id });
+  const profiles = await db.insert(schema.profiles).values({ tenantId, userId, role }).returning();
   assert(profiles.length === 1);
   return profiles[0];
 }
@@ -398,6 +395,12 @@ export async function findProfileByTenantIdAndUserId(tenantId: string, userId: s
 
 export async function findUserByEmail(email: string) {
   const rs = await db.select().from(schema.users).where(eq(schema.users.email, email));
+  assert(rs.length === 1 || rs.length === 0, "unexpected result");
+  return rs.length ? rs[0] : null;
+}
+
+export async function findUserBySlackUserId(slackUserId: string) {
+  const rs = await db.select().from(schema.users).where(eq(schema.users.slackUserId, slackUserId));
   assert(rs.length === 1 || rs.length === 0, "unexpected result");
   return rs.length ? rs[0] : null;
 }
