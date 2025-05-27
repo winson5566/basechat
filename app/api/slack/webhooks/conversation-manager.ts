@@ -19,7 +19,6 @@ import {
 
 import {
   filterEmptyMessages,
-  generate,
   GenerateContext,
   getRetrievalSystemPrompt,
   renderGroundingSystemPrompt,
@@ -87,9 +86,6 @@ export default class ConversationManager {
     const { content: systemMessageContent, sources } = await this._retriever(
       this._tenant,
       event.text ?? "",
-      // isBreadth: boolean,
-      // rerankEnabled: boolean,
-      // prioritizeRecent: boolean,
       false,
       true,
       false,
@@ -106,7 +102,10 @@ export default class ConversationManager {
   }
 
   async generate(profile: typeof schema.profiles.$inferSelect) {
-    const all = await getConversationMessages(this._tenant.id, profile.id, this.conversation.id);
+    const all = await this._messageDao.find({
+      conversationId: this.conversation.id,
+    });
+
     const messages: CoreMessage[] = all.map(({ role, content }) => {
       switch (role) {
         case "assistant":
@@ -152,34 +151,7 @@ export default class ConversationManager {
       prioritizeRecent: context.prioritizeRecent,
     });
 
-    // Move system messages to the beginning for providers that require it
-    const systemMessages = context.messages.filter((msg) => msg.role === "system");
-    const nonSystemMessages = context.messages.filter((msg) => msg.role !== "system");
-
-    // Filter out empty messages before sending to API
-    context.messages = filterEmptyMessages(context.messages);
-
-    let model;
-    switch (provider) {
-      case "openai":
-        model = openai(context.model);
-        break;
-      case "google":
-        model = google(context.model);
-        // google requires system messages to be ONLY in the beginning
-        context.messages = [...systemMessages, ...nonSystemMessages];
-        break;
-      case "anthropic":
-        model = anthropic(context.model);
-        // anthropic requires system messages to be ONLY in the beginning
-        context.messages = [...systemMessages, ...nonSystemMessages];
-        break;
-      case "groq":
-        model = groq(context.model);
-        break;
-      default:
-        model = anthropic(DEFAULT_MODEL);
-    }
+    const model = openai(context.model);
 
     const { object } = await generateObject({
       messages: context.messages,
@@ -189,8 +161,6 @@ export default class ConversationManager {
       output: "object",
       schema: createConversationMessageResponseSchema,
     });
-
-    console.log("object", object);
 
     await updateConversationMessageContent(tenantId, profileId, conversationId, pendingMessage.id, object.message);
 
