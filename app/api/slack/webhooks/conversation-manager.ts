@@ -1,11 +1,26 @@
 import assert from "assert";
 
+import { anthropic } from "@ai-sdk/anthropic";
+import { google } from "@ai-sdk/google";
+import { groq } from "@ai-sdk/groq";
+import { openai } from "@ai-sdk/openai";
 import { AllMessageEvents, GenericMessageEvent } from "@slack/web-api";
+import { CoreMessage, generateObject } from "ai";
+import assertNever from "assert-never";
 
+import { createConversationMessageResponseSchema } from "@/lib/api";
+import { DEFAULT_MODEL, DEFAULT_PROVIDER, getProviderForModel, SPECIAL_LLAMA_PROMPT } from "@/lib/llm/types";
 import * as schema from "@/lib/server/db/schema";
-import { createConversationMessage } from "@/lib/server/service";
+import {
+  createConversationMessage,
+  getConversationMessages,
+  updateConversationMessageContent,
+} from "@/lib/server/service";
 
 import {
+  filterEmptyMessages,
+  generate,
+  GenerateContext,
   getRetrievalSystemPrompt,
   renderGroundingSystemPrompt,
 } from "../../conversations/[conversationId]/messages/utils";
@@ -21,6 +36,7 @@ export type Retriever = (
   prioritizeRecent: boolean,
 ) => Promise<{ content: string; sources: any[] }>;
 
+const model = "gpt-4o";
 export default class ConversationManager {
   public constructor(
     private readonly _tenant: typeof schema.tenants.$inferSelect,
@@ -41,8 +57,6 @@ export default class ConversationManager {
     if (event.subtype !== undefined) {
       throw new Error(`Message subtype ${event.subtype} is not supported`);
     }
-
-    const model = "claude-3-7-sonnet-latest";
 
     const existing = await this._messageDao.find({
       conversationId: this.conversation.id,
@@ -91,8 +105,96 @@ export default class ConversationManager {
     });
   }
 
-  async generate() {
-    return null;
+  async generate(profile: typeof schema.profiles.$inferSelect) {
+    const all = await getConversationMessages(this._tenant.id, profile.id, this.conversation.id);
+    const messages: CoreMessage[] = all.map(({ role, content }) => {
+      switch (role) {
+        case "assistant":
+          return { role: "assistant" as const, content: content ?? "" };
+        case "user":
+          return { role: "user" as const, content: content ?? "" };
+        case "system":
+          return { role: "system" as const, content: content ?? "" };
+        default:
+          assertNever(role);
+      }
+    });
+
+    return await this._generate(this._tenant.id, profile.id, this.conversation.id, {
+      messages,
+      sources: [],
+      model,
+      isBreadth: false,
+      rerankEnabled: true,
+      prioritizeRecent: false,
+    });
+  }
+
+  async _generate(tenantId: string, profileId: string, conversationId: string, context: GenerateContext) {
+    // get provider given the model
+    let provider = getProviderForModel(context.model);
+    if (!provider) {
+      console.log(`Provider not found for model ${context.model}`);
+      console.log(`Using default model: ${DEFAULT_MODEL} and default provider: ${DEFAULT_PROVIDER}`);
+      provider = DEFAULT_PROVIDER;
+      context.model = DEFAULT_MODEL;
+    }
+
+    const pendingMessage = await createConversationMessage({
+      tenantId,
+      conversationId,
+      role: "assistant",
+      content: null,
+      sources: context.sources,
+      model: context.model,
+      isBreadth: context.isBreadth,
+      rerankEnabled: context.rerankEnabled,
+      prioritizeRecent: context.prioritizeRecent,
+    });
+
+    // Move system messages to the beginning for providers that require it
+    const systemMessages = context.messages.filter((msg) => msg.role === "system");
+    const nonSystemMessages = context.messages.filter((msg) => msg.role !== "system");
+
+    // Filter out empty messages before sending to API
+    context.messages = filterEmptyMessages(context.messages);
+
+    let model;
+    switch (provider) {
+      case "openai":
+        model = openai(context.model);
+        break;
+      case "google":
+        model = google(context.model);
+        // google requires system messages to be ONLY in the beginning
+        context.messages = [...systemMessages, ...nonSystemMessages];
+        break;
+      case "anthropic":
+        model = anthropic(context.model);
+        // anthropic requires system messages to be ONLY in the beginning
+        context.messages = [...systemMessages, ...nonSystemMessages];
+        break;
+      case "groq":
+        model = groq(context.model);
+        break;
+      default:
+        model = anthropic(DEFAULT_MODEL);
+    }
+
+    const { object } = await generateObject({
+      messages: context.messages,
+      model,
+      temperature: 0.3,
+      system: provider === "groq" ? SPECIAL_LLAMA_PROMPT : undefined,
+      output: "object",
+      schema: createConversationMessageResponseSchema,
+    });
+
+    console.log("object", object);
+
+    await updateConversationMessageContent(tenantId, profileId, conversationId, pendingMessage.id, object.message);
+
+    return object;
   }
 
   static async fromMessageEvent(
@@ -135,7 +237,6 @@ export default class ConversationManager {
     }
 
     const manager = new ConversationManager(tenant, new MessageDAO(tenant.id), conversation, retriever);
-
     await manager.add(profile, event);
     return manager;
   }

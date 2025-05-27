@@ -1,3 +1,5 @@
+import assert from "assert";
+
 import {
   AllMessageEvents,
   AppMentionEvent,
@@ -10,15 +12,6 @@ import {
 import { WebClient } from "@slack/web-api";
 import { NextRequest, NextResponse } from "next/server";
 
-import { auth } from "@/auth";
-import {
-  createProfile,
-  findProfileByTenantIdAndSlackUserId,
-  findProfileByTenantIdAndUserId,
-  findUserById,
-  findUserBySlackUserId,
-  getTenantBySlackTeamId,
-} from "@/lib/server/service";
 import { SLACK_SIGNING_SECRET } from "@/lib/server/settings";
 import { verifySlackSignature } from "@/lib/server/slack";
 
@@ -86,21 +79,27 @@ async function handleMessage(event: AllMessageEvents): Promise<void> {
     return;
   }
 
+  if (event.bot_id) {
+    console.log(`Skipping message from bot`);
+    return;
+  }
+
   if (!event.team) {
     throw new Error("No team ID found in message event");
   }
 
-  console.log("Processing message event:", event);
-
   const { tenant, profile } = await slackSignIn(event.team, event.user);
-  const manager = await ConversationManager.fromMessageEvent(tenant.id, profile.id, event);
-  await manager.generate();
+  assert(tenant.slackBotToken, "expected slack bot token");
 
-  // Add your message processing logic here
-  // For example: save to database, trigger AI response, etc.
+  const manager = await ConversationManager.fromMessageEvent(tenant, profile, event);
+  const object = await manager.generate(profile);
+  const slack = new WebClient(tenant.slackBotToken);
 
-  // Example: Log the message
-  console.log(`User ${event.user} said: ${event.text} in channel ${event.channel}`);
+  await slack.chat.postMessage({
+    channel: event.channel,
+    text: object.message,
+    thread_ts: event.ts,
+  });
 }
 
 async function handleAppMention(event: AppMentionEvent): Promise<void> {
@@ -111,45 +110,6 @@ async function handleAppMention(event: AppMentionEvent): Promise<void> {
     timestamp: event.ts,
     team: event.team,
   });
-
-  if (!event.team) {
-    console.error("No team ID found in app mention event");
-    return;
-  }
-
-  const { slackBotToken } = await getTenantBySlackTeamId(event.team);
-
-  if (!slackBotToken) {
-    console.error("No Slack bot token found for team:", event.team);
-    return;
-  }
-
-  try {
-    // Create Slack client using the utility function
-    const slack = new WebClient(slackBotToken);
-
-    // Remove the bot mention from the text to get the actual message
-    const mentionRegex = /<@[A-Z0-9]+>/g;
-    const cleanText = event.text?.replace(mentionRegex, "").trim();
-
-    // Create the echo response
-    const echoMessage = cleanText ? `Echo: ${cleanText}` : "Echo: (no message)";
-
-    // Send the echo response back to the channel using the utility function
-    const result = await slack.chat.postMessage({
-      channel: event.channel,
-      text: echoMessage,
-      thread_ts: event.ts,
-    });
-
-    if (result.ok) {
-      console.log("Echo message sent successfully");
-    } else {
-      console.error("Failed to send Slack message:", result.error);
-    }
-  } catch (error) {
-    console.error("Error sending echo message:", error);
-  }
 }
 
 async function handleMemberJoinedChannel(event: MemberJoinedChannelEvent): Promise<void> {
@@ -223,7 +183,11 @@ export async function POST(request: NextRequest) {
     // Handle event callbacks
     if (slackEvent.type === "event_callback") {
       console.log("Received event callback:", slackEvent.event?.type);
-      await handleSlackEvent(slackEvent.event);
+
+      // Intentional setTimeout so we can respond quickly to the webhook request
+      setTimeout(async () => {
+        await handleSlackEvent(slackEvent.event);
+      }, 0);
 
       // Always respond quickly to avoid retries
       return NextResponse.json({ ok: true });

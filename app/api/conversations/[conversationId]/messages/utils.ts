@@ -12,7 +12,7 @@ import * as schema from "@/lib/server/db/schema";
 import { getRagieClientAndPartition } from "@/lib/server/ragie";
 import { createConversationMessage, updateConversationMessageContent } from "@/lib/server/service";
 
-type GenerateContext = {
+export type GenerateContext = {
   messages: CoreMessage[];
   sources: any[];
   model: LLMModel;
@@ -24,7 +24,7 @@ type GenerateContext = {
 export const FAILED_MESSAGE_CONTENT = `Failed to generate message from the model, please try again.`;
 
 // Filter out messages with empty content
-function filterEmptyMessages(messages: CoreMessage[]): CoreMessage[] {
+export function filterEmptyMessages(messages: CoreMessage[]): CoreMessage[] {
   return messages.filter((msg) => {
     if (!msg.content) return false;
     if (typeof msg.content === "string" && msg.content.trim() === "") return false;
