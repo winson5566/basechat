@@ -1,8 +1,5 @@
 import assert from "assert";
 
-import { anthropic } from "@ai-sdk/anthropic";
-import { google } from "@ai-sdk/google";
-import { groq } from "@ai-sdk/groq";
 import { openai } from "@ai-sdk/openai";
 import { AllMessageEvents, GenericMessageEvent } from "@slack/web-api";
 import { CoreMessage, generateObject } from "ai";
@@ -11,14 +8,9 @@ import assertNever from "assert-never";
 import { createConversationMessageResponseSchema } from "@/lib/api";
 import { DEFAULT_MODEL, DEFAULT_PROVIDER, getProviderForModel, SPECIAL_LLAMA_PROMPT } from "@/lib/llm/types";
 import * as schema from "@/lib/server/db/schema";
-import {
-  createConversationMessage,
-  getConversationMessages,
-  updateConversationMessageContent,
-} from "@/lib/server/service";
+import { createConversationMessage, updateConversationMessageContent } from "@/lib/server/service";
 
 import {
-  filterEmptyMessages,
   GenerateContext,
   getRetrievalSystemPrompt,
   renderGroundingSystemPrompt,
