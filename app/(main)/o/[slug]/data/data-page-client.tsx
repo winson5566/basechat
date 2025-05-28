@@ -4,6 +4,7 @@ import Image from "next/image";
 import { useState } from "react";
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import WarningMessage from "@/components/warning-message";
 import ManageDataPreviewIcons from "@/public/manage-data-preview-icons.svg";
 
 import AddConnectionMenu from "./add-connection-menu";
@@ -61,12 +62,10 @@ export default function DataPageClient({
         </div>
       </div>
       {tenant.partitionLimitExceededAt && (
-        <div className="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-          <p className="text-yellow-800">
-            You have reached the page processing limit for this chatbot. Please contact support@ragie.ai if you need
-            assistance.
-          </p>
-        </div>
+        <WarningMessage className="mt-4">
+          You have reached the page processing limit for this chatbot. Please contact support@ragie.ai if you need
+          assistance.
+        </WarningMessage>
       )}
       <Tabs defaultValue="files" className="flex flex-col h-full mt-8">
         <TabsList className="w-full justify-start bg-transparent gap-2">
