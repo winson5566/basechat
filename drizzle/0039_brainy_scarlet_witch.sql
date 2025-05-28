@@ -1,1 +1,0 @@
-ALTER TABLE "tenants" ADD COLUMN "partition_limit_exceeded" boolean DEFAULT false NOT NULL;

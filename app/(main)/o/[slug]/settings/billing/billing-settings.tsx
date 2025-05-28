@@ -1,7 +1,5 @@
 "use client";
 
-import * as schema from "@/lib/server/db/schema";
-
 type PartitionInfo = {
   name: string;
   isDefault: boolean;
@@ -22,7 +20,9 @@ type PartitionInfo = {
 };
 
 type Props = {
-  tenant: typeof schema.tenants.$inferSelect;
+  tenant: {
+    partitionLimitExceededAt: Date | null;
+  };
   partitionInfo: PartitionInfo;
 };
 
@@ -33,7 +33,7 @@ export default function BillingSettings({ tenant, partitionInfo }: Props) {
         <h1 className="font-bold text-[32px] text-[#343A40]">Billing</h1>
       </div>
 
-      {tenant.partitionLimitExceeded && (
+      {tenant.partitionLimitExceededAt && (
         <div className="mb-8 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
           <p className="text-yellow-800">
             You have reached the page processing limit for this chatbot. Please contact support@ragie.ai if you need

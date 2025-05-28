@@ -91,7 +91,7 @@ export const tenants = pgTable(
     ragiePartition: text("ragie_partition"),
     trialExpiresAt: timestamp("trial_expires_at", { withTimezone: true, mode: "date" }).notNull(),
     paidStatus: paidStatusEnum("paid_status").default("trial").notNull(),
-    partitionLimitExceeded: boolean("partition_limit_exceeded").default(false).notNull(),
+    partitionLimitExceededAt: timestamp("partition_limit_exceeded_at", { withTimezone: true, mode: "date" }),
   },
   (t) => ({
     paidStatusIdx: index("tenants_paid_status_idx").on(t.paidStatus),

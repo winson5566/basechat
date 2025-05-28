@@ -1,5 +1,5 @@
 {
-  "id": "546312c0-743d-4316-af1b-3478411cccd4",
+  "id": "062f1249-ca85-455f-8448-9a10191016a2",
   "prevId": "2755ed9f-b6a7-4df0-8d23-f52b4a77c941",
   "version": "7",
   "dialect": "postgresql",
@@ -1053,12 +1053,11 @@
           "notNull": true,
           "default": "'trial'"
         },
-        "partition_limit_exceeded": {
-          "name": "partition_limit_exceeded",
-          "type": "boolean",
+        "partition_limit_exceeded_at": {
+          "name": "partition_limit_exceeded_at",
+          "type": "timestamp with time zone",
           "primaryKey": false,
-          "notNull": true,
-          "default": false
+          "notNull": false
         }
       },
       "indexes": {

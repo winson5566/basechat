@@ -16,7 +16,7 @@ interface Props {
   tenant: {
     id: string;
     slug: string;
-    partitionLimitExceeded: boolean;
+    partitionLimitExceededAt: Date | null;
   };
   session: {
     user: {
@@ -60,7 +60,7 @@ export default function DataPageClient({
           <AddConnectionMenu tenant={tenant} />
         </div>
       </div>
-      {tenant.partitionLimitExceeded && (
+      {tenant.partitionLimitExceededAt && (
         <div className="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
           <p className="text-yellow-800">
             You have reached the page processing limit for this chatbot. Please contact support@ragie.ai if you need

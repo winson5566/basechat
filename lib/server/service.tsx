@@ -19,6 +19,9 @@ import { getRagieClientAndPartition } from "./ragie";
 type Role = (typeof schema.rolesEnum.enumValues)[number];
 
 export async function createTenant(userId: string, name: string) {
+  const TWO_WEEKS_IN_MS = 14 * 24 * 60 * 60 * 1000;
+  const MAX_PAGES_PROCESSED_LIMIT = 10000;
+
   try {
     // Remove any non-alphanumeric characters except hyphens and spaces
     let slug = name
@@ -59,7 +62,7 @@ export async function createTenant(userId: string, name: string) {
 
     const tenants = await db
       .insert(schema.tenants)
-      .values({ name, slug, trialExpiresAt: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000) })
+      .values({ name, slug, trialExpiresAt: new Date(Date.now() + TWO_WEEKS_IN_MS) })
       .returning({ id: schema.tenants.id, slug: schema.tenants.slug });
 
     assert(tenants.length === 1);
@@ -71,7 +74,7 @@ export async function createTenant(userId: string, name: string) {
 
     await client.partitions.create({
       name: partition,
-      pagesProcessedLimitMax: 10000,
+      pagesProcessedLimitMax: MAX_PAGES_PROCESSED_LIMIT,
     });
 
     return { tenant: tenants[0], profile };

@@ -51,7 +51,7 @@ async function handlePartitionLimitEvent(event: WebhookEvent) {
   try {
     await db
       .update(schema.tenants)
-      .set({ partitionLimitExceeded: true })
+      .set({ partitionLimitExceededAt: new Date() })
       .where(eq(schema.tenants.id, event.payload.partition));
   } catch (error) {
     console.error("Failed to update tenant:", error);
