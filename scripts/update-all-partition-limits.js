@@ -97,33 +97,24 @@ async function updateAllPartitionLimits(newLimit) {
       try {
         console.log(`Processing tenant: ${tenant.slug}`);
 
-        // Get the Ragie client
-        let client;
-        let partition;
-        if (tenant.ragieApiKey) {
-          const decryptedApiKey = decrypt(tenant.ragieApiKey);
-          client = new Ragie({
-            auth: decryptedApiKey,
-            serverURL: RAGIE_API_BASE_URL,
-          });
-          partition = tenant.ragiePartition || "default";
-        } else {
-          client = new Ragie({
+        // tenant does not have custom api key
+        if (!tenant.ragieApiKey) {
+          const client = new Ragie({
             auth: RAGIE_API_KEY,
             serverURL: RAGIE_API_BASE_URL,
           });
-          partition = tenant.id;
+
+          // Update the partition limit in Ragie
+          await client.partitions.setLimits({
+            partitionId: tenant.id,
+            partitionLimitParams: {
+              pagesProcessedLimitMax: newLimit,
+            },
+          });
+          console.log(`Successfully updated partition limit for tenant ${tenant.slug}`);
+        } else {
+          console.log(`Tenant ${tenant.slug} has custom api key, skipping`);
         }
-
-        // Update the partition limit in Ragie
-        await client.partitions.setLimits({
-          partitionId: partition,
-          partitionLimitParams: {
-            pagesProcessedLimitMax: newLimit,
-          },
-        });
-
-        console.log(`Successfully updated partition limit for tenant ${tenant.slug}`);
       } catch (error) {
         console.error(`Failed to update tenant ${tenant.slug}:`, error);
         // Continue with next tenant
