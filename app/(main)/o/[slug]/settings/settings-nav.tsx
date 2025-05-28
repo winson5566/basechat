@@ -11,6 +11,7 @@ import {
   getUserSettingsPath,
   getBillingSettingsPath,
 } from "@/lib/paths";
+import { BILLING_ENABLED } from "@/lib/server/settings";
 import { cn } from "@/lib/utils";
 
 import { AppLocation } from "../footer";
@@ -29,7 +30,7 @@ function getAppLocation(path: string, slug: string): AppLocation {
   if (path.startsWith(getPromptSettingsPath(slug))) {
     return AppLocation.SETTINGS_PROMPTS;
   }
-  if (path.startsWith(getBillingSettingsPath(slug))) {
+  if (BILLING_ENABLED && path.startsWith(getBillingSettingsPath(slug))) {
     return AppLocation.SETTINGS_BILLING;
   }
   return AppLocation.SETTINGS;
@@ -57,9 +58,11 @@ export default function SettingsNav({ tenant }: Props) {
       <Link href={getPromptSettingsPath(tenant.slug)}>
         <NavItem selected={appLocation === AppLocation.SETTINGS_PROMPTS}>Prompts</NavItem>
       </Link>
-      <Link href={getBillingSettingsPath(tenant.slug)}>
-        <NavItem selected={appLocation === AppLocation.SETTINGS_BILLING}>Billing</NavItem>
-      </Link>
+      {BILLING_ENABLED && (
+        <Link href={getBillingSettingsPath(tenant.slug)}>
+          <NavItem selected={appLocation === AppLocation.SETTINGS_BILLING}>Billing</NavItem>
+        </Link>
+      )}
     </div>
   );
 }
