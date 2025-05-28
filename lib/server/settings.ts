@@ -34,6 +34,8 @@ export const ENCRYPTION_KEY = process.env.ENCRYPTION_KEY!;
 // assert(process.env.BILLING_ENABLED);
 export const BILLING_ENABLED = process.env.BILLING_ENABLED === "true";
 
+export const DEFAULT_PARTITION_LIMIT = Number(process.env.DEFAULT_PARTITION_LIMIT);
+
 export const SMTP_FROM = process.env.SMTP_FROM!;
 export const SMTP_HOST = process.env.SMTP_HOST!;
 export const SMTP_PORT = Number(process.env.SMTP_PORT!);

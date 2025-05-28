@@ -6,7 +6,7 @@ import { NextRequest } from "next/server";
 import db from "@/lib/server/db";
 import * as schema from "@/lib/server/db/schema";
 import { saveConnection } from "@/lib/server/service";
-import { RAGIE_WEBHOOK_SECRET } from "@/lib/server/settings";
+import { DEFAULT_PARTITION_LIMIT, RAGIE_WEBHOOK_SECRET } from "@/lib/server/settings";
 import { validateSignature } from "@/lib/server/utils";
 
 interface WebhookEvent {
@@ -48,14 +48,16 @@ async function handlePartitionLimitEvent(event: WebhookEvent) {
 
   assert(tenantResult.length === 1, "Failed tenant lookup. More than one tenant.");
 
-  try {
-    await db
-      .update(schema.tenants)
-      .set({ partitionLimitExceededAt: new Date() })
-      .where(eq(schema.tenants.id, event.payload.partition));
-  } catch (error) {
-    console.error("Failed to update tenant:", error);
-    return Response.json({ error: "Failed to update tenant settings" }, { status: 500 });
+  if (!isNaN(DEFAULT_PARTITION_LIMIT)) {
+    try {
+      await db
+        .update(schema.tenants)
+        .set({ partitionLimitExceededAt: new Date() })
+        .where(eq(schema.tenants.id, event.payload.partition));
+    } catch (error) {
+      console.error("Failed to update tenant:", error);
+      return Response.json({ error: "Failed to update tenant settings" }, { status: 500 });
+    }
   }
 
   return Response.json({ message: "success" });

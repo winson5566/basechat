@@ -1,6 +1,7 @@
 "use client";
 
 import WarningMessage from "@/components/warning-message";
+import { DEFAULT_PARTITION_LIMIT } from "@/lib/server/settings";
 
 type PartitionInfo = {
   name: string;
@@ -35,7 +36,7 @@ export default function BillingSettings({ tenant, partitionInfo }: Props) {
         <h1 className="font-bold text-[32px] text-[#343A40]">Billing</h1>
       </div>
 
-      {tenant.partitionLimitExceededAt && (
+      {!isNaN(DEFAULT_PARTITION_LIMIT) && tenant.partitionLimitExceededAt && (
         <WarningMessage className="mb-4">
           You have reached the page processing limit for this chatbot. Please contact support@ragie.ai if you need
           assistance.

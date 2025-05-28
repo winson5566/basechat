@@ -20,7 +20,6 @@ type Role = (typeof schema.rolesEnum.enumValues)[number];
 
 export async function createTenant(userId: string, name: string) {
   const TWO_WEEKS_IN_MS = 14 * 24 * 60 * 60 * 1000;
-  const MAX_PAGES_PROCESSED_LIMIT = 10000;
 
   try {
     // Remove any non-alphanumeric characters except hyphens and spaces
@@ -70,12 +69,13 @@ export async function createTenant(userId: string, name: string) {
 
     const profile = await createProfile(tenantId, userId, "admin");
 
-    const { client, partition } = await getRagieClientAndPartition(tenantId);
-
-    await client.partitions.create({
-      name: partition,
-      pagesProcessedLimitMax: MAX_PAGES_PROCESSED_LIMIT,
-    });
+    if (!isNaN(settings.DEFAULT_PARTITION_LIMIT)) {
+      const { client, partition } = await getRagieClientAndPartition(tenantId);
+      await client.partitions.create({
+        name: partition,
+        pagesProcessedLimitMax: settings.DEFAULT_PARTITION_LIMIT,
+      });
+    }
 
     return { tenant: tenants[0], profile };
   } catch (error) {
