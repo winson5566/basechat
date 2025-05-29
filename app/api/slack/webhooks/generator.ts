@@ -10,7 +10,7 @@ export interface Generator {
   generateObject(context: GenerateContext): Promise<{ usedSourceIndexes: number[]; message: string }>;
 }
 
-export class BaseGenerator implements Generator {
+export class DefaultGenerator implements Generator {
   async generateObject(context: GenerateContext) {
     let provider = getProviderForModel(context.model);
     if (!provider) {
@@ -37,4 +37,4 @@ export class BaseGenerator implements Generator {
   }
 }
 
-export default BaseGenerator;
+export default DefaultGenerator;
