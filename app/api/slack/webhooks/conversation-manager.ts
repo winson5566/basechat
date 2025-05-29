@@ -1,22 +1,18 @@
 import assert from "assert";
 
-import { openai } from "@ai-sdk/openai";
 import { AllMessageEvents, GenericMessageEvent } from "@slack/web-api";
-import { CoreMessage, generateObject } from "ai";
+import { CoreMessage } from "ai";
 import assertNever from "assert-never";
 
-import { createConversationMessageResponseSchema } from "@/lib/api";
-import { DEFAULT_MODEL, DEFAULT_PROVIDER, getProviderForModel, SPECIAL_LLAMA_PROMPT } from "@/lib/llm/types";
 import * as schema from "@/lib/server/db/schema";
-import { createConversationMessage, updateConversationMessageContent } from "@/lib/server/service";
 
 import {
-  GenerateContext,
   getRetrievalSystemPrompt,
   renderGroundingSystemPrompt,
 } from "../../conversations/[conversationId]/messages/utils";
 
 import ConversationDAO from "./conversation-dao";
+import BaseGenerator from "./generator";
 import MessageDAO from "./message-dao";
 
 export type Retriever = (
@@ -33,6 +29,7 @@ export default class ConversationManager {
     private readonly _tenant: typeof schema.tenants.$inferSelect,
     private readonly _messageDao: MessageDAO,
     private readonly _conversation: typeof schema.conversations.$inferSelect,
+    private readonly _generator: BaseGenerator,
     private readonly _retriever?: Retriever,
   ) {
     if (!this._retriever) {
@@ -54,8 +51,7 @@ export default class ConversationManager {
     });
 
     if (!existing.length) {
-      await createConversationMessage({
-        tenantId: this.conversation.tenantId,
+      await this._messageDao.create({
         conversationId: this.conversation.id,
         role: "system",
         content: renderGroundingSystemPrompt({ company: { name: this._tenant.name } }, this._tenant.groundingPrompt),
@@ -64,8 +60,7 @@ export default class ConversationManager {
       });
     }
 
-    await createConversationMessage({
-      tenantId: this._tenant.id,
+    await this._messageDao.create({
       conversationId: this.conversation.id,
       role: "user",
       content: event.text,
@@ -83,8 +78,7 @@ export default class ConversationManager {
       false,
     );
 
-    await createConversationMessage({
-      tenantId: this._tenant.id,
+    await this._messageDao.create({
       conversationId: this.conversation.id,
       role: "system",
       content: systemMessageContent,
@@ -93,68 +87,27 @@ export default class ConversationManager {
     });
   }
 
-  async generate(profile: typeof schema.profiles.$inferSelect) {
-    const all = await this._messageDao.find({
+  async generateObject() {
+    const context = await this._getContext();
+    const object = await this._generator.generateObject(context);
+
+    await this._messageDao.create({
       conversationId: this.conversation.id,
-    });
-
-    const messages: CoreMessage[] = all.map(({ role, content }) => {
-      switch (role) {
-        case "assistant":
-          return { role: "assistant" as const, content: content ?? "" };
-        case "user":
-          return { role: "user" as const, content: content ?? "" };
-        case "system":
-          return { role: "system" as const, content: content ?? "" };
-        default:
-          assertNever(role);
-      }
-    });
-
-    return await this._generate(this._tenant.id, profile.id, this.conversation.id, {
-      messages,
-      sources: [],
-      model,
-      isBreadth: false,
-      rerankEnabled: true,
-      prioritizeRecent: false,
-    });
-  }
-
-  async _generate(tenantId: string, profileId: string, conversationId: string, context: GenerateContext) {
-    // get provider given the model
-    let provider = getProviderForModel(context.model);
-    if (!provider) {
-      console.log(`Provider not found for model ${context.model}`);
-      console.log(`Using default model: ${DEFAULT_MODEL} and default provider: ${DEFAULT_PROVIDER}`);
-      provider = DEFAULT_PROVIDER;
-      context.model = DEFAULT_MODEL;
-    }
-
-    const pendingMessage = await createConversationMessage({
-      tenantId,
-      conversationId,
       role: "assistant",
-      content: null,
+      content: object.message,
+      sources: context.sources,
+    });
+
+    await this._messageDao.create({
+      conversationId: this.conversation.id,
+      role: "assistant",
+      content: object.message,
       sources: context.sources,
       model: context.model,
       isBreadth: context.isBreadth,
       rerankEnabled: context.rerankEnabled,
       prioritizeRecent: context.prioritizeRecent,
     });
-
-    const model = openai(context.model);
-
-    const { object } = await generateObject({
-      messages: context.messages,
-      model,
-      temperature: 0.3,
-      system: provider === "groq" ? SPECIAL_LLAMA_PROMPT : undefined,
-      output: "object",
-      schema: createConversationMessageResponseSchema,
-    });
-
-    await updateConversationMessageContent(tenantId, profileId, conversationId, pendingMessage.id, object.message);
 
     return object;
   }
@@ -198,8 +151,37 @@ export default class ConversationManager {
       });
     }
 
-    const manager = new ConversationManager(tenant, new MessageDAO(tenant.id), conversation, retriever);
+    const generator = new BaseGenerator();
+    const manager = new ConversationManager(tenant, new MessageDAO(tenant.id), conversation, generator, retriever);
     await manager.add(profile, event);
     return manager;
+  }
+
+  private async _getContext() {
+    const all = await this._messageDao.find({
+      conversationId: this.conversation.id,
+    });
+
+    const messages: CoreMessage[] = all.map(({ role, content }) => {
+      switch (role) {
+        case "assistant":
+          return { role: "assistant" as const, content: content ?? "" };
+        case "user":
+          return { role: "user" as const, content: content ?? "" };
+        case "system":
+          return { role: "system" as const, content: content ?? "" };
+        default:
+          assertNever(role);
+      }
+    });
+
+    return {
+      messages,
+      sources: [],
+      model,
+      isBreadth: false,
+      rerankEnabled: true,
+      prioritizeRecent: false,
+    };
   }
 }

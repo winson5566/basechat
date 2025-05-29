@@ -16,6 +16,7 @@ import { SLACK_SIGNING_SECRET } from "@/lib/server/settings";
 import { verifySlackSignature } from "@/lib/server/slack";
 
 import ConversationManager from "./conversation-manager";
+import BaseGenerator from "./generator";
 import { slackSignIn } from "./utils";
 
 // Webhook payload wrapper types (these are specific to webhook delivery, not individual events)
@@ -92,7 +93,7 @@ async function handleMessage(event: AllMessageEvents): Promise<void> {
   assert(tenant.slackBotToken, "expected slack bot token");
 
   const manager = await ConversationManager.fromMessageEvent(tenant, profile, event);
-  const object = await manager.generate(profile);
+  const object = await manager.generateObject();
   const slack = new WebClient(tenant.slackBotToken);
 
   await slack.chat.postMessage({

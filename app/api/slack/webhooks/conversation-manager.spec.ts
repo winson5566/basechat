@@ -8,8 +8,19 @@ import pg from "pg";
 
 import * as schema from "@/lib/server/db/schema";
 
+import { GenerateContext } from "../../conversations/[conversationId]/messages/utils";
+
 import ConversationManager, { Retriever } from "./conversation-manager";
 import MessageDAO from "./message-dao";
+
+class TestGenerator implements Generator {
+  async generateObject(context: GenerateContext) {
+    return {
+      usedSourceIndexes: [],
+      message: "Test message",
+    };
+  }
+}
 
 let db: NodePgDatabase<typeof schema>;
 let client: pg.Client;
@@ -190,7 +201,13 @@ describe("ConversationManager", () => {
 
       it("should add a system message and a user message to the conversation", async () => {
         const event = createTestEvent({ text: "hello" });
-        const manager = new ConversationManager(tenant, new MessageDAO(tenant.id), conversation, mockRetriever);
+        const manager = new ConversationManager(
+          tenant,
+          new MessageDAO(tenant.id),
+          conversation,
+          new TestGenerator(),
+          mockRetriever,
+        );
         await manager.add(profile, event);
 
         const messages = await db.query.messages.findMany({
@@ -216,7 +233,13 @@ describe("ConversationManager", () => {
     describe("when the conversation has messages", () => {
       beforeEach(async () => {
         const event = createTestEvent({ text: "hello" });
-        const manager = new ConversationManager(tenant, new MessageDAO(tenant.id), conversation, mockRetriever);
+        const manager = new ConversationManager(
+          tenant,
+          new MessageDAO(tenant.id),
+          conversation,
+          new TestGenerator(),
+          mockRetriever,
+        );
         await manager.add(profile, event);
 
         const messages = await db.query.messages.findMany({
@@ -228,7 +251,13 @@ describe("ConversationManager", () => {
       it("should only add a user message to the conversation", async () => {
         const event = createTestEvent({ text: "hi hi" });
 
-        const manager = new ConversationManager(tenant, new MessageDAO(tenant.id), conversation, mockRetriever);
+        const manager = new ConversationManager(
+          tenant,
+          new MessageDAO(tenant.id),
+          conversation,
+          new TestGenerator(),
+          mockRetriever,
+        );
         await manager.add(profile, event);
 
         const messages = await db.query.messages.findMany({
