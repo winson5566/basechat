@@ -5,7 +5,6 @@ import { useState } from "react";
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import WarningMessage from "@/components/warning-message";
-import { DEFAULT_PARTITION_LIMIT } from "@/lib/server/settings";
 import ManageDataPreviewIcons from "@/public/manage-data-preview-icons.svg";
 
 import AddConnectionMenu from "./add-connection-menu";
@@ -36,6 +35,7 @@ interface Props {
       addedBy: string | null;
     }
   >;
+  defaultPartitionLimit: number;
 }
 
 export default function DataPageClient({
@@ -46,6 +46,7 @@ export default function DataPageClient({
   totalDocuments,
   connections,
   connectionMap,
+  defaultPartitionLimit,
 }: Props) {
   const [fileUploadCount, setFileUploadCount] = useState(0);
 
@@ -62,7 +63,7 @@ export default function DataPageClient({
           <AddConnectionMenu tenant={tenant} />
         </div>
       </div>
-      {!isNaN(DEFAULT_PARTITION_LIMIT) && tenant.partitionLimitExceededAt && (
+      {!isNaN(defaultPartitionLimit) && tenant.partitionLimitExceededAt && (
         <WarningMessage className="mt-4">
           You have reached the page processing limit for this chatbot. Please contact support@ragie.ai if you need
           assistance.

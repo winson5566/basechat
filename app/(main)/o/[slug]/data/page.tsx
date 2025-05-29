@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import db from "@/lib/server/db";
 import * as schema from "@/lib/server/db/schema";
 import { getRagieClientAndPartition } from "@/lib/server/ragie";
+import { DEFAULT_PARTITION_LIMIT } from "@/lib/server/settings";
 import { adminOrRedirect } from "@/lib/server/utils";
 
 import DataPageClient from "./data-page-client";
@@ -58,6 +59,7 @@ export default async function DataIndexPage({ params, searchParams }: Props) {
       totalDocuments={totalDocuments}
       connections={connections}
       connectionMap={connectionMap}
+      defaultPartitionLimit={DEFAULT_PARTITION_LIMIT}
     />
   );
 }
