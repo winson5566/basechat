@@ -11,7 +11,6 @@ import {
   getUserSettingsPath,
   getBillingSettingsPath,
 } from "@/lib/paths";
-import { BILLING_ENABLED } from "@/lib/server/settings";
 import { cn } from "@/lib/utils";
 
 import { AppLocation } from "../footer";
@@ -20,7 +19,7 @@ const NavItem = ({ children, selected }: { children: ReactNode; selected?: boole
   <div className={cn("px-3 py-2 rounded-lg", selected ? "bg-[#F5F5F7] font-semibold" : "")}>{children}</div>
 );
 
-function getAppLocation(path: string, slug: string): AppLocation {
+function getAppLocation(path: string, slug: string, billingEnabled: boolean): AppLocation {
   if (path.startsWith(getUserSettingsPath(slug))) {
     return AppLocation.SETTINGS_USERS;
   }
@@ -30,7 +29,7 @@ function getAppLocation(path: string, slug: string): AppLocation {
   if (path.startsWith(getPromptSettingsPath(slug))) {
     return AppLocation.SETTINGS_PROMPTS;
   }
-  if (BILLING_ENABLED && path.startsWith(getBillingSettingsPath(slug))) {
+  if (billingEnabled && path.startsWith(getBillingSettingsPath(slug))) {
     return AppLocation.SETTINGS_BILLING;
   }
   return AppLocation.SETTINGS;
@@ -38,11 +37,12 @@ function getAppLocation(path: string, slug: string): AppLocation {
 
 interface Props {
   tenant: { slug: string };
+  billingEnabled: boolean;
 }
 
-export default function SettingsNav({ tenant }: Props) {
+export default function SettingsNav({ tenant, billingEnabled }: Props) {
   const pathname = usePathname();
-  const appLocation = getAppLocation(pathname, tenant.slug);
+  const appLocation = getAppLocation(pathname, tenant.slug, billingEnabled);
 
   return (
     <div className="w-[233px] flex flex-col pr-16">
@@ -58,7 +58,7 @@ export default function SettingsNav({ tenant }: Props) {
       <Link href={getPromptSettingsPath(tenant.slug)}>
         <NavItem selected={appLocation === AppLocation.SETTINGS_PROMPTS}>Prompts</NavItem>
       </Link>
-      {BILLING_ENABLED && (
+      {billingEnabled && (
         <Link href={getBillingSettingsPath(tenant.slug)}>
           <NavItem selected={appLocation === AppLocation.SETTINGS_BILLING}>Billing</NavItem>
         </Link>
