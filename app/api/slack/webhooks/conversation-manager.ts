@@ -12,7 +12,7 @@ import {
 } from "../../conversations/[conversationId]/messages/utils";
 
 import ConversationDAO from "./conversation-dao";
-import DefaultGenerator from "./generator";
+import AbstractGenerator, { generatorFactory } from "./generator";
 import MessageDAO from "./message-dao";
 
 export type Retriever = (
@@ -29,7 +29,7 @@ export default class ConversationManager {
     private readonly _tenant: typeof schema.tenants.$inferSelect,
     private readonly _messageDao: MessageDAO,
     private readonly _conversation: typeof schema.conversations.$inferSelect,
-    private readonly _generator: DefaultGenerator,
+    private readonly _generator: AbstractGenerator,
     private readonly _retriever?: Retriever,
   ) {
     if (!this._retriever) {
@@ -151,7 +151,7 @@ export default class ConversationManager {
       });
     }
 
-    const generator = new DefaultGenerator();
+    const generator = generatorFactory(model);
     const manager = new ConversationManager(tenant, new MessageDAO(tenant.id), conversation, generator, retriever);
     await manager.add(profile, event);
     return manager;
@@ -171,7 +171,7 @@ export default class ConversationManager {
         case "system":
           return { role: "system" as const, content: content ?? "" };
         default:
-          assertNever(role);
+          return assertNever(role);
       }
     });
 

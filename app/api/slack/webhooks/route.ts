@@ -16,7 +16,6 @@ import { SLACK_SIGNING_SECRET } from "@/lib/server/settings";
 import { verifySlackSignature } from "@/lib/server/slack";
 
 import ConversationManager from "./conversation-manager";
-import DefaultGenerator from "./generator";
 import { slackSignIn } from "./utils";
 
 // Webhook payload wrapper types (these are specific to webhook delivery, not individual events)

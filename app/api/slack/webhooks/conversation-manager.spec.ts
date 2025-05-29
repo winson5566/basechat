@@ -11,10 +11,11 @@ import * as schema from "@/lib/server/db/schema";
 import { GenerateContext } from "../../conversations/[conversationId]/messages/utils";
 
 import ConversationManager, { Retriever } from "./conversation-manager";
+import Generator from "./generator";
 import MessageDAO from "./message-dao";
 
 class TestGenerator implements Generator {
-  async generateObject(context: GenerateContext) {
+  async generateObject(_context: GenerateContext) {
     return {
       usedSourceIndexes: [],
       message: "Test message",
