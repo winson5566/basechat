@@ -4,6 +4,7 @@ import Image from "next/image";
 import { useState } from "react";
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import WarningMessage from "@/components/warning-message";
 import ManageDataPreviewIcons from "@/public/manage-data-preview-icons.svg";
 
 import AddConnectionMenu from "./add-connection-menu";
@@ -16,6 +17,7 @@ interface Props {
   tenant: {
     id: string;
     slug: string;
+    partitionLimitExceededAt: Date | null;
   };
   session: {
     user: {
@@ -33,6 +35,7 @@ interface Props {
       addedBy: string | null;
     }
   >;
+  defaultPartitionLimit: number;
 }
 
 export default function DataPageClient({
@@ -43,6 +46,7 @@ export default function DataPageClient({
   totalDocuments,
   connections,
   connectionMap,
+  defaultPartitionLimit,
 }: Props) {
   const [fileUploadCount, setFileUploadCount] = useState(0);
 
@@ -59,6 +63,12 @@ export default function DataPageClient({
           <AddConnectionMenu tenant={tenant} />
         </div>
       </div>
+      {!isNaN(defaultPartitionLimit) && tenant.partitionLimitExceededAt && (
+        <WarningMessage className="mt-4">
+          You have reached the page processing limit for this chatbot. Please contact support@ragie.ai if you need
+          assistance.
+        </WarningMessage>
+      )}
       <Tabs defaultValue="files" className="flex flex-col h-full mt-8">
         <TabsList className="w-full justify-start bg-transparent gap-2">
           <TabsTrigger

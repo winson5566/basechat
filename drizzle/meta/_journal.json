@@ -274,6 +274,13 @@
       "when": 1747869168493,
       "tag": "0038_smooth_darkstar",
       "breakpoints": true
+    },
+    {
+      "idx": 39,
+      "version": "7",
+      "when": 1748447472284,
+      "tag": "0039_worthless_wendigo",
+      "breakpoints": true
     }
   ]
 }

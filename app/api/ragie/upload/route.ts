@@ -34,6 +34,9 @@ export async function POST(request: NextRequest) {
     return Response.json(res);
   } catch (error) {
     console.error("Error uploading file:", JSON.stringify(error));
+    if (error instanceof Error && error.message.includes("limit for this partition")) {
+      return Response.json({ error: error.message }, { status: 402 });
+    }
     return Response.json({ error: "Failed to upload file" }, { status: 500 });
   }
 }

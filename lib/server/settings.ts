@@ -28,10 +28,13 @@ export const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY!;
 // assert(process.env.RAGIE_WEBHOOK_SECRET);
 export const RAGIE_WEBHOOK_SECRET = process.env.RAGIE_WEBHOOK_SECRET!;
 
-//assert(process.env.ENCRYPTION_KEY)
+// assert(process.env.ENCRYPTION_KEY);
 export const ENCRYPTION_KEY = process.env.ENCRYPTION_KEY!;
 
+// assert(process.env.BILLING_ENABLED);
 export const BILLING_ENABLED = process.env.BILLING_ENABLED === "true";
+
+export const DEFAULT_PARTITION_LIMIT = Number(process.env.DEFAULT_PARTITION_LIMIT);
 
 export const SMTP_FROM = process.env.SMTP_FROM!;
 export const SMTP_HOST = process.env.SMTP_HOST!;
