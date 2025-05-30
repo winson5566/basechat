@@ -2,20 +2,48 @@ import { anthropic } from "@ai-sdk/anthropic";
 import { google } from "@ai-sdk/google";
 import { groq } from "@ai-sdk/groq";
 import { openai } from "@ai-sdk/openai";
-import { generateObject, LanguageModel } from "ai";
+import {
+  CoreMessage,
+  DeepPartial,
+  generateObject,
+  LanguageModel,
+  streamObject,
+  StreamObjectOnFinishCallback,
+  StreamObjectResult,
+} from "ai";
 import { assertNever } from "assert-never";
+import { z } from "zod";
 
 import { createConversationMessageResponseSchema } from "@/lib/api";
 import { DEFAULT_PROVIDER, getProviderForModel, SPECIAL_LLAMA_PROMPT } from "@/lib/llm/types";
 
 import { GenerateContext } from "../../conversations/[conversationId]/messages/utils";
 
+type ConversationMessageResponse = z.infer<typeof createConversationMessageResponseSchema>;
+type GenerateStreamOptions = {
+  onFinish: StreamObjectOnFinishCallback<ConversationMessageResponse>;
+};
+
+function filterMessages(messages: CoreMessage[]) {
+  return messages.filter((msg) => {
+    if (!msg.content) return false;
+    if (typeof msg.content === "string" && msg.content.trim() === "") return false;
+    return true;
+  });
+}
+
 export default interface Generator {
-  generateObject(context: GenerateContext): Promise<{ usedSourceIndexes: number[]; message: string }>;
+  generateObject(context: GenerateContext): Promise<ConversationMessageResponse>;
+  generateStream(
+    context: GenerateContext,
+    options: GenerateStreamOptions,
+  ): StreamObjectResult<DeepPartial<ConversationMessageResponse>, ConversationMessageResponse, never>;
 }
 
 export function generatorFactory(model: string): Generator {
   const provider = getProviderForModel(model) ?? DEFAULT_PROVIDER;
+
+  console.log(`Using provider: ${provider} for model: ${model}`);
 
   switch (provider) {
     case "openai":
@@ -40,12 +68,7 @@ export abstract class AbstractGenerator implements Generator {
 
   async generateObject(context: GenerateContext) {
     const model = this._languageModelFactory(context.model);
-
-    const messages = context.messages.filter((msg) => {
-      if (!msg.content) return false;
-      if (typeof msg.content === "string" && msg.content.trim() === "") return false;
-      return true;
-    });
+    const messages = filterMessages(context.messages);
 
     const { object } = await generateObject({
       messages,
@@ -57,6 +80,20 @@ export abstract class AbstractGenerator implements Generator {
     });
 
     return object;
+  }
+
+  generateStream(context: GenerateContext, options: GenerateStreamOptions) {
+    const model = this._languageModelFactory(context.model);
+    const messages = filterMessages(context.messages);
+
+    return streamObject({
+      messages,
+      model,
+      temperature: 0.3,
+      system: this._getSystem(),
+      schema: createConversationMessageResponseSchema,
+      onFinish: options.onFinish,
+    });
   }
 }
 export abstract class SortedMessageGenerator extends AbstractGenerator {

@@ -2,6 +2,7 @@ import { randomUUID } from "crypto";
 
 import { jest } from "@jest/globals";
 import { GenericMessageEvent } from "@slack/web-api";
+import { DeepPartial, StreamObjectOnFinishCallback, StreamObjectResult } from "ai";
 import { and, eq } from "drizzle-orm";
 import { drizzle, NodePgDatabase } from "drizzle-orm/node-postgres";
 import pg from "pg";
@@ -20,6 +21,13 @@ class TestGenerator implements Generator {
       usedSourceIndexes: [],
       message: "Test message",
     };
+  }
+
+  generateStream<OBJECT>(
+    _context: GenerateContext,
+    _options: { onFinish: StreamObjectOnFinishCallback<OBJECT> },
+  ): StreamObjectResult<DeepPartial<OBJECT>, OBJECT, never> {
+    throw new Error("Method not implemented.");
   }
 }
 
@@ -209,7 +217,7 @@ describe("ConversationManager", () => {
           new TestGenerator(),
           mockRetriever,
         );
-        await manager.add(profile, event);
+        await manager.addSlackMessage(profile, event);
 
         const messages = await db.query.messages.findMany({
           where: eq(schema.messages.conversationId, conversation.id),
@@ -241,7 +249,7 @@ describe("ConversationManager", () => {
           new TestGenerator(),
           mockRetriever,
         );
-        await manager.add(profile, event);
+        await manager.addSlackMessage(profile, event);
 
         const messages = await db.query.messages.findMany({
           where: eq(schema.messages.conversationId, conversation.id),
@@ -259,7 +267,7 @@ describe("ConversationManager", () => {
           new TestGenerator(),
           mockRetriever,
         );
-        await manager.add(profile, event);
+        await manager.addSlackMessage(profile, event);
 
         const messages = await db.query.messages.findMany({
           where: eq(schema.messages.conversationId, conversation.id),

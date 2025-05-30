@@ -2,6 +2,9 @@ import { CoreMessage } from "ai";
 import assertNever from "assert-never";
 import { NextRequest } from "next/server";
 
+import ConversationManager from "@/app/api/slack/webhooks/conversation-manager";
+import { generatorFactory } from "@/app/api/slack/webhooks/generator";
+import MessageDAO from "@/app/api/slack/webhooks/message-dao";
 import { conversationMessagesResponseSchema, createConversationMessageRequestSchema } from "@/lib/api";
 import { DEFAULT_MODEL, DEFAULT_PROVIDER, getProviderForModel } from "@/lib/llm/types";
 import { createConversationMessage, getConversation, getConversationMessages } from "@/lib/server/service";
@@ -40,74 +43,10 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   }
 
   const conversation = await getConversation(tenant.id, profile.id, conversationId);
-  const existing = await getConversationMessages(tenant.id, profile.id, conversation.id);
-
-  if (!existing.length) {
-    await createConversationMessage({
-      tenantId: tenant.id,
-      conversationId: conversation.id,
-      role: "system",
-      content: renderGroundingSystemPrompt(
-        {
-          company: {
-            name: tenant.name,
-          },
-        },
-        tenant.groundingPrompt,
-      ),
-      sources: [],
-      model: model,
-    });
-  }
-
-  await createConversationMessage({
-    tenantId: tenant.id,
-    conversationId: conversation.id,
-    role: "user",
-    content,
-    sources: [],
-    model: model,
-  });
-
-  const { content: systemMessageContent, sources } = await getRetrievalSystemPrompt(
-    tenant,
-    content,
-    isBreadth,
-    rerankEnabled,
-    prioritizeRecent,
-  );
-
-  await createConversationMessage({
-    tenantId: tenant.id,
-    conversationId: conversation.id,
-    role: "system",
-    content: systemMessageContent,
-    sources: [],
-    model: model,
-  });
-
-  const all = await getConversationMessages(tenant.id, profile.id, conversation.id);
-  const messages: CoreMessage[] = all.map(({ role, content }) => {
-    switch (role) {
-      case "assistant":
-        return { role: "assistant" as const, content: content ?? "" };
-      case "user":
-        return { role: "user" as const, content: content ?? "" };
-      case "system":
-        return { role: "system" as const, content: content ?? "" };
-      default:
-        assertNever(role);
-    }
-  });
-
-  const [stream, messageId] = await generate(tenant.id, profile.id, conversation.id, {
-    messages,
-    sources,
-    model,
-    isBreadth,
-    rerankEnabled,
-    prioritizeRecent,
-  });
+  const generator = generatorFactory(model);
+  const manager = new ConversationManager(tenant, new MessageDAO(tenant.id), conversation, generator);
+  await manager.add(profile, content);
+  const [stream, messageId] = await manager.generateStream();
 
   if (!stream) {
     return new Response(

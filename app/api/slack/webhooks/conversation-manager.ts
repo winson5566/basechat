@@ -7,6 +7,7 @@ import assertNever from "assert-never";
 import * as schema from "@/lib/server/db/schema";
 
 import {
+  FAILED_MESSAGE_CONTENT,
   getRetrievalSystemPrompt,
   renderGroundingSystemPrompt,
 } from "../../conversations/[conversationId]/messages/utils";
@@ -25,6 +26,8 @@ export type Retriever = (
 
 const model = "gpt-4o";
 export default class ConversationManager {
+  private _mostRecentSources: any[] = [];
+
   public constructor(
     private readonly _tenant: typeof schema.tenants.$inferSelect,
     private readonly _messageDao: MessageDAO,
@@ -41,11 +44,15 @@ export default class ConversationManager {
     return this._conversation;
   }
 
-  async add(addedBy: typeof schema.profiles.$inferSelect, event: GenericMessageEvent) {
+  addSlackMessage(addedBy: typeof schema.profiles.$inferSelect, event: GenericMessageEvent) {
     if (event.subtype !== undefined) {
       throw new Error(`Message subtype ${event.subtype} is not supported`);
     }
 
+    return this.add(addedBy, event.text ?? "");
+  }
+
+  async add(addedBy: typeof schema.profiles.$inferSelect, content: string) {
     const existing = await this._messageDao.find({
       conversationId: this.conversation.id,
     });
@@ -60,23 +67,19 @@ export default class ConversationManager {
       });
     }
 
-    await this._messageDao.create({
+    const message = await this._messageDao.create({
       conversationId: this.conversation.id,
       role: "user",
-      content: event.text,
+      content,
       sources: [],
       model,
     });
 
     assert(this._retriever, "Retriever is not set");
 
-    const { content: systemMessageContent, sources } = await this._retriever(
-      this._tenant,
-      event.text ?? "",
-      false,
-      true,
-      false,
-    );
+    const { content: systemMessageContent, sources } = await this._retriever(this._tenant, content, false, true, false);
+
+    this._mostRecentSources = sources;
 
     await this._messageDao.create({
       conversationId: this.conversation.id,
@@ -85,18 +88,13 @@ export default class ConversationManager {
       sources,
       model,
     });
+
+    return message;
   }
 
   async generateObject() {
-    const context = await this._getContext();
+    const context = await this.getContext();
     const object = await this._generator.generateObject(context);
-
-    await this._messageDao.create({
-      conversationId: this.conversation.id,
-      role: "assistant",
-      content: object.message,
-      sources: context.sources,
-    });
 
     await this._messageDao.create({
       conversationId: this.conversation.id,
@@ -110,6 +108,41 @@ export default class ConversationManager {
     });
 
     return object;
+  }
+
+  async generateStream() {
+    const context = await this.getContext();
+
+    const pending = await this._messageDao.create({
+      conversationId: this.conversation.id,
+      role: "assistant",
+      content: null,
+      sources: context.sources,
+      model: context.model,
+      isBreadth: context.isBreadth,
+      rerankEnabled: context.rerankEnabled,
+      prioritizeRecent: context.prioritizeRecent,
+    });
+
+    try {
+      const stream = await this._generator.generateStream(context, {
+        onFinish: async (event) => {
+          if (!event.object) {
+            return;
+          }
+
+          await this._messageDao.update(pending.id, {
+            content: (event.object as any).message,
+          });
+        },
+      });
+      return [stream, pending.id] as const;
+    } catch (error) {
+      await this._messageDao.update(pending.id, {
+        content: FAILED_MESSAGE_CONTENT,
+      });
+      return [null, pending.id] as const;
+    }
   }
 
   static async fromMessageEvent(
@@ -153,11 +186,11 @@ export default class ConversationManager {
 
     const generator = generatorFactory(model);
     const manager = new ConversationManager(tenant, new MessageDAO(tenant.id), conversation, generator, retriever);
-    await manager.add(profile, event);
+    await manager.addSlackMessage(profile, event);
     return manager;
   }
 
-  private async _getContext() {
+  public async getContext() {
     const all = await this._messageDao.find({
       conversationId: this.conversation.id,
     });
@@ -177,7 +210,7 @@ export default class ConversationManager {
 
     return {
       messages,
-      sources: [],
+      sources: this._mostRecentSources,
       model,
       isBreadth: false,
       rerankEnabled: true,
