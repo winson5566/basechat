@@ -16,16 +16,6 @@ import ConversationDAO from "./conversation-dao";
 import AbstractGenerator, { generatorFactory } from "./generator";
 import MessageDAO from "./message-dao";
 
-// export type Retriever = (
-//   tenant: typeof schema.tenants.$inferSelect,
-//   query: string,
-//   isBreadth: boolean,
-//   rerankEnabled: boolean,
-//   prioritizeRecent: boolean,
-// ) => Promise<{ content: string; sources: any[] }>;
-
-const model = "gpt-4o";
-
 interface RetrieverSettings {
   isBreadth: boolean;
   rerankEnabled: boolean;
