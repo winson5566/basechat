@@ -15,7 +15,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { SLACK_SIGNING_SECRET } from "@/lib/server/settings";
 import { verifySlackSignature } from "@/lib/server/slack";
 
-import ConversationManager from "./conversation-manager";
+import ConversationContext, { ReplyGenerator, Retriever } from "./conversation";
+import { generatorFactory } from "./generator";
+import MessageDAO from "./message-dao";
 import { slackSignIn } from "./utils";
 
 // Webhook payload wrapper types (these are specific to webhook delivery, not individual events)
@@ -91,8 +93,12 @@ async function handleMessage(event: AllMessageEvents): Promise<void> {
   const { tenant, profile } = await slackSignIn(event.team, event.user);
   assert(tenant.slackBotToken, "expected slack bot token");
 
-  const manager = await ConversationManager.fromMessageEvent(tenant, profile, event);
-  const object = await manager.generateObject();
+  const retriever = new Retriever(tenant, { isBreadth: false, rerankEnabled: true, prioritizeRecent: false });
+  const context = await ConversationContext.fromMessageEvent(tenant, profile, event, retriever);
+  const replyContext = await context.promptSlackMessage(profile, event);
+  const generator = new ReplyGenerator(new MessageDAO(tenant.id), generatorFactory("gpt-4o"));
+  const object = await generator.generateObject(replyContext);
+
   const slack = new WebClient(tenant.slackBotToken);
 
   await slack.chat.postMessage({

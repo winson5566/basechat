@@ -1,33 +1,22 @@
 import { randomUUID } from "crypto";
 
-import { jest } from "@jest/globals";
 import { GenericMessageEvent } from "@slack/web-api";
-import { DeepPartial, StreamObjectOnFinishCallback, StreamObjectResult } from "ai";
 import { and, eq } from "drizzle-orm";
 import { drizzle, NodePgDatabase } from "drizzle-orm/node-postgres";
 import pg from "pg";
 
 import * as schema from "@/lib/server/db/schema";
 
-import { GenerateContext } from "../../conversations/[conversationId]/messages/utils";
-
-import ConversationManager, { Retriever } from "./conversation-manager";
-import Generator from "./generator";
+import ConversationContext, { Retriever } from "./conversation";
 import MessageDAO from "./message-dao";
 
-class TestGenerator implements Generator {
-  async generateObject(_context: GenerateContext) {
-    return {
-      usedSourceIndexes: [],
-      message: "Test message",
-    };
+class TestRetriever extends Retriever {
+  constructor(tenant: typeof schema.tenants.$inferSelect) {
+    super(tenant, { isBreadth: false, rerankEnabled: false, prioritizeRecent: false });
   }
 
-  generateStream<OBJECT>(
-    _context: GenerateContext,
-    _options: { onFinish: StreamObjectOnFinishCallback<OBJECT> },
-  ): StreamObjectResult<DeepPartial<OBJECT>, OBJECT, never> {
-    throw new Error("Method not implemented.");
+  retrieve(_query: string) {
+    return Promise.resolve({ content: "Retrieval system prompt", sources: [] });
   }
 }
 
@@ -104,36 +93,36 @@ function createTestEvent(event: Partial<GenericMessageEvent> = {}): GenericMessa
   };
 }
 
-describe("ConversationManager", () => {
+describe(ConversationContext, () => {
   let tenant: typeof schema.tenants.$inferSelect;
   let profile: typeof schema.profiles.$inferSelect;
   let user: typeof schema.users.$inferSelect;
-  let mockRetriever: Retriever;
+  let retriever: Retriever;
 
   beforeEach(async () => {
     tenant = await createTestTenant();
     user = await createTestUser();
     profile = await createTestProfile(tenant, user, { role: "guest" });
-    mockRetriever = jest.fn().mockResolvedValue({ content: "Retrieval system prompt", sources: [] });
+    retriever = new TestRetriever(tenant);
   });
 
   describe("fromMessageEvent", () => {
     it("should create a ConversationManager instance", async () => {
       const event = createTestEvent();
-      const manager = await ConversationManager.fromMessageEvent(tenant, profile, event, mockRetriever);
-      expect(manager).toBeInstanceOf(ConversationManager);
+      const manager = await ConversationContext.fromMessageEvent(tenant, profile, event, retriever);
+      expect(manager).toBeInstanceOf(ConversationContext);
     });
 
     describe("when a thread ID is not provided", () => {
       it("should create a new conversation", async () => {
         const event = createTestEvent({ thread_ts: undefined });
-        const manager = await ConversationManager.fromMessageEvent(tenant, profile, event, mockRetriever);
+        const context = await ConversationContext.fromMessageEvent(tenant, profile, event, retriever);
 
-        expect(manager.conversation).not.toBeNull();
-        expect(manager.conversation.tenantId).toEqual(tenant.id);
-        expect(manager.conversation.title).toEqual("Slack conversation");
-        expect(manager.conversation.profileId).toEqual(profile.id);
-        expect(manager.conversation.slackThreadId).toEqual(event.ts);
+        expect(context.conversation).not.toBeNull();
+        expect(context.conversation.tenantId).toEqual(tenant.id);
+        expect(context.conversation.title).toEqual("Slack conversation");
+        expect(context.conversation.profileId).toEqual(profile.id);
+        expect(context.conversation.slackThreadId).toEqual(event.ts);
       });
     });
 
@@ -151,13 +140,13 @@ describe("ConversationManager", () => {
           expect(conversation).toBeUndefined();
 
           const event = createTestEvent({ thread_ts: "123456789.123" });
-          const manager = await ConversationManager.fromMessageEvent(tenant, profile, event, mockRetriever);
+          const context = await ConversationContext.fromMessageEvent(tenant, profile, event, retriever);
 
-          expect(manager.conversation).not.toBeNull();
-          expect(manager.conversation.tenantId).toEqual(tenant.id);
-          expect(manager.conversation.title).toEqual("Slack conversation");
-          expect(manager.conversation.profileId).toEqual(profile.id);
-          expect(manager.conversation.slackThreadId).toEqual("123456789.123");
+          expect(context.conversation).not.toBeNull();
+          expect(context.conversation.tenantId).toEqual(tenant.id);
+          expect(context.conversation.title).toEqual("Slack conversation");
+          expect(context.conversation.profileId).toEqual(profile.id);
+          expect(context.conversation.slackThreadId).toEqual("123456789.123");
         });
       });
 
@@ -176,14 +165,14 @@ describe("ConversationManager", () => {
           )[0];
 
           const event = createTestEvent({ thread_ts: "123456789.123" });
-          const manager = await ConversationManager.fromMessageEvent(tenant, profile, event, mockRetriever);
-          expect(manager.conversation.id).toEqual(conversation.id);
+          const context = await ConversationContext.fromMessageEvent(tenant, profile, event, retriever);
+          expect(context.conversation.id).toEqual(conversation.id);
         });
       });
     });
   });
 
-  describe("add", () => {
+  describe(ConversationContext.prototype.prompt, () => {
     let conversation: typeof schema.conversations.$inferSelect;
 
     beforeEach(async () => {
@@ -210,14 +199,8 @@ describe("ConversationManager", () => {
 
       it("should add a system message and a user message to the conversation", async () => {
         const event = createTestEvent({ text: "hello" });
-        const manager = new ConversationManager(
-          tenant,
-          new MessageDAO(tenant.id),
-          conversation,
-          new TestGenerator(),
-          mockRetriever,
-        );
-        await manager.addSlackMessage(profile, event);
+        const manager = new ConversationContext(new MessageDAO(tenant.id), retriever, tenant, conversation);
+        await manager.promptSlackMessage(profile, event);
 
         const messages = await db.query.messages.findMany({
           where: eq(schema.messages.conversationId, conversation.id),
@@ -242,14 +225,8 @@ describe("ConversationManager", () => {
     describe("when the conversation has messages", () => {
       beforeEach(async () => {
         const event = createTestEvent({ text: "hello" });
-        const manager = new ConversationManager(
-          tenant,
-          new MessageDAO(tenant.id),
-          conversation,
-          new TestGenerator(),
-          mockRetriever,
-        );
-        await manager.addSlackMessage(profile, event);
+        const manager = new ConversationContext(new MessageDAO(tenant.id), retriever, tenant, conversation);
+        await manager.promptSlackMessage(profile, event);
 
         const messages = await db.query.messages.findMany({
           where: eq(schema.messages.conversationId, conversation.id),
@@ -260,14 +237,8 @@ describe("ConversationManager", () => {
       it("should only add a user message to the conversation", async () => {
         const event = createTestEvent({ text: "hi hi" });
 
-        const manager = new ConversationManager(
-          tenant,
-          new MessageDAO(tenant.id),
-          conversation,
-          new TestGenerator(),
-          mockRetriever,
-        );
-        await manager.addSlackMessage(profile, event);
+        const manager = new ConversationContext(new MessageDAO(tenant.id), retriever, tenant, conversation);
+        await manager.promptSlackMessage(profile, event);
 
         const messages = await db.query.messages.findMany({
           where: eq(schema.messages.conversationId, conversation.id),

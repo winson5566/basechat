@@ -17,8 +17,6 @@ import { z } from "zod";
 import { createConversationMessageResponseSchema } from "@/lib/api";
 import { DEFAULT_PROVIDER, getProviderForModel, SPECIAL_LLAMA_PROMPT } from "@/lib/llm/types";
 
-import { GenerateContext } from "../../conversations/[conversationId]/messages/utils";
-
 type ConversationMessageResponse = z.infer<typeof createConversationMessageResponseSchema>;
 type GenerateStreamOptions = {
   onFinish: StreamObjectOnFinishCallback<ConversationMessageResponse>;
@@ -32,7 +30,13 @@ function filterMessages(messages: CoreMessage[]) {
   });
 }
 
+export interface GenerateContext {
+  messages: CoreMessage[];
+}
+
 export default interface Generator {
+  model: string;
+
   generateObject(context: GenerateContext): Promise<ConversationMessageResponse>;
   generateStream(
     context: GenerateContext,
@@ -47,19 +51,21 @@ export function generatorFactory(model: string): Generator {
 
   switch (provider) {
     case "openai":
-      return new OpenAIGenerator();
+      return new OpenAIGenerator(model);
     case "google":
-      return new GoogleGenerator();
+      return new GoogleGenerator(model);
     case "anthropic":
-      return new AnthropicGenerator();
+      return new AnthropicGenerator(model);
     case "groq":
-      return new GroqGenerator();
+      return new GroqGenerator(model);
     default:
       assertNever(provider);
   }
 }
 
 export abstract class AbstractGenerator implements Generator {
+  constructor(public readonly model: string) {}
+
   protected abstract _languageModelFactory(model: string): LanguageModel;
 
   protected _getSystem(): string | undefined {
@@ -67,7 +73,7 @@ export abstract class AbstractGenerator implements Generator {
   }
 
   async generateObject(context: GenerateContext) {
-    const model = this._languageModelFactory(context.model);
+    const model = this._languageModelFactory(this.model);
     const messages = filterMessages(context.messages);
 
     const { object } = await generateObject({
@@ -83,12 +89,9 @@ export abstract class AbstractGenerator implements Generator {
   }
 
   generateStream(context: GenerateContext, options: GenerateStreamOptions) {
-    const model = this._languageModelFactory(context.model);
-    const messages = filterMessages(context.messages);
-
     return streamObject({
-      messages,
-      model,
+      messages: filterMessages(context.messages),
+      model: this._languageModelFactory(this.model),
       temperature: 0.3,
       system: this._getSystem(),
       schema: createConversationMessageResponseSchema,
