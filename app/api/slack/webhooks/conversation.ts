@@ -24,7 +24,6 @@ interface RetrieverSettings {
 
 export interface ReplyContext {
   conversationId: string;
-  replyToMessageId: string;
   messages: CoreMessage[];
   sources: any[];
 }
@@ -130,7 +129,6 @@ export default class ConversationContext {
 
     return {
       conversationId: this._conversation.id,
-      replyToMessageId: all[all.length - 1].id,
       messages,
       sources,
     };
