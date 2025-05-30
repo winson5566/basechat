@@ -211,9 +211,12 @@ export class ReplyGenerator {
     });
 
     try {
-      const stream = await this._generator.generateStream(context, {
+      const stream = this._generator.generateStream(context, {
         onFinish: async (event) => {
           if (!event.object) {
+            await this._messageDao.update(pending.id, {
+              content: FAILED_MESSAGE_CONTENT,
+            });
             return;
           }
           await this._messageDao.update(pending.id, {
