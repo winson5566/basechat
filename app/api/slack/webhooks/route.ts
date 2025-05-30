@@ -12,12 +12,16 @@ import {
 import { WebClient } from "@slack/web-api";
 import { NextRequest, NextResponse } from "next/server";
 
+import {
+  ConversationContext,
+  MessageDAO,
+  ReplyGenerator,
+  Retriever,
+  generatorFactory,
+} from "@/lib/server/conversation-context";
 import { SLACK_SIGNING_SECRET } from "@/lib/server/settings";
 import { verifySlackSignature } from "@/lib/server/slack";
 
-import ConversationContext, { ReplyGenerator, Retriever } from "./conversation";
-import { generatorFactory } from "./generator";
-import MessageDAO from "./message-dao";
 import { slackSignIn } from "./utils";
 
 // Webhook payload wrapper types (these are specific to webhook delivery, not individual events)

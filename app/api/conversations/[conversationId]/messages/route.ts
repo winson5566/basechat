@@ -1,14 +1,17 @@
 import { NextRequest } from "next/server";
 
-import ConversationContext, { ReplyGenerator, Retriever } from "@/app/api/slack/webhooks/conversation";
-import { generatorFactory } from "@/app/api/slack/webhooks/generator";
-import MessageDAO from "@/app/api/slack/webhooks/message-dao";
 import { conversationMessagesResponseSchema, createConversationMessageRequestSchema } from "@/lib/api";
 import { DEFAULT_MODEL, DEFAULT_PROVIDER, getProviderForModel } from "@/lib/llm/types";
+import {
+  ConversationContext,
+  MessageDAO,
+  ReplyGenerator,
+  Retriever,
+  generatorFactory,
+} from "@/lib/server/conversation-context";
+import { FAILED_MESSAGE_CONTENT } from "@/lib/server/conversation-context/utils";
 import { getConversation, getConversationMessages } from "@/lib/server/service";
 import { requireAuthContextFromRequest } from "@/lib/server/utils";
-
-import { FAILED_MESSAGE_CONTENT } from "./utils";
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ conversationId: string }> }) {
   const { profile, tenant } = await requireAuthContextFromRequest(request);

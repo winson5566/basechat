@@ -6,15 +6,10 @@ import assertNever from "assert-never";
 
 import * as schema from "@/lib/server/db/schema";
 
-import {
-  FAILED_MESSAGE_CONTENT,
-  getRetrievalSystemPrompt,
-  renderGroundingSystemPrompt,
-} from "../../conversations/[conversationId]/messages/utils";
-
 import ConversationDAO from "./conversation-dao";
-import AbstractGenerator, { generatorFactory } from "./generator";
+import Generator from "./generator";
 import MessageDAO from "./message-dao";
+import { FAILED_MESSAGE_CONTENT, getRetrievalSystemPrompt, renderGroundingSystemPrompt } from "./utils";
 
 interface RetrieverSettings {
   isBreadth: boolean;
@@ -27,6 +22,7 @@ export interface ReplyContext {
   messages: CoreMessage[];
   sources: any[];
 }
+
 export class Retriever {
   constructor(
     private readonly _tenant: typeof schema.tenants.$inferSelect,
@@ -36,9 +32,11 @@ export class Retriever {
   get isBreadth() {
     return this._settings.isBreadth;
   }
+
   get rerankEnabled() {
     return this._settings.rerankEnabled;
   }
+
   get prioritizeRecent() {
     return this._settings.prioritizeRecent;
   }
@@ -53,6 +51,7 @@ export class Retriever {
     );
   }
 }
+
 export default class ConversationContext {
   public constructor(
     private readonly _messageDao: MessageDAO,
@@ -180,7 +179,7 @@ export default class ConversationContext {
 export class ReplyGenerator {
   constructor(
     private readonly _messageDao: MessageDAO,
-    private readonly _generator: AbstractGenerator,
+    private readonly _generator: Generator,
   ) {}
 
   async generateObject(context: ReplyContext) {

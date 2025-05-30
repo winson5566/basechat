@@ -7,7 +7,7 @@ import pg from "pg";
 
 import * as schema from "@/lib/server/db/schema";
 
-import ConversationContext, { Retriever } from "./conversation";
+import ConversationContext, { Retriever } from "./conversation-context";
 import MessageDAO from "./message-dao";
 
 class TestRetriever extends Retriever {
