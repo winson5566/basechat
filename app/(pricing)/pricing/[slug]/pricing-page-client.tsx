@@ -33,7 +33,7 @@ export default function PricingPageClient({ tenant }: PricingPageClientProps) {
   const currentTier = currentPlan?.tier;
 
   // Determine if tenant is in trial
-  const isInTrial = tenant.paidStatus === "trial";
+  const isInTrial = tenant.paidStatus === "trial" || tenant.paidStatus === "legacy";
 
   const handleSubscribe = async (tier: string, seats: number) => {
     try {

@@ -24,6 +24,7 @@ export interface PricingTier {
   mostPopular: boolean;
   color: string;
   hasCustomPricing?: boolean;
+  partitionLimit: number;
 }
 
 export const PRICING_TIER_CONFIG: PricingTier[] = [
@@ -38,6 +39,7 @@ export const PRICING_TIER_CONFIG: PricingTier[] = [
     buttonHidden: false,
     mostPopular: false,
     color: TIER_COLORS[Tier.DEVELOPER],
+    partitionLimit: 10000,
   },
   {
     name: "Starter",
@@ -50,6 +52,7 @@ export const PRICING_TIER_CONFIG: PricingTier[] = [
     buttonHidden: false,
     mostPopular: false,
     color: TIER_COLORS[Tier.STARTER],
+    partitionLimit: 50000,
   },
   {
     name: "Pro",
@@ -62,6 +65,7 @@ export const PRICING_TIER_CONFIG: PricingTier[] = [
     mostPopular: true,
     buttonHidden: false,
     color: TIER_COLORS[Tier.PRO],
+    partitionLimit: 100000,
   },
   {
     name: "Enterprise",
@@ -75,5 +79,6 @@ export const PRICING_TIER_CONFIG: PricingTier[] = [
     mostPopular: false,
     color: TIER_COLORS[Tier.ENTERPRISE],
     hasCustomPricing: true,
+    partitionLimit: 100000,
   },
 ];

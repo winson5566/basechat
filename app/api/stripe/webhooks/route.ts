@@ -163,8 +163,6 @@ async function handlePaymentMethodDetached(event: Stripe.Event) {
 
   // Remove payment method info from tenant metadata
   const existingMetadata = await getExistingMetadata(tenantId);
-  delete existingMetadata.paymentMethodId;
-  delete existingMetadata.paymentMethodType;
 
   await db
     .update(schema.tenants)
