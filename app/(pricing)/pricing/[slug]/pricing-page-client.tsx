@@ -3,11 +3,15 @@
 import Link from "next/link";
 
 import { Button } from "@/components/ui/button";
-import { PRICING_TIER_CONFIG } from "@/lib/billing";
+import { PRICING_TIER_CONFIG } from "@/lib/billing/pricing";
+import { getCurrentPlan } from "@/lib/billing/tenant";
 import { getDataPath } from "@/lib/paths";
+
+import { useUser } from "./user-context";
 
 interface PricingPageClientProps {
   tenant: {
+    name: string;
     slug: string;
     paidStatus: string;
     metadata: {
@@ -23,12 +27,39 @@ interface PricingPageClientProps {
 }
 
 export default function PricingPageClient({ tenant }: PricingPageClientProps) {
+  const { email } = useUser();
   // Get the current active plan
-  const currentPlan = tenant.metadata.plans?.find((plan) => !plan.endedAt);
+  const currentPlan = getCurrentPlan(tenant.metadata);
   const currentTier = currentPlan?.tier;
 
   // Determine if tenant is in trial
   const isInTrial = tenant.paidStatus === "trial";
+
+  const handleSubscribe = async (tier: string, seats: number) => {
+    try {
+      const response = await fetch(`/api/billing/subscribe`, {
+        method: "POST",
+        headers: { tenant: tenant.slug },
+        body: JSON.stringify({
+          tier,
+          seats,
+          email,
+          name: tenant.name,
+        }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || "Failed to create subscription");
+      }
+
+      // Redirect to billing settings page on success
+      window.location.href = `/o/${tenant.slug}/settings/billing`;
+    } catch (error) {
+      console.error("Error creating subscription:", error);
+      // TODO: Show error message to user
+    }
+  };
 
   return (
     <div className="w-full max-w-[1200px] relative">
@@ -101,7 +132,7 @@ export default function PricingPageClient({ tenant }: PricingPageClientProps) {
                     if (tier.buttonLink) {
                       window.location.href = tier.buttonLink;
                     } else {
-                      // TODO: Implement Stripe checkout
+                      handleSubscribe(tier.id, 1); // Start with 1 seat
                     }
                   }}
                 >

@@ -13,6 +13,7 @@ export default async function PricingPage({ params }: Props) {
   return (
     <PricingPageClient
       tenant={{
+        name: tenant.name,
         slug: tenant.slug,
         paidStatus: tenant.paidStatus,
         metadata: tenant.metadata ?? {},

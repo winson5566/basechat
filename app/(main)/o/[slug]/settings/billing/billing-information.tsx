@@ -5,6 +5,7 @@ import Link from "next/link";
 
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { getCurrentPlan } from "@/lib/billing/tenant";
 import { getPricingPath } from "@/lib/paths";
 
 interface BillingInformationProps {
@@ -26,7 +27,7 @@ interface BillingInformationProps {
 }
 
 export default function BillingInformation({ tenant }: BillingInformationProps) {
-  const currentPlan = tenant.metadata.plans?.find((plan) => !plan.endedAt);
+  const currentPlan = getCurrentPlan(tenant.metadata);
   const totalSeats = currentPlan?.seats ?? 0;
   const usedSeats = 0; // TODO: Get this from the number of active users
 
