@@ -8,7 +8,6 @@ import Markdown from "react-markdown";
 import { Skeleton } from "@/components/ui/skeleton";
 import CONNECTOR_MAP from "@/lib/connector-map";
 import { getRagieStreamPath } from "@/lib/paths";
-import { SourceMetadata } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import CloseIcon from "@/public/icons/close.svg";
 import ExternalLinkIcon from "@/public/icons/external-link.svg";
@@ -20,6 +19,8 @@ import Replay10Icon from "@/public/icons/replay_10.svg";
 import VolumeUpIcon from "@/public/icons/volume_up.svg";
 
 import { DocumentResponse } from "./types";
+
+import { SourceMetadata } from "@/lib/types";
 interface PlayerControlsProps {
   isPlaying: boolean;
   isMuted: boolean;

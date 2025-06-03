@@ -6,9 +6,10 @@ import { useGlobalState } from "@/app/(main)/o/[slug]/context";
 import Chatbot from "@/components/chatbot";
 import { Skeleton } from "@/components/ui/skeleton";
 import { LLMModel } from "@/lib/llm/types";
-import { SourceMetadata } from "@/lib/types";
 
 import Summary from "./summary";
+
+import { SourceMetadata } from "@/lib/types";
 
 interface Props {
   id: string;
