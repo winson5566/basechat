@@ -121,9 +121,19 @@ async function handleMessage(event: AllMessageEvents): Promise<void> {
   const generator = new ReplyGenerator(new MessageDAO(tenant.id), generatorFactory("gpt-4o"));
   const object = await generator.generateObject(replyContext);
 
+  // Format message with sources if available
+  let messageText = object.message;
+  if (object.usedSourceIndexes && object.usedSourceIndexes.length > 0) {
+    messageText += "\n\n📚 *Sources:*";
+    object.usedSourceIndexes.forEach((index) => {
+      const source = replyContext.sources[index];
+      messageText += `\n• <${source.source_url}|${source.documentName}>`;
+    });
+  }
+
   await slack.chat.postMessage({
     channel: event.channel,
-    text: object.message,
+    text: messageText,
     thread_ts: event.ts,
   });
 }

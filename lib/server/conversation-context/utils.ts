@@ -3,6 +3,7 @@ import Handlebars from "handlebars";
 import { DEFAULT_GROUNDING_PROMPT, DEFAULT_SYSTEM_PROMPT } from "@/lib/constants";
 import * as schema from "@/lib/server/db/schema";
 import { getRagieClientAndPartition } from "@/lib/server/ragie";
+import { SourceMetadata } from "@/lib/types";
 
 export const FAILED_MESSAGE_CONTENT = `Failed to generate message from the model, please try again.`;
 
@@ -44,7 +45,7 @@ export async function getRetrievalSystemPrompt(
 
   const chunks = JSON.stringify(response);
 
-  const sources = response.scoredChunks.map((chunk) => {
+  const sources: SourceMetadata[] = response.scoredChunks.map((chunk) => {
     const documentName = chunk.documentName;
     let isVideo = false;
     let isAudio = false;
@@ -72,6 +73,9 @@ export async function getRetrievalSystemPrompt(
 
     return {
       ...chunk.documentMetadata,
+      source_type: chunk.documentMetadata.source_type,
+      file_path: chunk.documentMetadata.file_path,
+      source_url: chunk.documentMetadata.source_url,
       documentId: chunk.documentId,
       documentName,
       streamUrl,

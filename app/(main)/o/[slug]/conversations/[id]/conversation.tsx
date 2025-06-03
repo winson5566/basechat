@@ -4,9 +4,9 @@ import { useEffect, useState } from "react";
 
 import { useGlobalState } from "@/app/(main)/o/[slug]/context";
 import Chatbot from "@/components/chatbot";
-import { SourceMetadata } from "@/components/chatbot/types";
 import { Skeleton } from "@/components/ui/skeleton";
 import { LLMModel } from "@/lib/llm/types";
+import { SourceMetadata } from "@/lib/types";
 
 import Summary from "./summary";
 
