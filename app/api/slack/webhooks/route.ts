@@ -22,7 +22,7 @@ import {
 import { SLACK_SIGNING_SECRET } from "@/lib/server/settings";
 import { verifySlackSignature } from "@/lib/server/slack";
 
-import { slackSignIn } from "./utils";
+import { shouldReplyToMessage, slackSignIn } from "./utils";
 
 // Webhook payload wrapper types (these are specific to webhook delivery, not individual events)
 interface SlackWebhookPayload {
@@ -97,7 +97,17 @@ async function handleMessage(event: AllMessageEvents): Promise<void> {
   const { tenant, profile } = await slackSignIn(event.team, event.user);
   assert(tenant.slackBotToken, "expected slack bot token");
 
-  const retriever = new Retriever(tenant, { isBreadth: false, rerankEnabled: true, prioritizeRecent: false });
+  const shouldReply = await shouldReplyToMessage(event);
+  if (!shouldReply) {
+    console.log(`Skipping message that is not a question`);
+    return;
+  }
+
+  const retriever = new Retriever(tenant, {
+    isBreadth: false,
+    rerankEnabled: true,
+    prioritizeRecent: false,
+  });
   const context = await ConversationContext.fromMessageEvent(tenant, profile, event, retriever);
   const replyContext = await context.promptSlackMessage(profile, event);
   const generator = new ReplyGenerator(new MessageDAO(tenant.id), generatorFactory("gpt-4o"));
