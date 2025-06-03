@@ -95,7 +95,7 @@ export const tenants = pgTable(
     ragiePartition: text("ragie_partition"),
     slackEnabled: boolean("slack_enabled").default(false),
     slackWebhookUrl: text("slack_webhook_url"),
-    slackChannel: text("slack_channel"),
+    slackChannels: text("slack_channels").array().default([]),
     slackBotToken: text("slack_bot_token"),
     slackTeamId: text("slack_team_id"),
     slackTeamName: text("slack_team_name"),

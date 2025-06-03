@@ -70,7 +70,7 @@ export const updateTenantSchema = z.object({
   overridePrioritizeRecent: z.boolean().optional(),
   slackEnabled: z.boolean().optional(),
   slackWebhookUrl: z.string().nullable().optional(),
-  slackChannel: z.string().nullable().optional(),
+  slackChannels: z.array(z.string()).optional(),
   slackBotToken: z.string().nullable().optional(),
   slackTeamId: z.string().nullable().optional(),
   slackTeamName: z.string().nullable().optional(),

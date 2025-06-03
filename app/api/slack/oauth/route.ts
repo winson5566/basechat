@@ -20,6 +20,8 @@ export async function GET(request: NextRequest) {
   const scopes = [
     "chat:write",
     "channels:read",
+    "channels:join",
+    "channels:manage",
     "groups:read",
     "im:read",
     "mpim:read",
