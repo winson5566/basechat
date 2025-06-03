@@ -1,6 +1,7 @@
 import { openai } from "@ai-sdk/openai";
 import { GenericMessageEvent } from "@slack/web-api";
 import { generateObject } from "ai";
+import Handlebars from "handlebars";
 import { z } from "zod";
 
 import { auth } from "@/auth";
