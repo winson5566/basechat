@@ -99,9 +99,17 @@ async function handleMessage(event: AllMessageEvents): Promise<void> {
 
   const shouldReply = await shouldReplyToMessage(event);
   if (!shouldReply) {
-    console.log(`Skipping message that is not a question`);
+    console.log(`Skipping message that did not meet the criteria for a reply`);
     return;
   }
+
+  const slack = new WebClient(tenant.slackBotToken);
+
+  await slack.reactions.add({
+    channel: event.channel,
+    timestamp: event.ts,
+    name: "thinking_face",
+  });
 
   const retriever = new Retriever(tenant, {
     isBreadth: false,
@@ -112,8 +120,6 @@ async function handleMessage(event: AllMessageEvents): Promise<void> {
   const replyContext = await context.promptSlackMessage(profile, event);
   const generator = new ReplyGenerator(new MessageDAO(tenant.id), generatorFactory("gpt-4o"));
   const object = await generator.generateObject(replyContext);
-
-  const slack = new WebClient(tenant.slackBotToken);
 
   await slack.chat.postMessage({
     channel: event.channel,

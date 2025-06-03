@@ -17,7 +17,15 @@ export async function GET(request: NextRequest) {
   const redirectUri = `${BASE_URL}/api/slack/callback`;
   const state = tenant.slug; // Use tenant slug as state to identify which tenant is authorizing
 
-  const scopes = ["chat:write", "channels:read", "groups:read", "im:read", "mpim:read"].join(",");
+  const scopes = [
+    "chat:write",
+    "channels:read",
+    "groups:read",
+    "im:read",
+    "mpim:read",
+    "reactions:read",
+    "reactions:write",
+  ].join(",");
 
   const authUrl = new URL("https://slack.com/oauth/v2/authorize");
   authUrl.searchParams.set("client_id", SLACK_CLIENT_ID);
