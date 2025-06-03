@@ -17,7 +17,8 @@ import { z } from "zod";
 import { createConversationMessageResponseSchema } from "@/lib/api";
 import { DEFAULT_PROVIDER, getProviderForModel, SPECIAL_LLAMA_PROMPT } from "@/lib/llm/types";
 
-type ConversationMessageResponse = z.infer<typeof createConversationMessageResponseSchema>;
+export type ConversationMessageResponse = z.infer<typeof createConversationMessageResponseSchema>;
+
 type GenerateStreamOptions = {
   onFinish: StreamObjectOnFinishCallback<ConversationMessageResponse>;
 };

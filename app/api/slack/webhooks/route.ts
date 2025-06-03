@@ -3,6 +3,7 @@ import assert from "assert";
 import {
   AllMessageEvents,
   AppMentionEvent,
+  GenericMessageEvent,
   MemberJoinedChannelEvent,
   MemberLeftChannelEvent,
   ReactionAddedEvent,
@@ -14,7 +15,9 @@ import { NextRequest, NextResponse } from "next/server";
 
 import {
   ConversationContext,
+  ConversationMessageResponse,
   MessageDAO,
+  ReplyContext,
   ReplyGenerator,
   Retriever,
   generatorFactory,
@@ -22,7 +25,7 @@ import {
 import { SLACK_SIGNING_SECRET } from "@/lib/server/settings";
 import { verifySlackSignature } from "@/lib/server/slack";
 
-import { shouldReplyToMessage, slackSignIn } from "./utils";
+import { formatMessageWithSources, shouldReplyToMessage, slackSignIn } from "./utils";
 
 // Webhook payload wrapper types (these are specific to webhook delivery, not individual events)
 interface SlackWebhookPayload {
@@ -79,25 +82,36 @@ async function handleSlackEvent(event: SlackEvent | undefined): Promise<void> {
 }
 
 async function handleMessage(event: AllMessageEvents): Promise<void> {
-  // Only handle basic message events that have user and text properties
   if (event.subtype && event.subtype !== undefined) {
     console.log(`Skipping message with subtype: ${event.subtype}`);
     return;
   }
+  return _handleMessage(event);
+}
 
-  if (event.bot_id) {
-    console.log(`Skipping message from bot`);
-    return;
+async function handleAppMention(event: AppMentionEvent): Promise<void> {
+  return _handleMessage(event);
+}
+
+async function _handleMessage(event: AppMentionEvent | GenericMessageEvent) {
+  if (!event.team) {
+    throw new Error("No team ID found in app mention event");
   }
 
-  if (!event.team) {
-    throw new Error("No team ID found in message event");
+  if (!event.user) {
+    throw new Error("No user ID found in app mention event");
   }
 
   const { tenant, profile } = await slackSignIn(event.team, event.user);
+
   assert(tenant.slackBotToken, "expected slack bot token");
 
-  const shouldReply = await shouldReplyToMessage(event);
+  if (tenant.slackResponseMode === "mentions" && event.type !== "app_mention") {
+    console.log(`Skipping message - mentions only mode`);
+    return;
+  }
+
+  const shouldReply = await shouldReplyToMessage(event.text);
   if (!shouldReply) {
     console.log(`Skipping message that did not meet the criteria for a reply`);
     return;
@@ -121,30 +135,12 @@ async function handleMessage(event: AllMessageEvents): Promise<void> {
   const generator = new ReplyGenerator(new MessageDAO(tenant.id), generatorFactory("gpt-4o"));
   const object = await generator.generateObject(replyContext);
 
-  // Format message with sources if available
-  let messageText = object.message;
-  if (object.usedSourceIndexes && object.usedSourceIndexes.length > 0) {
-    messageText += "\n\n📚 *Sources:*";
-    object.usedSourceIndexes.forEach((index) => {
-      const source = replyContext.sources[index];
-      messageText += `\n• <${source.source_url}|${source.documentName}>`;
-    });
-  }
+  const text = formatMessageWithSources(object, replyContext);
 
   await slack.chat.postMessage({
     channel: event.channel,
-    text: messageText,
     thread_ts: event.ts,
-  });
-}
-
-async function handleAppMention(event: AppMentionEvent): Promise<void> {
-  console.log("Processing app mention:", {
-    channel: event.channel,
-    user: event.user,
-    text: event.text,
-    timestamp: event.ts,
-    team: event.team,
+    text,
   });
 }
 

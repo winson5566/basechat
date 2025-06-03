@@ -1,11 +1,13 @@
 "use client";
 
-import { Loader2, ExternalLink, CheckCircle, AlertCircle, Hash, Users, Lock, Plus, X } from "lucide-react";
+import { Loader2, ExternalLink, CheckCircle, AlertCircle, Hash, Users, Lock, Plus, X, Settings } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import * as schema from "@/lib/server/db/schema";
 
 type Props = {
@@ -26,6 +28,8 @@ export default function SlackSettings({ tenant, slackConfigured }: Props) {
   const [channels, setChannels] = useState<SlackChannel[]>([]);
   const [loadingChannels, setLoadingChannels] = useState(false);
   const [joiningChannels, setJoiningChannels] = useState<Set<string>>(new Set());
+  const [responseMode, setResponseMode] = useState<"mentions" | "all">(tenant.slackResponseMode || "mentions");
+  const [updatingResponseMode, setUpdatingResponseMode] = useState(false);
   const searchParams = useSearchParams();
 
   useEffect(() => {
@@ -144,6 +148,31 @@ export default function SlackSettings({ tenant, slackConfigured }: Props) {
     }
   }
 
+  async function handleResponseModeChange(newMode: "mentions" | "all") {
+    setUpdatingResponseMode(true);
+    try {
+      const response = await fetch("/api/tenants/current", {
+        method: "PATCH",
+        headers: {
+          tenant: tenant.slug,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          slackResponseMode: newMode,
+        }),
+      });
+
+      if (!response.ok) throw new Error("Failed to update response mode");
+
+      setResponseMode(newMode);
+      toast.success(`Response mode updated to ${newMode === "mentions" ? "mentions only" : "all messages"}`);
+    } catch (error) {
+      toast.error("Failed to update response mode");
+    } finally {
+      setUpdatingResponseMode(false);
+    }
+  }
+
   const configuredChannels = tenant.slackChannels || [];
   const joinedChannels = channels.filter((channel) => channel.isMember);
   const availableChannels = channels.filter((channel) => !channel.isMember);
@@ -204,6 +233,50 @@ export default function SlackSettings({ tenant, slackConfigured }: Props) {
                   <span className="text-sm">Channels Joined:</span>
                   <span className="text-sm font-medium">{joinedChannels.length}</span>
                 </div>
+              </div>
+            </div>
+
+            {/* Response Mode Configuration */}
+            <div className="space-y-4">
+              <div className="flex items-center gap-2">
+                <Settings className="h-5 w-5 text-[#343A40]" />
+                <h3 className="font-medium text-[#343A40]">Response Behavior</h3>
+              </div>
+              <p className="text-sm text-muted-foreground">
+                Choose when the AI assistant should respond in Slack channels.
+              </p>
+              <div className="bg-gray-50 rounded-lg p-4">
+                <RadioGroup
+                  value={responseMode}
+                  onValueChange={(value: "mentions" | "all") => handleResponseModeChange(value)}
+                  disabled={updatingResponseMode}
+                  className="space-y-3"
+                >
+                  <div className="flex items-center space-x-3">
+                    <RadioGroupItem value="mentions" id="mentions" />
+                    <Label htmlFor="mentions" className="flex-1 cursor-pointer">
+                      <div className="font-medium">App mentions only</div>
+                      <div className="text-sm text-muted-foreground">
+                        Respond only when someone @mentions the bot or sends a direct message
+                      </div>
+                    </Label>
+                  </div>
+                  <div className="flex items-center space-x-3">
+                    <RadioGroupItem value="all" id="all" />
+                    <Label htmlFor="all" className="flex-1 cursor-pointer">
+                      <div className="font-medium">All messages</div>
+                      <div className="text-sm text-muted-foreground">
+                        Respond to every message in joined channels (may be very active)
+                      </div>
+                    </Label>
+                  </div>
+                </RadioGroup>
+                {updatingResponseMode && (
+                  <div className="flex items-center gap-2 mt-3 text-sm text-muted-foreground">
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Updating response behavior...
+                  </div>
+                )}
               </div>
             </div>
 

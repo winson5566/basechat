@@ -1,0 +1,1 @@
+ALTER TABLE "tenants" ADD COLUMN "slack_response_mode" text DEFAULT 'mentions';

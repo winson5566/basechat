@@ -74,6 +74,7 @@ export const updateTenantSchema = z.object({
   slackBotToken: z.string().nullable().optional(),
   slackTeamId: z.string().nullable().optional(),
   slackTeamName: z.string().nullable().optional(),
+  slackResponseMode: z.enum(["mentions", "all"]).optional(),
 });
 
 export type MemberType = "profile" | "invite";

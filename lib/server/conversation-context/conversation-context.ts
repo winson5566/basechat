@@ -1,6 +1,6 @@
 import assert from "assert";
 
-import { AllMessageEvents, GenericMessageEvent } from "@slack/web-api";
+import { AllMessageEvents, AppMentionEvent, GenericMessageEvent } from "@slack/web-api";
 import { CoreMessage } from "ai";
 import assertNever from "assert-never";
 
@@ -64,11 +64,7 @@ export default class ConversationContext {
     return this._conversation;
   }
 
-  promptSlackMessage(addedBy: typeof schema.profiles.$inferSelect, event: GenericMessageEvent) {
-    if (event.subtype !== undefined) {
-      throw new Error(`Message subtype ${event.subtype} is not supported`);
-    }
-
+  promptSlackMessage(addedBy: typeof schema.profiles.$inferSelect, event: GenericMessageEvent | AppMentionEvent) {
     return this.prompt(addedBy, event.text ?? "");
   }
 
@@ -136,13 +132,9 @@ export default class ConversationContext {
   static async fromMessageEvent(
     tenant: typeof schema.tenants.$inferSelect,
     profile: typeof schema.profiles.$inferSelect,
-    event: AllMessageEvents,
+    event: GenericMessageEvent | AppMentionEvent,
     retriever: Retriever,
   ) {
-    if (event.subtype !== undefined) {
-      throw new Error(`Message subtype ${event.subtype} is not supported`);
-    }
-
     const dao = new ConversationDAO(tenant.id);
     let conversation: typeof schema.conversations.$inferSelect | undefined;
 

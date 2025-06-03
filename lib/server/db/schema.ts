@@ -99,6 +99,7 @@ export const tenants = pgTable(
     slackBotToken: text("slack_bot_token"),
     slackTeamId: text("slack_team_id"),
     slackTeamName: text("slack_team_name"),
+    slackResponseMode: text("slack_response_mode").default("mentions").$type<"mentions" | "all">(),
     trialExpiresAt: timestamp("trial_expires_at", { withTimezone: true, mode: "date" }).notNull(),
     paidStatus: paidStatusEnum("paid_status").default("trial").notNull(),
   },

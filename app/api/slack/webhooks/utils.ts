@@ -5,6 +5,7 @@ import Handlebars from "handlebars";
 import { z } from "zod";
 
 import { auth } from "@/auth";
+import { ConversationMessageResponse } from "@/lib/server/conversation-context";
 import {
   createProfile,
   findProfileByTenantIdAndUserId,
@@ -34,12 +35,12 @@ export async function slackSignIn(teamId: string, slackUserId: string) {
   return { tenant, profile };
 }
 
-export async function shouldReplyToMessage(event: GenericMessageEvent) {
-  if (!event.text) {
+export async function shouldReplyToMessage(question?: string) {
+  if (!question) {
     console.log(`Skipping message with no text`);
     return false;
   }
-  return await isQuestion(event.text);
+  return await isQuestion(question);
 }
 
 const IS_QUESTION_PROMPT = Handlebars.compile(`Is the follow text a question?
@@ -61,4 +62,16 @@ async function isQuestion(text: string) {
     schema: isQuestionSchema,
   });
   return object.isQuestion;
+}
+
+export function formatMessageWithSources(object: ConversationMessageResponse, replyContext: ReplyContext): string {
+  let messageText = object.message;
+  if (object.usedSourceIndexes && object.usedSourceIndexes.length > 0) {
+    messageText += "\n\n📚 *Sources:*";
+    object.usedSourceIndexes.forEach((index) => {
+      const source = replyContext.sources[index];
+      messageText += `\n• <${source.source_url}|${source.documentName}>`;
+    });
+  }
+  return messageText;
 }
