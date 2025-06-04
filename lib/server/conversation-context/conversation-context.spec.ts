@@ -1,11 +1,18 @@
-import { randomUUID } from "crypto";
-
 import { GenericMessageEvent } from "@slack/web-api";
 import { and, eq } from "drizzle-orm";
-import { drizzle, NodePgDatabase } from "drizzle-orm/node-postgres";
-import pg from "pg";
+import { NodePgDatabase } from "drizzle-orm/node-postgres";
 
 import * as schema from "@/lib/server/db/schema";
+import {
+  initTestDb,
+  closeTestDb,
+  getTestDb,
+  createTestTenant,
+  createTestUser,
+  createTestProfile,
+  createTestConversation,
+  cleanupTestTenant,
+} from "@/lib/test";
 
 import ConversationContext, { Retriever } from "./conversation-context";
 import MessageDAO from "./message-dao";
@@ -21,63 +28,15 @@ class TestRetriever extends Retriever {
 }
 
 let db: NodePgDatabase<typeof schema>;
-let client: pg.Client;
 
 beforeAll(async () => {
-  client = new pg.Client({ connectionString: process.env.DATABASE_URL! });
-  await client.connect();
-  db = drizzle(client, { schema });
+  const { db: testDb } = await initTestDb();
+  db = testDb;
 });
 
 afterAll(async () => {
-  await client.end();
+  await closeTestDb();
 });
-
-async function createTestTenant(partial: Partial<typeof schema.tenants.$inferInsert> = {}) {
-  const id = randomUUID();
-  return (
-    await db
-      .insert(schema.tenants)
-      .values({
-        name: `example-${id}`,
-        slug: `example-${id}`,
-        trialExpiresAt: new Date(Date.now() + 1000 * 60 * 60 * 24 * 30),
-        ...partial,
-      })
-      .returning()
-  )[0];
-}
-
-async function createTestProfile(
-  tenant: typeof schema.tenants.$inferSelect,
-  user: typeof schema.users.$inferSelect,
-  partial: Partial<typeof schema.profiles.$inferInsert> = {},
-) {
-  const id = randomUUID();
-  return (
-    await db
-      .insert(schema.profiles)
-      .values({
-        tenantId: tenant.id,
-        userId: user.id,
-        role: "user",
-        ...partial,
-      })
-      .returning()
-  )[0];
-}
-
-async function createTestUser(partial: Partial<typeof schema.users.$inferInsert> = {}) {
-  const id = randomUUID();
-  return (
-    await db
-      .insert(schema.users)
-      .values({
-        ...partial,
-      })
-      .returning()
-  )[0];
-}
 
 function createTestEvent(event: Partial<GenericMessageEvent> = {}): GenericMessageEvent {
   return {
@@ -104,6 +63,10 @@ describe(ConversationContext, () => {
     user = await createTestUser();
     profile = await createTestProfile(tenant, user, { role: "guest" });
     retriever = new TestRetriever(tenant);
+  });
+
+  afterEach(async () => {
+    await cleanupTestTenant(tenant.id);
   });
 
   describe("fromMessageEvent", () => {
@@ -152,17 +115,10 @@ describe(ConversationContext, () => {
 
       describe("and the conversation exists", () => {
         it("should return the existing conversation", async () => {
-          const conversation = (
-            await db
-              .insert(schema.conversations)
-              .values({
-                tenantId: tenant.id,
-                profileId: profile.id,
-                title: "Slack conversation",
-                slackThreadId: "123456789.123",
-              })
-              .returning()
-          )[0];
+          const conversation = await createTestConversation(tenant, profile, {
+            title: "Slack conversation",
+            slackThreadId: "123456789.123",
+          });
 
           const event = createTestEvent({ thread_ts: "123456789.123" });
           const context = await ConversationContext.fromMessageEvent(tenant, profile, event, retriever);
@@ -176,17 +132,10 @@ describe(ConversationContext, () => {
     let conversation: typeof schema.conversations.$inferSelect;
 
     beforeEach(async () => {
-      conversation = (
-        await db
-          .insert(schema.conversations)
-          .values({
-            tenantId: tenant.id,
-            profileId: profile.id,
-            title: "Slack conversation",
-            slackThreadId: "123456789.123",
-          })
-          .returning()
-      )[0];
+      conversation = await createTestConversation(tenant, profile, {
+        title: "Slack conversation",
+        slackThreadId: "123456789.123",
+      });
     });
 
     describe("when the conversation has no messages", () => {
