@@ -77,11 +77,14 @@ async function isQuestion(text: string) {
 
 export function formatMessageWithSources(object: ConversationMessageResponse, replyContext: ReplyContext): string {
   let messageText = object.message;
+
   if (object.usedSourceIndexes && object.usedSourceIndexes.length > 0) {
     messageText += "\n\n📚 *Sources:*";
     object.usedSourceIndexes.forEach((index) => {
       const source = replyContext.sources[index];
-      messageText += `\n• <${source.source_url}|${source.documentName}>`;
+      if (source) {
+        messageText += `\n• <${source.source_url}|${source.documentName}>`;
+      }
     });
   }
   return messageText;
