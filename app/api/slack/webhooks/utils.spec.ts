@@ -1,3 +1,4 @@
+import { jest } from "@jest/globals";
 import { eq } from "drizzle-orm";
 import { NodePgDatabase } from "drizzle-orm/node-postgres";
 
@@ -12,7 +13,7 @@ import {
   cleanupTestUser,
 } from "@/lib/test";
 
-import { slackSignIn } from "./utils";
+import { slackSignIn, SlackSignInOptions } from "./utils";
 
 let db: NodePgDatabase<typeof schema>;
 
@@ -26,6 +27,26 @@ afterAll(async () => {
 });
 
 describe("slackSignIn", () => {
+  let options: SlackSignInOptions;
+
+  beforeEach(() => {
+    options = {
+      slackClientFactory: jest.fn(() => {
+        return {
+          users: {
+            info: jest.fn<() => Promise<any>>().mockResolvedValue({
+              user: {
+                id: "mock-user-id",
+                name: "mock-user",
+                real_name: "Mock User",
+              },
+            }),
+          },
+        } as any;
+      }),
+    };
+  });
+
   describe("when the team does NOT exist", () => {
     const slackTeamId = "does-not-exist";
 
@@ -63,7 +84,7 @@ describe("slackSignIn", () => {
       });
 
       it("should create a new user", async () => {
-        const result = await slackSignIn(slackTeamId, slackUserId);
+        const result = await slackSignIn(slackTeamId, slackUserId, options);
 
         await expect(db.query.users.findFirst({ where: eq(schema.users.slackUserId, slackUserId) })).resolves.toEqual(
           expect.objectContaining({
@@ -95,7 +116,7 @@ describe("slackSignIn", () => {
       });
 
       it("should return the user", async () => {
-        const result = await slackSignIn(slackTeamId, slackUserId);
+        const result = await slackSignIn(slackTeamId, slackUserId, options);
 
         expect(result).toEqual({
           tenant,

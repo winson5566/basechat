@@ -1,9 +1,13 @@
+import assert from "assert";
+
 import { openai } from "@ai-sdk/openai";
+import { WebClient } from "@slack/web-api";
 import { generateObject } from "ai";
 import Handlebars from "handlebars";
 import { z } from "zod";
 
 import { ConversationMessageResponse } from "@/lib/server/conversation-context";
+import * as schema from "@/lib/server/db/schema";
 import {
   createProfile,
   createSlackUser,
@@ -12,12 +16,27 @@ import {
   getTenantBySlackTeamId,
 } from "@/lib/server/service";
 
-export async function slackSignIn(teamId: string, slackUserId: string) {
+export function createSlackClient(tenant: typeof schema.tenants.$inferSelect) {
+  assert(tenant.slackBotToken, "Slack bot token is required");
+  return new WebClient(tenant.slackBotToken);
+}
+
+type Tenant = typeof schema.tenants.$inferSelect;
+
+export interface SlackSignInOptions {
+  slackClientFactory?: (tenant: Tenant) => WebClient;
+}
+
+export async function slackSignIn(teamId: string, slackUserId: string, options: SlackSignInOptions = {}) {
   const tenant = await getTenantBySlackTeamId(teamId);
 
   let user = await findUserBySlackUserId(slackUserId);
   if (!user) {
-    user = await createSlackUser(slackUserId);
+    const factory = options.slackClientFactory ?? createSlackClient;
+    const client = factory(tenant);
+    const userInfo = await client.users.info({ user: slackUserId });
+    assert(userInfo.user, "User info is required");
+    user = await createSlackUser(slackUserId, userInfo.user);
   }
 
   let profile = await findProfileByTenantIdAndUserId(tenant.id, user.id);

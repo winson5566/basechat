@@ -1,6 +1,7 @@
 import assert from "assert";
 
 import { render } from "@react-email/components";
+import { User as SlackUser } from "@slack/web-api/dist/types/response/UsersInfoResponse";
 import { asc, and, eq, ne, sql, inArray } from "drizzle-orm";
 import { union } from "drizzle-orm/pg-core";
 import nodemailer from "nodemailer";
@@ -645,8 +646,8 @@ export async function updateTenantPaidStatus(tenantId: string, paidStatus: "tria
   await db.update(schema.tenants).set({ paidStatus }).where(eq(schema.tenants.id, tenantId));
 }
 
-export async function createSlackUser(slackUserId: string) {
-  const rs = await db.insert(schema.users).values({ slackUserId }).returning();
+export async function createSlackUser(slackUserId: string, slackUser: SlackUser) {
+  const rs = await db.insert(schema.users).values({ slackUserId, slackUser: slackUser }).returning();
   assert(rs.length === 1, "expect single record");
   return rs[0];
 }

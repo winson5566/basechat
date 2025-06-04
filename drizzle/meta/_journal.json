@@ -316,6 +316,20 @@
       "when": 1749044068752,
       "tag": "0044_fixed_microbe",
       "breakpoints": true
+    },
+    {
+      "idx": 45,
+      "version": "7",
+      "when": 1749052415408,
+      "tag": "0045_chief_the_executioner",
+      "breakpoints": true
+    },
+    {
+      "idx": 46,
+      "version": "7",
+      "when": 1749053098027,
+      "tag": "0046_aberrant_kree",
+      "breakpoints": true
     }
   ]
 }

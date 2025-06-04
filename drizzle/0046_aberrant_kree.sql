@@ -1,0 +1,1 @@
+ALTER TABLE "users" RENAME COLUMN "slack_user_info" TO "slack_user";

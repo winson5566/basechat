@@ -170,7 +170,8 @@ export const users = pgTable("users", {
   email: text("email").unique(),
   isAnonymous: boolean("is_anonymous").notNull().default(false),
   emailVerified: boolean("email_verified").notNull().default(false),
-  slackUserId: text("slack_user_id"),
+  slackUserId: text("slack_user_id").unique(),
+  slackUser: json("slack_user"),
   image: text("image"),
   currentProfileId: uuid("current_profile_id").references((): AnyPgColumn => profiles.id, { onDelete: "set null" }),
 });

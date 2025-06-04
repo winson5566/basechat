@@ -27,6 +27,7 @@ export async function GET(request: NextRequest) {
     "mpim:read",
     "reactions:read",
     "reactions:write",
+    "users:read",
   ].join(",");
 
   const authUrl = new URL("https://slack.com/oauth/v2/authorize");

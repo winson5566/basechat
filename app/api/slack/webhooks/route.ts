@@ -15,9 +15,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 import {
   ConversationContext,
-  ConversationMessageResponse,
   MessageDAO,
-  ReplyContext,
   ReplyGenerator,
   Retriever,
   generatorFactory,
@@ -100,6 +98,11 @@ async function _handleMessage(event: AppMentionEvent | GenericMessageEvent) {
 
   if (!event.user) {
     throw new Error("No user ID found in app mention event");
+  }
+
+  if (event.bot_id) {
+    console.log(`Skipping message from bot: ${event.bot_id}`);
+    return;
   }
 
   const { tenant, profile } = await slackSignIn(event.team, event.user);
