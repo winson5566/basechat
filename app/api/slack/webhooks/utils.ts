@@ -6,7 +6,7 @@ import { generateObject } from "ai";
 import Handlebars from "handlebars";
 import { z } from "zod";
 
-import { ConversationMessageResponse } from "@/lib/server/conversation-context";
+import { ConversationMessageResponse, ReplyContext } from "@/lib/server/conversation-context";
 import * as schema from "@/lib/server/db/schema";
 import {
   createProfile,
