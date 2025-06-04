@@ -4,14 +4,31 @@ import Orb from "orb-billing";
 
 import { TenantPlan, TenantMetadata } from "@/lib/billing/tenant";
 import { getPlanIdFromType, getPlanTypeFromId } from "@/lib/orb";
+import { PLANS, PlanType, SEAT_ADD_ON_NAME } from "@/lib/orb-types";
 import db from "@/lib/server/db";
 import * as schema from "@/lib/server/db/schema";
+import { getRagieClientAndPartition } from "@/lib/server/ragie";
 import { getTenantByTenantId } from "@/lib/server/service";
 import { ORB_WEBHOOK_SECRET, ORB_API_KEY } from "@/lib/server/settings";
 
 const orb = new Orb({
   apiKey: ORB_API_KEY,
 });
+
+interface Price {
+  id: string;
+  name: string;
+}
+
+interface FixedFeeQuantityTransition {
+  price_id: string;
+  quantity: number;
+  effective_date: string;
+}
+
+interface PriceInterval {
+  fixed_fee_quantity_transitions?: FixedFeeQuantityTransition[];
+}
 
 interface OrbWebhookPayload {
   type: string;
@@ -29,8 +46,10 @@ interface OrbWebhookPayload {
     };
     plan: {
       id: string;
+      prices: Price[];
     };
     quantity: number;
+    price_intervals: PriceInterval[];
   };
 }
 
@@ -104,7 +123,13 @@ async function handleSubscriptionStarted(tenantId: string, payload: OrbWebhookPa
   const existingPlans = existingMetadata.plans || [];
   const existingPaidStatus = tenant.paidStatus;
 
-  // Update tenant metadata with new subscription info
+  const planSeatPrice = payload.subscription.plan.prices.find((p: any) => p.name === SEAT_ADD_ON_NAME);
+
+  const quantity = payload.subscription.price_intervals
+    .flatMap((interval: any) => interval.fixed_fee_quantity_transitions || [])
+    .filter((t: any) => t.price_id === planSeatPrice?.id)
+    .sort((a: any, b: any) => new Date(b.effective_date).getTime() - new Date(a.effective_date).getTime())[0]?.quantity;
+
   await db
     .update(schema.tenants)
     .set({
@@ -123,7 +148,7 @@ async function handleSubscriptionStarted(tenantId: string, payload: OrbWebhookPa
             startedAt: new Date(payload.subscription.start_date),
             endedAt: null,
             tier: payload.subscription.plan.id,
-            seats: payload.subscription.quantity,
+            seats: quantity,
           },
         ],
       },
@@ -137,6 +162,15 @@ async function handlePlanChanged(tenantId: string, payload: OrbWebhookPayload) {
   const tenant = await getTenantByTenantId(tenantId);
   const existingMetadata = (tenant.metadata || {}) as TenantMetadata;
   const existingPlans = existingMetadata.plans || [];
+  const existingPaidStatus = tenant.paidStatus;
+  const planSeatPrice = payload.subscription.plan.prices.find((p: any) => p.name === SEAT_ADD_ON_NAME);
+
+  const newPlanType = getPlanTypeFromId(payload.subscription.plan.id);
+
+  const quantity = payload.subscription.price_intervals
+    .flatMap((interval: any) => interval.fixed_fee_quantity_transitions || [])
+    .filter((t: any) => t.price_id === planSeatPrice?.id)
+    .sort((a: any, b: any) => new Date(b.effective_date).getTime() - new Date(a.effective_date).getTime())[0]?.quantity;
 
   await db
     .update(schema.tenants)
@@ -152,16 +186,34 @@ async function handlePlanChanged(tenantId: string, payload: OrbWebhookPayload) {
           })),
           {
             id: payload.subscription.id,
-            name: getPlanTypeFromId(payload.subscription.plan.id) || "developer",
+            name: newPlanType || "developer",
             startedAt: new Date(payload.subscription.start_date),
             endedAt: null,
             tier: payload.subscription.plan.id,
-            seats: payload.subscription.quantity,
+            seats: quantity,
           },
         ],
       },
+      paidStatus: payload.subscription.plan.id === getPlanIdFromType("developer") ? existingPaidStatus : "active",
     })
     .where(eq(schema.tenants.id, tenantId));
+
+  if (newPlanType) {
+    const newPartitionLimit = PLANS[newPlanType as PlanType].partitionLimit;
+    const { client, partition } = await getRagieClientAndPartition(tenantId);
+    await client.partitions.setLimits({
+      partitionId: partition,
+      partitionLimitParams: {
+        pagesProcessedLimitMax: newPartitionLimit,
+      },
+    });
+    await db
+      .update(schema.tenants)
+      .set({
+        partitionLimitExceededAt: null,
+      })
+      .where(eq(schema.tenants.id, tenantId));
+  }
 }
 
 async function handleFixedFeeQuantityUpdated(tenantId: string, payload: OrbWebhookPayload) {
@@ -171,21 +223,35 @@ async function handleFixedFeeQuantityUpdated(tenantId: string, payload: OrbWebho
   const existingMetadata = (tenant.metadata || {}) as TenantMetadata;
   const existingPlans = existingMetadata.plans || [];
 
+  const planSeatPrice = payload.subscription.plan.prices.find((p: any) => p.name === SEAT_ADD_ON_NAME);
+
+  const quantity = payload.subscription.price_intervals
+    .flatMap((interval: any) => interval.fixed_fee_quantity_transitions || [])
+    .filter((t: any) => t.price_id === planSeatPrice?.id)
+    .sort((a: any, b: any) => new Date(b.effective_date).getTime() - new Date(a.effective_date).getTime())[0]?.quantity;
+
   // Update seats in current plan
   await db
     .update(schema.tenants)
     .set({
       metadata: {
-        ...existingMetadata,
-        plans: existingPlans.map((plan: TenantPlan) => {
-          if (plan.id === payload.subscription.id) {
-            return {
-              ...plan,
-              seats: payload.subscription.quantity,
-            };
-          }
-          return plan;
-        }),
+        stripeCustomerId: existingMetadata.stripeCustomerId,
+        orbSubscriptionId: existingMetadata.orbSubscriptionId,
+        orbCustomerId: existingMetadata.orbCustomerId,
+        plans: [
+          ...existingPlans.map((plan: TenantPlan) => ({
+            ...plan,
+            endedAt: plan.endedAt ? plan.endedAt : new Date(),
+          })),
+          {
+            id: payload.subscription.id,
+            name: getPlanTypeFromId(payload.subscription.plan.id) || "developer",
+            startedAt: new Date(payload.subscription.start_date),
+            endedAt: null,
+            tier: payload.subscription.plan.id,
+            seats: quantity,
+          },
+        ],
       },
     })
     .where(eq(schema.tenants.id, tenantId));

@@ -7,6 +7,7 @@ import { getCurrentPlan } from "@/lib/billing/tenant";
 import { getSubscriptions } from "@/lib/orb";
 import { provisionBillingCustomer } from "@/lib/server/billing";
 import { getRagieClientAndPartition } from "@/lib/server/ragie";
+import { getMembersByTenantId } from "@/lib/server/service";
 import { BILLING_ENABLED, DEFAULT_PARTITION_LIMIT } from "@/lib/server/settings";
 import { adminOrRedirect } from "@/lib/server/utils";
 import { getStripeCustomerDefaultPaymentMethod } from "@/lib/stripe";
@@ -92,12 +93,16 @@ export default async function BillingSettingsPage({ params }: Props) {
   const overdueInvoice = getOverdueInvoice(invoices);
   const nextPaymentDate = getNextPaymentDate(invoices);
 
+  const { totalUsers, totalInvites } = await getMembersByTenantId(tenant.id, 1, 10);
+  const userCount = Number(totalUsers) + Number(totalInvites);
+
   return (
     <div className="flex justify-center overflow-auto w-full">
       <div className="max-w-[1140px] w-full p-4 flex-grow flex">
         <SettingsNav tenant={tenant} billingEnabled={BILLING_ENABLED} />
         <BillingSettings
           tenant={{
+            id: tenant.id,
             slug: tenant.slug,
             partitionLimitExceededAt: tenant.partitionLimitExceededAt,
             paidStatus: tenant.paidStatus,
@@ -113,6 +118,7 @@ export default async function BillingSettingsPage({ params }: Props) {
             currentPlan,
             invoices,
             subscriptions,
+            userCount,
           }}
         />
       </div>

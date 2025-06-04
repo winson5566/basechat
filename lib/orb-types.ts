@@ -1,8 +1,6 @@
 import Orb from "orb-billing";
 import { z } from "zod";
 
-export const ACTIVE_SUBSCRIPTION_STATUS: String[] = ["active", "upcoming"];
-
 export const tierSchema = z.union([
   z.literal("developer"),
   z.literal("starter"),
@@ -94,68 +92,6 @@ export const TIER_UPGRADE_PATH = ["developer", "starter", "pro", "enterprise"] a
 export const SEAT_ADD_ON_NAME = "Seat license";
 export const SEAT_COST = 18;
 
-export enum InternalTier {
-  DEVELOPER_FREE = "developer-free", // Default free plan, new customers get this
-  DEVELOPER = "developer",
-  STARTER = "starter",
-  PRO = "pro",
-  PRO_FREE = "pro-dev", // Free plan
-  ENTERPRISE = "enterprise",
-}
-
-export const INTERNAL_TIERS = [
-  InternalTier.DEVELOPER_FREE.valueOf(),
-  InternalTier.DEVELOPER.valueOf(),
-  InternalTier.PRO.valueOf(),
-  InternalTier.STARTER.valueOf(),
-  InternalTier.PRO_FREE.valueOf(),
-  InternalTier.ENTERPRISE.valueOf(),
-];
-
-export const TIERS = [
-  InternalTier.DEVELOPER.valueOf(),
-  InternalTier.STARTER.valueOf(),
-  InternalTier.PRO.valueOf(),
-  InternalTier.ENTERPRISE.valueOf(),
-];
-
-export type SubscriptionStatus = "active" | "trial" | "upcoming";
-
-export function isTier(value: string): value is Tier {
-  return TIERS.includes(value);
-}
-
-export function isInternalTier(value: string): value is InternalTier {
-  return INTERNAL_TIERS.includes(value);
-}
-
-export function internalTierToPublic(tier: InternalTier): Tier {
-  switch (tier) {
-    case InternalTier.DEVELOPER:
-      return InternalTier.DEVELOPER;
-    case InternalTier.DEVELOPER_FREE:
-      return InternalTier.DEVELOPER;
-    // TODO update once changed
-    case InternalTier.STARTER:
-      return InternalTier.STARTER;
-    case InternalTier.ENTERPRISE:
-      return InternalTier.ENTERPRISE;
-    case InternalTier.PRO:
-      return InternalTier.PRO;
-    case InternalTier.PRO_FREE:
-      return InternalTier.PRO;
-  }
-}
-
-// export type BillingCycle =
-//     | "monthly"
-//     | "one_time"
-//     | "quarterly"
-//     | "annual"
-//     | "custom"
-//     | "semi_annual";
-export type SubscriptionCancelOption = "end_of_subscription_term" | "immediate" | "requested_date";
-
 export type SeatChangePreview = {
   immediateInvoice: Orb.Invoices.Invoice | null;
   upcomingInvoice: Orb.Invoices.Invoice | null;
@@ -163,9 +99,6 @@ export type SeatChangePreview = {
   immediateSeatCharge: number;
   upcomingSeatCharge: number;
   daysLeftInCurrentBillingCycle: number;
-  isFreeSeatsTier: boolean;
-  hasFreeSeats: boolean;
-  isSalesAssisted: boolean;
   allowedSeatCount: number;
   availableSeatCount: number;
 };

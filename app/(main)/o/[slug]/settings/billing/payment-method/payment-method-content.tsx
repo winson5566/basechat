@@ -130,9 +130,18 @@ export default function PaymentMethodContent({
           <div className="flex flex-col gap-4">
             <Skeleton className="h-[40px] w-[500px]" />
             <Skeleton className="h-[40px] w-[500px]" />
+            <Skeleton className="h-[40px] w-[500px]" />
+            <div className="my-16" />
           </div>
         )}
       </div>
+      <div className="my-16" />
+      <div className="my-16" />
+      <div className="my-16" />
+      <div className="my-16" />
+      <div className="my-16" />
+      <div className="my-16" />
+      <div className="my-16" />
     </div>
   );
 }

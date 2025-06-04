@@ -35,10 +35,12 @@ type BillingData = {
   currentPlan: any; // TODO: Add proper type
   invoices: Orb.Invoice[];
   subscriptions: any[]; // TODO: Add proper type
+  userCount: number;
 };
 
 type Props = {
   tenant: {
+    id: string;
     slug: string;
     partitionLimitExceededAt: Date | null;
     paidStatus: string;

@@ -1,7 +1,7 @@
 "use client";
 
 import { PaymentElement, useElements, useStripe } from "@stripe/react-stripe-js";
-import { format, isBefore, isEqual } from "date-fns";
+import { format, isBefore, isEqual, isAfter } from "date-fns";
 import { useRouter } from "next/navigation";
 import { FormEvent, useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -246,17 +246,22 @@ export function UpgradePlanContentInner({
   const dueInvoice = previewInvoices.find(
     (invoice) =>
       invoice.due_date &&
-      (isEqual(new Date(invoice.due_date), serverStartOfDay) || isBefore(new Date(invoice.due_date), serverStartOfDay)), // TODO: i removed check for parseFloat(invoice.total) > 0
+      (isEqual(new Date(invoice.due_date), serverStartOfDay) ||
+        isBefore(new Date(invoice.due_date), serverStartOfDay)) &&
+      parseFloat(invoice.total) > 0,
   );
   const nextInvoice = previewInvoices.reduce<(typeof previewInvoices)[0] | null>((acc, invoice) => {
-    if (invoice.due_date && invoice.line_items.some((li) => li.price?.name === SEAT_ADD_ON_NAME)) {
+    if (
+      invoice.due_date &&
+      isAfter(new Date(invoice.due_date), serverStartOfDay) &&
+      invoice.line_items.some((li) => li.price?.name === SEAT_ADD_ON_NAME)
+    ) {
       if (!acc || (acc.due_date && isBefore(new Date(invoice.due_date), new Date(acc.due_date)))) {
         return invoice;
       }
     }
     return acc;
   }, null);
-  // TODO: NO NEXT INVOICE, what is the deal with due_date, when do we create invoices?
 
   if (!dueInvoice || !nextInvoice) {
     return (
@@ -345,7 +350,7 @@ export function UpgradePlanContentInner({
 
         {currentSeatCount > 0 && (
           <div className="text-sm flex justify-between mt-4">
-            <span>Embedded Connectors ({currentSeatCount})</span>
+            <span>Seats ({currentSeatCount})</span>
             <span>{currencyFormatter.format(seatMonthlyCost)} /month</span>
           </div>
         )}

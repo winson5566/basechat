@@ -100,7 +100,7 @@ export const tenants = pgTable(
         endedAt: Date | null;
         startedAt: Date;
         tier: string; // orb plan id
-        seats: number; // TODO: right now not in DB
+        seats: number;
       }>;
     }>(),
     trialExpiresAt: timestamp("trial_expires_at", { withTimezone: true, mode: "date" }).notNull(),

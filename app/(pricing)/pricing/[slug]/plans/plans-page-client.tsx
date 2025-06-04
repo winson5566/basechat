@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { getCurrentPlan, TenantMetadata } from "@/lib/billing/tenant";
 import { PLANS, PlanType, TIER_UPGRADE_PATH, TIER_COLORS, Tier } from "@/lib/orb-types";
 import { getDataPath } from "@/lib/paths";
+import { capitalizeFirstLetter } from "@/lib/utils";
 
 interface PlansPageContentProps {
   tenant: {
@@ -24,6 +25,7 @@ interface PlansPageContentProps {
       }>;
     };
   };
+  userCount: number;
 }
 
 function TierFeatureContent({ check, text }: { check: boolean; text: React.ReactNode | string | undefined }) {
@@ -35,7 +37,7 @@ function TierFeatureContent({ check, text }: { check: boolean; text: React.React
   );
 }
 
-function FeatureItem({ tier }: { tier: Tier }) {
+function FeatureItem() {
   return (
     <tr>
       <th scope="row" className="border-b py-3 font-normal leading-6 text-muted-foreground">
@@ -57,11 +59,20 @@ function FeatureItem({ tier }: { tier: Tier }) {
   );
 }
 
-export default function PlansPageContent({ tenant }: PlansPageContentProps) {
+export default function PlansPageContent({ tenant, userCount }: PlansPageContentProps) {
   const router = useRouter();
   // Get the current active plan
   const currentPlan = getCurrentPlan(tenant.metadata as TenantMetadata);
-  const currentPlanType = currentPlan?.name;
+  // If no current plan, treat as developer plan
+  const currentPlanType = currentPlan?.name || "developer";
+  const effectivePlan = currentPlan || {
+    name: "developer",
+    seats: userCount,
+    startedAt: new Date(),
+    endedAt: null,
+    tier: "developer",
+    id: "developer-fallback",
+  };
 
   // Determine if tenant is in trial
   const isInTrial = tenant.paidStatus === "trial" || tenant.paidStatus === "legacy";
@@ -77,12 +88,13 @@ export default function PlansPageContent({ tenant }: PlansPageContentProps) {
       {/* Current Plan Section */}
       <div className="mb-8 p-4 border rounded-lg">
         <h2 className="text-xl font-semibold mb-2">Current Plan</h2>
-        {currentPlan ? (
+        {effectivePlan ? (
           <div className="space-y-2">
             <p className="text-gray-600">
-              You are currently on the {currentPlanType} plan with {currentPlan.seats} seats
+              You are currently on the {capitalizeFirstLetter(currentPlanType)} plan with {effectivePlan.seats} seat
+              {effectivePlan.seats !== 1 ? "s" : ""}
             </p>
-            <p className="text-sm text-gray-500">Started on {new Date(currentPlan.startedAt).toLocaleDateString()}</p>
+            <p className="text-sm text-gray-500">Started on {new Date(effectivePlan.startedAt).toLocaleDateString()}</p>
           </div>
         ) : isInTrial ? (
           <div className="space-y-2">
@@ -111,17 +123,19 @@ export default function PlansPageContent({ tenant }: PlansPageContentProps) {
               <thead>
                 <tr>
                   <td />
-                  {TIER_UPGRADE_PATH.map((tierId) => {
-                    const plan = PLANS[tierId as PlanType];
-                    return (
-                      <th key={tierId} scope="col" className="pt-6 xl:pt-8">
-                        <h2 className="font-medium pb-0 text-2xl" style={{ color: TIER_COLORS[tierId] }}>
-                          {plan ? plan.displayName : "Enterprise"}
-                        </h2>
-                        <div className="h-0.5 mt-5" style={{ background: TIER_COLORS[tierId] }} />
-                      </th>
-                    );
-                  })}
+                  {TIER_UPGRADE_PATH.filter((tierId) => tierId === "developer" || currentPlanType !== "developer").map(
+                    (tierId) => {
+                      const plan = PLANS[tierId as PlanType];
+                      return (
+                        <th key={tierId} scope="col" className="pt-6 xl:pt-8">
+                          <h2 className="font-medium pb-0 text-2xl" style={{ color: TIER_COLORS[tierId] }}>
+                            {tierId === "developer" ? "Free Trial" : plan ? plan.displayName : "Enterprise"}
+                          </h2>
+                          <div className="h-0.5 mt-5" style={{ background: TIER_COLORS[tierId] }} />
+                        </th>
+                      );
+                    },
+                  )}
                 </tr>
               </thead>
 
@@ -131,51 +145,65 @@ export default function PlansPageContent({ tenant }: PlansPageContentProps) {
                     <span className="sr-only">Price</span>
                   </th>
 
-                  {TIER_UPGRADE_PATH.map((tierId) => {
-                    const plan = PLANS[tierId as PlanType];
-                    const isEnterprise = tierId === "enterprise";
+                  {TIER_UPGRADE_PATH.filter((tierId) => tierId === "developer" || currentPlanType !== "developer").map(
+                    (tierId) => {
+                      const plan = PLANS[tierId as PlanType];
+                      const isEnterprise = tierId === "enterprise";
 
-                    return (
-                      <td key={tierId} className="pt-2 align-top">
-                        <div className="flex h-full flex-col gap-6">
-                          <p className="text-xs">
-                            {PLANS[tierId as PlanType]?.description || "Custom enterprise solutions"}
-                          </p>
+                      return (
+                        <td key={tierId} className="pt-2 align-top">
+                          <div className="flex h-full flex-col gap-6">
+                            <p className="text-xs">
+                              {tierId === "developer"
+                                ? "2-week free trial to explore Base Chat"
+                                : PLANS[tierId as PlanType]?.description || "Custom enterprise solutions"}
+                            </p>
 
-                          {/* Price Display */}
-                          <div className="flex items-baseline gap-x-1">
-                            {isEnterprise ? (
-                              <span className="text-xl">Custom pricing</span>
-                            ) : (
-                              <>
-                                <span className="text-2xl font-bold">${plan.price}</span>
-                                <span className="text-muted-foreground">/ month</span>
-                              </>
-                            )}
-                          </div>
+                            {/* Price Display */}
+                            <div className="flex items-baseline gap-x-1">
+                              {isEnterprise ? (
+                                <span className="text-xl">Custom pricing</span>
+                              ) : (
+                                <>
+                                  <span className="text-2xl font-bold">${plan.price}</span>
+                                  <span className="text-muted-foreground">/ month</span>
+                                </>
+                              )}
+                            </div>
 
-                          {/* Action Button */}
-                          <Button
-                            className="w-full"
-                            style={{
-                              backgroundColor: currentPlanType === tierId ? "#9CA3AF" : TIER_COLORS[tierId],
-                              color: "white",
-                            }}
-                            disabled={currentPlanType === tierId}
-                            onClick={() => {
-                              if (isEnterprise) {
-                                window.location.href = "mailto:support@ragie.ai?subject=Enterprise%20Plan%20Inquiry";
-                              } else {
-                                router.push(`/pricing/${tenant.slug}/plan-change?plan-type=${tierId}`);
+                            {/* Action Button */}
+                            <Button
+                              className="w-full"
+                              style={{
+                                backgroundColor: currentPlanType === tierId ? "#9CA3AF" : TIER_COLORS[tierId],
+                                color: "white",
+                              }}
+                              disabled={
+                                currentPlanType === tierId ||
+                                (tierId === "developer" && currentPlanType !== "developer")
                               }
-                            }}
-                          >
-                            {currentPlanType === tierId ? "Current Plan" : isEnterprise ? "Contact Sales" : "Upgrade"}
-                          </Button>
-                        </div>
-                      </td>
-                    );
-                  })}
+                              onClick={() => {
+                                if (isEnterprise) {
+                                  window.location.href = "mailto:support@ragie.ai?subject=Enterprise%20Plan%20Inquiry";
+                                } else {
+                                  router.push(`/pricing/${tenant.slug}/plan-change?plan-type=${tierId}`);
+                                }
+                              }}
+                            >
+                              {currentPlanType === tierId
+                                ? "Current Plan"
+                                : isEnterprise
+                                  ? "Contact Sales"
+                                  : TIER_UPGRADE_PATH.indexOf(tierId) <
+                                      TIER_UPGRADE_PATH.indexOf(currentPlanType as Tier)
+                                    ? "Downgrade"
+                                    : "Upgrade"}
+                            </Button>
+                          </div>
+                        </td>
+                      );
+                    },
+                  )}
                 </tr>
 
                 <tr>
@@ -185,7 +213,7 @@ export default function PlansPageContent({ tenant }: PlansPageContentProps) {
                 </tr>
 
                 {/* Feature Sections */}
-                <FeatureItem tier="developer" />
+                <FeatureItem />
               </tbody>
             </table>
           </div>

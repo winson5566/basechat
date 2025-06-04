@@ -90,6 +90,7 @@ export default async function UpgradePlan({ searchParams, params }: Props) {
       })),
     }),
   );
+
   const previewCreditNotes = ((changePreview as any)?.changed_resources?.created_credit_notes || []).map(
     (note: CreditNote) => ({
       total: note.total,

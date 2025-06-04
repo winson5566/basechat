@@ -3,9 +3,11 @@ import Orb from "orb-billing";
 import Stripe from "stripe";
 
 import { TenantMetadata } from "@/lib/billing/tenant";
+import { getPlanById, getPlanSeatId } from "@/lib/orb";
 
 import db from "./db";
 import * as schema from "./db/schema";
+import { getMembersByTenantId } from "./service";
 import { STRIPE_SECRET_KEY, ORB_API_KEY, ORB_DEVELOPER_PLAN_ID } from "./settings";
 
 const stripe = new Stripe(STRIPE_SECRET_KEY, { typescript: true });
@@ -14,8 +16,7 @@ const orb = new Orb({
   apiKey: ORB_API_KEY,
 });
 
-// Helper function to get existing metadata
-async function getExistingMetadata(tenantId: string): Promise<TenantMetadata> {
+export async function getExistingMetadata(tenantId: string): Promise<TenantMetadata> {
   const tenant = await db
     .select({ metadata: schema.tenants.metadata })
     .from(schema.tenants)
@@ -81,13 +82,21 @@ export async function provisionBillingCustomer(tenantId: string, userFullName: s
       payment_provider_id: stripeCustomerId,
     });
 
-    // TODO: what are we doing here, do we need to deal with seats?
     // Subscribe to Developer plan if no subscription exists
     let orbSubscriptionId = existingMetadata.orbSubscriptionId;
     if (!orbSubscriptionId) {
+      const seatPriceId = getPlanSeatId(await getPlanById(ORB_DEVELOPER_PLAN_ID));
+      const { totalUsers, totalInvites } = await getMembersByTenantId(tenantId, 1, 10);
+      const usedSeatCount = Number(totalUsers) + Number(totalInvites);
       const orbSubscription = await orb.subscriptions.create({
         customer_id: orbCustomerId,
         plan_id: ORB_DEVELOPER_PLAN_ID,
+        replace_prices: [
+          {
+            replaces_price_id: seatPriceId,
+            fixed_price_quantity: usedSeatCount,
+          },
+        ],
       });
       orbSubscriptionId = orbSubscription.id;
     }

@@ -3,6 +3,8 @@ import { Stripe } from "stripe";
 import { STRIPE_SECRET_KEY } from "./server/settings";
 
 // TODO: figure out why api key not coming from env
+// https://github.com/stripe/stripe-node/issues/2207
+// https://stackoverflow.com/questions/79086035/firebase-deploy-error-neither-apikey-nor-config-authenticator-provided-using-s
 const stripe = new Stripe(STRIPE_SECRET_KEY);
 
 export async function getStripeCustomer(customerId: string): Promise<Stripe.Customer | Stripe.DeletedCustomer> {

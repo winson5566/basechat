@@ -4,7 +4,11 @@ import { format } from "date-fns";
 import { CreditCard, History, Users, Settings, ChevronRight } from "lucide-react";
 import Link from "next/link";
 import Orb from "orb-billing";
+import React from "react";
+import { toast } from "sonner";
+import Stripe from "stripe";
 
+import { ManageSeatsDialog } from "@/components/billing/manage-seats-dialog";
 import PaymentMethod from "@/components/billing/payment-method";
 import { Card } from "@/components/ui/card";
 import { PLANS } from "@/lib/orb-types";
@@ -15,12 +19,7 @@ type BillingData = {
   nextPaymentDate: string | null;
   defaultPaymentMethod: {
     id: string;
-    card: {
-      brand: string;
-      last4: string;
-      exp_month: number;
-      exp_year: number;
-    } | null;
+    card: Stripe.PaymentMethod.Card | null;
     billing_details: any;
     created: number;
     type: string;
@@ -36,13 +35,17 @@ type BillingData = {
   invoices: Orb.Invoices.Invoice[];
   subscriptions: any[]; // TODO: Add proper type
   stripeCustomerId?: string;
+  userCount: number;
 };
 
 interface BillingInformationProps {
   billingData: BillingData;
   billingPath: string;
   pricingPlansPath: string;
-  tenant: { slug: string };
+  tenant: {
+    id: string;
+    slug: string;
+  };
 }
 
 interface BillingCardProps {
@@ -114,7 +117,27 @@ export function BillingInformation({ billingData, billingPath, pricingPlansPath,
   const planType = currentPlan.name as keyof typeof PLANS;
   const planConfig = PLANS[planType];
   const totalSeats = currentPlan.seats ?? 0;
-  const usedSeats = 0; // TODO: Get actual used seats count
+  const usedSeats = billingData.userCount;
+
+  const [manageSeatsOpen, setManageSeatsOpen] = React.useState(false);
+  const handleSaveSeats = async (newSeats: number) => {
+    try {
+      const response = await fetch(`/api/billing/update-seats`, {
+        method: "POST",
+        body: JSON.stringify({ seats: newSeats }),
+        headers: { tenant: tenant.slug },
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to update seats");
+      }
+
+      toast.success("Successfully updated team seats");
+    } catch (error) {
+      toast.error("Failed to update team seats");
+      console.error("Error updating seats:", error);
+    }
+  };
 
   if (!planConfig) {
     console.error("Plan configuration not found for plan:", currentPlan);
@@ -143,11 +166,27 @@ export function BillingInformation({ billingData, billingPath, pricingPlansPath,
           <div className="mt-4">
             <div className="text-sm font-medium text-muted-foreground">Seats</div>
             <div className="mt-1 text-2xl font-semibold">
-              {usedSeats} / {totalSeats}
+              <span className={usedSeats > totalSeats ? "text-red-600" : undefined}>
+                {usedSeats} / {totalSeats}
+              </span>
             </div>
           </div>
-          {/* TODO: manage seats page (modal?) */}
-          <BillingCardLink href={`${billingPath}/seats`}>Manage Team</BillingCardLink>
+          <button
+            type="button"
+            className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors mt-4"
+            onClick={() => setManageSeatsOpen(true)}
+          >
+            Manage Team
+            <ChevronRight className="h-4 w-4" />
+          </button>
+          <ManageSeatsDialog
+            open={manageSeatsOpen}
+            onOpenChange={setManageSeatsOpen}
+            currentSeats={totalSeats}
+            userCount={usedSeats}
+            onSave={handleSaveSeats}
+            tenantId={tenant.id}
+          />
         </BillingCard>
 
         <BillingCard
