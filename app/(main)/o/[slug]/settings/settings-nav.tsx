@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { ReactNode } from "react";
 
 import {
+  getBillingSettingsPath,
   getModelSettingsPath,
   getPromptSettingsPath,
   getSettingsPath,
@@ -19,7 +20,7 @@ const NavItem = ({ children, selected }: { children: ReactNode; selected?: boole
   <div className={cn("px-3 py-2 rounded-lg", selected ? "bg-[#F5F5F7] font-semibold" : "")}>{children}</div>
 );
 
-function getAppLocation(path: string, slug: string): AppLocation {
+function getAppLocation(path: string, slug: string, billingEnabled: boolean): AppLocation {
   if (path.startsWith(getUserSettingsPath(slug))) {
     return AppLocation.SETTINGS_USERS;
   }
@@ -32,16 +33,20 @@ function getAppLocation(path: string, slug: string): AppLocation {
   if (path.startsWith(getSlackSettingsPath(slug))) {
     return AppLocation.SETTINGS_SLACK;
   }
+  if (billingEnabled && path.startsWith(getBillingSettingsPath(slug))) {
+    return AppLocation.SETTINGS_BILLING;
+  }
   return AppLocation.SETTINGS;
 }
 
 interface Props {
   tenant: { slug: string };
+  billingEnabled: boolean;
 }
 
-export default function SettingsNav({ tenant }: Props) {
+export default function SettingsNav({ tenant, billingEnabled }: Props) {
   const pathname = usePathname();
-  const appLocation = getAppLocation(pathname, tenant.slug);
+  const appLocation = getAppLocation(pathname, tenant.slug, billingEnabled);
 
   return (
     <div className="w-[233px] flex flex-col pr-16">
@@ -60,6 +65,11 @@ export default function SettingsNav({ tenant }: Props) {
       <Link href={getSlackSettingsPath(tenant.slug)}>
         <NavItem selected={appLocation === AppLocation.SETTINGS_SLACK}>Slack</NavItem>
       </Link>
+      {billingEnabled && (
+        <Link href={getBillingSettingsPath(tenant.slug)}>
+          <NavItem selected={appLocation === AppLocation.SETTINGS_BILLING}>Billing</NavItem>
+        </Link>
+      )}
     </div>
   );
 }

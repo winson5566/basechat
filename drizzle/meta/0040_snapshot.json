@@ -1,6 +1,6 @@
 {
-  "id": "f9557c79-3a62-43bd-b8cf-033bfc0d23fb",
-  "prevId": "8bf1bf20-ba18-474c-9c76-128632ca4176",
+  "id": "93028d8a-28b3-473d-a055-10556ad13383",
+  "prevId": "062f1249-ca85-455f-8448-9a10191016a2",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -356,6 +356,18 @@
           "type": "text",
           "primaryKey": false,
           "notNull": true
+        },
+        "slack_thread_id": {
+          "name": "slack_thread_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "slack_event": {
+          "name": "slack_event",
+          "type": "json",
+          "primaryKey": false,
+          "notNull": false
         }
       },
       "indexes": {
@@ -580,6 +592,12 @@
           "type": "json",
           "primaryKey": false,
           "notNull": true
+        },
+        "slack_event": {
+          "name": "slack_event",
+          "type": "json",
+          "primaryKey": false,
+          "notNull": false
         },
         "model": {
           "name": "model",
@@ -1046,17 +1064,12 @@
           "notNull": false,
           "default": false
         },
-        "slack_webhook_url": {
-          "name": "slack_webhook_url",
-          "type": "text",
+        "slack_channels": {
+          "name": "slack_channels",
+          "type": "text[]",
           "primaryKey": false,
-          "notNull": false
-        },
-        "slack_channel": {
-          "name": "slack_channel",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
+          "notNull": false,
+          "default": "'{}'"
         },
         "slack_bot_token": {
           "name": "slack_bot_token",
@@ -1076,6 +1089,13 @@
           "primaryKey": false,
           "notNull": false
         },
+        "slack_response_mode": {
+          "name": "slack_response_mode",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "'mentions'"
+        },
         "trial_expires_at": {
           "name": "trial_expires_at",
           "type": "timestamp with time zone",
@@ -1089,6 +1109,12 @@
           "primaryKey": false,
           "notNull": true,
           "default": "'trial'"
+        },
+        "partition_limit_exceeded_at": {
+          "name": "partition_limit_exceeded_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
         }
       },
       "indexes": {
@@ -1116,6 +1142,13 @@
           "nullsNotDistinct": false,
           "columns": [
             "slug"
+          ]
+        },
+        "tenants_slack_team_id_unique": {
+          "name": "tenants_slack_team_id_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "slack_team_id"
           ]
         }
       },
@@ -1174,6 +1207,18 @@
           "notNull": true,
           "default": false
         },
+        "slack_user_id": {
+          "name": "slack_user_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "slack_user": {
+          "name": "slack_user",
+          "type": "json",
+          "primaryKey": false,
+          "notNull": false
+        },
         "image": {
           "name": "image",
           "type": "text",
@@ -1210,6 +1255,13 @@
           "nullsNotDistinct": false,
           "columns": [
             "email"
+          ]
+        },
+        "users_slack_user_id_unique": {
+          "name": "users_slack_user_id_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "slack_user_id"
           ]
         }
       },

@@ -5,8 +5,17 @@ import { toast } from "sonner";
 
 import { VALID_FILE_TYPES, uploadFile, validateFile } from "@/lib/file-utils";
 
-export default function UploadFileButton({ tenant, userName }: { tenant: { slug: string }; userName: string }) {
+interface Props {
+  tenant: {
+    slug: string;
+  };
+  userName: string;
+  onUploadComplete: () => void;
+}
+
+export default function UploadFileButton({ tenant, userName, onUploadComplete }: Props) {
   const router = useRouter();
+
   const handleUpload = () => {
     const input = document.createElement("input");
     input.type = "file";
@@ -42,6 +51,7 @@ export default function UploadFileButton({ tenant, userName }: { tenant: { slug:
 
       await Promise.all(uploadPromises);
       router.refresh();
+      onUploadComplete();
     };
   };
 

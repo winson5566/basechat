@@ -94,11 +94,12 @@ export const tenants = pgTable(
     slackEnabled: boolean("slack_enabled").default(false),
     slackChannels: text("slack_channels").array().default([]),
     slackBotToken: text("slack_bot_token"),
-    slackTeamId: text("slack_team_id"),
+    slackTeamId: text("slack_team_id").unique(),
     slackTeamName: text("slack_team_name"),
     slackResponseMode: text("slack_response_mode").default("mentions").$type<"mentions" | "all">(),
     trialExpiresAt: timestamp("trial_expires_at", { withTimezone: true, mode: "date" }).notNull(),
     paidStatus: paidStatusEnum("paid_status").default("trial").notNull(),
+    partitionLimitExceededAt: timestamp("partition_limit_exceeded_at", { withTimezone: true, mode: "date" }),
   },
   (t) => ({
     paidStatusIdx: index("tenants_paid_status_idx").on(t.paidStatus),

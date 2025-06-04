@@ -278,71 +278,15 @@
     {
       "idx": 39,
       "version": "7",
-      "when": 1748035390730,
-      "tag": "0039_free_carnage",
+      "when": 1748447472284,
+      "tag": "0039_worthless_wendigo",
       "breakpoints": true
     },
     {
       "idx": 40,
       "version": "7",
-      "when": 1748038670673,
-      "tag": "0040_nasty_nehzno",
-      "breakpoints": true
-    },
-    {
-      "idx": 41,
-      "version": "7",
-      "when": 1748358746445,
-      "tag": "0041_clean_brother_voodoo",
-      "breakpoints": true
-    },
-    {
-      "idx": 42,
-      "version": "7",
-      "when": 1748968277435,
-      "tag": "0042_unusual_pixie",
-      "breakpoints": true
-    },
-    {
-      "idx": 43,
-      "version": "7",
-      "when": 1748979098426,
-      "tag": "0043_flawless_abomination",
-      "breakpoints": true
-    },
-    {
-      "idx": 44,
-      "version": "7",
-      "when": 1749044068752,
-      "tag": "0044_fixed_microbe",
-      "breakpoints": true
-    },
-    {
-      "idx": 45,
-      "version": "7",
-      "when": 1749052415408,
-      "tag": "0045_chief_the_executioner",
-      "breakpoints": true
-    },
-    {
-      "idx": 46,
-      "version": "7",
-      "when": 1749053098027,
-      "tag": "0046_aberrant_kree",
-      "breakpoints": true
-    },
-    {
-      "idx": 47,
-      "version": "7",
-      "when": 1749055588210,
-      "tag": "0047_lively_paper_doll",
-      "breakpoints": true
-    },
-    {
-      "idx": 48,
-      "version": "7",
-      "when": 1749056247858,
-      "tag": "0048_powerful_doctor_octopus",
+      "when": 1749074695496,
+      "tag": "0040_graceful_corsair",
       "breakpoints": true
     }
   ]

@@ -14,13 +14,14 @@ export async function GET(request: NextRequest) {
   try {
     const res = await client.documents.list({
       partition,
-      pageSize: 10,
+      pageSize: 50,
       cursor,
     });
 
     return NextResponse.json({
       documents: res.result.documents,
       nextCursor: res.result.pagination.nextCursor,
+      totalCount: res.result.pagination.totalCount,
     });
   } catch (error) {
     console.error("Error fetching documents:", error);

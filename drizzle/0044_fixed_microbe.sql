@@ -1,1 +1,0 @@
-ALTER TABLE "tenants" DROP COLUMN IF EXISTS "slack_webhook_url";

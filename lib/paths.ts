@@ -14,6 +14,8 @@ export const getPromptSettingsPath = (slug: string) => `${getSettingsPath(slug)}
 
 export const getSlackSettingsPath = (slug: string) => `${getSettingsPath(slug)}/slack`;
 
+export const getBillingSettingsPath = (slug: string) => `${getSettingsPath(slug)}/billing`;
+
 export const getCheckPath = (slug: string) => `/check/${slug}`;
 
 export const getSignInPath = ({ reset }: { reset?: boolean } = {}) => `/sign-in${reset ? "?reset=true" : ""}`;

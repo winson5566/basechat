@@ -1,3 +1,4 @@
+import { BILLING_ENABLED } from "@/lib/server/settings";
 import { adminOrRedirect } from "@/lib/server/utils";
 
 import SettingsNav from "../settings-nav";
@@ -15,7 +16,7 @@ export default async function PromptsSettingsPage({ params }: Props) {
   return (
     <div className="flex justify-center overflow-auto w-full">
       <div className="max-w-[1140px] w-full p-4 flex-grow flex">
-        <SettingsNav tenant={tenant} />
+        <SettingsNav tenant={tenant} billingEnabled={BILLING_ENABLED} />
         <PromptSettings tenant={tenant} />
       </div>
     </div>

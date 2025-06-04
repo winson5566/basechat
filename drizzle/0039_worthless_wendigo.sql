@@ -1,0 +1,1 @@
+ALTER TABLE "tenants" ADD COLUMN "partition_limit_exceeded_at" timestamp with time zone;

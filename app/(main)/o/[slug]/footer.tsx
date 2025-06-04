@@ -21,6 +21,7 @@ export enum AppLocation {
   SETTINGS_MODELS,
   SETTINGS_PROMPTS,
   SETTINGS_SLACK,
+  SETTINGS_BILLING,
 }
 
 export function NavButton({ alt, src, className }: { alt: string; src: any; className?: string }) {
