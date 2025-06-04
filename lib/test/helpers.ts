@@ -172,13 +172,15 @@ export async function createTestSetup(
  * Useful for test cleanup
  */
 export async function cleanupTestTenant(tenantId: string) {
-  const db = getTestDb();
+  await getTestDb().delete(schema.tenants).where(eq(schema.tenants.id, tenantId));
+}
 
-  // Delete in order to respect foreign key constraints
-  // await db.delete(schema.messages).where(eq(schema.messages.tenantId, tenantId));
-  // await db.delete(schema.conversations).where(eq(schema.conversations.tenantId, tenantId));
-  // await db.delete(schema.profiles).where(eq(schema.profiles.tenantId, tenantId));
-  await db.delete(schema.tenants).where(eq(schema.tenants.id, tenantId));
+/**
+ * Clean up test data by deleting all records for a user
+ * Useful for test cleanup
+ */
+export async function cleanupTestUser(userId: string) {
+  await getTestDb().delete(schema.users).where(eq(schema.users.id, userId));
 }
 
 /**

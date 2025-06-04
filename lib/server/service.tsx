@@ -644,3 +644,9 @@ export function linkUsers(fromUserId: string, toUserId: string) {
 export async function updateTenantPaidStatus(tenantId: string, paidStatus: "trial" | "active" | "expired") {
   await db.update(schema.tenants).set({ paidStatus }).where(eq(schema.tenants.id, tenantId));
 }
+
+export async function createSlackUser(slackUserId: string) {
+  const rs = await db.insert(schema.users).values({ slackUserId }).returning();
+  assert(rs.length === 1, "expect single record");
+  return rs[0];
+}

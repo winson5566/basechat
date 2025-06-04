@@ -2,7 +2,15 @@ import { eq } from "drizzle-orm";
 import { NodePgDatabase } from "drizzle-orm/node-postgres";
 
 import * as schema from "@/lib/server/db/schema";
-import { createTestUser, createTestTenant, initTestDb, closeTestDb, cleanupTestTenant } from "@/lib/test";
+import {
+  createTestUser,
+  createTestTenant,
+  initTestDb,
+  closeTestDb,
+  cleanupTestTenant,
+  randomTestString,
+  cleanupTestUser,
+} from "@/lib/test";
 
 import { slackSignIn } from "./utils";
 
@@ -34,7 +42,7 @@ describe("slackSignIn", () => {
   });
 
   describe("when the team exists", () => {
-    const slackTeamId = "does-exist";
+    const slackTeamId = randomTestString();
     let tenant: typeof schema.tenants.$inferSelect;
 
     beforeEach(async () => {
@@ -45,30 +53,56 @@ describe("slackSignIn", () => {
       await cleanupTestTenant(tenant.id);
     });
 
-    // describe("when the user does NOT exist", () => {
-    //   it("should create a new user", async () => {
-    //     const result = await slackSignIn(slackTeamId, "slack-user-123");
-    //     expect(result).toEqual({ tenant, profile: expect.any(Object) });
-    //   });
-    // });
+    describe("when the user does NOT exist", () => {
+      const slackUserId = randomTestString();
+
+      beforeEach(async () => {
+        await expect(
+          db.query.users.findFirst({ where: eq(schema.users.slackUserId, slackUserId) }),
+        ).resolves.toBeUndefined();
+      });
+
+      it("should create a new user", async () => {
+        const result = await slackSignIn(slackTeamId, slackUserId);
+
+        await expect(db.query.users.findFirst({ where: eq(schema.users.slackUserId, slackUserId) })).resolves.toEqual(
+          expect.objectContaining({
+            slackUserId,
+          }),
+        );
+
+        expect(result).toEqual({
+          tenant,
+          profile: expect.objectContaining({
+            userId: expect.any(String),
+            tenantId: tenant.id,
+            role: "guest",
+          }),
+        });
+      });
+    });
 
     describe("when the user exists", () => {
-      let existingSlackUserId = "slack-user-123";
+      let slackUserId = randomTestString();
       let user: typeof schema.users.$inferSelect;
 
       beforeEach(async () => {
-        user = await createTestUser({ slackUserId: existingSlackUserId });
+        user = await createTestUser({ slackUserId: slackUserId });
+      });
+
+      afterEach(async () => {
+        await cleanupTestUser(user.id);
       });
 
       it("should return the user", async () => {
-        const result = await slackSignIn(slackTeamId, existingSlackUserId);
+        const result = await slackSignIn(slackTeamId, slackUserId);
 
         expect(result).toEqual({
           tenant,
           profile: expect.objectContaining({
             userId: user.id,
             tenantId: tenant.id,
-            slackUserId: existingSlackUserId,
+            role: "guest",
           }),
         });
       });
