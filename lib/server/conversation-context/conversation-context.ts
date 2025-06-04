@@ -52,6 +52,10 @@ export class Retriever {
   }
 }
 
+interface PromptOptions {
+  slackEvent?: GenericMessageEvent | AppMentionEvent;
+}
+
 export default class ConversationContext {
   public constructor(
     private readonly _messageDao: MessageDAO,
@@ -65,10 +69,14 @@ export default class ConversationContext {
   }
 
   promptSlackMessage(addedBy: typeof schema.profiles.$inferSelect, event: GenericMessageEvent | AppMentionEvent) {
-    return this.prompt(addedBy, event.text ?? "");
+    return this.prompt(addedBy, event.text ?? "", { slackEvent: event });
   }
 
-  async prompt(addedBy: typeof schema.profiles.$inferSelect, content: string): Promise<ReplyContext> {
+  async prompt(
+    addedBy: typeof schema.profiles.$inferSelect,
+    content: string,
+    options?: PromptOptions,
+  ): Promise<ReplyContext> {
     const existing = await this._messageDao.find({
       conversationId: this._conversation.id,
     });
@@ -87,6 +95,7 @@ export default class ConversationContext {
       role: "user",
       content,
       sources: [],
+      slackEvent: options?.slackEvent,
     });
 
     const { content: systemMessageContent, sources } = await this._retriever.retrieve(content);
@@ -153,14 +162,8 @@ export default class ConversationContext {
       conversation = await dao.create({
         profileId: profile.id,
         title: "Slack conversation",
-
-        // Slack fields
         slackThreadId: event.ts,
-
-        // TODO: Keep these fields?
-        slackChannelId: event.channel,
-        slackMessageId: event.ts,
-        slackUserId: event.user,
+        slackEvent: event,
       });
     }
 

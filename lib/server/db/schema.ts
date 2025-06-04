@@ -54,10 +54,8 @@ export const conversations = pgTable(
       .references(() => profiles.id, { onDelete: "cascade" })
       .notNull(),
     title: text().notNull(),
-    slackChannelId: text("slack_channel_id"),
-    slackMessageId: text("slack_message_id"),
     slackThreadId: text("slack_thread_id"),
-    slackUserId: text("slack_user_id"),
+    slackEvent: json("slack_event"),
   },
   (t) => ({
     profileIdx: index("conversations_profile_idx").on(t.profileId),
@@ -151,6 +149,7 @@ export const messages = pgTable(
     content: text("content"),
     role: messageRolesEnum("role").notNull(),
     sources: json("sources").notNull(),
+    slackEvent: json("slack_event"),
     model: text("model").notNull().default(DEFAULT_MODEL).$type<z.infer<typeof modelSchema>>(),
     isBreadth: boolean("is_breadth").notNull().default(false),
     rerankEnabled: boolean("rerank_enabled").notNull().default(false),
