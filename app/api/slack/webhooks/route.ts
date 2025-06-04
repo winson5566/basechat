@@ -47,7 +47,7 @@ interface SlackUrlVerification {
 async function handleSlackEvent(event: SlackEvent | undefined): Promise<void> {
   if (!event) return;
 
-  console.log(`Handling Slack event: ${event.type}`, event);
+  console.log(`Handling Slack event: ${event.type}`);
 
   switch (event.type) {
     case "message":
