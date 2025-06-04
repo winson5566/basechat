@@ -145,6 +145,12 @@ async function _handleMessage(event: AppMentionEvent | GenericMessageEvent) {
     thread_ts: event.ts,
     text,
   });
+
+  await slack.reactions.remove({
+    channel: event.channel,
+    timestamp: event.ts,
+    name: "thinking_face",
+  });
 }
 
 async function handleMemberJoinedChannel(event: MemberJoinedChannelEvent): Promise<void> {
