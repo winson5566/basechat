@@ -20,7 +20,7 @@ import {
   Retriever,
   generatorFactory,
 } from "@/lib/server/conversation-context";
-import { SLACK_SIGNING_SECRET } from "@/lib/server/settings";
+import { SLACK_ALLOW_UNVERIFIED_WEBHOOKS, SLACK_SIGNING_SECRET } from "@/lib/server/settings";
 import { verifySlackSignature } from "@/lib/server/slack";
 
 import { formatMessageWithSources, shouldReplyToMessage, slackSignIn } from "./utils";
@@ -208,8 +208,11 @@ export async function POST(request: NextRequest) {
     } else if (SLACK_SIGNING_SECRET) {
       console.error("Missing signature headers");
       return NextResponse.json({ error: "Missing signature headers" }, { status: 401 });
+    } else if (SLACK_ALLOW_UNVERIFIED_WEBHOOKS) {
+      console.warn("Skipping Slack signature verification because SLACK_ALLOW_UNVERIFIED_WEBHOOKS is true");
     } else {
-      console.warn("Slack signing secret not configured - skipping signature verification");
+      console.error("Slack signing secret not configured");
+      return NextResponse.json({ error: "Bad server configuration" }, { status: 500 });
     }
 
     const slackEvent: SlackWebhookPayload = JSON.parse(body);

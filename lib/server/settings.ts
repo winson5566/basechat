@@ -51,3 +51,4 @@ export const AUTH_GOOGLE_SECRET = process.env.AUTH_GOOGLE_SECRET;
 export const SLACK_CLIENT_ID = process.env.SLACK_CLIENT_ID;
 export const SLACK_CLIENT_SECRET = process.env.SLACK_CLIENT_SECRET;
 export const SLACK_SIGNING_SECRET = process.env.SLACK_SIGNING_SECRET;
+export const SLACK_ALLOW_UNVERIFIED_WEBHOOKS = process.env.SLACK_ALLOW_UNVERIFIED_WEBHOOKS === "true";
