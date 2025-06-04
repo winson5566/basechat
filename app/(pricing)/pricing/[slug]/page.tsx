@@ -1,23 +1,8 @@
-import { requireAdminContext } from "@/lib/server/utils";
+import { redirect } from "next/navigation";
 
-import PricingPageClient from "./pricing-page-client";
+import { getPricingPlansPath } from "@/lib/paths";
 
-interface Props {
-  params: Promise<{ slug: string }>;
-}
-
-export default async function PricingPage({ params }: Props) {
+export default async function BillingPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const { tenant } = await requireAdminContext(slug);
-
-  return (
-    <PricingPageClient
-      tenant={{
-        name: tenant.name,
-        slug: tenant.slug,
-        paidStatus: tenant.paidStatus,
-        metadata: tenant.metadata ?? {},
-      }}
-    />
-  );
+  redirect(getPricingPlansPath(slug));
 }

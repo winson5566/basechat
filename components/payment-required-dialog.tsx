@@ -7,7 +7,7 @@ import { useEffect, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogClose, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { getPricingPath } from "@/lib/paths";
+import { getPricingPlansPath } from "@/lib/paths";
 
 interface PaymentRequiredDialogProps {
   tenant: {
@@ -54,7 +54,7 @@ export function PaymentRequiredDialog({ tenant }: PaymentRequiredDialogProps) {
             Your trial has ended, but exploring your knowledge base doesn&apos;t have to. Upgrade to a paid plan to
             continue using Base Chat. It&apos;s just $18 per user/month, plus a data plan.
           </p>
-          <Link href={getPricingPath(tenant.slug)}>
+          <Link href={getPricingPlansPath(tenant.slug)}>
             <Button className="bg-[#D946EF] text-white hover:bg-[#D946EF]/90 w-fit">View plans</Button>
           </Link>
         </div>

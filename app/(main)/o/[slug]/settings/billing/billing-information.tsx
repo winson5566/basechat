@@ -1,98 +1,178 @@
 "use client";
 
-import { CreditCard, History, Users, Settings, CreditCard as CreditCardIcon } from "lucide-react";
+import { format } from "date-fns";
+import { CreditCard, History, Users, Settings, ChevronRight } from "lucide-react";
 import Link from "next/link";
+import Orb from "orb-billing";
 
-import { Button } from "@/components/ui/button";
+import PaymentMethod from "@/components/billing/payment-method";
 import { Card } from "@/components/ui/card";
-import { getCurrentPlan } from "@/lib/billing/tenant";
-import { getPricingPath } from "@/lib/paths";
+import { PLANS } from "@/lib/orb-types";
+
+type BillingData = {
+  hasBillingHistory: boolean;
+  overdueInvoice: Orb.Invoices.Invoice | null;
+  nextPaymentDate: string | null;
+  defaultPaymentMethod: {
+    id: string;
+    card: {
+      brand: string;
+      last4: string;
+      exp_month: number;
+      exp_year: number;
+    } | null;
+    billing_details: any;
+    created: number;
+    type: string;
+  } | null;
+  currentPlan: {
+    id: string;
+    name: string;
+    endedAt: string | null;
+    startedAt: string;
+    tier: string;
+    seats: number;
+  };
+  invoices: Orb.Invoices.Invoice[];
+  subscriptions: any[]; // TODO: Add proper type
+  stripeCustomerId?: string;
+};
 
 interface BillingInformationProps {
-  tenant: {
-    slug: string;
-    paidStatus: string;
-    metadata: {
-      stripeCustomerId?: string;
-      orbCustomerId?: string;
-      plans?: Array<{
-        id: string;
-        endedAt: Date | null;
-        startedAt: Date;
-        tier: string;
-        seats: number;
-      }>;
-    };
-  };
+  billingData: BillingData;
+  billingPath: string;
+  pricingPlansPath: string;
+  tenant: { slug: string };
 }
 
-export default function BillingInformation({ tenant }: BillingInformationProps) {
-  const currentPlan = getCurrentPlan(tenant.metadata);
-  const totalSeats = currentPlan?.seats ?? 0;
-  const usedSeats = 0; // TODO: Get this from the number of active users
+interface BillingCardProps {
+  title: string;
+  description?: string;
+  icon: React.ReactNode;
+  color?: string;
+  children: React.ReactNode;
+}
+
+function BillingMessage({
+  overdueInvoice,
+  nextPaymentDate,
+}: {
+  overdueInvoice: Orb.Invoices.Invoice | null;
+  nextPaymentDate: string | null;
+}) {
+  if (overdueInvoice) {
+    return <p className="text-sm text-destructive-foreground">Payment overdue</p>;
+  }
+
+  if (nextPaymentDate) {
+    return <p className="text-sm text-muted-foreground">Next payment {format(nextPaymentDate, "LLL d, yyyy")}</p>;
+  }
+
+  return null;
+}
+
+function BillingCard({ title, description, icon, color, children }: BillingCardProps) {
+  return (
+    <Card
+      className={`border-t-4 ${color ? "" : "border-t-gray-200"}`}
+      style={color ? { borderColor: color } : undefined}
+    >
+      <div className="p-6">
+        <div className="flex items-center gap-2">
+          {icon}
+          <div>
+            <h3 className="text-lg font-medium">{title}</h3>
+            <p className="text-sm text-muted-foreground">{description}</p>
+          </div>
+        </div>
+        {children}
+      </div>
+    </Card>
+  );
+}
+
+interface BillingCardLinkProps {
+  href: string;
+  children: React.ReactNode;
+}
+
+function BillingCardLink({ href, children }: BillingCardLinkProps) {
+  return (
+    <Link
+      href={href}
+      className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors ml-auto mt-4"
+    >
+      {children}
+      <ChevronRight className="h-4 w-4" />
+    </Link>
+  );
+}
+
+export function BillingInformation({ billingData, billingPath, pricingPlansPath, tenant }: BillingInformationProps) {
+  const currentPlan = billingData.currentPlan;
+  // Map the plan name to the corresponding plan type in PLANS
+  const planType = currentPlan.name as keyof typeof PLANS;
+  const planConfig = PLANS[planType];
+  const totalSeats = currentPlan.seats ?? 0;
+  const usedSeats = 0; // TODO: Get actual used seats count
+
+  if (!planConfig) {
+    console.error("Plan configuration not found for plan:", currentPlan);
+    return null;
+  }
 
   return (
-    <div className="flex flex-col gap-6">
-      {/* Data Plan Card */}
-      <Card className="p-6">
-        <div className="flex flex-col h-full">
-          <div className="flex items-center gap-3 mb-4">
-            <CreditCard className="h-5 w-5 text-[#74747A]" />
-            <h3 className="font-medium text-base text-[#343A40]">Data Plan</h3>
-          </div>
-          <div className="flex-grow">
-            <p className="text-sm text-[#74747A] mb-2">Current Plan</p>
-            <p className="text-base font-medium text-[#343A40] mb-4">Pro Plan</p>
-          </div>
-          <Button variant="outline" className="w-full flex items-center justify-center gap-2">
-            <History className="h-4 w-4" />
-            View payment history
-          </Button>
-        </div>
-      </Card>
+    <div className="space-y-6">
+      <BillingMessage overdueInvoice={billingData.overdueInvoice} nextPaymentDate={billingData.nextPaymentDate} />
 
-      {/* Seats Card */}
-      <Card className="p-6">
-        <div className="flex flex-col h-full">
-          <div className="flex items-center gap-3 mb-4">
-            <Users className="h-5 w-5 text-[#74747A]" />
-            <h3 className="font-medium text-base text-[#343A40]">Seats</h3>
-          </div>
-          <div className="flex-grow">
-            <p className="text-sm text-[#74747A] mb-2">Total Seats</p>
-            <p className="text-base font-medium text-[#343A40] mb-2">{totalSeats}</p>
-            <p className="text-sm text-[#74747A] mb-2">Open Seats</p>
-            <p className="text-base font-medium text-[#343A40] mb-2">{totalSeats - usedSeats}</p>
-          </div>
-          <Button variant="outline" className="w-full flex items-center justify-center gap-2">
-            {/** TODO: button opens seat config dialog */}
-            <Settings className="h-4 w-4" />
-            Manage seats
-          </Button>
-        </div>
-      </Card>
+      <div className="space-y-6">
+        <BillingCard
+          title={`${planConfig.displayName} Plan`}
+          description={planConfig.description}
+          icon={<Settings className="h-5 w-5" />}
+          color={planConfig.color}
+        >
+          <BillingCardLink href={`${pricingPlansPath}`}>Manage Plan</BillingCardLink>
+        </BillingCard>
 
-      {/* Account Card */}
-      <Card className="p-6">
-        <div className="flex flex-col h-full">
-          <div className="flex items-center gap-3 mb-4">
-            <CreditCardIcon className="h-5 w-5 text-[#74747A]" />
-            <h3 className="font-medium text-base text-[#343A40]">Account</h3>
+        <BillingCard
+          title="Team Management"
+          description="Manage your team members and seats"
+          icon={<Users className="h-5 w-5" />}
+        >
+          <div className="mt-4">
+            <div className="text-sm font-medium text-muted-foreground">Seats</div>
+            <div className="mt-1 text-2xl font-semibold">
+              {usedSeats} / {totalSeats}
+            </div>
           </div>
-          <div className="flex-grow space-y-4">
-            <Link href={getPricingPath(tenant.slug)}>
-              <Button variant="outline" className="w-full flex items-center justify-center gap-2">
-                <Settings className="h-4 w-4" />
-                Manage plan
-              </Button>
-            </Link>
-            <Button variant="outline" className="w-full flex items-center justify-center gap-2">
-              <CreditCard className="h-4 w-4" />
-              Manage payment method
-            </Button>
+          {/* TODO: manage seats page (modal?) */}
+          <BillingCardLink href={`${billingPath}/seats`}>Manage Team</BillingCardLink>
+        </BillingCard>
+
+        <BillingCard
+          title="Payment History"
+          description="View your billing history and invoices"
+          icon={<History className="h-5 w-5" />}
+        >
+          <div className="mt-4">
+            <div className="text-sm font-medium text-muted-foreground">Recent Activity</div>
+            <div className="mt-1 text-2xl font-semibold">
+              {billingData.invoices.length} Invoice{billingData.invoices.length !== 1 ? "s" : ""}
+            </div>
           </div>
-        </div>
-      </Card>
+          <BillingCardLink href={`${billingPath}/history`}>View Payment History</BillingCardLink>
+        </BillingCard>
+
+        <BillingCard title="Account Management" icon={<CreditCard className="h-5 w-5" />}>
+          <div className="mt-4">
+            {billingData.stripeCustomerId && (
+              <PaymentMethod hasControls defaultPaymentMethod={billingData.defaultPaymentMethod} tenant={tenant} />
+            )}
+          </div>
+          <BillingCardLink href={`${billingPath}/payment-method`}>Manage Payment Methods</BillingCardLink>
+        </BillingCard>
+      </div>
     </div>
   );
 }

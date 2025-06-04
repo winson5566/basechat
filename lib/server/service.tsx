@@ -12,6 +12,7 @@ import * as settings from "@/lib/server/settings";
 
 import { InviteHtml, ResetPasswordHtml } from "../mail";
 
+import { provisionBillingCustomer } from "./billing";
 import db from "./db";
 import * as schema from "./db/schema";
 import { getRagieClientAndPartition } from "./ragie";
@@ -75,6 +76,13 @@ export async function createTenant(userId: string, name: string) {
         name: partition,
         pagesProcessedLimitMax: settings.DEFAULT_PARTITION_LIMIT,
       });
+    }
+
+    if (settings.BILLING_ENABLED) {
+      const user = await getUserById(userId);
+      const userName = user.name ?? user.id;
+      const userEmail = user.email ?? user.id;
+      await provisionBillingCustomer(tenantId, userName, userEmail);
     }
 
     return { tenant: tenants[0], profile };
@@ -304,6 +312,14 @@ export async function acceptInvite(userId: string, inviteId: string) {
     return rs[0];
   });
   return profile;
+}
+
+export async function getTenantByTenantId(tenantId: string) {
+  const rs = await db.select().from(schema.tenants).where(eq(schema.tenants.id, tenantId)).limit(1);
+  if (rs.length === 0) {
+    throw new Error(`Tenant ${tenantId} not found`);
+  }
+  return rs[0];
 }
 
 export async function getTenantsByUserId(userId: string) {

@@ -95,11 +95,12 @@ export const tenants = pgTable(
       orbCustomerId?: string;
       stripeCustomerId?: string;
       plans?: Array<{
-        id: string;
+        id: string; // orb subscription id
+        name: string; // orb plan type "developer" "starter" "pro"
         endedAt: Date | null;
         startedAt: Date;
-        tier: string;
-        seats: number;
+        tier: string; // orb plan id
+        seats: number; // TODO: right now not in DB
       }>;
     }>(),
     trialExpiresAt: timestamp("trial_expires_at", { withTimezone: true, mode: "date" }).notNull(),

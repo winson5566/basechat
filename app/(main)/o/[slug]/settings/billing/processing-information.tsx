@@ -27,7 +27,7 @@ interface ProcessingInformationProps {
 
 export default function ProcessingInformation({ partitionInfo }: ProcessingInformationProps) {
   return (
-    <Card className="p-6">
+    <Card className="p-6 border-t-4 border-t-gray-200">
       <div className="flex flex-col h-full">
         <h2 className="font-semibold text-xl text-[#343A40] mb-4">Processing Information</h2>
         <div className="space-y-6">

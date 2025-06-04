@@ -12,6 +12,14 @@ export const TIER_COLORS = {
   [Tier.ENTERPRISE]: "#A1A1AA",
 };
 
+export interface Feature {
+  name: string;
+  tiersCheck: Record<string, boolean>;
+  tiersText: Record<string, string | undefined>;
+  subFeatures?: Feature[];
+  custom?: React.ReactNode;
+}
+
 export interface PricingTier {
   name: string;
   id: Tier;
@@ -25,6 +33,7 @@ export interface PricingTier {
   color: string;
   hasCustomPricing?: boolean;
   partitionLimit: number;
+  features?: Feature[];
 }
 
 export const PRICING_TIER_CONFIG: PricingTier[] = [
@@ -40,6 +49,53 @@ export const PRICING_TIER_CONFIG: PricingTier[] = [
     mostPopular: false,
     color: TIER_COLORS[Tier.DEVELOPER],
     partitionLimit: 10000,
+    features: [
+      {
+        name: "Core Features",
+        tiersCheck: {
+          [Tier.DEVELOPER]: true,
+          [Tier.STARTER]: true,
+          [Tier.PRO]: true,
+          [Tier.ENTERPRISE]: true,
+        },
+        tiersText: {
+          [Tier.DEVELOPER]: "Basic chat functionality",
+          [Tier.STARTER]: "Basic chat functionality",
+          [Tier.PRO]: "Advanced chat functionality",
+          [Tier.ENTERPRISE]: "Custom chat functionality",
+        },
+      },
+      {
+        name: "Partition Limit",
+        tiersCheck: {
+          [Tier.DEVELOPER]: true,
+          [Tier.STARTER]: true,
+          [Tier.PRO]: true,
+          [Tier.ENTERPRISE]: true,
+        },
+        tiersText: {
+          [Tier.DEVELOPER]: "10,000 partitions",
+          [Tier.STARTER]: "50,000 partitions",
+          [Tier.PRO]: "100,000 partitions",
+          [Tier.ENTERPRISE]: "Unlimited partitions",
+        },
+      },
+      {
+        name: "Support",
+        tiersCheck: {
+          [Tier.DEVELOPER]: true,
+          [Tier.STARTER]: true,
+          [Tier.PRO]: true,
+          [Tier.ENTERPRISE]: true,
+        },
+        tiersText: {
+          [Tier.DEVELOPER]: "Community support",
+          [Tier.STARTER]: "Email support",
+          [Tier.PRO]: "Priority email support",
+          [Tier.ENTERPRISE]: "Dedicated support team",
+        },
+      },
+    ],
   },
   {
     name: "Starter",
@@ -53,6 +109,53 @@ export const PRICING_TIER_CONFIG: PricingTier[] = [
     mostPopular: false,
     color: TIER_COLORS[Tier.STARTER],
     partitionLimit: 50000,
+    features: [
+      {
+        name: "Core Features",
+        tiersCheck: {
+          [Tier.DEVELOPER]: true,
+          [Tier.STARTER]: true,
+          [Tier.PRO]: true,
+          [Tier.ENTERPRISE]: true,
+        },
+        tiersText: {
+          [Tier.DEVELOPER]: "Basic chat functionality",
+          [Tier.STARTER]: "Basic chat functionality",
+          [Tier.PRO]: "Advanced chat functionality",
+          [Tier.ENTERPRISE]: "Custom chat functionality",
+        },
+      },
+      {
+        name: "Partition Limit",
+        tiersCheck: {
+          [Tier.DEVELOPER]: true,
+          [Tier.STARTER]: true,
+          [Tier.PRO]: true,
+          [Tier.ENTERPRISE]: true,
+        },
+        tiersText: {
+          [Tier.DEVELOPER]: "10,000 partitions",
+          [Tier.STARTER]: "50,000 partitions",
+          [Tier.PRO]: "100,000 partitions",
+          [Tier.ENTERPRISE]: "Unlimited partitions",
+        },
+      },
+      {
+        name: "Support",
+        tiersCheck: {
+          [Tier.DEVELOPER]: true,
+          [Tier.STARTER]: true,
+          [Tier.PRO]: true,
+          [Tier.ENTERPRISE]: true,
+        },
+        tiersText: {
+          [Tier.DEVELOPER]: "Community support",
+          [Tier.STARTER]: "Email support",
+          [Tier.PRO]: "Priority email support",
+          [Tier.ENTERPRISE]: "Dedicated support team",
+        },
+      },
+    ],
   },
   {
     name: "Pro",
@@ -66,6 +169,53 @@ export const PRICING_TIER_CONFIG: PricingTier[] = [
     buttonHidden: false,
     color: TIER_COLORS[Tier.PRO],
     partitionLimit: 100000,
+    features: [
+      {
+        name: "Core Features",
+        tiersCheck: {
+          [Tier.DEVELOPER]: true,
+          [Tier.STARTER]: true,
+          [Tier.PRO]: true,
+          [Tier.ENTERPRISE]: true,
+        },
+        tiersText: {
+          [Tier.DEVELOPER]: "Basic chat functionality",
+          [Tier.STARTER]: "Basic chat functionality",
+          [Tier.PRO]: "Advanced chat functionality",
+          [Tier.ENTERPRISE]: "Custom chat functionality",
+        },
+      },
+      {
+        name: "Partition Limit",
+        tiersCheck: {
+          [Tier.DEVELOPER]: true,
+          [Tier.STARTER]: true,
+          [Tier.PRO]: true,
+          [Tier.ENTERPRISE]: true,
+        },
+        tiersText: {
+          [Tier.DEVELOPER]: "10,000 partitions",
+          [Tier.STARTER]: "50,000 partitions",
+          [Tier.PRO]: "100,000 partitions",
+          [Tier.ENTERPRISE]: "Unlimited partitions",
+        },
+      },
+      {
+        name: "Support",
+        tiersCheck: {
+          [Tier.DEVELOPER]: true,
+          [Tier.STARTER]: true,
+          [Tier.PRO]: true,
+          [Tier.ENTERPRISE]: true,
+        },
+        tiersText: {
+          [Tier.DEVELOPER]: "Community support",
+          [Tier.STARTER]: "Email support",
+          [Tier.PRO]: "Priority email support",
+          [Tier.ENTERPRISE]: "Dedicated support team",
+        },
+      },
+    ],
   },
   {
     name: "Enterprise",
@@ -80,5 +230,52 @@ export const PRICING_TIER_CONFIG: PricingTier[] = [
     color: TIER_COLORS[Tier.ENTERPRISE],
     hasCustomPricing: true,
     partitionLimit: 100000,
+    features: [
+      {
+        name: "Core Features",
+        tiersCheck: {
+          [Tier.DEVELOPER]: true,
+          [Tier.STARTER]: true,
+          [Tier.PRO]: true,
+          [Tier.ENTERPRISE]: true,
+        },
+        tiersText: {
+          [Tier.DEVELOPER]: "Basic chat functionality",
+          [Tier.STARTER]: "Basic chat functionality",
+          [Tier.PRO]: "Advanced chat functionality",
+          [Tier.ENTERPRISE]: "Custom chat functionality",
+        },
+      },
+      {
+        name: "Partition Limit",
+        tiersCheck: {
+          [Tier.DEVELOPER]: true,
+          [Tier.STARTER]: true,
+          [Tier.PRO]: true,
+          [Tier.ENTERPRISE]: true,
+        },
+        tiersText: {
+          [Tier.DEVELOPER]: "10,000 partitions",
+          [Tier.STARTER]: "50,000 partitions",
+          [Tier.PRO]: "100,000 partitions",
+          [Tier.ENTERPRISE]: "Unlimited partitions",
+        },
+      },
+      {
+        name: "Support",
+        tiersCheck: {
+          [Tier.DEVELOPER]: true,
+          [Tier.STARTER]: true,
+          [Tier.PRO]: true,
+          [Tier.ENTERPRISE]: true,
+        },
+        tiersText: {
+          [Tier.DEVELOPER]: "Community support",
+          [Tier.STARTER]: "Email support",
+          [Tier.PRO]: "Priority email support",
+          [Tier.ENTERPRISE]: "Dedicated support team",
+        },
+      },
+    ],
   },
 ];

@@ -1,15 +1,20 @@
 "use client";
 
+import { InferSelectModel } from "drizzle-orm";
 import { createContext, useContext } from "react";
 
+import { users } from "@/lib/server/db/schema";
+
+type User = InferSelectModel<typeof users>;
+
 interface UserContextType {
-  email: string;
+  user: User;
 }
 
 const UserContext = createContext<UserContextType | null>(null);
 
-export function UserProvider({ children, email }: { children: React.ReactNode; email: string }) {
-  return <UserContext.Provider value={{ email }}>{children}</UserContext.Provider>;
+export function UserProvider({ children, user }: { children: React.ReactNode; user: User }) {
+  return <UserContext.Provider value={{ user }}>{children}</UserContext.Provider>;
 }
 
 export function useUser() {

@@ -1,18 +1,14 @@
-import assert from "assert";
-
 import { eq } from "drizzle-orm";
 import Orb from "orb-billing";
 import Stripe from "stripe";
 
-
-import { PRICING_TIER_CONFIG, Tier } from "@/lib/billing/pricing";
-import { getCurrentPlan, TenantMetadata } from "@/lib/billing/tenant";
+import { TenantMetadata } from "@/lib/billing/tenant";
 
 import db from "./db";
 import * as schema from "./db/schema";
-import { STRIPE_SECRET_KEY, ORB_API_KEY } from "./settings";
+import { STRIPE_SECRET_KEY, ORB_API_KEY, ORB_DEVELOPER_PLAN_ID } from "./settings";
 
-const stripe = new Stripe(STRIPE_SECRET_KEY);
+const stripe = new Stripe(STRIPE_SECRET_KEY, { typescript: true });
 
 const orb = new Orb({
   apiKey: ORB_API_KEY,
@@ -29,12 +25,16 @@ async function getExistingMetadata(tenantId: string): Promise<TenantMetadata> {
   return (tenant[0]?.metadata || {}) as TenantMetadata;
 }
 
-export async function createStripeCustomer(tenantId: string, email: string, name: string) {
+export async function createStripeCustomer(tenantId: string, orbCustomerId: string, email: string, name: string) {
   try {
     const customer = await stripe.customers.create({
       email,
       name,
-      metadata: { tenantId },
+      metadata: {
+        orb_customer_id: orbCustomerId,
+        orb_external_customer_id: tenantId,
+        payment_source: "orb",
+      },
     });
     return customer;
   } catch (error) {
@@ -43,14 +43,12 @@ export async function createStripeCustomer(tenantId: string, email: string, name
   }
 }
 
-export async function createOrbCustomer(stripeCustomerId: string, tenantId: string, email: string, name: string) {
+export async function createOrbCustomer(tenantId: string, email: string, name: string) {
   try {
     const customer = await orb.customers.create({
       external_customer_id: tenantId,
       email,
       name,
-      payment_provider: "stripe_charge",
-      payment_provider_id: stripeCustomerId,
     });
     return customer;
   } catch (error) {
@@ -59,106 +57,48 @@ export async function createOrbCustomer(stripeCustomerId: string, tenantId: stri
   }
 }
 
-export async function startSubscription(tenantId: string, email: string, tier: Tier, seats: number) {
+export async function provisionBillingCustomer(tenantId: string, userFullName: string, email: string) {
   try {
-    // Get tenant info
-    const rs = await db.select().from(schema.tenants).where(eq(schema.tenants.id, tenantId)).limit(1);
-    assert(rs.length === 1, "expected 1 tenant");
-
-    const tenant = rs[0];
+    // Get tenant metadata
     const existingMetadata = await getExistingMetadata(tenantId);
-
-    // Create Stripe customer if doesn't exist
-    let stripeCustomerId = existingMetadata.stripeCustomerId;
-    if (!stripeCustomerId) {
-      const stripeCustomer = await createStripeCustomer(tenantId, email, tenant.name);
-      stripeCustomerId = stripeCustomer.id;
-    }
 
     // Create Orb customer if doesn't exist
     let orbCustomerId = existingMetadata.orbCustomerId;
     if (!orbCustomerId) {
-      const orbCustomer = await createOrbCustomer(stripeCustomerId, tenantId, email, tenant.name);
+      const orbCustomer = await createOrbCustomer(tenantId, email, userFullName);
       orbCustomerId = orbCustomer.id;
     }
+    // Create Stripe customer if doesn't exist
+    let stripeCustomerId = existingMetadata.stripeCustomerId;
+    if (!stripeCustomerId) {
+      const stripeCustomer = await createStripeCustomer(tenantId, orbCustomerId, email, userFullName);
+      stripeCustomerId = stripeCustomer.id;
+    }
 
-    // Create subscription in Orb
-    const subscription = await orb.subscriptions.create({
-      customer_id: orbCustomerId,
-      plan_id: tier,
-      fixed_fee_quantity: seats,
+    // Add stripe customer id to orb customer
+    await orb.customers.update(orbCustomerId, {
+      payment_provider: "stripe_charge",
+      payment_provider_id: stripeCustomerId,
     });
 
-    return subscription;
-  } catch (error) {
-    console.error("Error starting subscription:", error);
-    throw error;
-  }
-}
-
-export async function changePlan(tenantId: string, newTier: Tier, seats: number) {
-  try {
-    const rs = await db.select().from(schema.tenants).where(eq(schema.tenants.id, tenantId)).limit(1);
-    assert(rs.length === 1, "expected 1 tenant");
-
-    const tenant = rs[0];
-    const existingMetadata = await getExistingMetadata(tenantId);
-    const currentPlan = getCurrentPlan(existingMetadata);
-    if (!currentPlan) throw new Error("No active plan found");
-
-    // TODO: implement this immediate plan change instead of using 'update'
-    // updatedSub = await orb.subscriptions.schedulePlanChange(
-    //     session.billing.subscriptionId,
-    //     {
-    //       plan_id: nextPlanId,
-    //       change_option: "immediate",
-    //       add_adjustments: adjustments,
-    //       replace_prices: [
-    //         {
-    //           replaces_price_id: embeddedConnectorPriceId,
-    //           fixed_price_quantity: embeddedConnecterCnt,
-    //         },
-    //       ],
-    //     },
-    //   );
-
-    // Update subscription in Orb
-    const subscription = await orb.subscriptions.update(currentPlan.id, {
-      plan_id: newTier,
-      fixed_fee_quantity: seats,
-    });
-
-    return subscription;
-  } catch (error) {
-    console.error("Error changing plan:", error);
-    throw error;
-  }
-}
-
-export async function checkPartitionLimit(tenantId: string) {
-  try {
-    // Get tenant info
-    const rs = await db.select().from(schema.tenants).where(eq(schema.tenants.id, tenantId)).limit(1);
-    assert(rs.length === 1, "expected 1 tenant");
-
-    const tenant = rs[0];
-    const existingMetadata = await getExistingMetadata(tenantId);
-    const currentPlan = getCurrentPlan(existingMetadata);
-    if (!currentPlan) return false;
-
-    const tierConfig = PRICING_TIER_CONFIG.find((t) => t.id === currentPlan.tier);
-    if (!tierConfig) return false;
-
-    // TODO: Implement actual partition count check
-    const currentPartitionCount = 0; // Placeholder
+    // TODO: what are we doing here, do we need to deal with seats?
+    // Subscribe to Developer plan if no subscription exists
+    let orbSubscriptionId = existingMetadata.orbSubscriptionId;
+    if (!orbSubscriptionId) {
+      const orbSubscription = await orb.subscriptions.create({
+        customer_id: orbCustomerId,
+        plan_id: ORB_DEVELOPER_PLAN_ID,
+      });
+      orbSubscriptionId = orbSubscription.id;
+    }
 
     return {
-      isExceeded: currentPartitionCount > tierConfig.partitionLimit,
-      currentCount: currentPartitionCount,
-      limit: tierConfig.partitionLimit,
+      newStripeCustomerId: stripeCustomerId,
+      newOrbCustomerId: orbCustomerId,
+      newOrbSubscriptionId: orbSubscriptionId,
     };
   } catch (error) {
-    console.error("Error checking partition limit:", error);
+    console.error("Error starting subscription:", error);
     throw error;
   }
 }

@@ -1,8 +1,11 @@
 "use client";
 
-import WarningMessage from "@/components/warning-message";
+import Orb from "orb-billing";
 
-import BillingInformation from "./billing-information";
+import WarningMessage from "@/components/warning-message";
+import { getBillingSettingsPath, getPricingPlansPath } from "@/lib/paths";
+
+import { BillingInformation } from "./billing-information";
 import ProcessingInformation from "./processing-information";
 
 type PartitionInfo = {
@@ -24,6 +27,16 @@ type PartitionInfo = {
   };
 };
 
+type BillingData = {
+  hasBillingHistory: boolean;
+  overdueInvoice: Orb.Invoice | null;
+  nextPaymentDate: string | null;
+  defaultPaymentMethod: any; // TODO: add proper type
+  currentPlan: any; // TODO: Add proper type
+  invoices: Orb.Invoice[];
+  subscriptions: any[]; // TODO: Add proper type
+};
+
 type Props = {
   tenant: {
     slug: string;
@@ -43,9 +56,10 @@ type Props = {
   };
   partitionInfo: PartitionInfo;
   defaultPartitionLimit: number;
+  billingData: BillingData;
 };
 
-export default function BillingSettings({ tenant, partitionInfo, defaultPartitionLimit }: Props) {
+export default function BillingSettings({ tenant, partitionInfo, defaultPartitionLimit, billingData }: Props) {
   return (
     <div className="w-full p-4 flex-grow flex flex-col relative">
       <div className="flex w-full justify-between items-center mb-8">
@@ -60,7 +74,12 @@ export default function BillingSettings({ tenant, partitionInfo, defaultPartitio
       )}
 
       <div className="space-y-8">
-        <BillingInformation tenant={tenant} />
+        <BillingInformation
+          billingPath={getBillingSettingsPath(tenant.slug)}
+          pricingPlansPath={getPricingPlansPath(tenant.slug)}
+          billingData={billingData}
+          tenant={tenant}
+        />
         <ProcessingInformation partitionInfo={partitionInfo} />
       </div>
       <div className="h-16" />
