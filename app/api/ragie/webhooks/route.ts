@@ -83,9 +83,9 @@ export async function POST(request: NextRequest) {
     event.type === "connection_sync_progress" ||
     event.type === "connection_sync_finished"
   ) {
-    return handleConnectionSyncEvent(event);
+    return await handleConnectionSyncEvent(event);
   } else if (event.type === "partition_limit_exceeded") {
-    return handlePartitionLimitEvent(event);
+    return await handlePartitionLimitEvent(event);
   } else {
     // Ignore all other webhooks
     return Response.json({ message: "success" });
