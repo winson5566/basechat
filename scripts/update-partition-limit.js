@@ -1,12 +1,9 @@
 import crypto from "crypto";
 
-import dotenv from "dotenv";
 import { eq } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/node-postgres";
 import { pgTable, text, timestamp } from "drizzle-orm/pg-core";
 import { Ragie } from "ragie";
-
-dotenv.config();
 
 // run with: npm run update-partition-limit <slug> <newLimit>
 // <slug> is the tenant identifier
