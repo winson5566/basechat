@@ -1,13 +1,11 @@
 import crypto from "crypto";
 
-import dotenv from "dotenv";
 import { drizzle } from "drizzle-orm/node-postgres";
 import { pgTable, text, timestamp } from "drizzle-orm/pg-core";
 import { Ragie } from "ragie";
 
 // run with: npm run update-all-partition-limits <newLimit>
 // <newLimit> is the new pages processed limit (e.g. 20000)
-dotenv.config();
 
 const databaseUrl = process.env.DATABASE_URL;
 const RAGIE_API_BASE_URL = process.env.RAGIE_API_BASE_URL;
