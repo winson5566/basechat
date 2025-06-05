@@ -21,6 +21,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Member, MemberRole, MemberType } from "@/lib/api";
+import { getBillingSettingsPath } from "@/lib/paths";
 
 const THRESHOLD = 0.1;
 
@@ -327,18 +328,27 @@ export default function UserSettings({
                       </div>
                     )}
                     <DialogFooter className="mt-8">
-                      <PrimaryButton
-                        type="submit"
-                        disabled={
-                          !form.getValues("emails")?.length ||
-                          (currentPlanSeats !== undefined &&
-                            Number(totalUsers) + Number(totalInvites) + (form.getValues("emails")?.length || 0) >
-                              currentPlanSeats)
+                      {(() => {
+                        const currentUsage =
+                          Number(totalUsers) + Number(totalInvites) + (form.getValues("emails")?.length || 0);
+                        const needsMoreSeats = currentPlanSeats !== undefined && currentUsage > currentPlanSeats;
+                        const additionalSeats = Number(currentUsage) - Number(currentPlanSeats);
+
+                        if (needsMoreSeats) {
+                          return (
+                            <PrimaryButton onClick={() => (window.location.href = getBillingSettingsPath(tenant.slug))}>
+                              Add {additionalSeats} Seat{additionalSeats === 1 ? "" : "s"} to Continue
+                            </PrimaryButton>
+                          );
                         }
-                      >
-                        Send invite
-                        {isLoading && <Loader2 size={18} className="ml-2 animate-spin" />}
-                      </PrimaryButton>
+
+                        return (
+                          <PrimaryButton type="submit" disabled={!form.getValues("emails")?.length}>
+                            Send invite
+                            {isLoading && <Loader2 size={18} className="ml-2 animate-spin" />}
+                          </PrimaryButton>
+                        );
+                      })()}
                     </DialogFooter>
                   </form>
                 </Form>
