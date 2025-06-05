@@ -1,16 +1,17 @@
+"use server";
+
 import assert from "assert";
 
 import assertNever from "assert-never";
-import { addDays, addMonths, startOfMonth, differenceInDays } from "date-fns";
+import { addMonths, startOfMonth, differenceInDays } from "date-fns";
 import Orb from "orb-billing";
 import { Plan, Price, Subscription, SubscriptionSchedulePlanChangeParams } from "orb-billing/resources/index.mjs";
 
 import { getCurrentPlan } from "./billing/tenant";
 import { PlanType, SEAT_ADD_ON_NAME, SeatChangePreview } from "./orb-types";
 import { getExistingMetadata } from "./server/billing";
-import { getMembersByTenantId } from "./server/service";
 import { ORB_API_KEY, ORB_DEVELOPER_PLAN_ID, ORB_PRO_PLAN_ID, ORB_STARTER_PLAN_ID } from "./server/settings";
-import { startOfDayUtc, nowUtc } from "./utils";
+import { nowUtc } from "./utils";
 
 export async function getSubscriptions(orbCustomerId: string) {
   const orb = new Orb();
@@ -20,8 +21,8 @@ export async function getSubscriptions(orbCustomerId: string) {
   return response.data;
 }
 
-export function findUpcomingSeatQuantityChange(sub: any): number | null {
-  const seatPriceId = getPlanSeatId(sub.plan, sub.customer);
+export async function findUpcomingSeatQuantityChange(sub: any): Promise<number | null> {
+  const seatPriceId = await getPlanSeatId(sub.plan, sub.customer);
   const upcomingSchedule = sub.fixed_fee_quantity_schedule?.find(
     (sched: any) => sched.price_id === seatPriceId && new Date(sched.start_date) > new Date(),
   );
@@ -59,11 +60,11 @@ export async function updateSeats(orbSubscriptionId: string, seats: number) {
   const orb = new Orb();
   const sub = await orb.subscriptions.fetch(orbSubscriptionId);
   assert(sub.plan, "Must have plan");
-  const seatPriceId = getPlanSeatId(sub.plan, sub.customer);
+  const seatPriceId = await getPlanSeatId(sub.plan, sub.customer);
   let periodQuantity = seats;
 
   // is there an upcoming quantity change?
-  const upcomingQuantityChange = findUpcomingSeatQuantityChange(sub);
+  const upcomingQuantityChange = await findUpcomingSeatQuantityChange(sub);
   if (upcomingQuantityChange) {
     periodQuantity += periodQuantity - upcomingQuantityChange;
   }
@@ -113,32 +114,13 @@ export async function changePlan(
   }
   const currSeatPrice = getPlanPrice(currPlan, SEAT_ADD_ON_NAME);
 
-  const nextPlanId = getPlanIdFromType(nextPlanType as PlanType);
+  const nextPlanId = await getPlanIdFromType(nextPlanType as PlanType);
   const nextPlan = await orb.plans.fetch(nextPlanId);
-  const seatPriceId = getPlanSeatId(nextPlan, sub.customer);
+  const seatPriceId = await getPlanSeatId(nextPlan, sub.customer);
   const nextSeatPrice = await orb.prices.fetch(seatPriceId);
   nextSeatPrice.fixed_price_quantity = seatCount;
 
-  // Upgrades occur immediately, downgrades occur at the end of the billing period
-  // For upgrades, the next invoice needs to be discounted by paid portion of the current
-  // months software fee, this discounting occurs using a CreditNote which is displayed to
-  // the user in the UI. This CreditNote will be applied to the invoice for the plan being
-  // upgraded to. The cost of embedded connectors will be discounted based on the cost of
-  // the embedded connector price on the new plan multiplied by the current quantity.
-
-  // Find the invoice in the current billing period with the software fee on it
   const adjustments: Array<SubscriptionSchedulePlanChangeParams.AddAdjustment> = [];
-  // Only discount if embedded connector price > 0
-  //   if (seatCount > 0 && (currSeatPrice as any).unit_config.unit_amount > 0) { // TODO: commented this out
-  //     adjustments.push({
-  //       adjustment: {
-  //         applies_to_price_ids: [seatPriceId],
-  //         adjustment_type: "amount_discount",
-  //         amount_discount: String(seatCount * (nextSeatPrice as any).unit_config.unit_amount),
-  //       },
-  //       end_date: addDays(startOfDayUtc(), 1).toISOString(),
-  //     });
-  //   }
 
   try {
     // HACK: The Orb API can preview changes by providing headers these "Include-Changed-Resources": "true", "Dry-Run": "true"
@@ -223,7 +205,7 @@ export async function getUpcomingSubscriptionSeatCount(subscription: Subscriptio
   if (!subscription || !subscription.plan) {
     throw new Error("Subscription not found");
   }
-  const priceId = getPlanSeatId(subscription.plan, subscription.customer);
+  const priceId = await getPlanSeatId(subscription.plan, subscription.customer);
 
   // Use the latest schedule change, which may exist in the case of a removed seat
   const latestSchedule = subscription.fixed_fee_quantity_schedule.reduce<
@@ -238,7 +220,7 @@ export async function getUpcomingSubscriptionSeatCount(subscription: Subscriptio
   return latestSchedule?.quantity || 0;
 }
 
-export function getPlanSeatId(plan: Plan, customer?: Subscription["customer"]) {
+export async function getPlanSeatId(plan: Plan, customer?: Subscription["customer"]) {
   const priceId = plan.prices.find((p) => {
     return p.name === SEAT_ADD_ON_NAME;
   })?.id;
@@ -251,7 +233,7 @@ export function getPlanSeatId(plan: Plan, customer?: Subscription["customer"]) {
   return priceId;
 }
 
-function getPlanPrice(plan: Plan, priceName: string) {
+async function getPlanPrice(plan: Plan, priceName: string) {
   const price = plan.prices.find((p) => {
     return p.name === priceName;
   });
@@ -259,7 +241,7 @@ function getPlanPrice(plan: Plan, priceName: string) {
   return price;
 }
 
-export function getPlanIdFromType(planType: PlanType) {
+export async function getPlanIdFromType(planType: PlanType) {
   assert(typeof ORB_DEVELOPER_PLAN_ID === "string");
   assert(typeof ORB_STARTER_PLAN_ID === "string");
   assert(typeof ORB_PRO_PLAN_ID === "string");
@@ -275,7 +257,7 @@ export function getPlanIdFromType(planType: PlanType) {
   }
 }
 
-export function getPlanTypeFromId(planId: string) {
+export async function getPlanTypeFromId(planId: string) {
   if (planId === ORB_DEVELOPER_PLAN_ID) {
     return "developer";
   }
@@ -296,7 +278,7 @@ export async function getPlanById(planId: string) {
 
 export async function isCurrentlyOnSubscription(subscription: PlanType, orbCustomerId: string) {
   const currentSubscription = await getSubscription(orbCustomerId);
-  const planId = getPlanIdFromType(subscription);
+  const planId = await getPlanIdFromType(subscription);
   return currentSubscription?.plan?.id === planId;
 }
 
@@ -379,14 +361,14 @@ export async function previewSeatChange(
   const orbSubscriptionId = existingMetadata.orbSubscriptionId;
   assert(orbSubscriptionId, "Must have subscription ID");
 
-  const seatPriceId = getPlanSeatId(currentPlanAsPlan);
+  const seatPriceId = await getPlanSeatId(currentPlanAsPlan);
 
   const originalUpcomingInvoices = await orb.invoices.list({
     subscription_id: currentPlan.id,
     status: ["draft"],
     "due_date[gt]": nowUtc().toISOString().split("T")[0],
   });
-  const originalUpcomingInvoice = selectUpcomingInvoice(originalUpcomingInvoices.data, seatPriceId);
+  const originalUpcomingInvoice = await selectUpcomingInvoice(originalUpcomingInvoices.data, seatPriceId);
   const daysLeftInCurrentBillingCycle = differenceInDays(
     originalUpcomingInvoice && originalUpcomingInvoice.due_date
       ? new Date(originalUpcomingInvoice.due_date)
@@ -413,7 +395,7 @@ export async function previewSeatChange(
       immediateInvoice: null,
       upcomingInvoice: originalUpcomingInvoice,
       currentSeatCharge: originalUpcomingInvoice
-        ? selectSeatChargeFromInvoice(currentPlanAsPlan, originalUpcomingInvoice)
+        ? await selectSeatChargeFromInvoice(currentPlanAsPlan, originalUpcomingInvoice)
         : 0,
       immediateSeatCharge: 0,
       upcomingSeatCharge: 0,
@@ -432,25 +414,27 @@ export async function previewSeatChange(
   const updatedSub = await updatedSubRes.json();
 
   const immediateInvoice = updatedSub.changed_resources?.created_invoices
-    ? selectImmediateDueInvoice(updatedSub.changed_resources.created_invoices, seatPriceId)
+    ? await selectImmediateDueInvoice(updatedSub.changed_resources.created_invoices, seatPriceId)
     : null;
-  let upcomingInvoice = selectUpcomingInvoice(updatedSub.changed_resources?.created_invoices || [], seatPriceId);
+  let upcomingInvoice = await selectUpcomingInvoice(updatedSub.changed_resources?.created_invoices || [], seatPriceId);
   if (!upcomingInvoice) {
     const upcomingInvoices = await orb.invoices.list({
       subscription_id: updatedSub.id,
       status: ["draft"],
       "due_date[gt]": nowUtc().toISOString().split("T")[0],
     });
-    upcomingInvoice = selectUpcomingInvoice(upcomingInvoices.data, seatPriceId);
+    upcomingInvoice = await selectUpcomingInvoice(upcomingInvoices.data, seatPriceId);
   }
 
   // If there is a pending cancellation, from the user's perspective their current embedded connector's charge
   // is actually their upcoming charge
   const currentSeatCharge =
     hasPendingQuantityChange && originalUpcomingInvoice
-      ? selectSeatChargeFromInvoice(currentPlanAsPlan, originalUpcomingInvoice)
+      ? await selectSeatChargeFromInvoice(currentPlanAsPlan, originalUpcomingInvoice)
       : await selectSeatChargeFromSubscription(orbSubscriptionId);
-  const immediateSeatCharge = immediateInvoice ? selectSeatChargeFromInvoice(currentPlanAsPlan, immediateInvoice) : 0;
+  const immediateSeatCharge = immediateInvoice
+    ? await selectSeatChargeFromInvoice(currentPlanAsPlan, immediateInvoice)
+    : 0;
   const nextPeriodChangeRes = await _dryRunQuantityChange({
     subscriptionId: orbSubscriptionId,
     priceId: seatPriceId,
@@ -458,15 +442,15 @@ export async function previewSeatChange(
     changeOption: "upcoming_invoice",
   });
   const nextPeriodChange = await nextPeriodChangeRes.json();
-  const upcomingChangeInvoice = selectUpcomingInvoice(
+  const upcomingChangeInvoice = await selectUpcomingInvoice(
     nextPeriodChange.changed_resources?.created_invoices || [],
     seatPriceId,
   );
   let upcomingSeatCharge = 0;
   if (upcomingChangeInvoice) {
-    upcomingSeatCharge = selectSeatChargeFromInvoice(currentPlanAsPlan, upcomingChangeInvoice);
+    upcomingSeatCharge = await selectSeatChargeFromInvoice(currentPlanAsPlan, upcomingChangeInvoice);
   } else if (upcomingInvoice) {
-    upcomingSeatCharge = selectSeatChargeFromInvoice(currentPlanAsPlan, upcomingInvoice);
+    upcomingSeatCharge = await selectSeatChargeFromInvoice(currentPlanAsPlan, upcomingInvoice);
   }
 
   return {
@@ -481,7 +465,7 @@ export async function previewSeatChange(
   } as SeatChangePreview;
 }
 
-function selectImmediateDueInvoice(invoices: Orb.Invoices.Invoice[], requiredPriceId?: string) {
+async function selectImmediateDueInvoice(invoices: Orb.Invoices.Invoice[], requiredPriceId?: string) {
   const now = nowUtc();
   // Find the latest due invoice that has a total greater than 0
   const dueInvoice = invoices.reduce<null | Orb.Invoices.Invoice>((latest, i) => {
@@ -504,7 +488,7 @@ function selectImmediateDueInvoice(invoices: Orb.Invoices.Invoice[], requiredPri
   return dueInvoice;
 }
 
-function selectUpcomingInvoice(invoices: Orb.Invoices.Invoice[], requiredPriceId?: string) {
+async function selectUpcomingInvoice(invoices: Orb.Invoices.Invoice[], requiredPriceId?: string) {
   const now = nowUtc();
   // Find the next invoice that has a total greater than 0
   const nextInvoice = invoices.reduce<null | Orb.Invoices.Invoice>((next, i) => {
@@ -527,8 +511,8 @@ function selectUpcomingInvoice(invoices: Orb.Invoices.Invoice[], requiredPriceId
   return nextInvoice;
 }
 
-function selectSeatChargeFromInvoice(plan: Plan, invoice: Orb.Invoices.Invoice) {
-  const seatPriceId = getPlanSeatId(plan, invoice.customer as any);
+async function selectSeatChargeFromInvoice(plan: Plan, invoice: Orb.Invoices.Invoice) {
+  const seatPriceId = await getPlanSeatId(plan, invoice.customer as any);
   return invoice.line_items.reduce((total, lineItem) => {
     if (lineItem.price?.id === seatPriceId) {
       return total + parseFloat(lineItem.amount);
@@ -543,7 +527,7 @@ async function selectSeatChargeFromSubscription(orbSubscriptionId: string) {
   const subscription = await orb.subscriptions.fetch(orbSubscriptionId);
   assert(subscription.plan, "Must have plan");
   const now = nowUtc();
-  const seatPriceId = getPlanSeatId(subscription.plan, subscription.customer);
+  const seatPriceId = await getPlanSeatId(subscription.plan, subscription.customer);
   const seatPrice = (subscription.plan.prices as any).find((p: Price) => p.id === seatPriceId)?.unit_config.unit_amount;
   const currentPriceInterval = subscription.price_intervals.find(
     (pi) =>
@@ -570,7 +554,7 @@ export async function getCurrentSubscriptionSeatCount(orbSubscriptionId: string)
   const sub = await orb.subscriptions.fetch(orbSubscriptionId);
   assert(sub.plan, "Must have plan");
 
-  const seatPriceId = getPlanSeatId(sub.plan, sub.customer);
+  const seatPriceId = await getPlanSeatId(sub.plan, sub.customer);
   const nowIso = nowUtc().toISOString();
 
   const fixedFeeQuantity = sub.fixed_fee_quantity_schedule.find((f) => {

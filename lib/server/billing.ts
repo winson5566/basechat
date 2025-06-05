@@ -85,7 +85,7 @@ export async function provisionBillingCustomer(tenantId: string, userFullName: s
     // Subscribe to Developer plan if no subscription exists
     let orbSubscriptionId = existingMetadata.orbSubscriptionId;
     if (!orbSubscriptionId) {
-      const seatPriceId = getPlanSeatId(await getPlanById(ORB_DEVELOPER_PLAN_ID));
+      const seatPriceId = await getPlanSeatId(await getPlanById(ORB_DEVELOPER_PLAN_ID));
       const { totalUsers, totalInvites } = await getMembersByTenantId(tenantId, 1, 10);
       const usedSeatCount = Number(totalUsers) + Number(totalInvites);
       const orbSubscription = await orb.subscriptions.create({

@@ -32,6 +32,7 @@ interface Props {
   tenant: {
     slug: string;
   };
+  currentPlanSeats?: number;
 }
 
 const formSchema = z.object({
@@ -63,6 +64,7 @@ export default function UserSettings({
   initialTotalInvites,
   pageSize,
   tenant,
+  currentPlanSeats,
 }: Props) {
   const [members, setMembers] = useState(initialMembers);
   const [totalUsers, setTotalUsers] = useState(initialTotalUsers);
@@ -307,8 +309,33 @@ export default function UserSettings({
                         </FormItem>
                       )}
                     />
+                    {currentPlanSeats !== undefined && (
+                      <div className="text-sm text-[#74747A] mt-2">
+                        {(() => {
+                          const currentUsage =
+                            Number(totalUsers) + Number(totalInvites) + (form.getValues("emails")?.length || 0);
+                          const remaining = currentPlanSeats - currentUsage;
+                          if (remaining > 0) {
+                            return `${remaining} seat${remaining === 1 ? "" : "s"} left`;
+                          } else if (remaining === 0) {
+                            return "0 seats left";
+                          } else {
+                            const additional = Math.abs(remaining);
+                            return `0 seats left, ${additional} additional seat${additional === 1 ? "" : "s"} required`;
+                          }
+                        })()}
+                      </div>
+                    )}
                     <DialogFooter className="mt-8">
-                      <PrimaryButton type="submit" disabled={!form.getValues("emails")?.length}>
+                      <PrimaryButton
+                        type="submit"
+                        disabled={
+                          !form.getValues("emails")?.length ||
+                          (currentPlanSeats !== undefined &&
+                            Number(totalUsers) + Number(totalInvites) + (form.getValues("emails")?.length || 0) >
+                              currentPlanSeats)
+                        }
+                      >
                         Send invite
                         {isLoading && <Loader2 size={18} className="ml-2 animate-spin" />}
                       </PrimaryButton>

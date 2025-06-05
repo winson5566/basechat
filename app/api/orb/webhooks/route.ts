@@ -144,7 +144,7 @@ async function handleSubscriptionStarted(tenantId: string, payload: OrbWebhookPa
           })),
           {
             id: payload.subscription.id,
-            name: getPlanTypeFromId(payload.subscription.plan.id) || "developer",
+            name: (await getPlanTypeFromId(payload.subscription.plan.id)) || "developer",
             startedAt: new Date(payload.subscription.start_date),
             endedAt: null,
             tier: payload.subscription.plan.id,
@@ -152,7 +152,8 @@ async function handleSubscriptionStarted(tenantId: string, payload: OrbWebhookPa
           },
         ],
       },
-      paidStatus: payload.subscription.plan.id === getPlanIdFromType("developer") ? existingPaidStatus : "active",
+      paidStatus:
+        payload.subscription.plan.id === (await getPlanIdFromType("developer")) ? existingPaidStatus : "active",
     })
     .where(eq(schema.tenants.id, tenantId));
 }
@@ -165,7 +166,7 @@ async function handlePlanChanged(tenantId: string, payload: OrbWebhookPayload) {
   const existingPaidStatus = tenant.paidStatus;
   const planSeatPrice = payload.subscription.plan.prices.find((p: any) => p.name === SEAT_ADD_ON_NAME);
 
-  const newPlanType = getPlanTypeFromId(payload.subscription.plan.id);
+  const newPlanType = await getPlanTypeFromId(payload.subscription.plan.id);
 
   const quantity = payload.subscription.price_intervals
     .flatMap((interval: any) => interval.fixed_fee_quantity_transitions || [])
@@ -194,7 +195,8 @@ async function handlePlanChanged(tenantId: string, payload: OrbWebhookPayload) {
           },
         ],
       },
-      paidStatus: payload.subscription.plan.id === getPlanIdFromType("developer") ? existingPaidStatus : "active",
+      paidStatus:
+        payload.subscription.plan.id === (await getPlanIdFromType("developer")) ? existingPaidStatus : "active",
     })
     .where(eq(schema.tenants.id, tenantId));
 
@@ -245,7 +247,7 @@ async function handleFixedFeeQuantityUpdated(tenantId: string, payload: OrbWebho
           })),
           {
             id: payload.subscription.id,
-            name: getPlanTypeFromId(payload.subscription.plan.id) || "developer",
+            name: (await getPlanTypeFromId(payload.subscription.plan.id)) || "developer",
             startedAt: new Date(payload.subscription.start_date),
             endedAt: null,
             tier: payload.subscription.plan.id,
