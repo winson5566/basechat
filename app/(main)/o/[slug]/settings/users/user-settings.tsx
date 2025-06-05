@@ -90,28 +90,31 @@ export default function UserSettings({
     form.setValue("emails", emails);
   };
 
-  const fetchMembers = async (page: number) => {
-    setIsLoading(true);
-    try {
-      const res = await fetch(`/api/tenants/current/members?page=${page}&pageSize=${pageSize}`, {
-        headers: { tenant: tenant.slug },
-      });
-      const data = await res.json();
-      setMembers((prev) => [...(prev || []), ...data.members]);
-      setTotalUsers(data.totalUsers);
-      setTotalInvites(data.totalInvites);
-      setCurrentPage(page);
-    } catch (error) {
-      toast.error("Failed to fetch members");
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  const fetchMembers = useCallback(
+    async (page: number) => {
+      setIsLoading(true);
+      try {
+        const res = await fetch(`/api/tenants/current/members?page=${page}&pageSize=${pageSize}`, {
+          headers: { tenant: tenant.slug },
+        });
+        const data = await res.json();
+        setMembers((prev) => [...(prev || []), ...data.members]);
+        setTotalUsers(data.totalUsers);
+        setTotalInvites(data.totalInvites);
+        setCurrentPage(page);
+      } catch (error) {
+        toast.error("Failed to fetch members");
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [pageSize, tenant.slug, setMembers, setTotalUsers, setTotalInvites, setCurrentPage, setIsLoading],
+  );
 
   const loadMore = useCallback(() => {
     if (isLoading || members.length >= totalUsers) return;
     fetchMembers(currentPage + 1);
-  }, [currentPage, isLoading, members.length, totalUsers]);
+  }, [currentPage, isLoading, members.length, totalUsers, fetchMembers]);
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -123,13 +126,14 @@ export default function UserSettings({
       { threshold: THRESHOLD },
     );
 
-    if (loadMoreRef.current) {
-      observer.observe(loadMoreRef.current);
+    const currentRef = loadMoreRef.current;
+    if (currentRef) {
+      observer.observe(currentRef);
     }
 
     return () => {
-      if (loadMoreRef.current) {
-        observer.unobserve(loadMoreRef.current);
+      if (currentRef) {
+        observer.unobserve(currentRef);
       }
     };
   }, [loadMore]);

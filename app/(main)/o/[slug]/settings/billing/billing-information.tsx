@@ -183,7 +183,6 @@ export function BillingInformation({ billingData, billingPath, pricingPlansPath,
             open={manageSeatsOpen}
             onOpenChange={setManageSeatsOpen}
             currentSeats={totalSeats}
-            userCount={usedSeats}
             onSave={handleSaveSeats}
             tenantId={tenant.id}
           />

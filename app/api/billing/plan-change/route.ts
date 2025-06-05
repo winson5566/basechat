@@ -7,15 +7,12 @@ export async function POST(req: NextRequest) {
   const { tenant } = await requireAdminContextFromRequest(req);
   try {
     const { planType } = await req.json();
-    console.log("planType", planType);
 
     const metadata = tenant.metadata;
 
     if (!metadata) {
       return NextResponse.json({ error: "Tenant metadata not found" }, { status: 400 });
     }
-
-    console.log("about to get metadata");
 
     const { stripeCustomerId, orbCustomerId, orbSubscriptionId } = metadata;
     if (!stripeCustomerId || !orbCustomerId || !orbSubscriptionId) {
@@ -29,8 +26,6 @@ export async function POST(req: NextRequest) {
         orbSubscriptionId,
       },
     };
-
-    console.log("about to check if on subscription");
 
     const onSubscription = await isCurrentlyOnSubscription(planType, orbCustomerId);
     if (onSubscription) {

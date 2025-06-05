@@ -91,7 +91,9 @@ export default function PlansPageContent({ tenant, userCount }: PlansPageContent
         {effectivePlan ? (
           <div className="space-y-2">
             <p className="text-gray-600">
-              You are currently on the {capitalizeFirstLetter(currentPlanType)} plan with {effectivePlan.seats} seat
+              You are currently on the{" "}
+              {currentPlanType === "developer" ? "Free Trial" : capitalizeFirstLetter(currentPlanType)} plan with{" "}
+              {effectivePlan.seats} seat
               {effectivePlan.seats !== 1 ? "s" : ""}
             </p>
             <p className="text-sm text-gray-500">Started on {new Date(effectivePlan.startedAt).toLocaleDateString()}</p>
@@ -123,19 +125,17 @@ export default function PlansPageContent({ tenant, userCount }: PlansPageContent
               <thead>
                 <tr>
                   <td />
-                  {TIER_UPGRADE_PATH.filter((tierId) => tierId === "developer" || currentPlanType !== "developer").map(
-                    (tierId) => {
-                      const plan = PLANS[tierId as PlanType];
-                      return (
-                        <th key={tierId} scope="col" className="pt-6 xl:pt-8">
-                          <h2 className="font-medium pb-0 text-2xl" style={{ color: TIER_COLORS[tierId] }}>
-                            {tierId === "developer" ? "Free Trial" : plan ? plan.displayName : "Enterprise"}
-                          </h2>
-                          <div className="h-0.5 mt-5" style={{ background: TIER_COLORS[tierId] }} />
-                        </th>
-                      );
-                    },
-                  )}
+                  {TIER_UPGRADE_PATH.map((tierId) => {
+                    const plan = PLANS[tierId as PlanType];
+                    return (
+                      <th key={tierId} scope="col" className="pt-6 xl:pt-8">
+                        <h2 className="font-medium pb-0 text-2xl" style={{ color: TIER_COLORS[tierId] }}>
+                          {tierId === "developer" ? "Free Trial" : plan ? plan.displayName : "Enterprise"}
+                        </h2>
+                        <div className="h-0.5 mt-5" style={{ background: TIER_COLORS[tierId] }} />
+                      </th>
+                    );
+                  })}
                 </tr>
               </thead>
 
@@ -145,65 +145,64 @@ export default function PlansPageContent({ tenant, userCount }: PlansPageContent
                     <span className="sr-only">Price</span>
                   </th>
 
-                  {TIER_UPGRADE_PATH.filter((tierId) => tierId === "developer" || currentPlanType !== "developer").map(
-                    (tierId) => {
-                      const plan = PLANS[tierId as PlanType];
-                      const isEnterprise = tierId === "enterprise";
+                  {TIER_UPGRADE_PATH.map((tierId) => {
+                    const plan = PLANS[tierId as PlanType];
+                    const isEnterprise = tierId === "enterprise";
 
-                      return (
-                        <td key={tierId} className="pt-2 align-top">
-                          <div className="flex h-full flex-col gap-6">
-                            <p className="text-xs">
-                              {tierId === "developer"
-                                ? "2-week free trial to explore Base Chat"
-                                : PLANS[tierId as PlanType]?.description || "Custom enterprise solutions"}
-                            </p>
+                    return (
+                      <td key={tierId} className="pt-2 align-top">
+                        <div className="flex h-full flex-col gap-6">
+                          <p className="text-xs">
+                            {tierId === "developer"
+                              ? "2-week free trial to explore Base Chat"
+                              : PLANS[tierId as PlanType]?.description ||
+                                "Custom enterprise solutions to fit your needs"}
+                          </p>
 
-                            {/* Price Display */}
-                            <div className="flex items-baseline gap-x-1">
-                              {isEnterprise ? (
-                                <span className="text-xl">Custom pricing</span>
-                              ) : (
-                                <>
-                                  <span className="text-2xl font-bold">${plan.price}</span>
-                                  <span className="text-muted-foreground">/ month</span>
-                                </>
-                              )}
-                            </div>
-
-                            {/* Action Button */}
-                            <Button
-                              className="w-full"
-                              style={{
-                                backgroundColor: currentPlanType === tierId ? "#9CA3AF" : TIER_COLORS[tierId],
-                                color: "white",
-                              }}
-                              disabled={
-                                currentPlanType === tierId ||
-                                (tierId === "developer" && currentPlanType !== "developer")
-                              }
-                              onClick={() => {
-                                if (isEnterprise) {
-                                  window.location.href = "mailto:support@ragie.ai?subject=Enterprise%20Plan%20Inquiry";
-                                } else {
-                                  router.push(`/pricing/${tenant.slug}/plan-change?plan-type=${tierId}`);
-                                }
-                              }}
-                            >
-                              {currentPlanType === tierId
-                                ? "Current Plan"
-                                : isEnterprise
-                                  ? "Contact Sales"
-                                  : TIER_UPGRADE_PATH.indexOf(tierId) <
-                                      TIER_UPGRADE_PATH.indexOf(currentPlanType as Tier)
-                                    ? "Downgrade"
-                                    : "Upgrade"}
-                            </Button>
+                          {/* Price Display */}
+                          <div className="flex items-baseline gap-x-1">
+                            {isEnterprise ? (
+                              <span className="text-xl">Custom pricing</span>
+                            ) : (
+                              <>
+                                <span className="text-2xl font-bold">${plan.price}</span>
+                                <span className="text-muted-foreground">/ month</span>
+                              </>
+                            )}
                           </div>
-                        </td>
-                      );
-                    },
-                  )}
+
+                          {/* Action Button */}
+                          <Button
+                            className="w-full"
+                            style={{
+                              backgroundColor: currentPlanType === tierId ? "#9CA3AF" : TIER_COLORS[tierId],
+                              color: "white",
+                            }}
+                            disabled={
+                              currentPlanType === tierId ||
+                              (tierId === "developer" && currentPlanType !== "developer") ||
+                              TIER_UPGRADE_PATH.indexOf(tierId) < TIER_UPGRADE_PATH.indexOf(currentPlanType as Tier)
+                            }
+                            onClick={() => {
+                              if (isEnterprise) {
+                                window.open("https://calendly.com/d/crhj-b4f-d4v/ragie-basechat-discussion", "_blank");
+                              } else {
+                                router.push(`/pricing/${tenant.slug}/plan-change?plan-type=${tierId}`);
+                              }
+                            }}
+                          >
+                            {currentPlanType === tierId
+                              ? "Current Plan"
+                              : isEnterprise
+                                ? "Contact Sales"
+                                : TIER_UPGRADE_PATH.indexOf(tierId) < TIER_UPGRADE_PATH.indexOf(currentPlanType as Tier)
+                                  ? "Downgrade"
+                                  : "Upgrade"}
+                          </Button>
+                        </div>
+                      </td>
+                    );
+                  })}
                 </tr>
 
                 <tr>
@@ -224,10 +223,13 @@ export default function PlansPageContent({ tenant, userCount }: PlansPageContent
       <div className="mt-8 text-left">
         <p className="text-sm text-gray-600">
           Have questions?{" "}
-          <Link href="/" className="text-blue-600 hover:text-blue-800">
+          <Link
+            href="https://calendly.com/d/crhj-b4f-d4v/ragie-basechat-discussion"
+            target="_blank"
+            className="text-blue-600 hover:text-blue-800"
+          >
             Contact us
           </Link>
-          {/* TODO: add calendly link */}
         </p>
       </div>
     </div>

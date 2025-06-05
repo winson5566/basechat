@@ -1,9 +1,10 @@
 import { redirect } from "next/navigation";
+import { NextRequest } from "next/server";
 
 import { getBillingSettingsPath, getTenantPath } from "@/lib/paths";
 import { adminOrRedirect } from "@/lib/server/utils";
 
-export const GET = async ({ params }: { params: { slug: string } }) => {
+export const GET = async (request: NextRequest, { params }: { params: Promise<{ slug: string }> }) => {
   const { slug } = await params;
   const { tenant } = await adminOrRedirect(slug);
 

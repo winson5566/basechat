@@ -9,9 +9,9 @@ import SettingsNav from "../../settings-nav";
 
 import PaymentMethodContent from "./payment-method-content";
 
-export default async function PaymentMethodPage({ params }: { params: { slug: string } }) {
-  const { tenant } = await requireAdminContext(params.slug);
-
+export default async function PaymentMethodPage({ params }: { params: Promise<{ slug: string }> }) {
+  const p = await params;
+  const { tenant } = await requireAdminContext(p.slug);
   const { stripeCustomerId } = tenant.metadata || {};
   assert(typeof stripeCustomerId === "string", "Stripe customer ID not found");
   const defaultPaymentMethod = await getStripeCustomerDefaultPaymentMethod(stripeCustomerId);

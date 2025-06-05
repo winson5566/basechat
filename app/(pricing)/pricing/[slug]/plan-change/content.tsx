@@ -174,15 +174,15 @@ export function UpgradePlanContentInner({
           setLoading(false);
           return;
         }
-        const setupIntent = await createStripeSetupIntent(tenant.metadata.stripeCustomerId);
+        const { client_secret } = await createStripeSetupIntent(tenant.metadata.stripeCustomerId);
         const returnUrl = `${baseUrl}${getBillingSettingsPath(tenant.slug)}/payment-method-redirect`;
 
         const { setupIntent: confirmIntent, error } = await stripe.confirmSetup({
           elements,
-          clientSecret: setupIntent.client_secret!,
+          clientSecret: client_secret!,
           redirect: "if_required",
           confirmParams: {
-            return_url: returnUrl, // TODO:, is this the right redirect?
+            return_url: returnUrl,
           },
         });
         if (error) {
@@ -215,8 +215,6 @@ export function UpgradePlanContentInner({
           planType: targetPlan.planType,
         }),
       });
-
-      console.log("response", response);
 
       if (response.status === 400) {
         const error = await response.json();
@@ -264,13 +262,7 @@ export function UpgradePlanContentInner({
   }, null);
 
   if (!dueInvoice || !nextInvoice) {
-    return (
-      <div>
-        Error: Unable to load invoice information
-        {dueInvoice ? "due invoice" : "no due invoice"}
-        {nextInvoice ? "next invoice" : "no next invoice"}
-      </div>
-    );
+    return <div>Error: Unable to load invoice information</div>;
   }
 
   return (
@@ -335,7 +327,7 @@ export function UpgradePlanContentInner({
           )}
         </div>
       </div>
-      <div className="min-w-[280px] max-w-[340px] p-4 border-l">
+      <div className="min-w-[320px] max-w-[400px] p-4 border-l">
         <div className="text-base mb-4">Summary</div>
         <div className="text-sm flex justify-between">
           <span>{targetPlan.displayName} plan</span>

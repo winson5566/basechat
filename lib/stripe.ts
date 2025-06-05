@@ -1,10 +1,9 @@
+"use server";
+
 import { Stripe } from "stripe";
 
 import { STRIPE_SECRET_KEY } from "./server/settings";
 
-// TODO: figure out why api key not coming from env
-// https://github.com/stripe/stripe-node/issues/2207
-// https://stackoverflow.com/questions/79086035/firebase-deploy-error-neither-apikey-nor-config-authenticator-provided-using-s
 const stripe = new Stripe(STRIPE_SECRET_KEY);
 
 export async function getStripeCustomer(customerId: string): Promise<Stripe.Customer | Stripe.DeletedCustomer> {
@@ -25,7 +24,6 @@ export async function getStripeCustomerDefaultPaymentMethod(customerId: string):
 }
 
 export async function setStripeDefaultInvoicePaymentMethod(customerId: string, paymentMethodId: string): Promise<void> {
-  console.log("about to update customer");
   await stripe.customers.update(customerId, {
     invoice_settings: {
       default_payment_method: paymentMethodId,
@@ -59,10 +57,12 @@ export async function getStripeCustomerDefaultPaymentMethodId(stripeCustomerId: 
     throw new Error("Stripe customer is deleted");
   }
 
-  return getDefaultPaymentMethodId(customer.invoice_settings.default_payment_method);
+  return await getDefaultPaymentMethodId(customer.invoice_settings.default_payment_method as string);
 }
 
-export function getDefaultPaymentMethodId(paymentMethod: Stripe.PaymentMethod | string | null): string | null {
+export async function getDefaultPaymentMethodId(
+  paymentMethod: Stripe.PaymentMethod | string | null,
+): Promise<string | null> {
   if (paymentMethod === null) {
     return null;
   }

@@ -5,7 +5,7 @@ import { Invoice } from "orb-billing/resources/invoices.mjs";
 
 import { H1 } from "@/components/ui/typography";
 import { getCurrentPlan } from "@/lib/billing/tenant";
-import { changePlan, getPlanIdFromType } from "@/lib/orb";
+import { changePlan } from "@/lib/orb";
 import { planTypeSchema, PLANS } from "@/lib/orb-types";
 import { provisionBillingCustomer } from "@/lib/server/billing";
 import { BASE_URL, NEXT_PUBLIC_STRIPE_PUBLIC_KEY } from "@/lib/server/settings";
@@ -16,15 +16,17 @@ import { startOfDayUtc } from "@/lib/utils";
 import UpgradePlanContent from "./content";
 
 interface Props {
-  searchParams: { [key: string]: string | string[] | undefined };
-  params: { slug: string };
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+  params: Promise<{ slug: string }>;
 }
 
 export default async function UpgradePlan({ searchParams, params }: Props) {
-  const planType = planTypeSchema.parse(searchParams["plan-type"]);
+  const p = await params;
+  const searchP = await searchParams;
+  const planType = planTypeSchema.parse(searchP["plan-type"]);
   const targetPlan = PLANS[planType];
   assert(targetPlan, "Target plan not found");
-  const { tenant, session } = await requireAdminContext(params.slug);
+  const { tenant, session } = await requireAdminContext(p.slug);
   const metadata = tenant.metadata;
 
   let stripeCustomerId;

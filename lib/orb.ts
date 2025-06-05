@@ -129,16 +129,16 @@ export async function changePlan(
   // Find the invoice in the current billing period with the software fee on it
   const adjustments: Array<SubscriptionSchedulePlanChangeParams.AddAdjustment> = [];
   // Only discount if embedded connector price > 0
-  if (seatCount > 0 && (currSeatPrice as any).unit_config.unit_amount > 0) {
-    adjustments.push({
-      adjustment: {
-        applies_to_price_ids: [seatPriceId],
-        adjustment_type: "amount_discount",
-        amount_discount: String(seatCount * (nextSeatPrice as any).unit_config.unit_amount),
-      },
-      end_date: addDays(startOfDayUtc(), 1).toISOString(),
-    });
-  }
+  //   if (seatCount > 0 && (currSeatPrice as any).unit_config.unit_amount > 0) { // TODO: commented this out
+  //     adjustments.push({
+  //       adjustment: {
+  //         applies_to_price_ids: [seatPriceId],
+  //         adjustment_type: "amount_discount",
+  //         amount_discount: String(seatCount * (nextSeatPrice as any).unit_config.unit_amount),
+  //       },
+  //       end_date: addDays(startOfDayUtc(), 1).toISOString(),
+  //     });
+  //   }
 
   try {
     // HACK: The Orb API can preview changes by providing headers these "Include-Changed-Resources": "true", "Dry-Run": "true"
