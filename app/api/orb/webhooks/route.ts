@@ -13,6 +13,13 @@ import { ORB_WEBHOOK_SECRET, ORB_API_KEY } from "@/lib/server/settings";
 
 const orb = new Orb({ apiKey: ORB_API_KEY });
 
+class TenantNotFoundError extends Error {
+  constructor(tenantId: string) {
+    super(`Tenant ${tenantId} not found`);
+    this.name = "TenantNotFoundError";
+  }
+}
+
 interface Price {
   id: string;
   name: string;
@@ -69,26 +76,31 @@ export async function POST(req: NextRequest) {
     switch (webhookType) {
       case "customer.created": {
         const tenantId = payload.customer.external_customer_id;
+        await assertTenantExists(tenantId);
         await handleCustomerCreated(tenantId, payload);
         break;
       }
       case "customer.edited": {
         const tenantId = payload.customer.external_customer_id;
+        await assertTenantExists(tenantId);
         await handleCustomerEdited(tenantId, payload);
         break;
       }
       case "subscription.started": {
         const tenantId = payload.subscription.customer.external_customer_id;
+        await assertTenantExists(tenantId);
         await handleSubscriptionStarted(tenantId, payload);
         break;
       }
       case "subscription.plan_changed": {
         const tenantId = payload.subscription.customer.external_customer_id;
+        await assertTenantExists(tenantId);
         await handlePlanChanged(tenantId, payload);
         break;
       }
       case "subscription.fixed_fee_quantity_updated": {
         const tenantId = payload.subscription.customer.external_customer_id;
+        await assertTenantExists(tenantId);
         await handleFixedFeeQuantityUpdated(tenantId, payload);
         break;
       }
@@ -99,8 +111,19 @@ export async function POST(req: NextRequest) {
     }
     return NextResponse.json({ ok: true });
   } catch (error) {
+    if (error instanceof TenantNotFoundError) {
+      console.log(`Ignoring webhook likely intended for ragie api: ${error.message}`);
+      return NextResponse.json({ ok: true });
+    }
     console.error("Error processing orb webhook:", error);
     return NextResponse.json({ error: "Webhook handler failed" }, { status: 500 });
+  }
+}
+
+async function assertTenantExists(tenantId: string) {
+  const tenant = await getTenantByTenantId(tenantId);
+  if (!tenant) {
+    throw new TenantNotFoundError(tenantId);
   }
 }
 
