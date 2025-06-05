@@ -550,7 +550,7 @@ async function selectSeatChargeFromSubscription(orbSubscriptionId: string) {
 }
 
 export async function getCurrentSubscriptionSeatCount(orbSubscriptionId: string) {
-  const orb = new Orb();
+  const orb = new Orb({ apiKey: ORB_API_KEY });
   const sub = await orb.subscriptions.fetch(orbSubscriptionId);
   assert(sub.plan, "Must have plan");
 

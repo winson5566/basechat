@@ -8,7 +8,7 @@ import { getSubscriptions } from "@/lib/orb";
 import { provisionBillingCustomer } from "@/lib/server/billing";
 import { getRagieClientAndPartition } from "@/lib/server/ragie";
 import { getMembersByTenantId } from "@/lib/server/service";
-import { BILLING_ENABLED, DEFAULT_PARTITION_LIMIT } from "@/lib/server/settings";
+import { BILLING_ENABLED, DEFAULT_PARTITION_LIMIT, ORB_API_KEY } from "@/lib/server/settings";
 import { adminOrRedirect } from "@/lib/server/utils";
 import { getStripeCustomerDefaultPaymentMethod } from "@/lib/stripe";
 
@@ -55,7 +55,7 @@ export default async function BillingSettingsPage({ params }: Props) {
   assert(typeof orbCustomerId === "string", "Orb customer ID not found");
 
   // Get Orb data
-  const orb = new Orb();
+  const orb = new Orb({ apiKey: ORB_API_KEY });
   const invoiceRes = await orb.invoices.list({
     external_customer_id: tenant.id,
     status: ["issued", "paid", "synced"],

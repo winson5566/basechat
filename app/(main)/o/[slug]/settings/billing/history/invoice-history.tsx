@@ -6,11 +6,13 @@ import Orb from "orb-billing";
 
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { ORB_API_KEY } from "@/lib/server/settings";
 import { requireAdminContext } from "@/lib/server/utils";
 
-export default async function InvoicesPage({ params }: { params: { slug: string } }) {
-  const orb = new Orb();
-  const { tenant } = await requireAdminContext(params.slug);
+export default async function InvoicesPage({ params }: { params: Promise<{ slug: string }> }) {
+  const p = await params;
+  const orb = new Orb({ apiKey: ORB_API_KEY });
+  const { tenant } = await requireAdminContext(p.slug);
 
   const tenantId = tenant.id;
   const metadata = tenant.metadata;

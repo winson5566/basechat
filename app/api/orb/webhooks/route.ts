@@ -11,9 +11,7 @@ import { getRagieClientAndPartition } from "@/lib/server/ragie";
 import { getTenantByTenantId } from "@/lib/server/service";
 import { ORB_WEBHOOK_SECRET, ORB_API_KEY } from "@/lib/server/settings";
 
-const orb = new Orb({
-  apiKey: ORB_API_KEY,
-});
+const orb = new Orb({ apiKey: ORB_API_KEY });
 
 interface Price {
   id: string;

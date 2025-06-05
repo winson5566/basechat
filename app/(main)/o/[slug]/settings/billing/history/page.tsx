@@ -17,7 +17,7 @@ export default async function InvoiceHistoryPage({ params }: Props) {
     <div className="flex justify-center overflow-auto w-full">
       <div className="max-w-[1140px] w-full p-4 flex-grow flex">
         <SettingsNav tenant={tenant} billingEnabled={BILLING_ENABLED} />
-        <InvoicesPage params={p} />
+        <InvoicesPage params={params} />
       </div>
     </div>
   );

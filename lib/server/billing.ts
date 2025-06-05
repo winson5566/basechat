@@ -12,9 +12,7 @@ import { STRIPE_SECRET_KEY, ORB_API_KEY, ORB_DEVELOPER_PLAN_ID } from "./setting
 
 const stripe = new Stripe(STRIPE_SECRET_KEY, { typescript: true });
 
-const orb = new Orb({
-  apiKey: ORB_API_KEY,
-});
+const orb = new Orb({ apiKey: ORB_API_KEY });
 
 export async function getExistingMetadata(tenantId: string): Promise<TenantMetadata> {
   const tenant = await db
