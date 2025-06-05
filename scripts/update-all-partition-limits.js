@@ -17,36 +17,6 @@ if (!databaseUrl) throw new Error("DATABASE_URL environment variable is required
 if (!RAGIE_API_BASE_URL) throw new Error("RAGIE_API_BASE_URL environment variable is required");
 if (!RAGIE_API_KEY) throw new Error("RAGIE_API_KEY environment variable is required");
 
-function decrypt(cipherText) {
-  if (!cipherText) {
-    throw new Error("Cipher text cannot be empty");
-  }
-
-  try {
-    const [ivHex, authTagHex, encryptedHex] = cipherText.split(":");
-
-    if (!ivHex || !authTagHex || !encryptedHex) {
-      throw new Error("Invalid cipher text format");
-    }
-
-    const iv = Buffer.from(ivHex, "hex");
-    const authTag = Buffer.from(authTagHex, "hex");
-    const encrypted = Buffer.from(encryptedHex, "hex");
-
-    // Create decipher
-    const decipher = crypto.createDecipheriv("aes-256-gcm", Buffer.from(ENCRYPTION_KEY, "hex"), iv);
-    decipher.setAuthTag(authTag);
-
-    // Decrypt the data
-    let decrypted = decipher.update(encrypted);
-    decrypted = Buffer.concat([decrypted, decipher.final()]);
-
-    return decrypted.toString("utf8");
-  } catch (error) {
-    throw new Error(`Failed to decrypt cipher text: ${error instanceof Error ? error.message : "Unknown error"}`);
-  }
-}
-
 function showUsage() {
   console.log("Usage: npm run update-all-partition-limits <newLimit>");
   console.log("  newLimit - The new pages processed limit (e.g. 20000)");
