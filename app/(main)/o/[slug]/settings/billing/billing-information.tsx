@@ -3,6 +3,7 @@
 import { format } from "date-fns";
 import { CreditCard, History, Users, Settings, ChevronRight } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import Orb from "orb-billing";
 import React from "react";
 import { toast } from "sonner";
@@ -112,6 +113,7 @@ function BillingCardLink({ href, children }: BillingCardLinkProps) {
 }
 
 export function BillingInformation({ billingData, billingPath, pricingPlansPath, tenant }: BillingInformationProps) {
+  const router = useRouter();
   const currentPlan = billingData.currentPlan;
   // Map the plan name to the corresponding plan type in PLANS
   const planType = currentPlan.name as keyof typeof PLANS;
@@ -133,6 +135,8 @@ export function BillingInformation({ billingData, billingPath, pricingPlansPath,
       }
 
       toast.success("Successfully updated team seats");
+      await new Promise((resolve) => setTimeout(resolve, 2000));
+      router.refresh();
     } catch (error) {
       toast.error("Failed to update team seats");
       console.error("Error updating seats:", error);

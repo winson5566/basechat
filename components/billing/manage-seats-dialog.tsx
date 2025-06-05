@@ -1,3 +1,4 @@
+import { Loader2 } from "lucide-react";
 import React, { useState, useEffect, useCallback } from "react";
 
 import { getSeatChangePreview } from "@/app/(main)/o/[slug]/settings/billing/actions";
@@ -24,6 +25,7 @@ interface ManageSeatsDialogProps {
 
 export function ManageSeatsDialog({ open, onOpenChange, currentSeats, onSave, tenantId }: ManageSeatsDialogProps) {
   const [seats, setSeats] = useState(currentSeats || 1);
+  const [debouncedSeats, setDebouncedSeats] = useState(currentSeats || 1);
   const [preview, setPreview] = useState<SeatChangePreview | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -48,11 +50,22 @@ export function ManageSeatsDialog({ open, onOpenChange, currentSeats, onSave, te
     [tenantId, setPreview, setIsLoading, setError],
   );
 
+  // Debounce the seats value
+  useEffect(() => {
+    setIsLoading(true);
+    const timer = setTimeout(() => {
+      setDebouncedSeats(seats);
+    }, 1500);
+
+    return () => clearTimeout(timer);
+  }, [seats]);
+
+  // Fetch preview when debounced value changes
   useEffect(() => {
     if (open) {
-      fetchPreview(seats);
+      fetchPreview(debouncedSeats);
     }
-  }, [open, seats, fetchPreview]);
+  }, [open, debouncedSeats, fetchPreview]);
 
   const handleIncrement = () => setSeats((s) => s + 1);
   const handleDecrement = () => setSeats((s) => (s > 1 ? s - 1 : 1));
@@ -90,30 +103,36 @@ export function ManageSeatsDialog({ open, onOpenChange, currentSeats, onSave, te
           {/* Payment Info */}
           {error ? (
             <div className="text-sm text-destructive">An error occurred</div>
-          ) : isLoading ? (
-            <div className="text-sm text-muted-foreground">Loading preview...</div>
           ) : (
-            <div className="flex flex-col gap-2">
-              <div className="flex justify-between text-sm">
-                <span>Current Payment</span>
-                <span>
-                  ${currentPayment.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                </span>
-              </div>
-              {immediatePayment > 0 && (
+            <div className="relative">
+              <div className={`flex flex-col gap-2 ${isLoading ? "opacity-50" : ""}`}>
                 <div className="flex justify-between text-sm">
-                  <span>Due Today</span>
+                  <span>Current Payment</span>
                   <span>
-                    ${immediatePayment.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    ${currentPayment.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                   </span>
                 </div>
-              )}
-              <div className="flex justify-between text-sm">
-                <span>Next Payment</span>
-                <span>
-                  ${upcomingPayment.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                </span>
+                {immediatePayment > 0 && (
+                  <div className="flex justify-between text-sm">
+                    <span>Due Today</span>
+                    <span>
+                      $
+                      {immediatePayment.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    </span>
+                  </div>
+                )}
+                <div className="flex justify-between text-sm">
+                  <span>Next Payment</span>
+                  <span>
+                    ${upcomingPayment.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  </span>
+                </div>
               </div>
+              {isLoading && (
+                <div className="absolute inset-0 flex items-center justify-center bg-background/50">
+                  <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                </div>
+              )}
             </div>
           )}
         </div>

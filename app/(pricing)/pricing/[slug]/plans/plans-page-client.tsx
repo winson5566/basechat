@@ -160,7 +160,7 @@ export default function PlansPageContent({ tenant, userCount }: PlansPageContent
                           </p>
 
                           {/* Price Display */}
-                          <div className="flex items-baseline gap-x-1">
+                          <div className="flex items-baseline gap-x-1 h-8">
                             {isEnterprise ? (
                               <span className="text-xl">Custom pricing</span>
                             ) : (

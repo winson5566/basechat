@@ -14,7 +14,7 @@ import { ORB_API_KEY, ORB_DEVELOPER_PLAN_ID, ORB_PRO_PLAN_ID, ORB_STARTER_PLAN_I
 import { nowUtc } from "./utils";
 
 export async function getSubscriptions(orbCustomerId: string) {
-  const orb = new Orb();
+  const orb = new Orb({ apiKey: ORB_API_KEY });
   const response = await orb.subscriptions.list({
     customer_id: [orbCustomerId],
   });
@@ -30,7 +30,7 @@ export async function findUpcomingSeatQuantityChange(sub: any): Promise<number |
 }
 
 export async function issueImmediateInvoices(subscriptionId: string): Promise<void> {
-  const orb = new Orb();
+  const orb = new Orb({ apiKey: ORB_API_KEY });
   const now = nowUtc();
 
   const invoices = await orb.invoices.list({
@@ -57,7 +57,7 @@ export async function issueImmediateInvoices(subscriptionId: string): Promise<vo
 }
 
 export async function updateSeats(orbSubscriptionId: string, seats: number) {
-  const orb = new Orb();
+  const orb = new Orb({ apiKey: ORB_API_KEY });
   const sub = await orb.subscriptions.fetch(orbSubscriptionId);
   assert(sub.plan, "Must have plan");
   const seatPriceId = await getPlanSeatId(sub.plan, sub.customer);
@@ -101,7 +101,7 @@ export async function changePlan(
     };
   },
 ): Promise<Orb.Subscription> {
-  const orb = new Orb();
+  const orb = new Orb({ apiKey: ORB_API_KEY });
   if (!tenant.metadata.orbSubscriptionId) {
     throw new Error("Orb subscription ID not found");
   }
@@ -271,7 +271,7 @@ export async function getPlanTypeFromId(planId: string) {
 }
 
 export async function getPlanById(planId: string) {
-  const orb = new Orb();
+  const orb = new Orb({ apiKey: ORB_API_KEY });
   const plan = await orb.plans.fetch(planId);
   return plan;
 }
@@ -348,7 +348,7 @@ export async function previewSeatChange(
   nextCount: number,
   changeOption: "immediate" | "upcoming_invoice" = "immediate",
 ) {
-  const orb = new Orb();
+  const orb = new Orb({ apiKey: ORB_API_KEY });
   assert(orbCustomerId, "Must have orbCustomerId");
   const existingMetadata = await getExistingMetadata(tenantId);
   assert(existingMetadata, "Must have existing metadata");
@@ -523,7 +523,7 @@ async function selectSeatChargeFromInvoice(plan: Plan, invoice: Orb.Invoices.Inv
 }
 
 async function selectSeatChargeFromSubscription(orbSubscriptionId: string) {
-  const orb = new Orb();
+  const orb = new Orb({ apiKey: ORB_API_KEY });
   const subscription = await orb.subscriptions.fetch(orbSubscriptionId);
   assert(subscription.plan, "Must have plan");
   const now = nowUtc();

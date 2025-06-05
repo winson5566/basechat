@@ -66,52 +66,41 @@ export async function POST(req: NextRequest) {
     const webhookType = payload.type;
     console.log(`Received orb webhook: ${webhookType}`);
 
-    try {
-      switch (webhookType) {
-        case "customer.created": {
-          const tenantId = payload.customer.external_customer_id;
-          await handleCustomerCreated(tenantId, payload);
-          break;
-        }
-        case "customer.edited": {
-          const tenantId = payload.customer.external_customer_id;
-          await handleCustomerEdited(tenantId, payload);
-          break;
-        }
-        case "subscription.started": {
-          const tenantId = payload.subscription.customer.external_customer_id;
-          await handleSubscriptionStarted(tenantId, payload);
-          break;
-        }
-        case "subscription.plan_changed": {
-          const tenantId = payload.subscription.customer.external_customer_id;
-          await handlePlanChanged(tenantId, payload);
-          break;
-        }
-        case "subscription.fixed_fee_quantity_updated": {
-          const tenantId = payload.subscription.customer.external_customer_id;
-          await handleFixedFeeQuantityUpdated(tenantId, payload);
-          break;
-        }
-        case "subscription.usage_exceeded": {
-          const tenantId = payload.subscription.customer.external_customer_id;
-          await handleUsageExceeded(tenantId, payload);
-          break;
-        }
-        default: {
-          console.log("Unhandled orb webhook type:", webhookType);
-          break;
-        }
+    switch (webhookType) {
+      case "customer.created": {
+        const tenantId = payload.customer.external_customer_id;
+        await handleCustomerCreated(tenantId, payload);
+        break;
       }
-    } catch (error) {
-      console.error("Error processing orb webhook:", error);
-      throw error;
+      case "customer.edited": {
+        const tenantId = payload.customer.external_customer_id;
+        await handleCustomerEdited(tenantId, payload);
+        break;
+      }
+      case "subscription.started": {
+        const tenantId = payload.subscription.customer.external_customer_id;
+        await handleSubscriptionStarted(tenantId, payload);
+        break;
+      }
+      case "subscription.plan_changed": {
+        const tenantId = payload.subscription.customer.external_customer_id;
+        await handlePlanChanged(tenantId, payload);
+        break;
+      }
+      case "subscription.fixed_fee_quantity_updated": {
+        const tenantId = payload.subscription.customer.external_customer_id;
+        await handleFixedFeeQuantityUpdated(tenantId, payload);
+        break;
+      }
+      default: {
+        console.log("Unhandled orb webhook type:", webhookType);
+        break;
+      }
     }
-
     return NextResponse.json({ ok: true });
   } catch (error) {
     console.error("Error processing orb webhook:", error);
-    return NextResponse.json({ error: "Webhook handler failed" }, { status: 400 });
+    return NextResponse.json({ error: "Webhook handler failed" }, { status: 500 });
   }
 }
 
@@ -157,7 +146,6 @@ async function handleSubscriptionStarted(tenantId: string, payload: OrbWebhookPa
 }
 
 async function handlePlanChanged(tenantId: string, payload: OrbWebhookPayload) {
-  // Get existing tenant metadata
   const tenant = await getTenantByTenantId(tenantId);
   const existingMetadata = (tenant.metadata || {}) as TenantMetadata;
   const existingPlans = existingMetadata.plans || [];
@@ -217,7 +205,6 @@ async function handlePlanChanged(tenantId: string, payload: OrbWebhookPayload) {
 }
 
 async function handleFixedFeeQuantityUpdated(tenantId: string, payload: OrbWebhookPayload) {
-  // Get existing tenant metadata
   const tenant = await getTenantByTenantId(tenantId);
 
   const existingMetadata = (tenant.metadata || {}) as TenantMetadata;
@@ -230,7 +217,6 @@ async function handleFixedFeeQuantityUpdated(tenantId: string, payload: OrbWebho
     .filter((t: any) => t.price_id === planSeatPrice?.id)
     .sort((a: any, b: any) => new Date(b.effective_date).getTime() - new Date(a.effective_date).getTime())[0]?.quantity;
 
-  // Update seats in current plan
   await db
     .update(schema.tenants)
     .set({
@@ -257,16 +243,9 @@ async function handleFixedFeeQuantityUpdated(tenantId: string, payload: OrbWebho
     .where(eq(schema.tenants.id, tenantId));
 }
 
-async function handleUsageExceeded(tenantId: string, payload: OrbWebhookPayload) {
-  // Handle usage exceeded event
-  // This could trigger notifications or other actions
-  console.log("Usage exceeded for tenant:", tenantId, payload);
-}
-
 async function handleCustomerCreated(tenantId: string, payload: OrbWebhookPayload) {
   const tenant = await getTenantByTenantId(tenantId);
   const existingMetadata = (tenant.metadata || {}) as TenantMetadata;
-  // Update tenant metadata with Orb customer ID
   await db
     .update(schema.tenants)
     .set({
@@ -281,7 +260,6 @@ async function handleCustomerCreated(tenantId: string, payload: OrbWebhookPayloa
 async function handleCustomerEdited(tenantId: string, payload: OrbWebhookPayload) {
   const tenant = await getTenantByTenantId(tenantId);
   const existingMetadata = (tenant.metadata || {}) as TenantMetadata;
-  // Update tenant metadata with Stripe customer ID
   await db
     .update(schema.tenants)
     .set({
