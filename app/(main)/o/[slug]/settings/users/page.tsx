@@ -1,4 +1,4 @@
-import { getCurrentPlan } from "@/lib/billing/tenant";
+import { getCurrentPlan, TenantPlan } from "@/lib/billing/tenant";
 import { getExistingMetadata } from "@/lib/server/billing";
 import { getMembersByTenantId } from "@/lib/server/service";
 import { BILLING_ENABLED } from "@/lib/server/settings";
@@ -18,9 +18,10 @@ export default async function SettingsUsersIndexPage({ params }: Props) {
   const { members, totalUsers, totalInvites } = await getMembersByTenantId(tenant.id, 1, 10);
 
   let currentPlanSeats: number | undefined = undefined;
+  let currentPlan: TenantPlan | undefined = undefined;
   if (BILLING_ENABLED) {
     const existingMetadata = await getExistingMetadata(tenant.id);
-    const currentPlan = getCurrentPlan(existingMetadata);
+    currentPlan = getCurrentPlan(existingMetadata);
     currentPlanSeats = currentPlan?.seats;
   }
 
@@ -34,6 +35,7 @@ export default async function SettingsUsersIndexPage({ params }: Props) {
         initialTotalInvites={totalInvites}
         pageSize={10}
         currentPlanSeats={currentPlanSeats}
+        currentPlan={currentPlan?.name}
       />
     </div>
   );

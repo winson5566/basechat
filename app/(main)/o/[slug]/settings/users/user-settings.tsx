@@ -4,6 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { DialogTrigger } from "@radix-ui/react-dialog";
 import assertNever from "assert-never";
 import { Loader2, MoreHorizontal, Trash } from "lucide-react";
+import { redirect } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -34,6 +35,7 @@ interface Props {
     slug: string;
   };
   currentPlanSeats?: number;
+  currentPlan?: string;
 }
 
 const formSchema = z.object({
@@ -66,6 +68,7 @@ export default function UserSettings({
   pageSize,
   tenant,
   currentPlanSeats,
+  currentPlan,
 }: Props) {
   const [members, setMembers] = useState(initialMembers);
   const [totalUsers, setTotalUsers] = useState(initialTotalUsers);
@@ -312,7 +315,7 @@ export default function UserSettings({
                         </FormItem>
                       )}
                     />
-                    {currentPlanSeats !== undefined && (
+                    {currentPlanSeats !== undefined && currentPlan !== "developer" && (
                       <div className="text-sm text-[#74747A] mt-2">
                         {(() => {
                           const currentUsage =
@@ -333,12 +336,15 @@ export default function UserSettings({
                       {(() => {
                         const currentUsage =
                           Number(totalUsers) + Number(totalInvites) + (form.getValues("emails")?.length || 0);
-                        const needsMoreSeats = currentPlanSeats !== undefined && currentUsage > currentPlanSeats;
+                        const needsMoreSeats =
+                          currentPlanSeats !== undefined &&
+                          currentPlan !== "developer" &&
+                          currentUsage > currentPlanSeats;
                         const additionalSeats = Number(currentUsage) - Number(currentPlanSeats);
 
                         if (needsMoreSeats) {
                           return (
-                            <PrimaryButton onClick={() => (window.location.href = getBillingSettingsPath(tenant.slug))}>
+                            <PrimaryButton onClick={() => redirect(getBillingSettingsPath(tenant.slug))}>
                               Add {additionalSeats} Seat{additionalSeats === 1 ? "" : "s"} to Continue
                             </PrimaryButton>
                           );
