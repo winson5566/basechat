@@ -4,7 +4,9 @@ import { NextResponse } from "next/server";
 
 import { updateSeats } from "@/lib/orb";
 import { getExistingMetadata } from "@/lib/server/billing";
+import { ORB_API_KEY } from "@/lib/server/settings";
 import { requireAdminContextFromRequest } from "@/lib/server/utils";
+// ORB_API_KEY import required for build
 
 export async function POST(req: Request) {
   const { tenant } = await requireAdminContextFromRequest(req);

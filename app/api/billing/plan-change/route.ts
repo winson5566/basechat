@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { changePlan, isCurrentlyOnSubscription } from "@/lib/orb";
 import { ORB_API_KEY } from "@/lib/server/settings";
 import { requireAdminContextFromRequest } from "@/lib/server/utils";
-// required for build
+// ORB_API_KEY import required for build
 
 export async function POST(req: NextRequest) {
   const { tenant } = await requireAdminContextFromRequest(req);
