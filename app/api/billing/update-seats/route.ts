@@ -8,6 +8,8 @@ import { ORB_API_KEY } from "@/lib/server/settings";
 import { requireAdminContextFromRequest } from "@/lib/server/utils";
 // ORB_API_KEY import required for build
 
+assert(ORB_API_KEY, "ORB_API_KEY is required");
+
 export async function POST(req: Request) {
   const { tenant } = await requireAdminContextFromRequest(req);
   try {
