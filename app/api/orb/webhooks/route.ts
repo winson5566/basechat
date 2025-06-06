@@ -120,8 +120,9 @@ export async function POST(req: NextRequest) {
 }
 
 async function assertTenantExists(tenantId: string) {
-  const tenant = await getTenantByTenantId(tenantId);
-  if (!tenant) {
+  try {
+    await getTenantByTenantId(tenantId);
+  } catch (error) {
     throw new TenantNotFoundError(tenantId);
   }
 }

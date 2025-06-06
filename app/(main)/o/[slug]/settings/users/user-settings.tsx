@@ -158,6 +158,7 @@ export default function UserSettings({
 
     setDialogOpen(false);
     setIsLoading(false);
+    setTotalInvites((prev) => prev + values.emails.length);
     toast.success("Invites sent");
     resetForm();
 
@@ -184,6 +185,7 @@ export default function UserSettings({
 
     toast.info("Invite was deleted");
     setMembers(members.filter((m) => m.type !== "invite" || m.id !== id));
+    setTotalInvites((prev) => prev - 1);
   };
 
   const deleteProfile = async (id: string) => {

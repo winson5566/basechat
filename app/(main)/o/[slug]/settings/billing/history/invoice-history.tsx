@@ -86,6 +86,14 @@ export default async function InvoicesPage({ params }: { params: Promise<{ slug:
       <div className="my-16" />
       <div className="my-16" />
       <div className="my-16" />
+      <div className="my-16" />
+      <div className="my-16" />
+      <div className="my-16" />
+      <div className="my-16" />
+      <div className="my-16" />
+      <div className="my-16" />
+      <div className="my-16" />
+      <div className="my-16" />
     </div>
   );
 }

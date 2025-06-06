@@ -112,15 +112,11 @@ export async function changePlan(
   if (!currPlan) {
     throw new Error("Current plan not found");
   }
-  const currSeatPrice = getPlanPrice(currPlan, SEAT_ADD_ON_NAME);
 
   const nextPlanId = await getPlanIdFromType(nextPlanType as PlanType);
+  assert(nextPlanId, "Next plan ID not found");
   const nextPlan = await orb.plans.fetch(nextPlanId);
   const seatPriceId = await getPlanSeatId(nextPlan, sub.customer);
-  const nextSeatPrice = await orb.prices.fetch(seatPriceId);
-  nextSeatPrice.fixed_price_quantity = seatCount;
-
-  const adjustments: Array<SubscriptionSchedulePlanChangeParams.AddAdjustment> = [];
 
   try {
     // HACK: The Orb API can preview changes by providing headers these "Include-Changed-Resources": "true", "Dry-Run": "true"
@@ -142,7 +138,6 @@ export async function changePlan(
             body: JSON.stringify({
               plan_id: nextPlanId,
               change_option: "immediate",
-              add_adjustments: adjustments,
               replace_prices: [
                 {
                   replaces_price_id: seatPriceId,
@@ -161,7 +156,6 @@ export async function changePlan(
       updatedSub = await orb.subscriptions.schedulePlanChange(tenant.metadata.orbSubscriptionId, {
         plan_id: nextPlanId,
         change_option: "immediate",
-        add_adjustments: adjustments,
         replace_prices: [
           {
             replaces_price_id: seatPriceId,
@@ -233,14 +227,6 @@ export async function getPlanSeatId(plan: Plan, customer?: Subscription["custome
   return priceId;
 }
 
-async function getPlanPrice(plan: Plan, priceName: string) {
-  const price = plan.prices.find((p) => {
-    return p.name === priceName;
-  });
-  assert(price, `Price for ${priceName} not found in plan`);
-  return price;
-}
-
 export async function getPlanIdFromType(planType: PlanType) {
   assert(typeof ORB_DEVELOPER_PLAN_ID === "string");
   assert(typeof ORB_STARTER_PLAN_ID === "string");
@@ -279,6 +265,7 @@ export async function getPlanById(planId: string) {
 export async function isCurrentlyOnSubscription(subscription: PlanType, orbCustomerId: string) {
   const currentSubscription = await getSubscription(orbCustomerId);
   const planId = await getPlanIdFromType(subscription);
+  assert(planId, "Plan ID not found");
   return currentSubscription?.plan?.id === planId;
 }
 
