@@ -228,7 +228,6 @@ export function UpgradePlanContentInner({
       }
 
       toast.success("You have successfully changed your plan");
-      await new Promise((resolve) => setTimeout(resolve, 2000));
       redirect(getTenantPath(tenant.slug));
     } catch (err: unknown) {
       toast.error("Unable to switch plans. Please contact support");
