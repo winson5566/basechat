@@ -75,24 +75,39 @@ async function updateAllPartitionLimits(newLimit, excludedTenantIds) {
 
         console.log(`Processing tenant: ${tenant.slug}`);
 
-        // tenant does not have custom api key
-        if (!tenant.ragieApiKey) {
+        // tenant custom api key
+        if (tenant.ragieApiKey) {
+          console.log(`Tenant ${tenant.slug} has custom api key, skipping`);
+          continue;
+        } else {
           const client = new Ragie({
             auth: RAGIE_API_KEY,
             serverURL: RAGIE_API_BASE_URL,
           });
 
-          // Update the partition limit in Ragie
-          await client.partitions.setLimits({
-            partitionId: tenant.id,
-            partitionLimitParams: {
-              pagesProcessedLimitMax: newLimit,
-            },
-          });
+          try {
+            await client.partitions.setLimits({
+              partitionId: tenant.id,
+              partitionLimitParams: {
+                pagesProcessedLimitMax: newLimit,
+              },
+            });
+          } catch (error) {
+            // Only handle 404 partition not found errors
+            if (error.statusCode === 404 && error.body?.includes("Partition not found")) {
+              // Partition not found, must create it
+              console.log("Creating partition for tenant: ", tenant.slug);
+              await client.partitions.create({
+                name: tenant.id,
+                pagesProcessedLimitMax: newLimit,
+              });
+            } else {
+              // Re-throw other errors
+              throw error;
+            }
+          }
           successfulUpdates++;
           console.log(`Successfully updated partition limit for tenant ${tenant.slug}`);
-        } else {
-          console.log(`Tenant ${tenant.slug} has custom api key, skipping`);
         }
       } catch (error) {
         console.error(`Failed to update tenant ${tenant.slug}:`, error);
