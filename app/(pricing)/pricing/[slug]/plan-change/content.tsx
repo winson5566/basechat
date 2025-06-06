@@ -265,6 +265,13 @@ export function UpgradePlanContentInner({
     return <div>Error: Unable to load invoice information</div>;
   }
 
+  const totalDueToday = Math.max(
+    0,
+    previewCreditNotes.length > 0
+      ? parseFloat(dueInvoice?.amount_due) - parseFloat(previewCreditNotes[0].total)
+      : parseFloat(dueInvoice?.amount_due),
+  );
+
   return (
     <form className={cn("flex", className)} onSubmit={handleSubmit}>
       <div className="pr-8">
@@ -352,16 +359,17 @@ export function UpgradePlanContentInner({
           <span>Base monthly starting {nextInvoice.due_date && format(new Date(nextInvoice.due_date), "M/d/yy")} </span>
           <span>${nextInvoice.amount_due} /month</span>
         </div>
-        <div className="flex justify-between items-center mt-3">
-          <span className="text-sm">Total due today</span>
-          <span className="font-bold">${dueInvoice?.amount_due}</span>
-        </div>
         {previewCreditNotes.length > 0 && (
           <div className="flex justify-between items-center mt-3 text-sm">
             <span>Refund on last plan</span>
             <span>${previewCreditNotes[0].total}</span>
           </div>
         )}
+        <div className="flex justify-between items-center mt-3">
+          <span className="text-sm">Total due today</span>
+          <span className="font-bold">{currencyFormatter.format(totalDueToday)}</span>
+        </div>
+
         <FinePrint targetPlan={targetPlan} nextInvoice={nextInvoice} />
         <Button type="submit" className="w-full mt-4" loading={loading} disabled={loading || !stripe}>
           Upgrade to {targetPlan.displayName}
