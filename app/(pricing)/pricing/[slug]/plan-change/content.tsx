@@ -2,7 +2,7 @@
 
 import { PaymentElement, useElements, useStripe } from "@stripe/react-stripe-js";
 import { format, isBefore, isEqual, isAfter } from "date-fns";
-import { useRouter, redirect } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { FormEvent, useEffect, useState } from "react";
 import { toast } from "sonner";
 import Stripe from "stripe";
@@ -228,7 +228,7 @@ export function UpgradePlanContentInner({
       }
 
       toast.success("You have successfully changed your plan");
-      redirect(getTenantPath(tenant.slug));
+      router.push(getTenantPath(tenant.slug));
     } catch (err: unknown) {
       toast.error("Unable to switch plans. Please contact support");
       console.error(err);
