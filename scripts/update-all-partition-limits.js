@@ -1,10 +1,8 @@
-import crypto from "crypto";
-
 import { drizzle } from "drizzle-orm/node-postgres";
 import { pgTable, text, timestamp } from "drizzle-orm/pg-core";
 import { Ragie } from "ragie";
 
-// run with: npm run update-all-partition-limits <newLimit>
+// run with: npm run update-all-partition-limits <newLimit> [excludeTenantId1] [excludeTenantId2] ...
 // <newLimit> is the new pages processed limit (e.g. 20000)
 
 const databaseUrl = process.env.DATABASE_URL;
@@ -18,8 +16,9 @@ if (!RAGIE_API_BASE_URL) throw new Error("RAGIE_API_BASE_URL environment variabl
 if (!RAGIE_API_KEY) throw new Error("RAGIE_API_KEY environment variable is required");
 
 function showUsage() {
-  console.log("Usage: npm run update-all-partition-limits <newLimit>");
+  console.log("Usage: npm run update-all-partition-limits <newLimit> [excludeTenantId1] [excludeTenantId2] ...");
   console.log("  newLimit - The new pages processed limit (e.g. 20000)");
+  console.log("  excludeTenantId - Optional: One or more tenant IDs to exclude from the update");
   process.exit(1);
 }
 
@@ -30,6 +29,7 @@ if (process.argv.length < 3) {
 
 const db = drizzle(databaseUrl);
 const newLimit = parseInt(process.argv[2], 10);
+const excludedTenantIds = process.argv.slice(3);
 
 if (isNaN(newLimit)) {
   console.log("Error: newLimit must be a number");
@@ -46,8 +46,8 @@ const tenantsSchema = pgTable("tenants", {
 
 console.log(`Updating partition limits for all tenants to ${newLimit}`);
 
-async function updateAllPartitionLimits(newLimit) {
-  const successfulUpdates = 0;
+async function updateAllPartitionLimits(newLimit, excludedTenantIds) {
+  let successfulUpdates = 0;
   try {
     // Get all tenants
     const allTenants = await db
@@ -60,10 +60,19 @@ async function updateAllPartitionLimits(newLimit) {
       .from(tenantsSchema);
 
     console.log(`Found ${allTenants.length} tenants to update`);
+    if (excludedTenantIds.length > 0) {
+      console.log(`Excluding ${excludedTenantIds.length} tenants: ${excludedTenantIds.join(", ")}`);
+    }
 
     // Process each tenant
     for (const tenant of allTenants) {
       try {
+        // Skip excluded tenants
+        if (excludedTenantIds.includes(tenant.id)) {
+          console.log(`Skipping excluded tenant: ${tenant.slug}`);
+          continue;
+        }
+
         console.log(`Processing tenant: ${tenant.slug}`);
 
         // tenant does not have custom api key
@@ -100,7 +109,7 @@ async function updateAllPartitionLimits(newLimit) {
   }
 }
 
-updateAllPartitionLimits(newLimit)
+updateAllPartitionLimits(newLimit, excludedTenantIds)
   .then(() => {
     process.exit(0);
   })
