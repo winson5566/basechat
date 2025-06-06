@@ -10,10 +10,6 @@ import * as schema from "./db/schema";
 import { getMembersByTenantId } from "./service";
 import { STRIPE_SECRET_KEY, ORB_API_KEY, ORB_DEVELOPER_PLAN_ID } from "./settings";
 
-const stripe = new Stripe(STRIPE_SECRET_KEY, { typescript: true });
-
-const orb = new Orb({ apiKey: ORB_API_KEY });
-
 export async function getExistingMetadata(tenantId: string): Promise<TenantMetadata> {
   const tenant = await db
     .select({ metadata: schema.tenants.metadata })
@@ -25,6 +21,7 @@ export async function getExistingMetadata(tenantId: string): Promise<TenantMetad
 }
 
 export async function createStripeCustomer(tenantId: string, orbCustomerId: string, email: string, name: string) {
+  const stripe = new Stripe(STRIPE_SECRET_KEY, { typescript: true });
   try {
     const customer = await stripe.customers.create({
       email,
@@ -43,6 +40,7 @@ export async function createStripeCustomer(tenantId: string, orbCustomerId: stri
 }
 
 export async function createOrbCustomer(tenantId: string, email: string, name: string) {
+  const orb = new Orb({ apiKey: ORB_API_KEY });
   try {
     const customer = await orb.customers.create({
       external_customer_id: tenantId,
@@ -57,6 +55,7 @@ export async function createOrbCustomer(tenantId: string, email: string, name: s
 }
 
 export async function provisionBillingCustomer(tenantId: string, userFullName: string, email: string) {
+  const orb = new Orb({ apiKey: ORB_API_KEY });
   try {
     // Get tenant metadata
     const existingMetadata = await getExistingMetadata(tenantId);
