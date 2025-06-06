@@ -1,6 +1,12 @@
 "use client";
 
+import Orb from "orb-billing";
+
 import WarningMessage from "@/components/warning-message";
+import { getBillingSettingsPath, getPricingPlansPath } from "@/lib/paths";
+
+import { BillingInformation } from "./billing-information";
+import ProcessingInformation from "./processing-information";
 
 type PartitionInfo = {
   name: string;
@@ -21,15 +27,41 @@ type PartitionInfo = {
   };
 };
 
+type BillingData = {
+  hasBillingHistory: boolean;
+  overdueInvoice: Orb.Invoice | null;
+  nextPaymentDate: string | null;
+  defaultPaymentMethod: any; // TODO: add proper type
+  currentPlan: any; // TODO: Add proper type
+  invoices: Orb.Invoice[];
+  subscriptions: any[]; // TODO: Add proper type
+  userCount: number;
+};
+
 type Props = {
   tenant: {
+    id: string;
+    slug: string;
     partitionLimitExceededAt: Date | null;
+    paidStatus: string;
+    metadata: {
+      stripeCustomerId?: string;
+      orbCustomerId?: string;
+      plans?: Array<{
+        id: string;
+        endedAt: Date | null;
+        startedAt: Date;
+        tier: string;
+        seats: number;
+      }>;
+    };
   };
   partitionInfo: PartitionInfo;
   defaultPartitionLimit: number;
+  billingData: BillingData;
 };
 
-export default function BillingSettings({ tenant, partitionInfo, defaultPartitionLimit }: Props) {
+export default function BillingSettings({ tenant, partitionInfo, defaultPartitionLimit, billingData }: Props) {
   return (
     <div className="w-full p-4 flex-grow flex flex-col relative">
       <div className="flex w-full justify-between items-center mb-8">
@@ -44,56 +76,14 @@ export default function BillingSettings({ tenant, partitionInfo, defaultPartitio
       )}
 
       <div className="space-y-8">
-        <div className="bg-white rounded-lg border border-[#D7D7D7] p-6">
-          <h2 className="font-semibold text-xl text-[#343A40] mb-4">Processing Information</h2>
-          <div className="space-y-6">
-            <hr className="border-[#D7D7D7]" />
-            <div>
-              <h3 className="font-medium text-base text-[#343A40] mb-2">Limits</h3>
-              <div className="space-y-2">
-                <p className="text-sm">
-                  <span className="text-[#74747A]">Max Pages Processed Limit:</span>{" "}
-                  {partitionInfo.limits.pagesProcessedLimitMax ?? "Unlimited"}
-                </p>
-                <p className="text-sm">
-                  <span className="text-[#74747A]">Limit Exceeded At:</span>{" "}
-                  {partitionInfo.limitExceededAt ? partitionInfo.limitExceededAt.toLocaleString() : "Never"}
-                </p>
-              </div>
-            </div>
-
-            <hr className="border-[#D7D7D7]" />
-
-            <div>
-              <h3 className="font-medium text-base text-[#343A40] mb-2">Statistics</h3>
-              <div className="space-y-2">
-                <p className="text-sm">
-                  <span className="text-[#74747A]">Monthly Pages Processed:</span>{" "}
-                  {partitionInfo.stats.pagesProcessedMonthly.toFixed(2)}
-                </p>
-                <p className="text-sm">
-                  <span className="text-[#74747A]">Monthly Pages Hosted:</span>{" "}
-                  {partitionInfo.stats.pagesHostedMonthly.toFixed(2)}
-                </p>
-                <p className="text-sm">
-                  <span className="text-[#74747A]">Total Pages Processed:</span>{" "}
-                  {partitionInfo.stats.pagesProcessedTotal.toFixed(2)}
-                </p>
-                <p className="text-sm">
-                  <span className="text-[#74747A]">Total Pages Hosted:</span>{" "}
-                  {partitionInfo.stats.pagesHostedTotal.toFixed(2)}
-                </p>
-                <p className="text-sm">
-                  <span className="text-[#74747A]">Total Documents:</span> {partitionInfo.stats.documentCount}
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
+        <BillingInformation
+          billingPath={getBillingSettingsPath(tenant.slug)}
+          pricingPlansPath={getPricingPlansPath(tenant.slug)}
+          billingData={billingData}
+          tenant={tenant}
+        />
+        <ProcessingInformation partitionInfo={partitionInfo} />
       </div>
-      <div className="h-16" />
-      <div className="h-16" />
-      <div className="h-16" />
       <div className="h-16" />
     </div>
   );

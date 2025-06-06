@@ -36,6 +36,16 @@ export const BILLING_ENABLED = process.env.BILLING_ENABLED === "true";
 
 export const DEFAULT_PARTITION_LIMIT = Number(process.env.DEFAULT_PARTITION_LIMIT);
 
+export const STRIPE_SECRET_KEY = process.env.STRIPE_SECRET_KEY!;
+
+export const STRIPE_WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET!;
+
+export const NEXT_PUBLIC_STRIPE_PUBLIC_KEY = process.env.NEXT_PUBLIC_STRIPE_PUBLIC_KEY!;
+
+export const ORB_API_KEY = process.env.ORB_API_KEY!;
+
+export const ORB_WEBHOOK_SECRET = process.env.ORB_WEBHOOK_SECRET!;
+
 export const SMTP_FROM = process.env.SMTP_FROM!;
 export const SMTP_HOST = process.env.SMTP_HOST!;
 export const SMTP_PORT = Number(process.env.SMTP_PORT!);
@@ -46,3 +56,8 @@ export const SMTP_PASSWORD = process.env.SMTP_PASSWORD;
 // Google OAuth configs - Optional
 export const AUTH_GOOGLE_ID = process.env.AUTH_GOOGLE_ID;
 export const AUTH_GOOGLE_SECRET = process.env.AUTH_GOOGLE_SECRET;
+
+// Orb Plans
+export const ORB_DEVELOPER_PLAN_ID = process.env.ORB_DEVELOPER_PLAN_ID!;
+export const ORB_STARTER_PLAN_ID = process.env.ORB_STARTER_PLAN_ID!;
+export const ORB_PRO_PLAN_ID = process.env.ORB_PRO_PLAN_ID!;
