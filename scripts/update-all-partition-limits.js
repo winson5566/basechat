@@ -47,6 +47,7 @@ const tenantsSchema = pgTable("tenants", {
 console.log(`Updating partition limits for all tenants to ${newLimit}`);
 
 async function updateAllPartitionLimits(newLimit) {
+  const successfulUpdates = 0;
   try {
     // Get all tenants
     const allTenants = await db
@@ -79,6 +80,7 @@ async function updateAllPartitionLimits(newLimit) {
               pagesProcessedLimitMax: newLimit,
             },
           });
+          successfulUpdates++;
           console.log(`Successfully updated partition limit for tenant ${tenant.slug}`);
         } else {
           console.log(`Tenant ${tenant.slug} has custom api key, skipping`);
@@ -91,6 +93,7 @@ async function updateAllPartitionLimits(newLimit) {
     }
 
     console.log("Finished processing all tenants");
+    console.log(`Successfull updates: ${successfulUpdates} / ${allTenants.length}`);
   } catch (error) {
     console.error("Failed to update partition limits:", error);
     process.exit(1);
