@@ -121,11 +121,15 @@ async function updatePartitionLimit(slug, newLimit) {
       },
     });
 
+    // Call ragie to see if now over the limit, set flag accordingly
+    const partitionInfo = await client.partitions.get({ partitionId: partition });
+    const limitExceededAt = partitionInfo.limitExceededAt;
+
     // Update the tenant record to update the exceeded flag
     await db
       .update(tenantsSchema)
       .set({
-        partitionLimitExceededAt: null,
+        partitionLimitExceededAt: limitExceededAt,
       })
       .where(eq(tenantsSchema.slug, slug));
 
