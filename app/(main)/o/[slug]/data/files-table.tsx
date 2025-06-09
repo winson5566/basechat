@@ -307,7 +307,7 @@ export default function FilesTable({
                           {file.status !== "ready" && file.status !== "failed" && (
                             <Loader2 className="h-4 w-4 animate-spin text-[#006EDB]" />
                           )}
-                          {getStatusDisplayName(file.status)}
+                          {tenant.paidStatus === "expired" ? "Paused" : getStatusDisplayName(file.status)}
                         </div>
                       </TableCell>
                       <TableCell className="text-right">

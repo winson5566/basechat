@@ -15,6 +15,7 @@ interface Props {
   tenant: {
     id: string;
     slug: string;
+    paidStatus: string;
   };
   connections: any[];
 }
@@ -91,7 +92,7 @@ export default function ConnectionsTable({ tenant, connections }: Props) {
                     {connection.status !== "ready" && connection.status !== "failed" && (
                       <Loader2 className="h-4 w-4 animate-spin text-[#006EDB]" />
                     )}
-                    {getStatusDisplayName(connection.status)}
+                    {tenant.paidStatus === "expired" ? "Paused" : getStatusDisplayName(connection.status)}
                   </div>
                 </TableCell>
                 <TableCell className="text-right">
