@@ -13,16 +13,19 @@ interface PaymentRequiredDialogProps {
     paidStatus: string;
     slug: string;
   };
+  profile: {
+    role: string;
+  };
 }
 
-export function PaymentRequiredDialog({ tenant }: PaymentRequiredDialogProps) {
+export function PaymentRequiredDialog({ tenant, profile }: PaymentRequiredDialogProps) {
   const [isOpen, setIsOpen] = useState(false);
 
   useEffect(() => {
-    if (tenant.paidStatus === "expired") {
+    if (tenant.paidStatus === "expired" && profile.role === "admin") {
       setIsOpen(true);
     }
-  }, [tenant.paidStatus]);
+  }, [tenant.paidStatus, profile.role]);
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
