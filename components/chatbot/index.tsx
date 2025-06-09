@@ -41,6 +41,7 @@ interface Props {
     overrideBreadth: boolean | null;
     overrideRerank: boolean | null;
     overridePrioritizeRecent: boolean | null;
+    paidStatus: string;
   };
   initMessage?: string;
   onSelectedSource: (source: SourceMetadata) => void;
@@ -320,6 +321,7 @@ export default function Chatbot({ tenant, conversationId, initMessage, onSelecte
             canSetIsBreadth={tenant?.overrideBreadth ?? true}
             canSetRerankEnabled={tenant?.overrideRerank ?? true}
             canSetPrioritizeRecent={tenant?.overridePrioritizeRecent ?? true}
+            tenantPaidStatus={tenant.paidStatus}
           />
         </div>
       </div>

@@ -8,8 +8,8 @@ interface Props {
 
 export default async function ConversationPage({ params }: Props) {
   const p = await params;
-  const { tenant } = await authOrRedirect(p.slug);
+  const { tenant, profile } = await authOrRedirect(p.slug);
   const { id } = p;
 
-  return <Conversation tenant={tenant} id={id} />;
+  return <Conversation tenant={tenant} id={id} profile={profile} />;
 }
