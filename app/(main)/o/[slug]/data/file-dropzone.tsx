@@ -9,6 +9,7 @@ import { MAX_FILE_SIZE, getDropzoneAcceptConfig, uploadFile, validateFile } from
 interface FileDropzoneProps {
   tenant: {
     slug: string;
+    paidStatus: string;
   };
   userName: string;
   onUploadComplete: () => void;
@@ -20,6 +21,10 @@ export default function FileDropzone({ tenant, userName, onUploadComplete }: Fil
   return (
     <Dropzone
       onDrop={async (acceptedFiles: File[]) => {
+        if (tenant.paidStatus === "expired") {
+          toast.error("Your organization's subscription has expired. Please renew to continue using this chatbot.");
+          return;
+        }
         const uploadPromises = acceptedFiles.map(async (file) => {
           const validation = validateFile(file);
           if (!validation.isValid) {

@@ -2,6 +2,7 @@ import { ChevronRight, ChevronDown } from "lucide-react";
 import Image from "next/image";
 import { KeyboardEvent, useRef, useState, useEffect } from "react";
 
+import { useProfile } from "@/app/(main)/o/[slug]/profile-context";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Switch } from "@/components/ui/switch";
 import { LLMModel, LLM_LOGO_MAP, LLM_DISPLAY_NAMES } from "@/lib/llm/types";
@@ -11,6 +12,7 @@ import CheckIcon from "../../public/icons/check.svg";
 import GearIcon from "../../public/icons/gear.svg";
 import { AutosizeTextarea, AutosizeTextAreaRef } from "../ui/autosize-textarea";
 import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../ui/tooltip";
 
 interface ChatInputProps {
   handleSubmit?: (text: string, model: LLMModel) => void;
@@ -26,7 +28,12 @@ interface ChatInputProps {
   canSetIsBreadth: boolean;
   canSetRerankEnabled: boolean;
   canSetPrioritizeRecent: boolean;
+  tenantPaidStatus: string;
 }
+
+const TOOLTIP_CONTENT = "This chatbot is currently inactive. For support, please reach out to the admin.";
+const ADMIN_TOOLTIP_CONTENT =
+  "Your organization's subscription has expired. Please renew to continue using this chatbot.";
 
 const useIsDesktop = () => {
   // Whether to display model popover to the right of settings or on top
@@ -87,6 +94,7 @@ const ModelPopoverContent = ({
 };
 
 export default function ChatInput(props: ChatInputProps) {
+  const { profile } = useProfile();
   const [value, setValue] = useState("");
 
   const { isBreadth, rerankEnabled, prioritizeRecent } = props;
@@ -95,6 +103,7 @@ export default function ChatInput(props: ChatInputProps) {
   const canSwitchModel = props.enabledModels.length > 1;
 
   const handleSubmit = (value: string) => {
+    if (props.tenantPaidStatus === "expired") return;
     setValue("");
 
     const v = value.trim();
@@ -123,16 +132,34 @@ export default function ChatInput(props: ChatInputProps) {
             setValue(event.target.value);
           }}
         />
-        <button onClick={() => handleSubmit(value)}>
-          <svg width="26" height="24" viewBox="0 0 26 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path
-              d="M24.3125 12L11.6731 12M6.34685 16.1693H3.91254M6.34685 12.1464H1.51254M6.34685 8.12356H3.91254M10.6199 4.59596L23.8753 11.0228C24.6916 11.4186 24.6916 12.5814 23.8753 12.9772L10.6199 19.4041C9.71186 19.8443 8.74666 18.9161 9.15116 17.9915L11.582 12.4353C11.7034 12.1578 11.7034 11.8422 11.582 11.5647L9.15116 6.00848C8.74666 5.08391 9.71186 4.15568 10.6199 4.59596Z"
-              stroke="black"
-              strokeWidth="2"
-              strokeLinecap="round"
-            />
-          </svg>
-        </button>
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                onClick={() => handleSubmit(value)}
+                disabled={props.tenantPaidStatus === "expired"}
+                className={cn(
+                  "transition-opacity",
+                  props.tenantPaidStatus === "expired" && "opacity-50 cursor-not-allowed",
+                )}
+              >
+                <svg width="26" height="24" viewBox="0 0 26 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path
+                    d="M24.3125 12L11.6731 12M6.34685 16.1693H3.91254M6.34685 12.1464H1.51254M6.34685 8.12356H3.91254M10.6199 4.59596L23.8753 11.0228C24.6916 11.4186 24.6916 12.5814 23.8753 12.9772L10.6199 19.4041C9.71186 19.8443 8.74666 18.9161 9.15116 17.9915L11.582 12.4353C11.7034 12.1578 11.7034 11.8422 11.582 11.5647L9.15116 6.00848C8.74666 5.08391 9.71186 4.15568 10.6199 4.59596Z"
+                    stroke="black"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                  />
+                </svg>
+              </button>
+            </TooltipTrigger>
+            {props.tenantPaidStatus === "expired" && (
+              <TooltipContent>
+                <p>{profile?.role === "admin" ? ADMIN_TOOLTIP_CONTENT : TOOLTIP_CONTENT}</p>
+              </TooltipContent>
+            )}
+          </Tooltip>
+        </TooltipProvider>
       </div>
       <Popover>
         {(canOverrideSomething || canSwitchModel) && (

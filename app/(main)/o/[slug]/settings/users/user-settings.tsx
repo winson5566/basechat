@@ -21,8 +21,12 @@ import {
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Member, MemberRole, MemberType } from "@/lib/api";
 import { getBillingSettingsPath } from "@/lib/paths";
+
+const ADMIN_TOOLTIP_CONTENT =
+  "Your organization's subscription has expired. Please renew to continue using this chatbot.";
 
 const THRESHOLD = 0.1;
 
@@ -33,6 +37,7 @@ interface Props {
   pageSize: number;
   tenant: {
     slug: string;
+    paidStatus: string;
   };
   currentPlanSeats?: number;
   currentPlan?: string;
@@ -77,6 +82,8 @@ export default function UserSettings({
   const [isLoading, setIsLoading] = useState(false);
   const [isDialogOpen, setDialogOpen] = useState(false);
   const loadMoreRef = useRef<HTMLDivElement>(null);
+
+  const chatbotDisabled = tenant.paidStatus === "expired";
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -268,9 +275,22 @@ export default function UserSettings({
         <div className="flex">
           <div className="flex flex-col justify-end">
             <Dialog open={isDialogOpen} onOpenChange={handleDialogOpenChange}>
-              <DialogTrigger asChild>
-                <PrimaryButton>Invite</PrimaryButton>
-              </DialogTrigger>
+              {chatbotDisabled ? (
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <div>
+                        <PrimaryButton disabled>Invite</PrimaryButton>
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent>{ADMIN_TOOLTIP_CONTENT}</TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              ) : (
+                <DialogTrigger asChild>
+                  <PrimaryButton>Invite</PrimaryButton>
+                </DialogTrigger>
+              )}
               <DialogContent className="sm:max-w-[425px]">
                 <DialogHeader>
                   <DialogTitle>Invite users</DialogTitle>

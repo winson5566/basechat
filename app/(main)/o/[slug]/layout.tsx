@@ -47,7 +47,7 @@ export default async function MainLayout({ children, params }: Props) {
           </div>
         </div>
       )}
-      <PaymentRequiredDialog tenant={tenant} />
+      <PaymentRequiredDialog tenant={tenant} profile={profile} />
     </div>
   );
 }

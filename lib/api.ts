@@ -87,6 +87,15 @@ export interface Member {
   type: MemberType;
 }
 
+export interface Profile {
+  id: string;
+  createdAt: Date;
+  updatedAt: Date;
+  tenantId: string;
+  userId: string;
+  role: MemberRole;
+}
+
 export const createTenantResponseSchema = z.object({
   id: z.string(),
 });

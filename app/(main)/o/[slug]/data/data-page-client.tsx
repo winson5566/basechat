@@ -18,6 +18,7 @@ interface Props {
     id: string;
     slug: string;
     partitionLimitExceededAt: Date | null;
+    paidStatus: string;
   };
   session: {
     user: {
@@ -50,6 +51,8 @@ export default function DataPageClient({
 }: Props) {
   const [fileUploadCount, setFileUploadCount] = useState(0);
 
+  const chatbotDisabled = tenant.paidStatus === "expired";
+
   return (
     <div className="max-w-[1140px] w-full p-4 flex flex-col h-full">
       <div className="flex w-full justify-between items-center pt-2">
@@ -59,8 +62,9 @@ export default function DataPageClient({
             tenant={tenant}
             userName={session.user.name}
             onUploadComplete={() => setFileUploadCount((prev) => prev + 1)}
+            disabled={chatbotDisabled}
           />
-          <AddConnectionMenu tenant={tenant} />
+          <AddConnectionMenu tenant={tenant} disabled={chatbotDisabled} />
         </div>
       </div>
       {!isNaN(defaultPartitionLimit) && tenant.partitionLimitExceededAt && (
