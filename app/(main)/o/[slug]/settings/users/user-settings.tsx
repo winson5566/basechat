@@ -4,6 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { DialogTrigger } from "@radix-ui/react-dialog";
 import assertNever from "assert-never";
 import { Loader2, MoreHorizontal, Trash } from "lucide-react";
+import { redirect } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -21,6 +22,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Member, MemberRole, MemberType } from "@/lib/api";
+import { getBillingSettingsPath } from "@/lib/paths";
 
 const THRESHOLD = 0.1;
 
@@ -32,6 +34,8 @@ interface Props {
   tenant: {
     slug: string;
   };
+  currentPlanSeats?: number;
+  currentPlan?: string;
 }
 
 const formSchema = z.object({
@@ -63,6 +67,8 @@ export default function UserSettings({
   initialTotalInvites,
   pageSize,
   tenant,
+  currentPlanSeats,
+  currentPlan,
 }: Props) {
   const [members, setMembers] = useState(initialMembers);
   const [totalUsers, setTotalUsers] = useState(initialTotalUsers);
@@ -90,28 +96,31 @@ export default function UserSettings({
     form.setValue("emails", emails);
   };
 
-  const fetchMembers = async (page: number) => {
-    setIsLoading(true);
-    try {
-      const res = await fetch(`/api/tenants/current/members?page=${page}&pageSize=${pageSize}`, {
-        headers: { tenant: tenant.slug },
-      });
-      const data = await res.json();
-      setMembers((prev) => [...(prev || []), ...data.members]);
-      setTotalUsers(data.totalUsers);
-      setTotalInvites(data.totalInvites);
-      setCurrentPage(page);
-    } catch (error) {
-      toast.error("Failed to fetch members");
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  const fetchMembers = useCallback(
+    async (page: number) => {
+      setIsLoading(true);
+      try {
+        const res = await fetch(`/api/tenants/current/members?page=${page}&pageSize=${pageSize}`, {
+          headers: { tenant: tenant.slug },
+        });
+        const data = await res.json();
+        setMembers((prev) => [...(prev || []), ...data.members]);
+        setTotalUsers(data.totalUsers);
+        setTotalInvites(data.totalInvites);
+        setCurrentPage(page);
+      } catch (error) {
+        toast.error("Failed to fetch members");
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [pageSize, tenant.slug, setMembers, setTotalUsers, setTotalInvites, setCurrentPage, setIsLoading],
+  );
 
   const loadMore = useCallback(() => {
     if (isLoading || members.length >= totalUsers) return;
     fetchMembers(currentPage + 1);
-  }, [currentPage, isLoading, members.length, totalUsers]);
+  }, [currentPage, isLoading, members.length, totalUsers, fetchMembers]);
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -123,13 +132,14 @@ export default function UserSettings({
       { threshold: THRESHOLD },
     );
 
-    if (loadMoreRef.current) {
-      observer.observe(loadMoreRef.current);
+    const currentRef = loadMoreRef.current;
+    if (currentRef) {
+      observer.observe(currentRef);
     }
 
     return () => {
-      if (loadMoreRef.current) {
-        observer.unobserve(loadMoreRef.current);
+      if (currentRef) {
+        observer.unobserve(currentRef);
       }
     };
   }, [loadMore]);
@@ -151,6 +161,7 @@ export default function UserSettings({
 
     setDialogOpen(false);
     setIsLoading(false);
+    setTotalInvites((prev) => Number(prev) + Number(values.emails.length));
     toast.success("Invites sent");
     resetForm();
 
@@ -177,6 +188,7 @@ export default function UserSettings({
 
     toast.info("Invite was deleted");
     setMembers(members.filter((m) => m.type !== "invite" || m.id !== id));
+    setTotalInvites((prev) => Number(prev) - 1);
   };
 
   const deleteProfile = async (id: string) => {
@@ -303,11 +315,48 @@ export default function UserSettings({
                         </FormItem>
                       )}
                     />
+                    {currentPlanSeats !== undefined && currentPlan !== "developer" && (
+                      <div className="text-sm text-[#74747A] mt-2">
+                        {(() => {
+                          const currentUsage =
+                            Number(totalUsers) + Number(totalInvites) + (form.getValues("emails")?.length || 0);
+                          const remaining = currentPlanSeats - currentUsage;
+                          if (remaining > 0) {
+                            return `${remaining} seat${remaining === 1 ? "" : "s"} left`;
+                          } else if (remaining === 0) {
+                            return "0 seats left";
+                          } else {
+                            const additional = Math.abs(remaining);
+                            return `0 seats left, ${additional} additional seat${additional === 1 ? "" : "s"} required`;
+                          }
+                        })()}
+                      </div>
+                    )}
                     <DialogFooter className="mt-8">
-                      <PrimaryButton type="submit" disabled={!form.getValues("emails")?.length}>
-                        Send invite
-                        {isLoading && <Loader2 size={18} className="ml-2 animate-spin" />}
-                      </PrimaryButton>
+                      {(() => {
+                        const currentUsage =
+                          Number(totalUsers) + Number(totalInvites) + (form.getValues("emails")?.length || 0);
+                        const needsMoreSeats =
+                          currentPlanSeats !== undefined &&
+                          currentPlan !== "developer" &&
+                          currentUsage > currentPlanSeats;
+                        const additionalSeats = Number(currentUsage) - Number(currentPlanSeats);
+
+                        if (needsMoreSeats) {
+                          return (
+                            <PrimaryButton onClick={() => redirect(getBillingSettingsPath(tenant.slug))}>
+                              Add {additionalSeats} Seat{additionalSeats === 1 ? "" : "s"} to Continue
+                            </PrimaryButton>
+                          );
+                        }
+
+                        return (
+                          <PrimaryButton type="submit" disabled={!form.getValues("emails")?.length}>
+                            Send invite
+                            {isLoading && <Loader2 size={18} className="ml-2 animate-spin" />}
+                          </PrimaryButton>
+                        );
+                      })()}
                     </DialogFooter>
                   </form>
                 </Form>

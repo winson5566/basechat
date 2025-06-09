@@ -1,5 +1,5 @@
 {
-  "id": "93028d8a-28b3-473d-a055-10556ad13383",
+  "id": "5696aafb-ad59-4f51-8111-20abd61f5a39",
   "prevId": "062f1249-ca85-455f-8448-9a10191016a2",
   "version": "7",
   "dialect": "postgresql",
@@ -96,12 +96,8 @@
           "name": "accounts_user_id_users_id_fk",
           "tableFrom": "accounts",
           "tableTo": "users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -192,12 +188,8 @@
           "name": "authenticators_user_id_users_id_fk",
           "tableFrom": "authenticators",
           "tableTo": "users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -207,9 +199,7 @@
         "authenticators_credential_id_unique": {
           "name": "authenticators_credential_id_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "credential_id"
-          ]
+          "columns": ["credential_id"]
         }
       },
       "policies": {},
@@ -290,12 +280,8 @@
           "name": "connections_tenant_id_tenants_id_fk",
           "tableFrom": "connections",
           "tableTo": "tenants",
-          "columnsFrom": [
-            "tenant_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["tenant_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -305,9 +291,7 @@
         "connections_ragie_connection_id_unique": {
           "name": "connections_ragie_connection_id_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "ragie_connection_id"
-          ]
+          "columns": ["ragie_connection_id"]
         }
       },
       "policies": {},
@@ -356,18 +340,6 @@
           "type": "text",
           "primaryKey": false,
           "notNull": true
-        },
-        "slack_thread_id": {
-          "name": "slack_thread_id",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "slack_event": {
-          "name": "slack_event",
-          "type": "json",
-          "primaryKey": false,
-          "notNull": false
         }
       },
       "indexes": {
@@ -413,12 +385,8 @@
           "name": "conversations_tenant_id_tenants_id_fk",
           "tableFrom": "conversations",
           "tableTo": "tenants",
-          "columnsFrom": [
-            "tenant_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["tenant_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -426,12 +394,8 @@
           "name": "conversations_profile_id_profiles_id_fk",
           "tableFrom": "conversations",
           "tableTo": "profiles",
-          "columnsFrom": [
-            "profile_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["profile_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -499,12 +463,8 @@
           "name": "invites_tenant_id_tenants_id_fk",
           "tableFrom": "invites",
           "tableTo": "tenants",
-          "columnsFrom": [
-            "tenant_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["tenant_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -512,12 +472,8 @@
           "name": "invites_invited_by_id_profiles_id_fk",
           "tableFrom": "invites",
           "tableTo": "profiles",
-          "columnsFrom": [
-            "invited_by_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["invited_by_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -527,10 +483,7 @@
         "invites_tenant_id_email_unique": {
           "name": "invites_tenant_id_email_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "tenant_id",
-            "email"
-          ]
+          "columns": ["tenant_id", "email"]
         }
       },
       "policies": {},
@@ -592,12 +545,6 @@
           "type": "json",
           "primaryKey": false,
           "notNull": true
-        },
-        "slack_event": {
-          "name": "slack_event",
-          "type": "json",
-          "primaryKey": false,
-          "notNull": false
         },
         "model": {
           "name": "model",
@@ -671,12 +618,8 @@
           "name": "messages_tenant_id_tenants_id_fk",
           "tableFrom": "messages",
           "tableTo": "tenants",
-          "columnsFrom": [
-            "tenant_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["tenant_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -684,12 +627,8 @@
           "name": "messages_conversation_id_conversations_id_fk",
           "tableFrom": "messages",
           "tableTo": "conversations",
-          "columnsFrom": [
-            "conversation_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["conversation_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -767,12 +706,8 @@
           "name": "profiles_tenant_id_tenants_id_fk",
           "tableFrom": "profiles",
           "tableTo": "tenants",
-          "columnsFrom": [
-            "tenant_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["tenant_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -780,12 +715,8 @@
           "name": "profiles_user_id_users_id_fk",
           "tableFrom": "profiles",
           "tableTo": "users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -795,10 +726,7 @@
         "profiles_tenant_id_user_id_unique": {
           "name": "profiles_tenant_id_user_id_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "tenant_id",
-            "user_id"
-          ]
+          "columns": ["tenant_id", "user_id"]
         }
       },
       "policies": {},
@@ -867,12 +795,8 @@
           "name": "sessions_user_id_users_id_fk",
           "tableFrom": "sessions",
           "tableTo": "users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -882,9 +806,7 @@
         "sessions_token_unique": {
           "name": "sessions_token_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "token"
-          ]
+          "columns": ["token"]
         }
       },
       "policies": {},
@@ -1057,44 +979,12 @@
           "primaryKey": false,
           "notNull": false
         },
-        "slack_enabled": {
-          "name": "slack_enabled",
-          "type": "boolean",
+        "metadata": {
+          "name": "metadata",
+          "type": "jsonb",
           "primaryKey": false,
           "notNull": false,
-          "default": false
-        },
-        "slack_channels": {
-          "name": "slack_channels",
-          "type": "text[]",
-          "primaryKey": false,
-          "notNull": false,
-          "default": "'{}'"
-        },
-        "slack_bot_token": {
-          "name": "slack_bot_token",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "slack_team_id": {
-          "name": "slack_team_id",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "slack_team_name": {
-          "name": "slack_team_name",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "slack_response_mode": {
-          "name": "slack_response_mode",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false,
-          "default": "'mentions'"
+          "default": "'{}'::jsonb"
         },
         "trial_expires_at": {
           "name": "trial_expires_at",
@@ -1140,16 +1030,7 @@
         "tenants_slug_unique": {
           "name": "tenants_slug_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "slug"
-          ]
-        },
-        "tenants_slack_team_id_unique": {
-          "name": "tenants_slack_team_id_unique",
-          "nullsNotDistinct": false,
-          "columns": [
-            "slack_team_id"
-          ]
+          "columns": ["slug"]
         }
       },
       "policies": {},
@@ -1207,18 +1088,6 @@
           "notNull": true,
           "default": false
         },
-        "slack_user_id": {
-          "name": "slack_user_id",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "slack_user": {
-          "name": "slack_user",
-          "type": "json",
-          "primaryKey": false,
-          "notNull": false
-        },
         "image": {
           "name": "image",
           "type": "text",
@@ -1238,12 +1107,8 @@
           "name": "users_current_profile_id_profiles_id_fk",
           "tableFrom": "users",
           "tableTo": "profiles",
-          "columnsFrom": [
-            "current_profile_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["current_profile_id"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "no action"
         }
@@ -1253,16 +1118,7 @@
         "users_email_unique": {
           "name": "users_email_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "email"
-          ]
-        },
-        "users_slack_user_id_unique": {
-          "name": "users_slack_user_id_unique",
-          "nullsNotDistinct": false,
-          "columns": [
-            "slack_user_id"
-          ]
+          "columns": ["email"]
         }
       },
       "policies": {},
@@ -1326,30 +1182,17 @@
     "public.message_roles": {
       "name": "message_roles",
       "schema": "public",
-      "values": [
-        "assistant",
-        "system",
-        "user"
-      ]
+      "values": ["assistant", "system", "user"]
     },
     "public.paid_status": {
       "name": "paid_status",
       "schema": "public",
-      "values": [
-        "trial",
-        "active",
-        "expired",
-        "legacy"
-      ]
+      "values": ["trial", "active", "expired", "legacy"]
     },
     "public.roles": {
       "name": "roles",
       "schema": "public",
-      "values": [
-        "admin",
-        "user",
-        "guest"
-      ]
+      "values": ["admin", "user", "guest"]
     }
   },
   "schemas": {},

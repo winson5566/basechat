@@ -1,12 +1,9 @@
 import crypto from "crypto";
 
-import dotenv from "dotenv";
 import { eq } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/node-postgres";
 import { pgTable, text, timestamp } from "drizzle-orm/pg-core";
 import { Ragie } from "ragie";
-
-dotenv.config();
 
 // run with: npm run update-partition-limit <slug> <newLimit>
 // <slug> is the tenant identifier
@@ -124,11 +121,15 @@ async function updatePartitionLimit(slug, newLimit) {
       },
     });
 
+    // Call ragie to see if now over the limit, set flag accordingly
+    const partitionInfo = await client.partitions.get({ partitionId: partition });
+    const limitExceededAt = partitionInfo.limitExceededAt;
+
     // Update the tenant record to update the exceeded flag
     await db
       .update(tenantsSchema)
       .set({
-        partitionLimitExceededAt: null,
+        partitionLimitExceededAt: limitExceededAt,
       })
       .where(eq(tenantsSchema.slug, slug));
 

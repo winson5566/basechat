@@ -1,13 +1,9 @@
-import crypto from "crypto";
-
-import dotenv from "dotenv";
 import { drizzle } from "drizzle-orm/node-postgres";
 import { pgTable, text, timestamp } from "drizzle-orm/pg-core";
 import { Ragie } from "ragie";
 
-// run with: npm run update-all-partition-limits <newLimit>
+// run with: npm run update-all-partition-limits <newLimit> [excludeTenantId1] [excludeTenantId2] ...
 // <newLimit> is the new pages processed limit (e.g. 20000)
-dotenv.config();
 
 const databaseUrl = process.env.DATABASE_URL;
 const RAGIE_API_BASE_URL = process.env.RAGIE_API_BASE_URL;
@@ -19,39 +15,10 @@ if (!databaseUrl) throw new Error("DATABASE_URL environment variable is required
 if (!RAGIE_API_BASE_URL) throw new Error("RAGIE_API_BASE_URL environment variable is required");
 if (!RAGIE_API_KEY) throw new Error("RAGIE_API_KEY environment variable is required");
 
-function decrypt(cipherText) {
-  if (!cipherText) {
-    throw new Error("Cipher text cannot be empty");
-  }
-
-  try {
-    const [ivHex, authTagHex, encryptedHex] = cipherText.split(":");
-
-    if (!ivHex || !authTagHex || !encryptedHex) {
-      throw new Error("Invalid cipher text format");
-    }
-
-    const iv = Buffer.from(ivHex, "hex");
-    const authTag = Buffer.from(authTagHex, "hex");
-    const encrypted = Buffer.from(encryptedHex, "hex");
-
-    // Create decipher
-    const decipher = crypto.createDecipheriv("aes-256-gcm", Buffer.from(ENCRYPTION_KEY, "hex"), iv);
-    decipher.setAuthTag(authTag);
-
-    // Decrypt the data
-    let decrypted = decipher.update(encrypted);
-    decrypted = Buffer.concat([decrypted, decipher.final()]);
-
-    return decrypted.toString("utf8");
-  } catch (error) {
-    throw new Error(`Failed to decrypt cipher text: ${error instanceof Error ? error.message : "Unknown error"}`);
-  }
-}
-
 function showUsage() {
-  console.log("Usage: npm run update-all-partition-limits <newLimit>");
+  console.log("Usage: npm run update-all-partition-limits <newLimit> [excludeTenantId1] [excludeTenantId2] ...");
   console.log("  newLimit - The new pages processed limit (e.g. 20000)");
+  console.log("  excludeTenantId - Optional: One or more tenant IDs to exclude from the update");
   process.exit(1);
 }
 
@@ -62,6 +29,7 @@ if (process.argv.length < 3) {
 
 const db = drizzle(databaseUrl);
 const newLimit = parseInt(process.argv[2], 10);
+const excludedTenantIds = process.argv.slice(3);
 
 if (isNaN(newLimit)) {
   console.log("Error: newLimit must be a number");
@@ -78,7 +46,8 @@ const tenantsSchema = pgTable("tenants", {
 
 console.log(`Updating partition limits for all tenants to ${newLimit}`);
 
-async function updateAllPartitionLimits(newLimit) {
+async function updateAllPartitionLimits(newLimit, excludedTenantIds) {
+  let successfulUpdates = 0;
   try {
     // Get all tenants
     const allTenants = await db
@@ -91,29 +60,54 @@ async function updateAllPartitionLimits(newLimit) {
       .from(tenantsSchema);
 
     console.log(`Found ${allTenants.length} tenants to update`);
+    if (excludedTenantIds.length > 0) {
+      console.log(`Excluding ${excludedTenantIds.length} tenants: ${excludedTenantIds.join(", ")}`);
+    }
 
     // Process each tenant
     for (const tenant of allTenants) {
       try {
+        // Skip excluded tenants
+        if (excludedTenantIds.includes(tenant.id)) {
+          console.log(`Skipping excluded tenant: ${tenant.slug}`);
+          continue;
+        }
+
         console.log(`Processing tenant: ${tenant.slug}`);
 
-        // tenant does not have custom api key
-        if (!tenant.ragieApiKey) {
+        // tenant custom api key
+        if (tenant.ragieApiKey) {
+          console.log(`Tenant ${tenant.slug} has custom api key, skipping`);
+          continue;
+        } else {
           const client = new Ragie({
             auth: RAGIE_API_KEY,
             serverURL: RAGIE_API_BASE_URL,
           });
 
-          // Update the partition limit in Ragie
-          await client.partitions.setLimits({
-            partitionId: tenant.id,
-            partitionLimitParams: {
-              pagesProcessedLimitMax: newLimit,
-            },
-          });
+          try {
+            await client.partitions.setLimits({
+              partitionId: tenant.id,
+              partitionLimitParams: {
+                pagesProcessedLimitMax: newLimit,
+              },
+            });
+          } catch (error) {
+            // Only handle 404 partition not found errors
+            if (error.statusCode === 404 && error.body?.includes("Partition not found")) {
+              // Partition not found, must create it
+              console.log("Creating partition for tenant: ", tenant.slug);
+              await client.partitions.create({
+                name: tenant.id,
+                pagesProcessedLimitMax: newLimit,
+              });
+            } else {
+              // Re-throw other errors
+              throw error;
+            }
+          }
+          successfulUpdates++;
           console.log(`Successfully updated partition limit for tenant ${tenant.slug}`);
-        } else {
-          console.log(`Tenant ${tenant.slug} has custom api key, skipping`);
         }
       } catch (error) {
         console.error(`Failed to update tenant ${tenant.slug}:`, error);
@@ -123,13 +117,14 @@ async function updateAllPartitionLimits(newLimit) {
     }
 
     console.log("Finished processing all tenants");
+    console.log(`Successfull updates: ${successfulUpdates} / ${allTenants.length}`);
   } catch (error) {
     console.error("Failed to update partition limits:", error);
     process.exit(1);
   }
 }
 
-updateAllPartitionLimits(newLimit)
+updateAllPartitionLimits(newLimit, excludedTenantIds)
   .then(() => {
     process.exit(0);
   })
