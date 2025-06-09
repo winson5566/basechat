@@ -130,7 +130,7 @@ export default function PlansPageContent({ tenant, userCount }: PlansPageContent
                     return (
                       <th key={tierId} scope="col" className="pt-6 xl:pt-8">
                         <h2 className="font-medium pb-0 text-2xl" style={{ color: TIER_COLORS[tierId] }}>
-                          {tierId === "developer" ? "Free Trial" : plan ? plan.displayName : "Enterprise"}
+                          {plan ? plan.displayName : "Enterprise"}
                         </h2>
                         <div className="h-0.5 mt-5" style={{ background: TIER_COLORS[tierId] }} />
                       </th>
@@ -153,10 +153,7 @@ export default function PlansPageContent({ tenant, userCount }: PlansPageContent
                       <td key={tierId} className="pt-2 align-top">
                         <div className="flex h-full flex-col gap-6">
                           <p className="text-xs">
-                            {tierId === "developer"
-                              ? "2-week free trial to explore Base Chat"
-                              : PLANS[tierId as PlanType]?.description ||
-                                "Custom enterprise solutions to fit your needs"}
+                            {PLANS[tierId as PlanType]?.description || "Custom enterprise solutions to fit your needs"}
                           </p>
 
                           {/* Price Display */}
@@ -180,7 +177,6 @@ export default function PlansPageContent({ tenant, userCount }: PlansPageContent
                             }}
                             disabled={
                               currentPlanType === tierId ||
-                              (tierId === "developer" && currentPlanType !== "developer") ||
                               TIER_UPGRADE_PATH.indexOf(tierId) < TIER_UPGRADE_PATH.indexOf(currentPlanType as Tier)
                             }
                             onClick={() => {
