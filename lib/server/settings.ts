@@ -57,6 +57,12 @@ export const SMTP_PASSWORD = process.env.SMTP_PASSWORD;
 export const AUTH_GOOGLE_ID = process.env.AUTH_GOOGLE_ID;
 export const AUTH_GOOGLE_SECRET = process.env.AUTH_GOOGLE_SECRET;
 
+// Slack OAuth configs - Optional
+export const SLACK_CLIENT_ID = process.env.SLACK_CLIENT_ID;
+export const SLACK_CLIENT_SECRET = process.env.SLACK_CLIENT_SECRET;
+export const SLACK_SIGNING_SECRET = process.env.SLACK_SIGNING_SECRET;
+export const SLACK_ALLOW_UNVERIFIED_WEBHOOKS = process.env.SLACK_ALLOW_UNVERIFIED_WEBHOOKS === "true";
+
 // Orb Plans
 export const ORB_DEVELOPER_PLAN_ID = process.env.ORB_DEVELOPER_PLAN_ID!;
 export const ORB_STARTER_PLAN_ID = process.env.ORB_STARTER_PLAN_ID!;
