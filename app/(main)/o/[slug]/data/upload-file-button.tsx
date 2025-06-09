@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { VALID_FILE_TYPES, uploadFile, validateFile } from "@/lib/file-utils";
 
 interface Props {
@@ -10,10 +11,14 @@ interface Props {
     slug: string;
   };
   userName: string;
+  disabled: boolean;
   onUploadComplete: () => void;
 }
 
-export default function UploadFileButton({ tenant, userName, onUploadComplete }: Props) {
+const ADMIN_TOOLTIP_CONTENT =
+  "Your organization's subscription has expired. Please renew to continue using this chatbot.";
+
+export default function UploadFileButton({ tenant, userName, disabled, onUploadComplete }: Props) {
   const router = useRouter();
 
   const handleUpload = () => {
@@ -56,11 +61,21 @@ export default function UploadFileButton({ tenant, userName, onUploadComplete }:
   };
 
   return (
-    <button
-      className="flex items-center rounded-[40px] h-[40px] px-5 bg-[#FFFFFF] border border-[#D7D7D7] font-semibold hover:bg-[#F5F5F7]"
-      onClick={handleUpload}
-    >
-      <div>Upload File</div>
-    </button>
+    <TooltipProvider>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <button
+            className={`flex items-center rounded-[40px] h-[40px] px-5 bg-[#FFFFFF] border border-[#D7D7D7] font-semibold ${
+              disabled ? "opacity-50 cursor-not-allowed" : "hover:bg-[#F5F5F7]"
+            }`}
+            onClick={handleUpload}
+            disabled={disabled}
+          >
+            <div>Upload File</div>
+          </button>
+        </TooltipTrigger>
+        {disabled && <TooltipContent>{ADMIN_TOOLTIP_CONTENT}</TooltipContent>}
+      </Tooltip>
+    </TooltipProvider>
   );
 }

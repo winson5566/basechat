@@ -19,6 +19,7 @@ interface Props {
   tenant: {
     id: string;
     slug: string;
+    paidStatus: string;
   };
   initialFiles: any[];
   nextCursor: string | null;
@@ -189,6 +190,10 @@ export default function FilesTable({
   return (
     <Dropzone
       onDrop={async (acceptedFiles: File[]) => {
+        if (tenant.paidStatus === "expired") {
+          toast.error("Your organization's subscription has expired. Please renew to continue using this chatbot.");
+          return;
+        }
         const uploadPromises = acceptedFiles.map(async (file) => {
           const validation = validateFile(file);
           if (!validation.isValid) {
