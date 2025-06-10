@@ -152,6 +152,16 @@ export default function UserSettings({
   }, [loadMore]);
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
+    const currentUsage = Number(totalUsers) + Number(totalInvites) + values.emails.length;
+    const needsMoreSeats =
+      currentPlanSeats !== undefined && currentPlan !== "developer" && currentUsage > currentPlanSeats;
+
+    if (needsMoreSeats) {
+      toast.error("You need to add more seats to continue");
+      redirect(getBillingSettingsPath(tenant.slug));
+      return;
+    }
+
     setIsLoading(true);
 
     const res = await fetch("/api/invites", {
@@ -364,7 +374,7 @@ export default function UserSettings({
 
                         if (needsMoreSeats) {
                           return (
-                            <PrimaryButton onClick={() => redirect(getBillingSettingsPath(tenant.slug))}>
+                            <PrimaryButton type="button" onClick={() => redirect(getBillingSettingsPath(tenant.slug))}>
                               Add {additionalSeats} Seat{additionalSeats === 1 ? "" : "s"} to Continue
                             </PrimaryButton>
                           );
