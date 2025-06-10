@@ -75,7 +75,7 @@ function BillingMessage({
   return null;
 }
 
-function BillingCard({ title, description, icon, color, children }: BillingCardProps) {
+export function BillingCard({ title, description, icon, color, children }: BillingCardProps) {
   return (
     <Card
       className={`border-t-4 ${color ? "" : "border-t-gray-200"}`}

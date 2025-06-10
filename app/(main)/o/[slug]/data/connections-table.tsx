@@ -62,8 +62,8 @@ export default function ConnectionsTable({ tenant, connections }: Props) {
       <div className="flex-1 overflow-y-auto">
         <Table>
           <TableHeader>
-            <TableRow isHeader>
-              <TableHead className="w-[600px]">Name</TableHead>
+            <TableRow noHover>
+              <TableHead className="w-[600px] pl-0">Name</TableHead>
               <TableHead className="w-[200px]">Added by</TableHead>
               <TableHead className="w-[200px]">Date added</TableHead>
               <TableHead className="w-[200px]">Last synced</TableHead>
@@ -72,7 +72,7 @@ export default function ConnectionsTable({ tenant, connections }: Props) {
           </TableHeader>
           <TableBody>
             {currentConnections.map((connection) => (
-              <TableRow key={connection.id}>
+              <TableRow key={connection.id} noHover>
                 <TableCell className="font-medium flex items-center">
                   <Image
                     src={CONNECTOR_MAP[connection.sourceType][1]}

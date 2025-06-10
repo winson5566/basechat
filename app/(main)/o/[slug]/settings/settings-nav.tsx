@@ -17,7 +17,9 @@ import { cn } from "@/lib/utils";
 import { AppLocation } from "../footer";
 
 const NavItem = ({ children, selected }: { children: ReactNode; selected?: boolean }) => (
-  <div className={cn("px-3 py-2 rounded-lg", selected ? "bg-[#F5F5F7] font-semibold" : "")}>{children}</div>
+  <div className={cn("px-3 py-2 rounded-lg hover:bg-[#F5F5F7]", selected ? "bg-[#F5F5F7] font-semibold" : "")}>
+    {children}
+  </div>
 );
 
 function getAppLocation(path: string, slug: string, billingEnabled: boolean): AppLocation {
