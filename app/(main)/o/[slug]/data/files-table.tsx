@@ -264,7 +264,7 @@ export default function FilesTable({
             ) : (
               <Table>
                 <TableHeader>
-                  <TableRow isHeader>
+                  <TableRow noHover>
                     <TableHead className="w-[600px]">Name</TableHead>
                     <TableHead className="w-[200px]">Connection</TableHead>
                     <TableHead className="w-[200px]">Added by</TableHead>
@@ -275,7 +275,7 @@ export default function FilesTable({
                 </TableHeader>
                 <TableBody>
                   {allFiles.map((file) => (
-                    <TableRow key={file.id}>
+                    <TableRow key={file.id} noHover>
                       <TableCell className="font-medium flex items-center">
                         <div>{file.name}</div>
                       </TableCell>

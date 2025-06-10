@@ -399,14 +399,14 @@ export default function UserSettings({
         <div className="max-h-[calc(100vh-365px)] overflow-y-auto">
           <Table>
             <TableHeader>
-              <TableRow>
+              <TableRow noHover>
                 <TableHead className="font-semibold text-[13px] text-[#74747A] pl-0">Name</TableHead>
                 <TableHead className="font-semibold text-[13px] text-[#74747A] w-[92px]">Role</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {members.map((member) => (
-                <TableRow key={member.id}>
+                <TableRow key={member.id} noHover>
                   <TableCell className="flex items-center pl-0 h-[52px]">
                     {member.type === "profile" ? (
                       <>
