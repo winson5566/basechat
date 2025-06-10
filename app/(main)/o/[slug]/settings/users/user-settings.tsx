@@ -280,7 +280,7 @@ export default function UserSettings({
 
   return (
     <div className="w-full p-4 flex-grow flex flex-col">
-      <div className="flex w-full justify-between items-center mb-16">
+      <div className="flex w-full justify-between items-center mb-8">
         <h1 className="font-bold text-[32px] text-[#343A40]">Users</h1>
         <div className="flex">
           <div className="flex flex-col justify-end">
@@ -395,7 +395,7 @@ export default function UserSettings({
           </div>
         </div>
       </div>
-      <div className="mt-16">
+      <div className="mt-14">
         <div className="text-[#74747A] mb-1.5 flex">
           <div>
             {totalUsers} {totalUsers == 1 ? "user" : "users"}

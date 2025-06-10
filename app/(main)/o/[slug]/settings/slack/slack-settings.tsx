@@ -179,7 +179,7 @@ export default function SlackSettings({ tenant, slackConfigured }: Props) {
 
   return (
     <div className="w-full p-4 flex-grow flex flex-col relative">
-      <div className="flex w-full justify-between items-center mb-16">
+      <div className="flex w-full justify-between items-center mb-12">
         <h1 className="font-bold text-[32px] text-[#343A40]">Slack Integration</h1>
       </div>
 

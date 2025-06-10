@@ -349,7 +349,7 @@ export default function GeneralSettings({ tenant, canUploadLogo }: Props) {
           "mb-8": !canUploadLogo,
         })}
       >
-        <h1 className="font-bold text-[32px] text-[#343A40]">Settings</h1>
+        <h1 className="font-bold text-[32px] text-[#343A40] mb-12">Settings</h1>
         <div className="flex justify-end">
           <button
             type="reset"
@@ -372,7 +372,7 @@ export default function GeneralSettings({ tenant, canUploadLogo }: Props) {
       </div>
       {canUploadLogo && (
         <div>
-          <div className="mb-2">
+          <div className="mb-2 mt-4">
             <Label className="font-semibold text-base text-[#343A40]">Avatar</Label>
           </div>
           <LogoChanger tenant={tenant} />
