@@ -407,7 +407,7 @@ export default function UserSettings({
             <TableBody>
               {members.map((member) => (
                 <TableRow key={member.id}>
-                  <TableCell className="flex items-center pl-0">
+                  <TableCell className="flex items-center pl-0 h-[52px]">
                     {member.type === "profile" ? (
                       <>
                         <div className="mr-2">{member.name}</div>
