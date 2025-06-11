@@ -52,9 +52,6 @@ export function EmptyBilling({ pricingPlansPath }: EmptyBillingProps) {
       <div className="h-16" />
       <div className="h-16" />
       <div className="h-16" />
-      <div className="h-16" />
-      <div className="h-16" />
-      <div className="h-16" />
     </div>
   );
 }
