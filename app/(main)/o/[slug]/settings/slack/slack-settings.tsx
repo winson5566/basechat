@@ -204,12 +204,6 @@ export default function SlackSettings({ tenant, slackConfigured }: Props) {
                 to enable Slack integration.
               </p>
             </div>
-            <div className="h-16" />
-            <div className="h-16" />
-            <div className="h-16" />
-            <div className="h-16" />
-            <div className="h-16" />
-            <div className="h-16" />
           </>
         ) : isConnected ? (
           <div className="space-y-6">
@@ -446,40 +440,33 @@ export default function SlackSettings({ tenant, slackConfigured }: Props) {
             </div>
           </div>
         ) : (
-          <>
-            <div className="space-y-6">
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                <h3 className="font-medium text-blue-800 mb-2">Getting Started</h3>
-                <ol className="text-sm text-blue-700 space-y-1">
-                  <li>1. Click &quot;Connect to Slack&quot; below</li>
-                  <li>2. Choose your Slack workspace</li>
-                  <li>3. Authorize the AI assistant bot</li>
-                  <li>4. Configure which channels the bot should join</li>
-                  <li>5. Start chatting with the bot in any configured channel!</li>
-                </ol>
-              </div>
-
-              <div className="pt-4">
-                <Button
-                  onClick={handleConnectSlack}
-                  disabled={isLoading}
-                  className="bg-[#4A154B] hover:bg-[#4A154B]/90 text-white"
-                >
-                  {isLoading ? (
-                    <Loader2 size={16} className="mr-2 animate-spin" />
-                  ) : (
-                    <ExternalLink size={16} className="mr-2" />
-                  )}
-                  Connect to Slack
-                </Button>
-              </div>
+          <div className="space-y-6">
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+              <h3 className="font-medium text-blue-800 mb-2">Getting Started</h3>
+              <ol className="text-sm text-blue-700 space-y-1">
+                <li>1. Click &quot;Connect to Slack&quot; below</li>
+                <li>2. Choose your Slack workspace</li>
+                <li>3. Authorize the AI assistant bot</li>
+                <li>4. Configure which channels the bot should join</li>
+                <li>5. Start chatting with the bot in any configured channel!</li>
+              </ol>
             </div>
-            <div className="h-16" />
-            <div className="h-16" />
-            <div className="h-16" />
-            <div className="h-16" />
-            <div className="h-16" />
-          </>
+
+            <div className="pt-4">
+              <Button
+                onClick={handleConnectSlack}
+                disabled={isLoading}
+                className="bg-[#4A154B] hover:bg-[#4A154B]/90 text-white"
+              >
+                {isLoading ? (
+                  <Loader2 size={16} className="mr-2 animate-spin" />
+                ) : (
+                  <ExternalLink size={16} className="mr-2" />
+                )}
+                Connect to Slack
+              </Button>
+            </div>
+          </div>
         )}
 
         {slackConfigured && (

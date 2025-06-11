@@ -188,6 +188,7 @@ export const users = pgTable("users", {
   slackUser: json("slack_user"),
   image: text("image"),
   currentProfileId: uuid("current_profile_id").references((): AnyPgColumn => profiles.id, { onDelete: "set null" }),
+  completedWelcomeFlowAt: timestamp("completed_welcome_flow_at", { withTimezone: true, mode: "date" }),
 });
 
 export const accounts = pgTable(

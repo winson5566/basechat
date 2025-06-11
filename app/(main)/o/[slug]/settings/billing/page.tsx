@@ -34,10 +34,9 @@ export default async function BillingSettingsPage({ params }: Props) {
   let orbCustomerId;
   let orbSubscriptionId;
 
-  let billingCustomerPreviouslyExists = true;
+  let mustProvisionBillingCustomer = true;
 
   if (!metadata || !metadata.stripeCustomerId || !metadata.orbCustomerId || !metadata.orbSubscriptionId) {
-    billingCustomerPreviouslyExists = false;
     const { newStripeCustomerId, newOrbCustomerId, newOrbSubscriptionId } = await provisionBillingCustomer(
       tenant.id,
       session.user.name,
@@ -47,6 +46,7 @@ export default async function BillingSettingsPage({ params }: Props) {
     orbCustomerId = newOrbCustomerId;
     orbSubscriptionId = newOrbSubscriptionId;
   } else {
+    mustProvisionBillingCustomer = false;
     stripeCustomerId = metadata.stripeCustomerId;
     orbCustomerId = metadata.orbCustomerId;
     orbSubscriptionId = metadata.orbSubscriptionId;
@@ -102,10 +102,12 @@ export default async function BillingSettingsPage({ params }: Props) {
   const userCount = Number(totalUsers) + Number(totalInvites);
 
   return (
-    <div className="flex justify-center overflow-auto w-full">
+    <div className="flex justify-center overflow-auto w-full h-full">
       <div className="max-w-[1140px] w-full p-4 flex-grow flex">
         <SettingsNav tenant={tenant} billingEnabled={BILLING_ENABLED} />
-        {billingCustomerPreviouslyExists ? (
+        {mustProvisionBillingCustomer ? (
+          <EmptyBilling pricingPlansPath={getPricingPlansPath(tenant.slug)} />
+        ) : (
           <BillingSettings
             tenant={{
               id: tenant.id,
@@ -127,8 +129,6 @@ export default async function BillingSettingsPage({ params }: Props) {
               userCount,
             }}
           />
-        ) : (
-          <EmptyBilling pricingPlansPath={getPricingPlansPath(tenant.slug)} />
         )}
       </div>
     </div>
