@@ -2,7 +2,6 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2 } from "lucide-react";
-import { useRouter } from "next/navigation";
 import { useMemo, useState, useEffect } from "react";
 import { useForm, UseFormReturn } from "react-hook-form";
 import { toast } from "sonner";
@@ -98,7 +97,6 @@ type Props = {
 export default function PromptSettings({ tenant }: Props) {
   const [mounted, setMounted] = useState(false);
   const [isLoading, setLoading] = useState(false);
-  const router = useRouter();
 
   useEffect(() => setMounted(true), []);
 

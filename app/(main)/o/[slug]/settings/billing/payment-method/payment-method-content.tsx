@@ -135,13 +135,6 @@ export default function PaymentMethodContent({
           </div>
         )}
       </div>
-      <div className="my-16" />
-      <div className="my-16" />
-      <div className="my-16" />
-      <div className="my-16" />
-      <div className="my-16" />
-      <div className="my-16" />
-      <div className="my-16" />
     </div>
   );
 }

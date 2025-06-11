@@ -204,9 +204,6 @@ export default function SlackSettings({ tenant, slackConfigured }: Props) {
                 to enable Slack integration.
               </p>
             </div>
-            <div className="h-16" />
-            <div className="h-16" />
-            <div className="h-16" />
           </>
         ) : isConnected ? (
           <div className="space-y-6">
@@ -481,7 +478,6 @@ export default function SlackSettings({ tenant, slackConfigured }: Props) {
             </p>
           </div>
         )}
-        <div className="h-16" />
       </div>
     </div>
   );

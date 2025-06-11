@@ -91,8 +91,6 @@ export function PaymentForm({ billingUrl, stripeCustomerId, showCancel, onPaymen
         </div>
         {errorMessage && <p className="text-destructive-foreground">{errorMessage}</p>}
       </form>
-      <div className="my-16" />
-      <div className="my-16" />
     </div>
   );
 }

@@ -49,9 +49,6 @@ export function EmptyBilling({ pricingPlansPath }: EmptyBillingProps) {
           </BillingCard>
         </div>
       </div>
-      <div className="h-16" />
-      <div className="h-16" />
-      <div className="h-16" />
     </div>
   );
 }

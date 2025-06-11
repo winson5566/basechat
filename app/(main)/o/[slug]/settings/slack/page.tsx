@@ -16,7 +16,7 @@ export default async function SlackSettingsPage({ params }: Props) {
   const slackConfigured = Boolean(SLACK_CLIENT_ID);
 
   return (
-    <div className="flex justify-center overflow-auto w-full">
+    <div className="flex justify-center overflow-auto w-full h-full">
       <div className="max-w-[1140px] w-full p-4 flex-grow flex">
         <SettingsNav tenant={tenant} billingEnabled={BILLING_ENABLED} />
         <SlackSettings tenant={tenant} slackConfigured={slackConfigured} />
