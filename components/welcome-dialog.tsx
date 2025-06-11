@@ -13,12 +13,12 @@ interface WelcomeDialogProps {
   userId: string;
 }
 
-type Page = "welcome" | "intro1" | "intro2" | "intro3" | "conclusion";
+type Page = "welcome" | "connectors" | "invite" | "slack" | "conclusion";
 
 function ProgressDots({ currentPage }: { currentPage: Page }) {
-  if (!["intro1", "intro2", "intro3"].includes(currentPage)) return null;
+  if (!["connectors", "invite", "slack"].includes(currentPage)) return null;
 
-  const currentIndex = currentPage === "intro1" ? 0 : currentPage === "intro2" ? 1 : 2;
+  const currentIndex = currentPage === "connectors" ? 0 : currentPage === "invite" ? 1 : 2;
 
   return (
     <div className="flex justify-center gap-2 absolute bottom-3 left-0 right-0">
@@ -53,15 +53,15 @@ export function WelcomeDialog({ displayWelcome, userId }: WelcomeDialogProps) {
   const handleNext = () => {
     switch (currentPage) {
       case "welcome":
-        setCurrentPage("intro1");
+        setCurrentPage("connectors");
         break;
-      case "intro1":
-        setCurrentPage("intro2");
+      case "connectors":
+        setCurrentPage("invite");
         break;
-      case "intro2":
-        setCurrentPage("intro3");
+      case "invite":
+        setCurrentPage("slack");
         break;
-      case "intro3":
+      case "slack":
         setCurrentPage("conclusion");
         break;
       case "conclusion":
@@ -73,17 +73,17 @@ export function WelcomeDialog({ displayWelcome, userId }: WelcomeDialogProps) {
 
   const handleBack = () => {
     switch (currentPage) {
-      case "intro1":
+      case "connectors":
         setCurrentPage("welcome");
         break;
-      case "intro2":
-        setCurrentPage("intro1");
+      case "invite":
+        setCurrentPage("connectors");
         break;
-      case "intro3":
-        setCurrentPage("intro2");
+      case "slack":
+        setCurrentPage("invite");
         break;
       case "conclusion":
-        setCurrentPage("intro3");
+        setCurrentPage("slack");
         break;
     }
   };
@@ -115,7 +115,7 @@ export function WelcomeDialog({ displayWelcome, userId }: WelcomeDialogProps) {
             </div>
           </>
         );
-      case "intro1":
+      case "connectors":
         return (
           <>
             <div className="bg-[#F5F5F7] -mx-6 -mt-6 h-[260px] flex flex-col items-center justify-center rounded-t-lg relative">
@@ -155,7 +155,7 @@ export function WelcomeDialog({ displayWelcome, userId }: WelcomeDialogProps) {
             </div>
           </>
         );
-      case "intro2":
+      case "invite":
         return (
           <>
             <div className="bg-[#F5F5F7] -mx-6 -mt-6 h-[260px] flex flex-col items-center justify-center rounded-t-lg relative">
@@ -195,7 +195,7 @@ export function WelcomeDialog({ displayWelcome, userId }: WelcomeDialogProps) {
             </div>
           </>
         );
-      case "intro3":
+      case "slack":
         return (
           <>
             <div className="bg-[#F5F5F7] -mx-6 -mt-6 h-[260px] flex flex-col items-center justify-center rounded-t-lg relative">
@@ -280,7 +280,7 @@ export function WelcomeDialog({ displayWelcome, userId }: WelcomeDialogProps) {
     >
       <DialogContent
         className={`sm:max-w-[519px] bg-[#FFFFFF] ${
-          ["intro1", "intro2", "intro3"].includes(currentPage)
+          ["connectors", "invite", "slack"].includes(currentPage)
             ? "h-[578px]"
             : ["welcome", "conclusion"].includes(currentPage)
               ? "h-[272px]"
