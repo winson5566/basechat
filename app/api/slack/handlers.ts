@@ -12,6 +12,7 @@ import {
   WebClient,
 } from "@slack/web-api";
 
+import { DEFAULT_MODEL } from "@/lib/llm/types";
 import {
   ConversationContext,
   generatorFactory,
@@ -110,13 +111,16 @@ async function _handleMessage(event: AppMentionEvent | GenericMessageEvent) {
 
   try {
     const retriever = new Retriever(tenant, {
-      isBreadth: false,
-      rerankEnabled: true,
-      prioritizeRecent: false,
+      isBreadth: tenant.isBreadth ?? false,
+      rerankEnabled: tenant.rerankEnabled ?? true,
+      prioritizeRecent: tenant.prioritizeRecent ?? false,
     });
     const context = await ConversationContext.fromMessageEvent(tenant, profile, event, retriever);
     const replyContext = await context.promptSlackMessage(profile, event);
-    const generator = new ReplyGenerator(new MessageDAO(tenant.id), generatorFactory("gpt-4o"));
+    const generator = new ReplyGenerator(
+      new MessageDAO(tenant.id),
+      generatorFactory(tenant.defaultModel ?? DEFAULT_MODEL),
+    );
     const object = await generator.generateObject(replyContext);
 
     if (object.usedSourceIndexes.length > 0) {
