@@ -1,0 +1,2 @@
+ALTER TABLE "tenants" ALTER COLUMN "enabled_models" SET DEFAULT '{"gpt-4o","gpt-3.5-turbo","gpt-4.1-2025-04-14","gemini-2.0-flash","gemini-1.5-pro","claude-3-7-sonnet-latest","claude-3-5-haiku-latest","claude-opus-4-20250514","claude-sonnet-4-20250514","meta-llama/llama-4-scout-17b-16e-instruct"}';--> statement-breakpoint
+ALTER TABLE "users" ADD COLUMN "completed_welcome_flow_at" timestamp with time zone;

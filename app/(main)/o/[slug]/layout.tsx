@@ -2,6 +2,7 @@ import { ReactNode } from "react";
 
 import { PaymentRequiredDialog } from "@/components/payment-required-dialog";
 import RagieLogo from "@/components/ragie-logo";
+import { WelcomeDialog } from "@/components/welcome-dialog";
 import { getUserById } from "@/lib/server/service";
 import { BILLING_ENABLED } from "@/lib/server/settings";
 import { authOrRedirect } from "@/lib/server/utils";
@@ -18,6 +19,8 @@ export default async function MainLayout({ children, params }: Props) {
   const { slug } = await params;
   const { tenant, profile, session } = await authOrRedirect(slug);
   const user = await getUserById(session.user.id);
+
+  const displayWelcome = !user.completedWelcomeFlowAt && profile.role == "admin";
 
   return (
     <div className="h-screen w-full flex flex-col items-center bg-white overflow-hidden">
@@ -48,6 +51,7 @@ export default async function MainLayout({ children, params }: Props) {
         </div>
       )}
       <PaymentRequiredDialog tenant={tenant} profile={profile} />
+      {displayWelcome && <WelcomeDialog displayWelcome={displayWelcome} userId={user.id} />}
     </div>
   );
 }
