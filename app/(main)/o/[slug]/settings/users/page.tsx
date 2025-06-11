@@ -26,17 +26,19 @@ export default async function SettingsUsersIndexPage({ params }: Props) {
   }
 
   return (
-    <div className="max-w-[1140px] w-full p-4 flex-grow flex">
-      <SettingsNav tenant={tenant} billingEnabled={BILLING_ENABLED} />
-      <UserSettings
-        tenant={tenant}
-        initialMembers={members}
-        initialTotalUsers={totalUsers}
-        initialTotalInvites={totalInvites}
-        pageSize={10}
-        currentPlanSeats={currentPlanSeats}
-        currentPlan={currentPlan?.name}
-      />
+    <div className="flex justify-center overflow-auto w-full">
+      <div className="max-w-[1140px] w-full p-4 flex-grow flex">
+        <SettingsNav tenant={tenant} billingEnabled={BILLING_ENABLED} />
+        <UserSettings
+          tenant={tenant}
+          initialMembers={members}
+          initialTotalUsers={totalUsers}
+          initialTotalInvites={totalInvites}
+          pageSize={10}
+          currentPlanSeats={currentPlanSeats}
+          currentPlan={currentPlan?.name}
+        />
+      </div>
     </div>
   );
 }

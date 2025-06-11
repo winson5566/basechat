@@ -5,6 +5,7 @@ import Orb from "orb-billing";
 
 import { getCurrentPlan } from "@/lib/billing/tenant";
 import { getSubscriptions } from "@/lib/orb";
+import { getPricingPlansPath } from "@/lib/paths";
 import { provisionBillingCustomer } from "@/lib/server/billing";
 import { getRagieClientAndPartition } from "@/lib/server/ragie";
 import { getMembersByTenantId } from "@/lib/server/service";
@@ -15,6 +16,7 @@ import { getStripeCustomerDefaultPaymentMethod } from "@/lib/stripe";
 import SettingsNav from "../settings-nav";
 
 import BillingSettings from "./billing-settings";
+import { EmptyBilling } from "./empty-billing";
 
 interface Props {
   params: Promise<{ slug: string }>;
@@ -32,7 +34,10 @@ export default async function BillingSettingsPage({ params }: Props) {
   let orbCustomerId;
   let orbSubscriptionId;
 
+  let billingCustomerPreviouslyExists = true;
+
   if (!metadata || !metadata.stripeCustomerId || !metadata.orbCustomerId || !metadata.orbSubscriptionId) {
+    billingCustomerPreviouslyExists = false;
     const { newStripeCustomerId, newOrbCustomerId, newOrbSubscriptionId } = await provisionBillingCustomer(
       tenant.id,
       session.user.name,
@@ -100,27 +105,31 @@ export default async function BillingSettingsPage({ params }: Props) {
     <div className="flex justify-center overflow-auto w-full">
       <div className="max-w-[1140px] w-full p-4 flex-grow flex">
         <SettingsNav tenant={tenant} billingEnabled={BILLING_ENABLED} />
-        <BillingSettings
-          tenant={{
-            id: tenant.id,
-            slug: tenant.slug,
-            partitionLimitExceededAt: tenant.partitionLimitExceededAt,
-            paidStatus: tenant.paidStatus,
-            metadata: tenant.metadata ?? {},
-          }}
-          partitionInfo={partitionInfo}
-          defaultPartitionLimit={DEFAULT_PARTITION_LIMIT}
-          billingData={{
-            hasBillingHistory,
-            overdueInvoice,
-            nextPaymentDate,
-            defaultPaymentMethod: serializedDefaultPaymentMethod,
-            currentPlan,
-            invoices,
-            subscriptions,
-            userCount,
-          }}
-        />
+        {billingCustomerPreviouslyExists ? (
+          <BillingSettings
+            tenant={{
+              id: tenant.id,
+              slug: tenant.slug,
+              partitionLimitExceededAt: tenant.partitionLimitExceededAt,
+              paidStatus: tenant.paidStatus,
+              metadata: tenant.metadata ?? {},
+            }}
+            partitionInfo={partitionInfo}
+            defaultPartitionLimit={DEFAULT_PARTITION_LIMIT}
+            billingData={{
+              hasBillingHistory,
+              overdueInvoice,
+              nextPaymentDate,
+              defaultPaymentMethod: serializedDefaultPaymentMethod,
+              currentPlan,
+              invoices,
+              subscriptions,
+              userCount,
+            }}
+          />
+        ) : (
+          <EmptyBilling pricingPlansPath={getPricingPlansPath(tenant.slug)} />
+        )}
       </div>
     </div>
   );

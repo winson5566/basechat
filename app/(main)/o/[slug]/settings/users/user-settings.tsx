@@ -152,6 +152,16 @@ export default function UserSettings({
   }, [loadMore]);
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
+    const currentUsage = Number(totalUsers) + Number(totalInvites) + values.emails.length;
+    const needsMoreSeats =
+      currentPlanSeats !== undefined && currentPlan !== "developer" && currentUsage > currentPlanSeats;
+
+    if (needsMoreSeats) {
+      toast.error("You need to add more seats to continue");
+      redirect(getBillingSettingsPath(tenant.slug));
+      return;
+    }
+
     setIsLoading(true);
 
     const res = await fetch("/api/invites", {
@@ -270,7 +280,7 @@ export default function UserSettings({
 
   return (
     <div className="w-full p-4 flex-grow flex flex-col">
-      <div className="flex w-full justify-between items-center pt-2">
+      <div className="flex w-full justify-between items-center mb-8">
         <h1 className="font-bold text-[32px] text-[#343A40]">Users</h1>
         <div className="flex">
           <div className="flex flex-col justify-end">
@@ -364,7 +374,7 @@ export default function UserSettings({
 
                         if (needsMoreSeats) {
                           return (
-                            <PrimaryButton onClick={() => redirect(getBillingSettingsPath(tenant.slug))}>
+                            <PrimaryButton type="button" onClick={() => redirect(getBillingSettingsPath(tenant.slug))}>
                               Add {additionalSeats} Seat{additionalSeats === 1 ? "" : "s"} to Continue
                             </PrimaryButton>
                           );
@@ -385,7 +395,7 @@ export default function UserSettings({
           </div>
         </div>
       </div>
-      <div className="mt-16">
+      <div className="mt-14">
         <div className="text-[#74747A] mb-1.5 flex">
           <div>
             {totalUsers} {totalUsers == 1 ? "user" : "users"}
@@ -399,15 +409,15 @@ export default function UserSettings({
         <div className="max-h-[calc(100vh-365px)] overflow-y-auto">
           <Table>
             <TableHeader>
-              <TableRow>
+              <TableRow noHover>
                 <TableHead className="font-semibold text-[13px] text-[#74747A] pl-0">Name</TableHead>
                 <TableHead className="font-semibold text-[13px] text-[#74747A] w-[92px]">Role</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {members.map((member) => (
-                <TableRow key={member.id}>
-                  <TableCell className="flex items-center pl-0">
+                <TableRow key={member.id} noHover>
+                  <TableCell className="flex items-center pl-0 h-[52px]">
                     {member.type === "profile" ? (
                       <>
                         <div className="mr-2">{member.name}</div>
@@ -463,6 +473,12 @@ export default function UserSettings({
           </div>
         </div>
       </div>
+      <div className="h-16" />
+      <div className="h-16" />
+      <div className="h-16" />
+      <div className="h-16" />
+      <div className="h-16" />
+      <div className="h-16" />
     </div>
   );
 }

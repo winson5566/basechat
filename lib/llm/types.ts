@@ -3,11 +3,12 @@ import { z } from "zod";
 // Single source of truth for providers and their models
 export const PROVIDER_CONFIG = {
   openai: {
-    models: ["gpt-4o", "gpt-3.5-turbo"] as const,
+    models: ["gpt-4o", "gpt-3.5-turbo", "gpt-4.1-2025-04-14"] as const,
     logo: "/openai.svg",
     displayNames: {
       "gpt-4o": "GPT-4o",
       "gpt-3.5-turbo": "GPT-3.5 Turbo",
+      "gpt-4.1-2025-04-14": "GPT-4.1",
     } as const,
   },
   google: {
@@ -19,11 +20,18 @@ export const PROVIDER_CONFIG = {
     } as const,
   },
   anthropic: {
-    models: ["claude-3-7-sonnet-latest", "claude-3-5-haiku-latest"] as const,
+    models: [
+      "claude-3-7-sonnet-latest",
+      "claude-3-5-haiku-latest",
+      "claude-opus-4-20250514",
+      "claude-sonnet-4-20250514",
+    ] as const,
     logo: "/anthropic.svg",
     displayNames: {
       "claude-3-7-sonnet-latest": "Claude 3.7 Sonnet",
       "claude-3-5-haiku-latest": "Claude 3.5 Haiku",
+      "claude-opus-4-20250514": "Claude 4 Opus",
+      "claude-sonnet-4-20250514": "Claude 4 Sonnet",
     } as const,
   },
   groq: {

@@ -75,7 +75,7 @@ function BillingMessage({
   return null;
 }
 
-function BillingCard({ title, description, icon, color, children }: BillingCardProps) {
+export function BillingCard({ title, description, icon, color, children }: BillingCardProps) {
   return (
     <Card
       className={`border-t-4 ${color ? "" : "border-t-gray-200"}`}
@@ -154,7 +154,7 @@ export function BillingInformation({ billingData, billingPath, pricingPlansPath,
 
       <div className="space-y-6">
         <BillingCard
-          title={`${planConfig.displayName === "Developer" ? "Free Trial" : `${planConfig.displayName} Plan`}`}
+          title={`${planConfig.displayName} Plan`}
           description={planConfig.description}
           icon={<Settings className="h-5 w-5" />}
           color={planConfig.color}

@@ -110,6 +110,19 @@ export abstract class SortedMessageGenerator extends AbstractGenerator {
       messages: [...systemMessages, ...nonSystemMessages],
     });
   }
+
+  generateStream(context: GenerateContext, options: GenerateStreamOptions) {
+    const systemMessages = context.messages.filter((msg) => msg.role === "system");
+    const nonSystemMessages = context.messages.filter((msg) => msg.role !== "system");
+
+    return super.generateStream(
+      {
+        ...context,
+        messages: [...systemMessages, ...nonSystemMessages],
+      },
+      options,
+    );
+  }
 }
 
 export class AnthropicGenerator extends SortedMessageGenerator {

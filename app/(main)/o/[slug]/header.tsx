@@ -229,32 +229,36 @@ export default function Header({
                           {tenantItem.userCount ?? 1} User{(tenantItem.userCount ?? 1) === 1 ? "" : "s"}
                         </div>
                       </div>
-                      <Popover>
-                        <PopoverTrigger asChild>
-                          <TooltipProvider>
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <Image
-                                  src={EllipsesIcon}
-                                  height={16}
-                                  width={16}
-                                  alt="Options"
-                                  className={cn(
-                                    "flex-shrink-0 cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity",
-                                    tenantItem.lastAdmin && "opacity-0 cursor-not-allowed",
-                                  )}
-                                  onClick={(e) => e.stopPropagation()}
-                                />
-                              </TooltipTrigger>
-                              {tenantItem.lastAdmin && (
-                                <TooltipContent className="max-w-[200px] whitespace-normal">
-                                  <p>You are the sole admin for this chatbot and cannot leave it.</p>
-                                </TooltipContent>
-                              )}
-                            </Tooltip>
-                          </TooltipProvider>
-                        </PopoverTrigger>
-                        {!tenantItem.lastAdmin && (
+                      {tenantItem.lastAdmin ? (
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Image
+                                src={EllipsesIcon}
+                                height={16}
+                                width={16}
+                                alt="Options"
+                                className="flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity cursor-not-allowed"
+                                onClick={(e) => e.stopPropagation()}
+                              />
+                            </TooltipTrigger>
+                            <TooltipContent className="max-w-[200px] whitespace-normal">
+                              <p>You are the sole admin for this chatbot and cannot leave it.</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      ) : (
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <Image
+                              src={EllipsesIcon}
+                              height={16}
+                              width={16}
+                              alt="Options"
+                              className="flex-shrink-0 cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity"
+                              onClick={(e) => e.stopPropagation()}
+                            />
+                          </PopoverTrigger>
                           <TenantPopoverContent>
                             <button
                               className="text-sm text-black hover:text-gray-700"
@@ -296,8 +300,8 @@ export default function Header({
                               Leave chatbot
                             </button>
                           </TenantPopoverContent>
-                        )}
-                      </Popover>
+                        </Popover>
+                      )}
                     </div>
                   </li>
                 ))}
