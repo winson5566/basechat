@@ -1,7 +1,9 @@
+import "highlight.js/styles/github.css";
 import "./style.css";
 import { FileAudio, FileImage, FileVideo } from "lucide-react";
 import Image from "next/image";
 import Markdown from "react-markdown";
+import rehypeHighlight from "rehype-highlight";
 
 import CONNECTOR_MAP from "@/lib/connector-map";
 import { IMAGE_FILE_TYPES, VIDEO_FILE_TYPES, AUDIO_FILE_TYPES } from "@/lib/file-utils";
@@ -102,7 +104,9 @@ export default function AssistantMessage({
       </div>
       <div className="self-start mb-6 rounded-md ml-7">
         {content?.length ? (
-          <Markdown className="markdown mt-[10px]">{content}</Markdown>
+          <Markdown className="markdown mt-[10px]" rehypePlugins={[rehypeHighlight]}>
+            {content}
+          </Markdown>
         ) : (
           <div className="dot-pulse mt-[14px]" />
         )}
