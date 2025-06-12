@@ -103,8 +103,11 @@ export function WelcomeDialog({ displayWelcome, userId }: WelcomeDialogProps) {
               </p>
               <div className="flex justify-between items-center absolute bottom-6 left-6 right-6">
                 <button
-                  onClick={() => setIsOpen(false)}
-                  className="text-[#D946EF] hover:text-[#D946EF]/90 text-sm font-medium"
+                  onClick={async () => {
+                    await handleClose();
+                    setIsOpen(false);
+                  }}
+                  className="text-[#D946EF] hover:text-[#D946EF]/90 text-sm font-medium focus:outline-none focus:ring-0"
                 >
                   Skip for now
                 </button>
@@ -140,7 +143,13 @@ export function WelcomeDialog({ displayWelcome, userId }: WelcomeDialogProps) {
               </p>
               <div className="h-16" />
               <div className="flex justify-between items-center absolute bottom-6 left-6 right-6">
-                <button onClick={() => setIsOpen(false)} className="text-muted-foreground text-sm font-medium">
+                <button
+                  onClick={async () => {
+                    await handleClose();
+                    setIsOpen(false);
+                  }}
+                  className="text-muted-foreground text-sm font-medium"
+                >
                   Close
                 </button>
                 <div className="flex gap-2">
@@ -180,7 +189,13 @@ export function WelcomeDialog({ displayWelcome, userId }: WelcomeDialogProps) {
               </p>
               <div className="h-16" />
               <div className="flex justify-between items-center absolute bottom-6 left-6 right-6">
-                <button onClick={() => setIsOpen(false)} className="text-muted-foreground text-sm font-medium">
+                <button
+                  onClick={async () => {
+                    await handleClose();
+                    setIsOpen(false);
+                  }}
+                  className="text-muted-foreground text-sm font-medium"
+                >
                   Close
                 </button>
                 <div className="flex gap-2">
@@ -220,7 +235,13 @@ export function WelcomeDialog({ displayWelcome, userId }: WelcomeDialogProps) {
               </p>
               <div className="h-16" />
               <div className="flex justify-between items-center absolute bottom-6 left-6 right-6">
-                <button onClick={() => setIsOpen(false)} className="text-muted-foreground text-sm font-medium">
+                <button
+                  onClick={async () => {
+                    await handleClose();
+                    setIsOpen(false);
+                  }}
+                  className="text-muted-foreground text-sm font-medium"
+                >
                   Close
                 </button>
                 <div className="flex gap-2">
@@ -250,7 +271,13 @@ export function WelcomeDialog({ displayWelcome, userId }: WelcomeDialogProps) {
                 .
               </p>
               <div className="flex justify-between items-center absolute bottom-6 left-6 right-6">
-                <button onClick={() => setIsOpen(false)} className="text-muted-foreground text-sm font-medium">
+                <button
+                  onClick={async () => {
+                    await handleClose();
+                    setIsOpen(false);
+                  }}
+                  className="text-muted-foreground text-sm font-medium"
+                >
                   Close
                 </button>
                 <div className="flex gap-2">
