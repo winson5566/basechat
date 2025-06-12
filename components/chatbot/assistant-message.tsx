@@ -102,7 +102,7 @@ export default function AssistantMessage({
           tenantId={tenantId}
         />
       </div>
-      <div className="self-start mb-6 rounded-md ml-7">
+      <div className="self-start mb-6 rounded-md ml-7 max-w-[calc(100%-60px)]">
         {content?.length ? (
           <Markdown className="markdown mt-[10px]" rehypePlugins={[rehypeHighlight]}>
             {content}
