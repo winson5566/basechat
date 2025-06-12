@@ -1,12 +1,9 @@
+import "highlight.js/styles/github.css";
 import "./style.css";
-import "./markdown.css";
 import { FileAudio, FileImage, FileVideo } from "lucide-react";
 import Image from "next/image";
-import { useEffect, useState } from "react";
-import rehypeStringify from "rehype-stringify";
-import remarkParse from "remark-parse";
-import remarkRehype from "remark-rehype";
-import { unified } from "unified";
+import Markdown from "react-markdown";
+import rehypeHighlight from "rehype-highlight";
 
 import CONNECTOR_MAP from "@/lib/connector-map";
 import { IMAGE_FILE_TYPES, VIDEO_FILE_TYPES, AUDIO_FILE_TYPES } from "@/lib/file-utils";
@@ -86,25 +83,6 @@ export default function AssistantMessage({
   isGenerating,
   tenantId,
 }: Props) {
-  const [htmlContent, setHtmlContent] = useState<string>("");
-
-  useEffect(() => {
-    async function renderMarkdown() {
-      if (content) {
-        const { default: rehypeShiki } = await import("@shikijs/rehype");
-        const processor = await unified()
-          .use(remarkParse)
-          .use(remarkRehype)
-          .use(rehypeShiki, { theme: "catppuccin-latte" })
-          .use(rehypeStringify)
-          .process(content);
-
-        setHtmlContent(String(processor));
-      }
-    }
-    renderMarkdown();
-  }, [content]);
-
   const dedupe = sources.reduce<Record<string, SourceMetadata>>((acc, v) => {
     acc[v.documentId] = v;
     return acc;
@@ -126,10 +104,9 @@ export default function AssistantMessage({
       </div>
       <div className="self-start mb-6 rounded-md ml-7">
         {content?.length ? (
-          <div
-            className="markdown mt-[10px] prose prose-sm max-w-none dark:prose-invert"
-            dangerouslySetInnerHTML={{ __html: htmlContent }}
-          />
+          <Markdown className="markdown mt-[10px]" rehypePlugins={[rehypeHighlight]}>
+            {content}
+          </Markdown>
         ) : (
           <div className="dot-pulse mt-[14px]" />
         )}

@@ -80,3 +80,7 @@
     box-shadow: 10014px 0 0 -5px;
   }
 }
+
+.markdown pre {
+  @apply bg-white;
+}
