@@ -1,0 +1,28 @@
+.markdown {
+  @apply text-sm leading-7;
+}
+
+.markdown pre {
+  @apply my-4 p-4 rounded-lg overflow-x-auto;
+  background-color: var(--shiki-light-bg);
+}
+
+.markdown pre code {
+  @apply text-sm;
+  background: none !important;
+  padding: 0 !important;
+}
+
+.markdown :not(pre) > code {
+  @apply px-1.5 py-0.5 rounded text-sm;
+  background-color: var(--shiki-light-bg);
+}
+
+/* Dark mode styles */
+.dark .markdown pre {
+  background-color: var(--shiki-dark-bg);
+}
+
+.dark .markdown :not(pre) > code {
+  background-color: var(--shiki-dark-bg);
+}

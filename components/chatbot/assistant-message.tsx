@@ -1,11 +1,13 @@
 import "./style.css";
+import "./markdown.css";
 import { FileAudio, FileImage, FileVideo } from "lucide-react";
 import Image from "next/image";
-import Markdown from "react-markdown";
+import { useEffect, useState } from "react";
 
 import CONNECTOR_MAP from "@/lib/connector-map";
 import { IMAGE_FILE_TYPES, VIDEO_FILE_TYPES, AUDIO_FILE_TYPES } from "@/lib/file-utils";
 import { LLM_DISPLAY_NAMES, LLMModel } from "@/lib/llm/types";
+import { markdownToHtml } from "@/lib/markdown-utils";
 
 import { SourceMetadata } from "../../lib/types";
 import Logo from "../tenant/logo/logo";
@@ -81,6 +83,18 @@ export default function AssistantMessage({
   isGenerating,
   tenantId,
 }: Props) {
+  const [htmlContent, setHtmlContent] = useState<string>("");
+
+  useEffect(() => {
+    async function convertMarkdown() {
+      if (content) {
+        const html = await markdownToHtml(content);
+        setHtmlContent(html);
+      }
+    }
+    convertMarkdown();
+  }, [content]);
+
   const dedupe = sources.reduce<Record<string, SourceMetadata>>((acc, v) => {
     acc[v.documentId] = v;
     return acc;
@@ -102,7 +116,10 @@ export default function AssistantMessage({
       </div>
       <div className="self-start mb-6 rounded-md ml-7">
         {content?.length ? (
-          <Markdown className="markdown mt-[10px]">{content}</Markdown>
+          <div
+            className="markdown mt-[10px] prose prose-sm max-w-none dark:prose-invert"
+            dangerouslySetInnerHTML={{ __html: htmlContent }}
+          />
         ) : (
           <div className="dot-pulse mt-[14px]" />
         )}
