@@ -3,11 +3,14 @@ import "./markdown.css";
 import { FileAudio, FileImage, FileVideo } from "lucide-react";
 import Image from "next/image";
 import { useEffect, useState } from "react";
+import rehypeStringify from "rehype-stringify";
+import remarkParse from "remark-parse";
+import remarkRehype from "remark-rehype";
+import { unified } from "unified";
 
 import CONNECTOR_MAP from "@/lib/connector-map";
 import { IMAGE_FILE_TYPES, VIDEO_FILE_TYPES, AUDIO_FILE_TYPES } from "@/lib/file-utils";
 import { LLM_DISPLAY_NAMES, LLMModel } from "@/lib/llm/types";
-import { markdownToHtml } from "@/lib/markdown-utils";
 
 import { SourceMetadata } from "../../lib/types";
 import Logo from "../tenant/logo/logo";
@@ -86,13 +89,20 @@ export default function AssistantMessage({
   const [htmlContent, setHtmlContent] = useState<string>("");
 
   useEffect(() => {
-    async function convertMarkdown() {
+    async function renderMarkdown() {
       if (content) {
-        const html = await markdownToHtml(content);
-        setHtmlContent(html);
+        const { default: rehypeShiki } = await import("@shikijs/rehype");
+        const processor = await unified()
+          .use(remarkParse)
+          .use(remarkRehype)
+          .use(rehypeShiki, { theme: "catppuccin-latte" })
+          .use(rehypeStringify)
+          .process(content);
+
+        setHtmlContent(String(processor));
       }
     }
-    convertMarkdown();
+    renderMarkdown();
   }, [content]);
 
   const dedupe = sources.reduce<Record<string, SourceMetadata>>((acc, v) => {
