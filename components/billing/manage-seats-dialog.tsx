@@ -84,13 +84,14 @@ export function ManageSeatsDialog({ open, onOpenChange, currentSeats, onSave, te
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[400px]">
+      <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
-          <DialogTitle className="text-xl">Manage Seats</DialogTitle>
+          <DialogTitle className="text-xl">Add or remove open seats</DialogTitle>
         </DialogHeader>
-        <div className="flex flex-col gap-6">
-          {/* Counter */}
-          <div className="flex items-center justify-center gap-4">
+
+        {/* Seat Counter Section */}
+        <div className="flex items-center justify-between py-4 border-b">
+          <div className="flex items-center gap-4">
             <Button variant="outline" size="icon" onClick={handleDecrement} aria-label="Decrease seats">
               -
             </Button>
@@ -99,45 +100,63 @@ export function ManageSeatsDialog({ open, onOpenChange, currentSeats, onSave, te
               +
             </Button>
           </div>
-          <hr />
-          {/* Payment Info */}
-          {error ? (
-            <div className="text-sm text-destructive">An error occurred</div>
-          ) : (
-            <div className="relative">
-              <div className={`flex flex-col gap-2 ${isLoading ? "opacity-50" : ""}`}>
-                <div className="flex justify-between text-sm">
-                  <span>Current Payment</span>
-                  <span>
-                    ${currentPayment.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                  </span>
-                </div>
-                {immediatePayment > 0 && (
-                  <div className="flex justify-between text-sm">
-                    <span>Due Today</span>
-                    <span>
-                      $
-                      {immediatePayment.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                    </span>
-                  </div>
-                )}
-                <div className="flex justify-between text-sm">
-                  <span>Next Payment</span>
-                  <span>
-                    ${upcomingPayment.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+          <div className="text-right">
+            <div className="text-sm text-muted-foreground">Total Seats</div>
+            <div className="text-2xl font-semibold">{seats}</div>
+          </div>
+        </div>
+
+        {/* Payment Information Sections */}
+        {error ? (
+          <div className="text-sm text-destructive py-4">An error occurred</div>
+        ) : (
+          <div className="relative space-y-6 py-4">
+            {/* Current Payment Section */}
+            <div className="space-y-2 border-b">
+              <h3 className="text-sm font-medium">Current Payment</h3>
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-muted-foreground">Monthly recurring</span>
+                <span className="text-lg font-medium">
+                  ${currentPayment.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                </span>
+              </div>
+            </div>
+
+            {/* Next Payment Section */}
+            <div className="space-y-2 border-b">
+              <h3 className="text-sm font-medium">Next Payment</h3>
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-muted-foreground">Starting next billing cycle</span>
+                <span className="text-lg font-medium">
+                  ${upcomingPayment.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                </span>
+              </div>
+            </div>
+
+            {/* Immediate Payment Section */}
+            {immediatePayment > 0 && (
+              <div className="space-y-2 border-b">
+                <h3 className="text-sm font-medium">Due Today</h3>
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-muted-foreground">One-time charge</span>
+                  <span className="text-lg font-medium text-primary">
+                    ${immediatePayment.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                   </span>
                 </div>
               </div>
-              {isLoading && (
-                <div className="absolute inset-0 flex items-center justify-center bg-background/50">
-                  <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-                </div>
-              )}
-            </div>
-          )}
-        </div>
+            )}
+
+            {isLoading && (
+              <div className="absolute inset-0 flex items-center justify-center bg-background/50">
+                <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Footer Section */}
         <DialogFooter className="mt-6">
-          <div>
+          <div className="w-full">
             <div className="text-xs text-muted-foreground text-left w-full mb-3">
               By continuing, your credit will be charged the total amount due today and the new payment starting next
               billing cycle, until changed or cancelled.
