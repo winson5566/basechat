@@ -33,6 +33,9 @@ export type PlanDef = {
   buttonLink: string | null;
   buttonHidden: boolean;
   hasCustomPricing?: boolean;
+  streamingLimit: number;
+  audioLimit: number;
+  videoLimit: number;
 };
 
 export const TIER_COLORS = {
@@ -56,6 +59,9 @@ export const PLANS: Record<PlanType, PlanDef> = {
     buttonText: "Get Started",
     buttonLink: null,
     buttonHidden: false,
+    streamingLimit: 1000,
+    audioLimit: 1000,
+    videoLimit: 1000,
   },
   starter: {
     planType: "starter",
@@ -63,13 +69,16 @@ export const PLANS: Record<PlanType, PlanDef> = {
     tier: "starter",
     price: 100,
     displayName: "Starter",
-    description: "Perfect for smaller teams and projects",
+    description: "Designed for small teams with a growing knowledge base",
     color: TIER_COLORS.starter,
     partitionLimit: 10000,
     mostPopular: false,
     buttonText: "Upgrade",
     buttonLink: null,
     buttonHidden: false,
+    streamingLimit: 1000,
+    audioLimit: 1000,
+    videoLimit: 1000,
   },
   pro: {
     planType: "pro",
@@ -77,13 +86,16 @@ export const PLANS: Record<PlanType, PlanDef> = {
     tier: "pro",
     price: 500,
     displayName: "Pro",
-    description: "Production ready for growing businesses",
+    description: "Great for mid-size teams with more content and collaborators",
     color: TIER_COLORS.pro,
     partitionLimit: 60000,
     mostPopular: true,
     buttonText: "Upgrade",
     buttonLink: null,
     buttonHidden: false,
+    streamingLimit: 1000,
+    audioLimit: 1000,
+    videoLimit: 1000,
   },
 };
 
