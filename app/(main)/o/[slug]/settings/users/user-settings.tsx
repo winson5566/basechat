@@ -4,12 +4,13 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { DialogTrigger } from "@radix-ui/react-dialog";
 import assertNever from "assert-never";
 import { Loader2, MoreHorizontal, Trash } from "lucide-react";
-import { redirect } from "next/navigation";
+import { redirect, useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 
+import { ManageSeatsDialog } from "@/components/billing/manage-seats-dialog";
 import PrimaryButton from "@/components/primary-button";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import {
@@ -38,6 +39,7 @@ interface Props {
   tenant: {
     slug: string;
     paidStatus: string;
+    id: string;
   };
   currentPlanSeats?: number;
   currentPlan?: string;
@@ -81,7 +83,11 @@ export default function UserSettings({
   const [currentPage, setCurrentPage] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
   const [isDialogOpen, setDialogOpen] = useState(false);
+  const [manageSeatsOpen, setManageSeatsOpen] = useState(false);
+  const [requiredSeats, setRequiredSeats] = useState(0);
+  const [isProcessingWebhook, setIsProcessingWebhook] = useState(false);
   const loadMoreRef = useRef<HTMLDivElement>(null);
+  const router = useRouter();
 
   const chatbotDisabled = tenant.paidStatus === "expired";
 
@@ -278,6 +284,30 @@ export default function UserSettings({
     }
   };
 
+  const handleSaveSeats = async (newSeats: number) => {
+    try {
+      setIsProcessingWebhook(true);
+      const response = await fetch(`/api/billing/update-seats`, {
+        method: "POST",
+        body: JSON.stringify({ seats: newSeats }),
+        headers: { tenant: tenant.slug },
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to update seats");
+      }
+      toast.success("Successfully updated team seats");
+
+      await new Promise((resolve) => setTimeout(resolve, 5000));
+      router.refresh();
+    } catch (error) {
+      toast.error("Failed to update team seats");
+      console.error("Error updating seats:", error);
+    } finally {
+      setIsProcessingWebhook(false);
+    }
+  };
+
   return (
     <div className="w-full p-4 flex-grow flex flex-col">
       <div className="flex w-full justify-between items-center mb-8">
@@ -374,9 +404,25 @@ export default function UserSettings({
 
                         if (needsMoreSeats) {
                           return (
-                            <PrimaryButton type="button" onClick={() => redirect(getBillingSettingsPath(tenant.slug))}>
-                              Add {additionalSeats} Seat{additionalSeats === 1 ? "" : "s"} to Continue
-                            </PrimaryButton>
+                            <div className="flex justify-end w-full">
+                              <div className="relative">
+                                {isProcessingWebhook && (
+                                  <div className="absolute inset-0 flex items-center justify-center bg-background/50 z-10">
+                                    <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                                  </div>
+                                )}
+                                <PrimaryButton
+                                  type="button"
+                                  onClick={() => {
+                                    setRequiredSeats(additionalSeats);
+                                    setManageSeatsOpen(true);
+                                  }}
+                                  disabled={isProcessingWebhook}
+                                >
+                                  Add {additionalSeats} Seat{additionalSeats === 1 ? "" : "s"} to Continue
+                                </PrimaryButton>
+                              </div>
+                            </div>
                           );
                         }
 
@@ -473,6 +519,15 @@ export default function UserSettings({
           </div>
         </div>
       </div>
+      <ManageSeatsDialog
+        open={manageSeatsOpen}
+        onOpenChange={setManageSeatsOpen}
+        currentSeats={currentPlanSeats || 0}
+        onSave={handleSaveSeats}
+        tenantId={tenant.id}
+        initialAdditionalSeats={requiredSeats}
+        lightBackground={true}
+      />
     </div>
   );
 }

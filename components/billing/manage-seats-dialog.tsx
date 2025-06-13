@@ -14,11 +14,21 @@ interface ManageSeatsDialogProps {
   currentSeats: number;
   onSave: (newSeats: number) => void;
   tenantId: string;
+  lightBackground?: boolean;
+  initialAdditionalSeats?: number;
 }
 
-export function ManageSeatsDialog({ open, onOpenChange, currentSeats, onSave, tenantId }: ManageSeatsDialogProps) {
-  const [additionalSeats, setAdditionalSeats] = useState(0);
-  const [debouncedAdditionalSeats, setDebouncedAdditionalSeats] = useState(0);
+export function ManageSeatsDialog({
+  open,
+  onOpenChange,
+  currentSeats,
+  onSave,
+  tenantId,
+  lightBackground,
+  initialAdditionalSeats = 0,
+}: ManageSeatsDialogProps) {
+  const [additionalSeats, setAdditionalSeats] = useState(initialAdditionalSeats);
+  const [debouncedAdditionalSeats, setDebouncedAdditionalSeats] = useState(initialAdditionalSeats);
   const [preview, setPreview] = useState<SeatChangePreview | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -42,6 +52,14 @@ export function ManageSeatsDialog({ open, onOpenChange, currentSeats, onSave, te
     },
     [tenantId, setPreview, setIsLoading, setError],
   );
+
+  // Update additionalSeats when initialAdditionalSeats changes
+  useEffect(() => {
+    if (open) {
+      setAdditionalSeats(initialAdditionalSeats);
+      setDebouncedAdditionalSeats(initialAdditionalSeats);
+    }
+  }, [open, initialAdditionalSeats]);
 
   // Debounce the additional seats value
   useEffect(() => {
@@ -87,7 +105,7 @@ export function ManageSeatsDialog({ open, onOpenChange, currentSeats, onSave, te
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[400px]">
+      <DialogContent className="sm:max-w-[450px]" lightBackground={lightBackground}>
         <DialogHeader>
           <DialogTitle className="text-xl">Add or remove open seats</DialogTitle>
         </DialogHeader>
