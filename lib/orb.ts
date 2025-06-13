@@ -373,11 +373,9 @@ export async function previewSeatChange(
   const cancelledCount = currentPeriodBilledCount - currentPlanSeats;
   const hasPendingQuantityChange = cancelledCount !== 0;
   const orbNextCount = nextCount;
-  if (hasPendingQuantityChange) {
-    nextCount = nextCount + cancelledCount;
-  }
+  const adjustedNextCount = hasPendingQuantityChange ? nextCount + cancelledCount : nextCount;
 
-  if (nextCount <= 0) {
+  if (adjustedNextCount <= 0) {
     return {
       immediateInvoice: null,
       upcomingInvoice: originalUpcomingInvoice,
@@ -395,7 +393,7 @@ export async function previewSeatChange(
   const updatedSubRes = await _dryRunQuantityChange({
     subscriptionId: orbSubscriptionId,
     priceId: seatPriceId,
-    quantity: nextCount,
+    quantity: adjustedNextCount,
     changeOption,
   });
   const updatedSub = await updatedSubRes.json();
