@@ -7,30 +7,20 @@ import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
-import { PLANS, PlanType } from "@/lib/orb-types";
+import { PLANS, PlanType, TIER_UPGRADE_PATH, Tier } from "@/lib/orb-types";
 import { getDataPath } from "@/lib/paths";
 
 interface PlansPageContentProps {
   tenant: {
     name: string;
     slug: string;
-    paidStatus: string;
-    metadata: {
-      plans?: Array<{
-        id: string;
-        endedAt: Date | null;
-        startedAt: Date;
-        tier: string;
-        seats: number;
-      }>;
-    };
   };
-  userCount: number;
+  currentPlanName: string | undefined;
 }
 
 function TierFeatureContent({ check, text }: { check: boolean; text: React.ReactNode | string | undefined }) {
   return (
-    <div className="flex items-center gap-2 h-full">
+    <div className="flex items-center gap-2 h-full text-base font-medium">
       {check && <Check aria-hidden="true" className="h-5 w-5 text-white" />}
       {text && <span className="mt-0">{text}</span>}
     </div>
@@ -43,13 +33,13 @@ function FeatureItem() {
       {/* Documents and Images Section */}
       <tr>
         <th scope="row" className="py-3 font-normal leading-6 text-muted-foreground">
-          <div className="text-lg font-semibold">Documents and Images</div>
+          <div className="text-lg font-medium">Documents and Images</div>
         </th>
         <td colSpan={3} className="py-3" />
       </tr>
       <tr>
-        <th scope="row" className="border-b py-3 font-normal leading-6 text-muted-foreground">
-          <div className="font-normal">Page Limit</div>
+        <th scope="row" className="border-b py-3 font-normal leading-6">
+          <div className="text-base font-medium">Page processing</div>
         </th>
         {["starter", "pro", "enterprise"].map((tierId) => {
           const plan = PLANS[tierId as PlanType];
@@ -57,7 +47,7 @@ function FeatureItem() {
           return (
             <td key={tierId} className="border-b py-3">
               <TierFeatureContent
-                check={true}
+                check={false}
                 text={isEnterprise ? "Custom" : `${plan?.partitionLimit.toLocaleString()} pages`}
               />
             </td>
@@ -68,13 +58,13 @@ function FeatureItem() {
       {/* Audio and Video Section */}
       <tr>
         <th scope="row" className="py-3 font-normal leading-6 text-muted-foreground">
-          <div className="text-lg font-semibold">Audio and Video</div>
+          <div className="text-lg font-medium">Audio and Video</div>
         </th>
         <td colSpan={3} className="py-3" />
       </tr>
       <tr>
-        <th scope="row" className="border-b py-3 font-normal leading-6 text-muted-foreground">
-          <div className="font-normal">Streaming</div>
+        <th scope="row" className="border-b py-3 font-normal leading-6">
+          <div className="text-base font-medium">Streaming</div>
         </th>
         {["starter", "pro", "enterprise"].map((tierId) => {
           const plan = PLANS[tierId as PlanType];
@@ -82,16 +72,22 @@ function FeatureItem() {
           return (
             <td key={tierId} className="border-b py-3">
               <TierFeatureContent
-                check={true}
-                text={isEnterprise ? "Custom" : `${plan?.streamingLimit.toLocaleString()} GB`}
+                check={false}
+                text={
+                  isEnterprise
+                    ? "Custom"
+                    : plan?.streamingLimit > 1
+                      ? `${plan?.streamingLimit.toLocaleString()} GB`
+                      : `${plan?.streamingLimit.toLocaleString()} TB`
+                }
               />
             </td>
           );
         })}
       </tr>
       <tr>
-        <th scope="row" className="border-b py-3 font-normal leading-6 text-muted-foreground">
-          <div className="font-normal">Audio Processing</div>
+        <th scope="row" className="border-b py-3 font-normal leading-6">
+          <div className="text-base font-medium">Audio processing</div>
         </th>
         {["starter", "pro", "enterprise"].map((tierId) => {
           const plan = PLANS[tierId as PlanType];
@@ -99,16 +95,16 @@ function FeatureItem() {
           return (
             <td key={tierId} className="border-b py-3">
               <TierFeatureContent
-                check={true}
-                text={isEnterprise ? "Custom" : `${plan?.audioLimit.toLocaleString()} minutes`}
+                check={false}
+                text={isEnterprise ? "Custom" : `${plan?.audioLimit.toLocaleString()} hours`}
               />
             </td>
           );
         })}
       </tr>
       <tr>
-        <th scope="row" className="border-b py-3 font-normal leading-6 text-muted-foreground">
-          <div className="font-normal">Video Processing</div>
+        <th scope="row" className="border-b py-3 font-normal leading-6">
+          <div className="text-base font-medium">Video processing</div>
         </th>
         {["starter", "pro", "enterprise"].map((tierId) => {
           const plan = PLANS[tierId as PlanType];
@@ -116,8 +112,25 @@ function FeatureItem() {
           return (
             <td key={tierId} className="border-b py-3">
               <TierFeatureContent
-                check={true}
-                text={isEnterprise ? "Custom" : `${plan?.videoLimit.toLocaleString()} minutes`}
+                check={false}
+                text={isEnterprise ? "Custom" : `${plan?.videoLimit.toLocaleString()} hours`}
+              />
+            </td>
+          );
+        })}
+      </tr>
+      <tr>
+        <th scope="row" className="border-b py-3 font-normal leading-6">
+          <div className="text-base font-medium">Hosting</div>
+        </th>
+        {["starter", "pro", "enterprise"].map((tierId) => {
+          const plan = PLANS[tierId as PlanType];
+          const isEnterprise = tierId === "enterprise";
+          return (
+            <td key={tierId} className="border-b py-3">
+              <TierFeatureContent
+                check={false}
+                text={isEnterprise ? "Custom" : `${plan?.hostingLimit.toLocaleString()} GB`}
               />
             </td>
           );
@@ -127,7 +140,7 @@ function FeatureItem() {
   );
 }
 
-export default function PlansPageContent({ tenant, userCount }: PlansPageContentProps) {
+export default function PlansPageContent({ tenant, currentPlanName }: PlansPageContentProps) {
   const router = useRouter();
   const [isYearlyBilling, setIsYearlyBilling] = useState(false);
 
@@ -159,7 +172,7 @@ export default function PlansPageContent({ tenant, userCount }: PlansPageContent
                     const plan = PLANS[tierId as PlanType];
                     return (
                       <th key={tierId} scope="col" className="pt-6 xl:pt-8">
-                        <h2 className="font-medium pb-0 text-2xl">{plan ? plan.displayName : "Enterprise"}</h2>
+                        <h2 className="font-bold pb-0 text-2xl">{plan ? plan.displayName : "Enterprise"}</h2>
                       </th>
                     );
                   })}
@@ -180,9 +193,9 @@ export default function PlansPageContent({ tenant, userCount }: PlansPageContent
 
                     return (
                       <td key={tierId} className="pt-2 align-top">
-                        <div className="flex h-full flex-col gap-6">
-                          <p className="text-xs">
-                            {plan?.description || "Built for large teams with complex, high-volume data"}
+                        <div className="flex h-full flex-col gap-4">
+                          <p className="text-base leading-snug font-medium">
+                            {plan?.description || "Built for organization-wide deployment"}
                           </p>
 
                           {/* Action Button */}
@@ -192,6 +205,12 @@ export default function PlansPageContent({ tenant, userCount }: PlansPageContent
                               backgroundColor: isEnterprise ? "#E5E7EB" : "#D946EF",
                               color: isEnterprise ? "#000000" : "white",
                             }}
+                            disabled={Boolean(
+                              currentPlanName === tierId ||
+                                (currentPlanName &&
+                                  TIER_UPGRADE_PATH.indexOf(currentPlanName as Tier) >
+                                    TIER_UPGRADE_PATH.indexOf(tierId as Tier)),
+                            )}
                             onClick={() => {
                               if (isEnterprise) {
                                 window.open("https://calendly.com/d/crhj-b4f-d4v/ragie-basechat-discussion", "_blank");
@@ -200,27 +219,33 @@ export default function PlansPageContent({ tenant, userCount }: PlansPageContent
                               }
                             }}
                           >
-                            {isEnterprise ? "Contact Sales" : "Get Started"}
+                            {isEnterprise
+                              ? "Contact Us"
+                              : currentPlanName === tierId
+                                ? "Current Plan"
+                                : currentPlanName &&
+                                    TIER_UPGRADE_PATH.indexOf(currentPlanName as Tier) >
+                                      TIER_UPGRADE_PATH.indexOf(tierId as Tier)
+                                  ? "Downgrade"
+                                  : "Upgrade"}
                           </Button>
 
                           {/* Price Display */}
                           <div className="flex flex-col gap-2">
-                            <div className="flex items-baseline gap-x-1 h-8">
+                            <div className="flex items-center gap-x-2 h-8 text-base font-medium">
                               {isEnterprise ? (
                                 <span>Custom pricing</span>
                               ) : (
                                 <>
                                   <span>${displayPrice} / month</span>
                                   {isYearlyBilling && isPro && (
-                                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-[#D946EF] text-white">
+                                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs bg-[#D946EF] text-white">
                                       -10%
                                     </span>
                                   )}
                                 </>
                               )}
                             </div>
-
-                            {/* Yearly Billing Switch for Pro Plan */}
                             {isPro && (
                               <div className="flex items-center gap-2">
                                 <Switch
@@ -228,7 +253,7 @@ export default function PlansPageContent({ tenant, userCount }: PlansPageContent
                                   onCheckedChange={setIsYearlyBilling}
                                   className="data-[state=checked]:bg-[#D946EF]"
                                 />
-                                <span className="text-sm text-gray-600">Billed yearly</span>
+                                <span className="text-[15px] text-[#1D1D1F]">Billed yearly</span>
                               </div>
                             )}
                           </div>
@@ -253,13 +278,13 @@ export default function PlansPageContent({ tenant, userCount }: PlansPageContent
       </div>
 
       {/* Contact Us Section */}
-      <div className="mt-8 text-left">
-        <p className="text-sm text-gray-600">
+      <div className="mt-8 text-left text-base font-medium">
+        <p className="text-[#1D1D1F]">
           Have questions?{" "}
           <Link
             href="https://calendly.com/d/crhj-b4f-d4v/ragie-basechat-discussion"
             target="_blank"
-            className="text-[#D946EF] hover:text-[#D946EF]/90 text-sm font-medium underline"
+            className="text-[#D946EF] hover:text-[#D946EF]/90 underline"
           >
             Schedule a call
           </Link>

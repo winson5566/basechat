@@ -36,6 +36,7 @@ export type PlanDef = {
   streamingLimit: number;
   audioLimit: number;
   videoLimit: number;
+  hostingLimit: number;
 };
 
 export const TIER_COLORS = {
@@ -59,9 +60,10 @@ export const PLANS: Record<PlanType, PlanDef> = {
     buttonText: "Get Started",
     buttonLink: null,
     buttonHidden: false,
-    streamingLimit: 1000,
-    audioLimit: 1000,
-    videoLimit: 1000,
+    streamingLimit: 200,
+    audioLimit: 20,
+    videoLimit: 20,
+    hostingLimit: 20, // 20 GB
   },
   starter: {
     planType: "starter",
@@ -69,16 +71,17 @@ export const PLANS: Record<PlanType, PlanDef> = {
     tier: "starter",
     price: 100,
     displayName: "Starter",
-    description: "Designed for small teams with a growing knowledge base",
+    description: "Perfect for smaller teams and knowledge bases",
     color: TIER_COLORS.starter,
     partitionLimit: 10000,
     mostPopular: false,
     buttonText: "Upgrade",
     buttonLink: null,
     buttonHidden: false,
-    streamingLimit: 1000,
-    audioLimit: 1000,
-    videoLimit: 1000,
+    streamingLimit: 200, // 200 GB
+    audioLimit: 20,
+    videoLimit: 20,
+    hostingLimit: 20, // 20 GB
   },
   pro: {
     planType: "pro",
@@ -86,16 +89,17 @@ export const PLANS: Record<PlanType, PlanDef> = {
     tier: "pro",
     price: 500,
     displayName: "Pro",
-    description: "Great for mid-size teams with more content and collaborators",
+    description: "Designed for growing teams and content",
     color: TIER_COLORS.pro,
     partitionLimit: 60000,
     mostPopular: true,
     buttonText: "Upgrade",
     buttonLink: null,
     buttonHidden: false,
-    streamingLimit: 1000,
-    audioLimit: 1000,
-    videoLimit: 1000,
+    streamingLimit: 1, // 1 TB
+    audioLimit: 100,
+    videoLimit: 100,
+    hostingLimit: 100, // 100 GB
   },
 };
 
