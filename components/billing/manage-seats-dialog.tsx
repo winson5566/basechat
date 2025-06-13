@@ -3,16 +3,9 @@ import React, { useState, useEffect, useCallback } from "react";
 
 import { getSeatChangePreview } from "@/app/(main)/o/[slug]/settings/billing/actions";
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-  DialogClose,
-  DialogTrigger,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { SeatChangePreview } from "@/lib/orb-types";
 
 interface ManageSeatsDialogProps {
@@ -24,8 +17,8 @@ interface ManageSeatsDialogProps {
 }
 
 export function ManageSeatsDialog({ open, onOpenChange, currentSeats, onSave, tenantId }: ManageSeatsDialogProps) {
-  const [seats, setSeats] = useState(currentSeats || 1);
-  const [debouncedSeats, setDebouncedSeats] = useState(currentSeats || 1);
+  const [additionalSeats, setAdditionalSeats] = useState(0);
+  const [debouncedAdditionalSeats, setDebouncedAdditionalSeats] = useState(0);
   const [preview, setPreview] = useState<SeatChangePreview | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -50,59 +43,114 @@ export function ManageSeatsDialog({ open, onOpenChange, currentSeats, onSave, te
     [tenantId, setPreview, setIsLoading, setError],
   );
 
-  // Debounce the seats value
+  // Debounce the additional seats value
   useEffect(() => {
     setIsLoading(true);
     const timer = setTimeout(() => {
-      setDebouncedSeats(seats);
+      setDebouncedAdditionalSeats(additionalSeats);
     }, 1500);
 
     return () => clearTimeout(timer);
-  }, [seats]);
+  }, [additionalSeats]);
 
   // Fetch preview when debounced value changes
   useEffect(() => {
     if (open) {
-      fetchPreview(debouncedSeats);
+      const totalSeats = currentSeats + debouncedAdditionalSeats;
+      fetchPreview(totalSeats);
     }
-  }, [open, debouncedSeats, fetchPreview]);
+  }, [open, debouncedAdditionalSeats, fetchPreview, currentSeats]);
 
-  const handleIncrement = () => setSeats((s) => s + 1);
-  const handleDecrement = () => setSeats((s) => (s > 1 ? s - 1 : 1));
+  const handleIncrement = () => setAdditionalSeats((s) => s + 1);
+  const handleDecrement = () =>
+    setAdditionalSeats((s) => {
+      // Prevent total seats from going below 1
+      if (currentSeats + s <= 1) return s;
+      return s - 1;
+    });
   const handleInput = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = Math.max(1, parseInt(e.target.value) || 1);
-    setSeats(value);
+    const value = parseInt(e.target.value) || 0;
+    // Prevent total seats from going below 1
+    const maxNegative = -(currentSeats - 1);
+    setAdditionalSeats(Math.max(maxNegative, value));
   };
   const handleSave = () => {
-    onSave(seats);
+    const totalSeats = currentSeats + additionalSeats;
+    onSave(totalSeats);
     onOpenChange(false);
   };
 
   const currentPayment = preview?.currentSeatCharge || 0;
   const immediatePayment = preview?.immediateSeatCharge || 0;
   const upcomingPayment = preview?.upcomingSeatCharge || currentPayment;
+  const totalSeats = currentSeats + additionalSeats;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent className="sm:max-w-[400px]">
         <DialogHeader>
           <DialogTitle className="text-xl">Add or remove open seats</DialogTitle>
         </DialogHeader>
 
         {/* Seat Counter Section */}
         <div className="flex items-center justify-between py-4 border-b">
-          <div className="flex items-center gap-4">
-            <Button variant="outline" size="icon" onClick={handleDecrement} aria-label="Decrease seats">
-              -
-            </Button>
-            <Input type="text" min={1} value={seats} onChange={handleInput} className="w-16 text-center" />
-            <Button variant="outline" size="icon" onClick={handleIncrement} aria-label="Increase seats">
+          <div className="flex items-center gap-0">
+            {currentSeats + additionalSeats <= 1 ? (
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <div>
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        onClick={handleDecrement}
+                        aria-label="Decrease seats"
+                        className="w-12 h-12 rounded-none text-xl"
+                        disabled
+                      >
+                        -
+                      </Button>
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>
+                      No more open seats. Please
+                      <br /> remove one or more users first.
+                    </p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            ) : (
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={handleDecrement}
+                aria-label="Decrease seats"
+                className="w-12 h-12 rounded-none text-xl"
+              >
+                -
+              </Button>
+            )}
+            <Input
+              type="text"
+              min={1}
+              value={additionalSeats}
+              onChange={handleInput}
+              className="w-12 h-12 text-center text-xl rounded-none"
+            />
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={handleIncrement}
+              aria-label="Increase seats"
+              className="w-12 h-12 rounded-none text-xl"
+            >
               +
             </Button>
           </div>
           <div className="text-right">
-            <div className="text-sm text-muted-foreground">Total Seats</div>
-            <div className="text-2xl font-semibold">{seats}</div>
+            <div className="text-xl font-semibold">{totalSeats} total seats</div>
+            <div className="text-muted-foreground text-sm">$18/mo</div>
           </div>
         </div>
 
@@ -115,9 +163,10 @@ export function ManageSeatsDialog({ open, onOpenChange, currentSeats, onSave, te
             <div className="space-y-2 border-b">
               <h3 className="text-sm font-medium">Current Payment</h3>
               <div className="flex justify-between items-center">
-                <span className="text-sm text-muted-foreground">Monthly recurring</span>
+                <span className="text-sm text-muted-foreground">$18 x {currentSeats}</span>
                 <span className="text-lg font-medium">
-                  ${currentPayment.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  ${currentPayment.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} /
+                  month
                 </span>
               </div>
             </div>
@@ -126,25 +175,26 @@ export function ManageSeatsDialog({ open, onOpenChange, currentSeats, onSave, te
             <div className="space-y-2 border-b">
               <h3 className="text-sm font-medium">Next Payment</h3>
               <div className="flex justify-between items-center">
-                <span className="text-sm text-muted-foreground">Starting next billing cycle</span>
+                <span className="text-sm text-muted-foreground">$18 x {totalSeats}</span>
                 <span className="text-lg font-medium">
-                  ${upcomingPayment.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  ${upcomingPayment.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} /
+                  month
                 </span>
               </div>
             </div>
 
             {/* Immediate Payment Section */}
-            {immediatePayment > 0 && (
-              <div className="space-y-2 border-b">
-                <h3 className="text-sm font-medium">Due Today</h3>
-                <div className="flex justify-between items-center">
-                  <span className="text-sm text-muted-foreground">One-time charge</span>
-                  <span className="text-lg font-medium text-primary">
-                    ${immediatePayment.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                  </span>
-                </div>
+            <div className="space-y-2 border-b">
+              <h3 className="text-sm font-medium">Total Due today</h3>
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-muted-foreground">One-time charge</span>
+                <span className="text-lg font-medium text-primary">
+                  {immediatePayment > 0
+                    ? `$${immediatePayment.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+                    : "-"}
+                </span>
               </div>
-            )}
+            </div>
 
             {isLoading && (
               <div className="absolute inset-0 flex items-center justify-center bg-background/50">
@@ -167,13 +217,13 @@ export function ManageSeatsDialog({ open, onOpenChange, currentSeats, onSave, te
                   Cancel
                 </Button>
               </DialogClose>
-              <Button onClick={handleSave} disabled={seats === currentSeats || isLoading}>
+              <Button onClick={handleSave} disabled={additionalSeats === 0 || isLoading}>
                 {isLoading
                   ? "Loading..."
-                  : seats !== currentSeats
-                    ? seats > currentSeats
-                      ? `Confirm add ${seats - currentSeats} ${seats - currentSeats === 1 ? "seat" : "seats"}`
-                      : `Confirm remove ${currentSeats - seats} ${currentSeats - seats === 1 ? "seat" : "seats"}`
+                  : additionalSeats !== 0
+                    ? additionalSeats > 0
+                      ? `Confirm add ${additionalSeats} ${additionalSeats === 1 ? "seat" : "seats"}`
+                      : `Confirm remove ${Math.abs(additionalSeats)} ${Math.abs(additionalSeats) === 1 ? "seat" : "seats"}`
                     : "No change"}
               </Button>
             </div>
