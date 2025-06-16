@@ -89,6 +89,8 @@ export default function UserSettings({
   const [effectiveSeats, setEffectiveSeats] = useState(currentPlanSeats || 0);
   const loadMoreRef = useRef<HTMLDivElement>(null);
 
+  const openSeats = currentPlanSeats ? currentPlanSeats - (Number(totalUsers) + Number(totalInvites)) : 0;
+
   const chatbotDisabled = tenant.paidStatus === "expired";
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -442,13 +444,12 @@ export default function UserSettings({
       <div className="mt-14">
         <div className="text-[#74747A] mb-1.5 flex">
           <div>
-            {totalUsers} {totalUsers == 1 ? "user" : "users"}
+            {Number(totalUsers) + Number(totalInvites)}{" "}
+            {Number(totalUsers) + Number(totalInvites) === 1 ? "user" : "users"}
           </div>
-          {totalInvites > 0 && (
-            <div className="ml-4">
-              {totalInvites} {totalInvites == 1 ? "invite" : "invites"}
-            </div>
-          )}
+          <div className="ml-4">
+            {openSeats} {openSeats == 1 ? "open seat" : "open seats"}
+          </div>
         </div>
         <div className="max-h-[calc(100vh-365px)] overflow-y-auto">
           <Table>
