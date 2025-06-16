@@ -81,14 +81,13 @@ export function BillingCard({ children }: BillingCardProps) {
 interface BillingCardLinkProps {
   href: string;
   children: React.ReactNode;
-  isFirst?: boolean;
 }
 
-function BillingCardLink({ href, children, isFirst }: BillingCardLinkProps) {
+function BillingCardLink({ href, children }: BillingCardLinkProps) {
   return (
     <Link
       href={href}
-      className={`flex items-center justify-between w-full py-3 ${!isFirst ? "border-t border-gray-200" : ""} text-base font-medium text-[#1D1D1F] hover:text-foreground transition-colors`}
+      className="flex items-center justify-between w-full py-3 text-base font-medium text-[#1D1D1F] hover:text-foreground transition-colors"
     >
       <div className="flex items-center gap-3">{children}</div>
       <ChevronRight className="h-4 w-4" />
@@ -149,6 +148,7 @@ export function BillingInformation({ billingData, billingPath, pricingPlansPath,
                 </div>
               </div>
               <PaymentMethod hasControls defaultPaymentMethod={billingData.defaultPaymentMethod} tenant={tenant} />
+              <hr className="border-[#D7D7D7] mb-3" />
               <BillingCardLink href={`${billingPath}/history`}>
                 <History className="h-5 w-5 text-muted-foreground" />
                 View payment history
@@ -167,9 +167,10 @@ export function BillingInformation({ billingData, billingPath, pricingPlansPath,
                 </div>
                 <div className="text-sm text-muted-foreground mt-1 mb-3">{totalSeats - usedSeats} open seats</div>
               </div>
+              <hr className="border-[#D7D7D7] mb-3" />
               <button
                 type="button"
-                className="flex items-center justify-between w-full py-3 border-t border-gray-200 text-base font-medium text-[#1D1D1F] hover:text-foreground transition-colors"
+                className="flex items-center justify-between w-full py-3 text-base font-medium text-[#1D1D1F] hover:text-foreground transition-colors"
                 onClick={() => setManageSeatsOpen(true)}
               >
                 <div className="flex items-center gap-3">
@@ -193,10 +194,11 @@ export function BillingInformation({ billingData, billingPath, pricingPlansPath,
           <h3 className="text-lg font-medium mb-4">Account</h3>
           <BillingCard>
             <div className="flex flex-col">
-              <BillingCardLink href={`${pricingPlansPath}`} isFirst>
+              <BillingCardLink href={`${pricingPlansPath}`}>
                 <SettingsIcon className="h-5 w-5 text-muted-foreground" />
                 Change plans
               </BillingCardLink>
+              <hr className="border-[#D7D7D7] mb-3 mt-3" />
               <BillingCardLink href={`${billingPath}/payment-method`}>
                 <CreditCardIcon className="h-5 w-5 text-muted-foreground" />
                 Manage payment method
