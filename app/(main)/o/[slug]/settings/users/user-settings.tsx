@@ -296,7 +296,7 @@ export default function UserSettings({
         throw new Error("Failed to update seats");
       }
       toast.success("Successfully updated team seats");
-      await new Promise((resolve) => setTimeout(resolve, 2000));
+      await new Promise((resolve) => setTimeout(resolve, 1000));
       setEffectiveSeats(newSeats);
     } catch (error) {
       toast.error("Failed to update team seats");
