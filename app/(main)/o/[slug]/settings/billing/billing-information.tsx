@@ -165,7 +165,9 @@ export function BillingInformation({ billingData, billingPath, pricingPlansPath,
                 <div className="text-2xl font-semibold">
                   <span className={usedSeats > totalSeats ? "text-red-600" : undefined}>{totalSeats} total</span>
                 </div>
-                <div className="text-sm text-muted-foreground mt-1 mb-3">{totalSeats - usedSeats} open seats</div>
+                <div className="text-sm text-muted-foreground mt-1 mb-3">
+                  {totalSeats - usedSeats} open {totalSeats - usedSeats === 1 ? "seat" : "seats"}
+                </div>
               </div>
               <hr className="border-[#D7D7D7] mb-3" />
               <button
