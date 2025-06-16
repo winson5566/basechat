@@ -10,12 +10,18 @@ import { Switch } from "@/components/ui/switch";
 import { PLANS, PlanType, TIER_UPGRADE_PATH, Tier } from "@/lib/orb-types";
 import { getDataPath } from "@/lib/paths";
 
+// Helper function to normalize pro and proAnnual
+function normalizePlanName(planName: string | undefined): string | undefined {
+  if (!planName) return undefined;
+  return planName === "proAnnual" ? "pro" : planName;
+}
+
 interface PlansPageContentProps {
   tenant: {
     name: string;
     slug: string;
   };
-  currentPlanName: string | undefined;
+  currentPlanName: string | undefined; // "developer" "starter" "pro" "proAnnual"
 }
 
 function TierFeatureContent({ check, text }: { check: boolean; text: React.ReactNode | string | undefined }) {
@@ -206,25 +212,26 @@ export default function PlansPageContent({ tenant, currentPlanName }: PlansPageC
                               color: isEnterprise ? "#000000" : "white",
                             }}
                             disabled={Boolean(
-                              currentPlanName === tierId ||
+                              normalizePlanName(currentPlanName) === tierId ||
                                 (currentPlanName &&
-                                  TIER_UPGRADE_PATH.indexOf(currentPlanName as Tier) >
+                                  TIER_UPGRADE_PATH.indexOf(normalizePlanName(currentPlanName) as Tier) >
                                     TIER_UPGRADE_PATH.indexOf(tierId as Tier)),
                             )}
                             onClick={() => {
                               if (isEnterprise) {
                                 window.open("https://calendly.com/d/crhj-b4f-d4v/ragie-basechat-discussion", "_blank");
                               } else {
-                                router.push(`/pricing/${tenant.slug}/plan-change?plan-type=${tierId}`);
+                                const planType = tierId === "pro" && isYearlyBilling ? "proAnnual" : tierId;
+                                router.push(`/pricing/${tenant.slug}/plan-change?plan-type=${planType}`);
                               }
                             }}
                           >
                             {isEnterprise
                               ? "Contact Us"
-                              : currentPlanName === tierId
+                              : normalizePlanName(currentPlanName) === tierId
                                 ? "Current Plan"
                                 : currentPlanName &&
-                                    TIER_UPGRADE_PATH.indexOf(currentPlanName as Tier) >
+                                    TIER_UPGRADE_PATH.indexOf(normalizePlanName(currentPlanName) as Tier) >
                                       TIER_UPGRADE_PATH.indexOf(tierId as Tier)
                                   ? "Downgrade"
                                   : "Upgrade"}
