@@ -4,8 +4,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { DialogTrigger } from "@radix-ui/react-dialog";
 import assertNever from "assert-never";
 import { Loader2, MoreHorizontal, Trash } from "lucide-react";
-import { redirect, useRouter } from "next/navigation";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { redirect } from "next/navigation";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
@@ -85,9 +85,9 @@ export default function UserSettings({
   const [isDialogOpen, setDialogOpen] = useState(false);
   const [manageSeatsOpen, setManageSeatsOpen] = useState(false);
   const [requiredSeats, setRequiredSeats] = useState(0);
-  const [isProcessingWebhook, setIsProcessingWebhook] = useState(false);
+  const [isSavingSeats, setIsSavingSeats] = useState(false);
+  const [effectiveSeats, setEffectiveSeats] = useState(currentPlanSeats || 0);
   const loadMoreRef = useRef<HTMLDivElement>(null);
-  const router = useRouter();
 
   const chatbotDisabled = tenant.paidStatus === "expired";
 
@@ -159,8 +159,7 @@ export default function UserSettings({
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     const currentUsage = Number(totalUsers) + Number(totalInvites) + values.emails.length;
-    const needsMoreSeats =
-      currentPlanSeats !== undefined && currentPlan !== "developer" && currentUsage > currentPlanSeats;
+    const needsMoreSeats = effectiveSeats !== undefined && currentPlan !== "developer" && currentUsage > effectiveSeats;
 
     if (needsMoreSeats) {
       toast.error("You need to add more seats to continue");
@@ -286,7 +285,7 @@ export default function UserSettings({
 
   const handleSaveSeats = async (newSeats: number) => {
     try {
-      setIsProcessingWebhook(true);
+      setIsSavingSeats(true);
       const response = await fetch(`/api/billing/update-seats`, {
         method: "POST",
         body: JSON.stringify({ seats: newSeats }),
@@ -297,14 +296,13 @@ export default function UserSettings({
         throw new Error("Failed to update seats");
       }
       toast.success("Successfully updated team seats");
-
-      await new Promise((resolve) => setTimeout(resolve, 5000));
-      router.refresh();
+      await new Promise((resolve) => setTimeout(resolve, 2000));
+      setEffectiveSeats(newSeats);
     } catch (error) {
       toast.error("Failed to update team seats");
       console.error("Error updating seats:", error);
     } finally {
-      setIsProcessingWebhook(false);
+      setIsSavingSeats(false);
     }
   };
 
@@ -375,12 +373,12 @@ export default function UserSettings({
                         </FormItem>
                       )}
                     />
-                    {currentPlanSeats !== undefined && currentPlan !== "developer" && (
+                    {effectiveSeats !== undefined && currentPlan !== "developer" && (
                       <div className="text-sm text-[#74747A] mt-2">
                         {(() => {
                           const currentUsage =
                             Number(totalUsers) + Number(totalInvites) + (form.getValues("emails")?.length || 0);
-                          const remaining = currentPlanSeats - currentUsage;
+                          const remaining = effectiveSeats - currentUsage;
                           if (remaining > 0) {
                             return `${remaining} seat${remaining === 1 ? "" : "s"} left`;
                           } else if (remaining === 0) {
@@ -397,16 +395,14 @@ export default function UserSettings({
                         const currentUsage =
                           Number(totalUsers) + Number(totalInvites) + (form.getValues("emails")?.length || 0);
                         const needsMoreSeats =
-                          currentPlanSeats !== undefined &&
-                          currentPlan !== "developer" &&
-                          currentUsage > currentPlanSeats;
-                        const additionalSeats = Number(currentUsage) - Number(currentPlanSeats);
+                          effectiveSeats !== undefined && currentPlan !== "developer" && currentUsage > effectiveSeats;
+                        const additionalSeats = Number(currentUsage) - Number(effectiveSeats);
 
                         if (needsMoreSeats) {
                           return (
                             <div className="flex justify-end w-full">
                               <div className="relative">
-                                {isProcessingWebhook && (
+                                {isSavingSeats && (
                                   <div className="absolute inset-0 flex items-center justify-center bg-background/50 z-10">
                                     <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
                                   </div>
@@ -417,7 +413,7 @@ export default function UserSettings({
                                     setRequiredSeats(additionalSeats);
                                     setManageSeatsOpen(true);
                                   }}
-                                  disabled={isProcessingWebhook}
+                                  disabled={isSavingSeats}
                                 >
                                   Add {additionalSeats} Seat{additionalSeats === 1 ? "" : "s"} to Continue
                                 </PrimaryButton>
@@ -522,7 +518,7 @@ export default function UserSettings({
       <ManageSeatsDialog
         open={manageSeatsOpen}
         onOpenChange={setManageSeatsOpen}
-        currentSeats={currentPlanSeats || 0}
+        currentSeats={effectiveSeats}
         onSave={handleSaveSeats}
         tenantId={tenant.id}
         initialAdditionalSeats={requiredSeats}

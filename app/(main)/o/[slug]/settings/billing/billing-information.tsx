@@ -137,7 +137,7 @@ export function BillingInformation({ billingData, billingPath, pricingPlansPath,
 
       <div className="space-y-8">
         <div>
-          <h3 className="text-lg font-medium mb-4">Data Plan</h3>
+          <h3 className="text-lg font-medium mb-4 mt-12">Data Plan</h3>
           <BillingCard>
             <div className="flex flex-col">
               <div>
