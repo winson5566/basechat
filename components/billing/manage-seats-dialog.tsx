@@ -92,9 +92,18 @@ export function ManageSeatsDialog({
     });
   const handleInput = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = parseInt(e.target.value) || 0;
-    // Prevent total seats from going below 1
+
     const maxNegative = -(currentSeats - 1);
-    setAdditionalSeats(Math.max(maxNegative, value));
+    const minOpenSeats = -(initialOpenSeats - initialAdditionalSeats);
+
+    // Calculate what the open seats would be with this value
+    const resultingOpenSeats = initialOpenSeats - initialAdditionalSeats + value;
+    if (resultingOpenSeats >= 0) {
+      setAdditionalSeats(Math.max(maxNegative, value));
+    } else {
+      // If invalid, set to the minimum allowed value
+      setAdditionalSeats(Math.max(maxNegative, minOpenSeats));
+    }
   };
   const handleSave = () => {
     const totalSeats = currentSeats + additionalSeats;
