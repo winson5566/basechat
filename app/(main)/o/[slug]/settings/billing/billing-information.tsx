@@ -187,6 +187,7 @@ export function BillingInformation({ billingData, billingPath, pricingPlansPath,
             currentSeats={totalSeats}
             onSave={handleSaveSeats}
             tenantId={tenant.id}
+            initialOpenSeats={totalSeats - usedSeats}
           />
         </div>
 

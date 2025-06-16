@@ -333,6 +333,23 @@ export default function UserSettings({
                 <DialogHeader>
                   <DialogTitle>Invite users</DialogTitle>
                 </DialogHeader>
+                {effectiveSeats !== undefined && currentPlan !== "developer" && (
+                  <div className="text-sm text-[#74747A] mt-2">
+                    {(() => {
+                      const currentUsage =
+                        Number(totalUsers) + Number(totalInvites) + (form.getValues("emails")?.length || 0);
+                      const remaining = effectiveSeats - currentUsage;
+                      if (remaining > 0) {
+                        return `${remaining} seat${remaining === 1 ? "" : "s"} left`;
+                      } else if (remaining === 0) {
+                        return "0 seats left";
+                      } else {
+                        const additional = Math.abs(remaining);
+                        return `0 seats left, ${additional} additional seat${additional === 1 ? "" : "s"} required`;
+                      }
+                    })()}
+                  </div>
+                )}
                 <Form {...form}>
                   <form onSubmit={form.handleSubmit(onSubmit)}>
                     <FormField
@@ -373,23 +390,6 @@ export default function UserSettings({
                         </FormItem>
                       )}
                     />
-                    {effectiveSeats !== undefined && currentPlan !== "developer" && (
-                      <div className="text-sm text-[#74747A] mt-2">
-                        {(() => {
-                          const currentUsage =
-                            Number(totalUsers) + Number(totalInvites) + (form.getValues("emails")?.length || 0);
-                          const remaining = effectiveSeats - currentUsage;
-                          if (remaining > 0) {
-                            return `${remaining} seat${remaining === 1 ? "" : "s"} left`;
-                          } else if (remaining === 0) {
-                            return "0 seats left";
-                          } else {
-                            const additional = Math.abs(remaining);
-                            return `0 seats left, ${additional} additional seat${additional === 1 ? "" : "s"} required`;
-                          }
-                        })()}
-                      </div>
-                    )}
                     <DialogFooter className="mt-8">
                       {(() => {
                         const currentUsage =
@@ -423,10 +423,12 @@ export default function UserSettings({
                         }
 
                         return (
-                          <PrimaryButton type="submit" disabled={!form.getValues("emails")?.length}>
-                            Send invite
+                          <>
+                            <PrimaryButton type="submit" disabled={!form.getValues("emails")?.length}>
+                              {`Send invite${form.getValues("emails")?.length === 1 ? "" : "s"}`}
+                            </PrimaryButton>
                             {isLoading && <Loader2 size={18} className="ml-2 animate-spin" />}
-                          </PrimaryButton>
+                          </>
                         );
                       })()}
                     </DialogFooter>
@@ -523,6 +525,8 @@ export default function UserSettings({
         tenantId={tenant.id}
         initialAdditionalSeats={requiredSeats}
         lightBackground={true}
+        initialOpenSeats={0}
+        inviteFlow={true}
       />
     </div>
   );

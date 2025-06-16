@@ -15,7 +15,9 @@ interface ManageSeatsDialogProps {
   onSave: (newSeats: number) => void;
   tenantId: string;
   lightBackground?: boolean;
+  initialOpenSeats: number;
   initialAdditionalSeats?: number;
+  inviteFlow?: boolean;
 }
 
 export function ManageSeatsDialog({
@@ -25,7 +27,9 @@ export function ManageSeatsDialog({
   onSave,
   tenantId,
   lightBackground,
+  initialOpenSeats,
   initialAdditionalSeats = 0,
+  inviteFlow = false,
 }: ManageSeatsDialogProps) {
   const [additionalSeats, setAdditionalSeats] = useState(initialAdditionalSeats);
   const [debouncedAdditionalSeats, setDebouncedAdditionalSeats] = useState(initialAdditionalSeats);
@@ -105,15 +109,20 @@ export function ManageSeatsDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[450px]" lightBackground={lightBackground}>
+      <DialogContent
+        className="sm:max-w-[450px]"
+        lightBackground={lightBackground}
+        closeOnOutsideClick={!inviteFlow}
+        hideClose={inviteFlow}
+      >
         <DialogHeader>
           <DialogTitle className="text-xl">Add or remove open seats</DialogTitle>
         </DialogHeader>
 
         {/* Seat Counter Section */}
-        <div className="flex items-center justify-between py-4 border-b">
+        <div className="flex items-center justify-between pt-4 pb-2">
           <div className="flex items-center gap-0">
-            {currentSeats + additionalSeats <= 1 ? (
+            {currentSeats + additionalSeats <= 1 || initialOpenSeats + additionalSeats - initialAdditionalSeats <= 0 ? (
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
@@ -171,14 +180,18 @@ export function ManageSeatsDialog({
             <div className="text-muted-foreground text-sm">$18/mo</div>
           </div>
         </div>
+        <div className="text-sm text-muted-foreground">
+          {initialOpenSeats + additionalSeats - initialAdditionalSeats} open seats
+        </div>
 
         {/* Payment Information Sections */}
         {error ? (
           <div className="text-sm text-destructive py-4">An error occurred</div>
         ) : (
-          <div className="relative space-y-6 py-4">
+          <div className="relative space-y-6">
             {/* Current Payment Section */}
-            <div className="space-y-2 border-b">
+            <hr className="border-[#D7D7D7]" />
+            <div className="space-y-2">
               <h3 className="text-sm font-medium">Current Payment</h3>
               <div className="flex justify-between items-center">
                 <span className="text-sm text-muted-foreground">$18 x {currentSeats}</span>
@@ -190,7 +203,8 @@ export function ManageSeatsDialog({
             </div>
 
             {/* Next Payment Section */}
-            <div className="space-y-2 border-b">
+            <hr className="border-[#D7D7D7]" />
+            <div className="space-y-2">
               <h3 className="text-sm font-medium">Next Payment</h3>
               <div className="flex justify-between items-center">
                 <span className="text-sm text-muted-foreground">$18 x {totalSeats}</span>
@@ -202,8 +216,9 @@ export function ManageSeatsDialog({
             </div>
 
             {/* Immediate Payment Section */}
-            <div className="space-y-2 border-b">
-              <h3 className="text-sm font-medium">Total Due today</h3>
+            <hr className="border-[#D7D7D7]" />
+            <div className="space-y-2">
+              <h3 className="text-sm font-medium">Total Due Today</h3>
               <div className="flex justify-between items-center">
                 <span className="text-sm text-muted-foreground">One-time charge</span>
                 <span className="text-lg font-medium text-primary">
@@ -226,13 +241,13 @@ export function ManageSeatsDialog({
         <DialogFooter className="mt-6">
           <div className="w-full">
             <div className="text-xs text-muted-foreground text-left w-full mb-3">
-              By continuing, your credit will be charged the total amount due today and the new payment starting next
+              By continuing, your payment method will be charged the Total Due Today and the New Payment starting next
               billing cycle, until changed or cancelled.
             </div>
             <div className="flex flex-row gap-2 justify-end">
               <DialogClose asChild>
                 <Button variant="outline" type="button">
-                  Cancel
+                  {inviteFlow ? "Back" : "Cancel"}
                 </Button>
               </DialogClose>
               <Button onClick={handleSave} disabled={additionalSeats === 0 || isLoading}>
