@@ -208,8 +208,17 @@ export default function PlansPageContent({ tenant, currentPlanName }: PlansPageC
                           <Button
                             className="w-full"
                             style={{
-                              backgroundColor: isEnterprise ? "#E5E7EB" : "#D946EF",
-                              color: isEnterprise ? "#000000" : "white",
+                              backgroundColor: isEnterprise
+                                ? "#E5E7EB"
+                                : normalizePlanName(currentPlanName) === tierId
+                                  ? "white"
+                                  : "#D946EF",
+                              color: isEnterprise
+                                ? "#000000"
+                                : normalizePlanName(currentPlanName) === tierId
+                                  ? "#000000"
+                                  : "white",
+                              border: normalizePlanName(currentPlanName) === tierId ? "1px solid #74747A" : "none",
                             }}
                             disabled={Boolean(
                               normalizePlanName(currentPlanName) === tierId ||
