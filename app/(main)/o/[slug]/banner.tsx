@@ -27,9 +27,17 @@ export function Banner({ className, children, bubble = false }: BannerProps) {
   );
 }
 
-export function BannerLink({ href, children }: { href: string; children: React.ReactNode }) {
+export function BannerLink({
+  href,
+  target = "_self",
+  children,
+}: {
+  href: string;
+  target?: string;
+  children: React.ReactNode;
+}) {
   return (
-    <Link href={href} target="_blank" className="text-[#D946EF] underline hover:text-[#D946EF]/90">
+    <Link href={href} target={target} className="text-[#D946EF] underline hover:text-[#D946EF]/90">
       {children}
     </Link>
   );

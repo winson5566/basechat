@@ -140,7 +140,7 @@ export default function Header({
             <Banner bubble>
               You have {daysRemaining} {daysRemaining === 1 ? "day" : "days"} left of your free trial.{" "}
               <BannerLink href={getPricingPlansPath(tenant.slug)}>View pricing</BannerLink> or{" "}
-              <BannerLink href="https://calendly.com/d/crhj-b4f-d4v/ragie-basechat-discussion">
+              <BannerLink href="https://calendly.com/d/crhj-b4f-d4v/ragie-basechat-discussion" target="_blank">
                 contact sales
               </BannerLink>{" "}
               to upgrade.
@@ -150,7 +150,7 @@ export default function Header({
             <Banner>
               We hope you enjoyed Base Chat Early Access!{" "}
               <BannerLink href={getPricingPlansPath(tenant.slug)}>New pricing</BannerLink> starts June 5. To upgrade,{" "}
-              <BannerLink href="https://calendly.com/d/crhj-b4f-d4v/ragie-basechat-discussion">
+              <BannerLink href="https://calendly.com/d/crhj-b4f-d4v/ragie-basechat-discussion" target="_blank">
                 contact sales.
               </BannerLink>
             </Banner>
@@ -159,7 +159,7 @@ export default function Header({
             <Banner>
               Your Base Chat trial has expired.{" "}
               <BannerLink href={getPricingPlansPath(tenant.slug)}>Upgrade to a paid plan</BannerLink> or{" "}
-              <BannerLink href="https://calendly.com/d/crhj-b4f-d4v/ragie-basechat-discussion">
+              <BannerLink href="https://calendly.com/d/crhj-b4f-d4v/ragie-basechat-discussion" target="_blank">
                 contact sales
               </BannerLink>{" "}
               for questions.
