@@ -3,110 +3,160 @@
 import { Check } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
-import { getCurrentPlan, TenantMetadata } from "@/lib/billing/tenant";
-import { PLANS, PlanType, TIER_UPGRADE_PATH, TIER_COLORS, Tier } from "@/lib/orb-types";
+import { Switch } from "@/components/ui/switch";
+import { PLANS, PlanType, TIER_UPGRADE_PATH, Tier } from "@/lib/orb-types";
 import { getDataPath } from "@/lib/paths";
-import { capitalizeFirstLetter } from "@/lib/utils";
+
+// Helper function to normalize pro and proAnnual
+function normalizePlanName(planName: string | undefined): string | undefined {
+  if (!planName) return undefined;
+  return planName === "proAnnual" ? "pro" : planName;
+}
 
 interface PlansPageContentProps {
   tenant: {
     name: string;
     slug: string;
-    paidStatus: string;
-    metadata: {
-      plans?: Array<{
-        id: string;
-        endedAt: Date | null;
-        startedAt: Date;
-        tier: string;
-        seats: number;
-      }>;
-    };
   };
-  userCount: number;
+  currentPlanName: string | undefined; // "developer" "starter" "pro" "proAnnual"
 }
 
 function TierFeatureContent({ check, text }: { check: boolean; text: React.ReactNode | string | undefined }) {
   return (
-    <div className="flex items-center gap-2">
+    <div className="flex items-center gap-2 h-full text-base font-medium">
       {check && <Check aria-hidden="true" className="h-5 w-5 text-white" />}
-      {text && <span>{text}</span>}
+      {text && <span className="mt-0">{text}</span>}
     </div>
   );
 }
 
 function FeatureItem() {
   return (
-    <tr>
-      <th scope="row" className="border-b py-3 font-normal leading-6 text-muted-foreground">
-        Page Limit
-      </th>
-      {TIER_UPGRADE_PATH.map((tierId) => {
-        const plan = PLANS[tierId as PlanType];
-        const isEnterprise = tierId === "enterprise";
-        return (
-          <td key={tierId} className="border-b py-4">
-            <TierFeatureContent
-              check={true}
-              text={isEnterprise ? "Unlimited pages" : `${plan?.partitionLimit.toLocaleString()} pages`}
-            />
-          </td>
-        );
-      })}
-    </tr>
+    <>
+      {/* Documents and Images Section */}
+      <tr>
+        <th scope="row" className="py-3 font-normal leading-6 text-muted-foreground">
+          <div className="text-lg font-medium">Documents and Images</div>
+        </th>
+        <td colSpan={3} className="py-3" />
+      </tr>
+      <tr>
+        <th scope="row" className="border-b py-3 font-normal leading-6">
+          <div className="text-base font-medium">Page processing</div>
+        </th>
+        {["starter", "pro", "enterprise"].map((tierId) => {
+          const plan = PLANS[tierId as PlanType];
+          const isEnterprise = tierId === "enterprise";
+          return (
+            <td key={tierId} className="border-b py-3">
+              <TierFeatureContent
+                check={false}
+                text={isEnterprise ? "Custom" : `${plan?.partitionLimit.toLocaleString()} pages`}
+              />
+            </td>
+          );
+        })}
+      </tr>
+
+      {/* Audio and Video Section */}
+      <tr>
+        <th scope="row" className="py-3 font-normal leading-6 text-muted-foreground">
+          <div className="text-lg font-medium">Audio and Video</div>
+        </th>
+        <td colSpan={3} className="py-3" />
+      </tr>
+      <tr>
+        <th scope="row" className="border-b py-3 font-normal leading-6">
+          <div className="text-base font-medium">Streaming</div>
+        </th>
+        {["starter", "pro", "enterprise"].map((tierId) => {
+          const plan = PLANS[tierId as PlanType];
+          const isEnterprise = tierId === "enterprise";
+          return (
+            <td key={tierId} className="border-b py-3">
+              <TierFeatureContent
+                check={false}
+                text={
+                  isEnterprise
+                    ? "Custom"
+                    : plan?.streamingLimit > 1
+                      ? `${plan?.streamingLimit.toLocaleString()} GB`
+                      : `${plan?.streamingLimit.toLocaleString()} TB`
+                }
+              />
+            </td>
+          );
+        })}
+      </tr>
+      <tr>
+        <th scope="row" className="border-b py-3 font-normal leading-6">
+          <div className="text-base font-medium">Audio processing</div>
+        </th>
+        {["starter", "pro", "enterprise"].map((tierId) => {
+          const plan = PLANS[tierId as PlanType];
+          const isEnterprise = tierId === "enterprise";
+          return (
+            <td key={tierId} className="border-b py-3">
+              <TierFeatureContent
+                check={false}
+                text={isEnterprise ? "Custom" : `${plan?.audioLimit.toLocaleString()} hours`}
+              />
+            </td>
+          );
+        })}
+      </tr>
+      <tr>
+        <th scope="row" className="border-b py-3 font-normal leading-6">
+          <div className="text-base font-medium">Video processing</div>
+        </th>
+        {["starter", "pro", "enterprise"].map((tierId) => {
+          const plan = PLANS[tierId as PlanType];
+          const isEnterprise = tierId === "enterprise";
+          return (
+            <td key={tierId} className="border-b py-3">
+              <TierFeatureContent
+                check={false}
+                text={isEnterprise ? "Custom" : `${plan?.videoLimit.toLocaleString()} hours`}
+              />
+            </td>
+          );
+        })}
+      </tr>
+      <tr>
+        <th scope="row" className="border-b py-3 font-normal leading-6">
+          <div className="text-base font-medium">Hosting</div>
+        </th>
+        {["starter", "pro", "enterprise"].map((tierId) => {
+          const plan = PLANS[tierId as PlanType];
+          const isEnterprise = tierId === "enterprise";
+          return (
+            <td key={tierId} className="border-b py-3">
+              <TierFeatureContent
+                check={false}
+                text={isEnterprise ? "Custom" : `${plan?.hostingLimit.toLocaleString()} GB`}
+              />
+            </td>
+          );
+        })}
+      </tr>
+    </>
   );
 }
 
-export default function PlansPageContent({ tenant, userCount }: PlansPageContentProps) {
+export default function PlansPageContent({ tenant, currentPlanName }: PlansPageContentProps) {
   const router = useRouter();
-  // Get the current active plan
-  const currentPlan = getCurrentPlan(tenant.metadata as TenantMetadata);
-  // If no current plan, treat as developer plan
-  const currentPlanType = currentPlan?.name || "developer";
-  const effectivePlan = currentPlan || {
-    name: "developer",
-    seats: userCount,
-    startedAt: new Date(),
-    endedAt: null,
-    tier: "developer",
-    id: "developer-fallback",
-  };
-
-  // Determine if tenant is in trial
-  const isInTrial = tenant.paidStatus === "trial" || tenant.paidStatus === "legacy";
+  const [isYearlyBilling, setIsYearlyBilling] = useState(false);
 
   return (
     <div className="w-full max-w-[1200px] relative">
-      <Link href={getDataPath(tenant.slug)} className="absolute top-0 left-0 text-sm text-gray-500 hover:text-gray-700">
-        Cancel
-      </Link>
-
-      <h1 className="text-3xl font-bold mb-8 text-center">Choose Your Plan</h1>
-
-      {/* Current Plan Section */}
-      <div className="mb-8 p-4 border rounded-lg">
-        <h2 className="text-xl font-semibold mb-2">Current Plan</h2>
-        {effectivePlan ? (
-          <div className="space-y-2">
-            <p className="text-gray-600">
-              You are currently on the{" "}
-              {currentPlanType === "developer" ? "Free Trial" : capitalizeFirstLetter(currentPlanType)} plan with{" "}
-              {effectivePlan.seats} seat
-              {effectivePlan.seats !== 1 ? "s" : ""}
-            </p>
-            <p className="text-sm text-gray-500">Started on {new Date(effectivePlan.startedAt).toLocaleDateString()}</p>
-          </div>
-        ) : isInTrial ? (
-          <div className="space-y-2">
-            <p className="text-gray-600">You are currently on the Free Trial</p>
-          </div>
-        ) : (
-          <p className="text-gray-600">
-            {tenant.paidStatus === "expired" ? "Your trial has expired" : "You are on a paid plan"}
-          </p>
-        )}
+      <div className="flex flex-col gap-4">
+        <Link href={getDataPath(tenant.slug)} className="text-sm text-gray-500 hover:text-gray-700">
+          Cancel
+        </Link>
+        <h1 className="text-3xl font-bold">Base Chat Data Plans</h1>
       </div>
 
       {/* Pricing Table */}
@@ -116,23 +166,19 @@ export default function PlansPageContent({ tenant, userCount }: PlansPageContent
             <table className="w-full table-fixed border-separate border-spacing-x-8 text-left">
               <caption className="sr-only">Pricing plan comparison</caption>
               <colgroup>
-                <col className="w-1/6" />
-                <col className="w-1/6" />
-                <col className="w-1/6" />
-                <col className="w-1/6" />
-                <col className="w-1/6" />
+                <col className="w-1/4" />
+                <col className="w-1/4" />
+                <col className="w-1/4" />
+                <col className="w-1/4" />
               </colgroup>
               <thead>
                 <tr>
                   <td />
-                  {TIER_UPGRADE_PATH.map((tierId) => {
+                  {["starter", "pro", "enterprise"].map((tierId) => {
                     const plan = PLANS[tierId as PlanType];
                     return (
                       <th key={tierId} scope="col" className="pt-6 xl:pt-8">
-                        <h2 className="font-medium pb-0 text-2xl" style={{ color: TIER_COLORS[tierId] }}>
-                          {plan ? plan.displayName : "Enterprise"}
-                        </h2>
-                        <div className="h-0.5 mt-5" style={{ background: TIER_COLORS[tierId] }} />
+                        <h2 className="font-bold pb-0 text-2xl">{plan ? plan.displayName : "Enterprise"}</h2>
                       </th>
                     );
                   })}
@@ -145,56 +191,88 @@ export default function PlansPageContent({ tenant, userCount }: PlansPageContent
                     <span className="sr-only">Price</span>
                   </th>
 
-                  {TIER_UPGRADE_PATH.map((tierId) => {
+                  {["starter", "pro", "enterprise"].map((tierId) => {
                     const plan = PLANS[tierId as PlanType];
                     const isEnterprise = tierId === "enterprise";
+                    const isPro = tierId === "pro";
+                    const displayPrice = isPro && isYearlyBilling && plan ? plan.price * 0.9 : plan?.price;
 
                     return (
                       <td key={tierId} className="pt-2 align-top">
-                        <div className="flex h-full flex-col gap-6">
-                          <p className="text-xs">
-                            {PLANS[tierId as PlanType]?.description || "Custom enterprise solutions to fit your needs"}
+                        <div className="flex h-full flex-col gap-4">
+                          <p className="text-base leading-snug font-medium">
+                            {plan?.description || "Built for organization-wide deployment"}
                           </p>
-
-                          {/* Price Display */}
-                          <div className="flex items-baseline gap-x-1 h-8">
-                            {isEnterprise ? (
-                              <span className="text-xl">Custom pricing</span>
-                            ) : (
-                              <>
-                                <span className="text-2xl font-bold">${plan.price}</span>
-                                <span className="text-muted-foreground">/ month</span>
-                              </>
-                            )}
-                          </div>
 
                           {/* Action Button */}
                           <Button
                             className="w-full"
                             style={{
-                              backgroundColor: currentPlanType === tierId ? "#9CA3AF" : TIER_COLORS[tierId],
-                              color: "white",
+                              backgroundColor: isEnterprise
+                                ? "#E5E7EB"
+                                : normalizePlanName(currentPlanName) === tierId
+                                  ? "white"
+                                  : "#D946EF",
+                              color: isEnterprise
+                                ? "#000000"
+                                : normalizePlanName(currentPlanName) === tierId
+                                  ? "#000000"
+                                  : "white",
+                              border: normalizePlanName(currentPlanName) === tierId ? "1px solid #74747A" : "none",
                             }}
-                            disabled={
-                              currentPlanType === tierId ||
-                              TIER_UPGRADE_PATH.indexOf(tierId) < TIER_UPGRADE_PATH.indexOf(currentPlanType as Tier)
-                            }
+                            disabled={Boolean(
+                              normalizePlanName(currentPlanName) === tierId ||
+                                (currentPlanName &&
+                                  TIER_UPGRADE_PATH.indexOf(normalizePlanName(currentPlanName) as Tier) >
+                                    TIER_UPGRADE_PATH.indexOf(tierId as Tier)),
+                            )}
                             onClick={() => {
                               if (isEnterprise) {
                                 window.open("https://calendly.com/d/crhj-b4f-d4v/ragie-basechat-discussion", "_blank");
                               } else {
-                                router.push(`/pricing/${tenant.slug}/plan-change?plan-type=${tierId}`);
+                                const planType = tierId === "pro" && isYearlyBilling ? "proAnnual" : tierId;
+                                router.push(`/pricing/${tenant.slug}/plan-change?plan-type=${planType}`);
                               }
                             }}
                           >
-                            {currentPlanType === tierId
-                              ? "Current Plan"
-                              : isEnterprise
-                                ? "Contact Sales"
-                                : TIER_UPGRADE_PATH.indexOf(tierId) < TIER_UPGRADE_PATH.indexOf(currentPlanType as Tier)
+                            {isEnterprise
+                              ? "Contact Us"
+                              : normalizePlanName(currentPlanName) === tierId
+                                ? "Current Plan"
+                                : currentPlanName &&
+                                    TIER_UPGRADE_PATH.indexOf(normalizePlanName(currentPlanName) as Tier) >
+                                      TIER_UPGRADE_PATH.indexOf(tierId as Tier)
                                   ? "Downgrade"
                                   : "Upgrade"}
                           </Button>
+
+                          {/* Price Display */}
+                          <div className="flex flex-col gap-2">
+                            <div className="flex items-center gap-x-2 h-8 text-base font-medium">
+                              {isEnterprise ? (
+                                <span>Custom pricing</span>
+                              ) : (
+                                <>
+                                  <span>${displayPrice} / month</span>
+                                  {isYearlyBilling && isPro && (
+                                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs bg-[#D946EF] text-white">
+                                      -10%
+                                    </span>
+                                  )}
+                                </>
+                              )}
+                            </div>
+                            {isPro && (
+                              <div className="flex items-center gap-2">
+                                <Switch
+                                  checked={isYearlyBilling}
+                                  onCheckedChange={setIsYearlyBilling}
+                                  className="data-[state=checked]:bg-[#D946EF]"
+                                />
+                                <span className="text-[15px] text-[#1D1D1F]">Billed yearly</span>
+                              </div>
+                            )}
+                          </div>
                         </div>
                       </td>
                     );
@@ -202,7 +280,7 @@ export default function PlansPageContent({ tenant, userCount }: PlansPageContent
                 </tr>
 
                 <tr>
-                  <td colSpan={5} className="pt-8">
+                  <td colSpan={4} className="pt-8">
                     <hr className="w-full" />
                   </td>
                 </tr>
@@ -216,15 +294,15 @@ export default function PlansPageContent({ tenant, userCount }: PlansPageContent
       </div>
 
       {/* Contact Us Section */}
-      <div className="mt-8 text-left">
-        <p className="text-sm text-gray-600">
+      <div className="mt-8 text-left text-base font-medium">
+        <p className="text-[#1D1D1F]">
           Have questions?{" "}
           <Link
             href="https://calendly.com/d/crhj-b4f-d4v/ragie-basechat-discussion"
             target="_blank"
-            className="text-blue-600 hover:text-blue-800"
+            className="text-[#D946EF] hover:text-[#D946EF]/90 underline"
           >
-            Contact us
+            Schedule a call
           </Link>
         </p>
       </div>

@@ -64,7 +64,7 @@ type Props = {
 export default function BillingSettings({ tenant, partitionInfo, defaultPartitionLimit, billingData }: Props) {
   return (
     <div className="w-full p-4 flex-grow flex flex-col relative">
-      <div className="flex w-full justify-between items-center mb-12">
+      <div className="flex w-full justify-between items-center">
         <h1 className="font-bold text-[32px] text-[#343A40]">Billing</h1>
       </div>
 

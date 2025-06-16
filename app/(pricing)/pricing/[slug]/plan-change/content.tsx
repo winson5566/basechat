@@ -74,6 +74,11 @@ export default function UpgradePlanContent({
     loadDefaultPaymentMethod();
   }, [tenant.metadata.stripeCustomerId]);
 
+  let billingCycles: Array<"monthly" | "annual"> = ["monthly"];
+  if (targetPlan.tier === "proAnnual" || targetPlan.tier === "pro") {
+    billingCycles.push("annual");
+  }
+
   return (
     <StripeElementsWrapper
       stripePublishableKey={publicStripeKey}
@@ -85,7 +90,7 @@ export default function UpgradePlanContent({
         <UpgradePlanContentInner
           tenant={tenant}
           baseUrl={baseUrl}
-          billingCycles={["monthly"]}
+          billingCycles={billingCycles}
           defaultPaymentMethod={defaultPaymentMethod}
           targetPlan={targetPlan}
           currentSeatCount={currentSeatCount}

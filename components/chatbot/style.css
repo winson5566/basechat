@@ -83,9 +83,21 @@
 
 .markdown pre {
   background-color: white;
-  padding-left: 0px;
+  padding: 0;
+  margin: 0 0 1.5rem 0;
+  position: relative;
 }
 
 .markdown pre code {
   border-radius: 8px;
+  display: block;
+  overflow-x: auto;
+}
+
+.markdown pre code .group {
+  position: relative;
+}
+
+.markdown pre code .group:hover .copy-button {
+  opacity: 1;
 }

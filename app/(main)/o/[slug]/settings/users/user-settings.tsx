@@ -5,11 +5,12 @@ import { DialogTrigger } from "@radix-ui/react-dialog";
 import assertNever from "assert-never";
 import { Loader2, MoreHorizontal, Trash } from "lucide-react";
 import { redirect } from "next/navigation";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 
+import { ManageSeatsDialog } from "@/components/billing/manage-seats-dialog";
 import PrimaryButton from "@/components/primary-button";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import {
@@ -38,6 +39,7 @@ interface Props {
   tenant: {
     slug: string;
     paidStatus: string;
+    id: string;
   };
   currentPlanSeats?: number;
   currentPlan?: string;
@@ -81,7 +83,13 @@ export default function UserSettings({
   const [currentPage, setCurrentPage] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
   const [isDialogOpen, setDialogOpen] = useState(false);
+  const [manageSeatsOpen, setManageSeatsOpen] = useState(false);
+  const [requiredSeats, setRequiredSeats] = useState(0);
+  const [isSavingSeats, setIsSavingSeats] = useState(false);
+  const [effectiveSeats, setEffectiveSeats] = useState(currentPlanSeats || 0);
   const loadMoreRef = useRef<HTMLDivElement>(null);
+
+  const openSeats = currentPlanSeats ? currentPlanSeats - (Number(totalUsers) + Number(totalInvites)) : 0;
 
   const chatbotDisabled = tenant.paidStatus === "expired";
 
@@ -153,8 +161,7 @@ export default function UserSettings({
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     const currentUsage = Number(totalUsers) + Number(totalInvites) + values.emails.length;
-    const needsMoreSeats =
-      currentPlanSeats !== undefined && currentPlan !== "developer" && currentUsage > currentPlanSeats;
+    const needsMoreSeats = effectiveSeats !== undefined && currentPlan !== "developer" && currentUsage > effectiveSeats;
 
     if (needsMoreSeats) {
       toast.error("You need to add more seats to continue");
@@ -278,6 +285,29 @@ export default function UserSettings({
     }
   };
 
+  const handleSaveSeats = async (newSeats: number) => {
+    try {
+      setIsSavingSeats(true);
+      const response = await fetch(`/api/billing/update-seats`, {
+        method: "POST",
+        body: JSON.stringify({ seats: newSeats }),
+        headers: { tenant: tenant.slug },
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to update seats");
+      }
+      toast.success("Successfully updated team seats");
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+      setEffectiveSeats(newSeats);
+    } catch (error) {
+      toast.error("Failed to update team seats");
+      console.error("Error updating seats:", error);
+    } finally {
+      setIsSavingSeats(false);
+    }
+  };
+
   return (
     <div className="w-full p-4 flex-grow flex flex-col">
       <div className="flex w-full justify-between items-center mb-8">
@@ -305,6 +335,23 @@ export default function UserSettings({
                 <DialogHeader>
                   <DialogTitle>Invite users</DialogTitle>
                 </DialogHeader>
+                {effectiveSeats !== undefined && currentPlan !== "developer" && (
+                  <div className="text-sm text-[#74747A] mt-2">
+                    {(() => {
+                      const currentUsage =
+                        Number(totalUsers) + Number(totalInvites) + (form.getValues("emails")?.length || 0);
+                      const remaining = effectiveSeats - currentUsage;
+                      if (remaining > 0) {
+                        return `${remaining} seat${remaining === 1 ? "" : "s"} left`;
+                      } else if (remaining === 0) {
+                        return "0 seats left";
+                      } else {
+                        const additional = Math.abs(remaining);
+                        return `0 seats left, ${additional} additional seat${additional === 1 ? "" : "s"} required`;
+                      }
+                    })()}
+                  </div>
+                )}
                 <Form {...form}>
                   <form onSubmit={form.handleSubmit(onSubmit)}>
                     <FormField
@@ -345,46 +392,45 @@ export default function UserSettings({
                         </FormItem>
                       )}
                     />
-                    {currentPlanSeats !== undefined && currentPlan !== "developer" && (
-                      <div className="text-sm text-[#74747A] mt-2">
-                        {(() => {
-                          const currentUsage =
-                            Number(totalUsers) + Number(totalInvites) + (form.getValues("emails")?.length || 0);
-                          const remaining = currentPlanSeats - currentUsage;
-                          if (remaining > 0) {
-                            return `${remaining} seat${remaining === 1 ? "" : "s"} left`;
-                          } else if (remaining === 0) {
-                            return "0 seats left";
-                          } else {
-                            const additional = Math.abs(remaining);
-                            return `0 seats left, ${additional} additional seat${additional === 1 ? "" : "s"} required`;
-                          }
-                        })()}
-                      </div>
-                    )}
                     <DialogFooter className="mt-8">
                       {(() => {
                         const currentUsage =
                           Number(totalUsers) + Number(totalInvites) + (form.getValues("emails")?.length || 0);
                         const needsMoreSeats =
-                          currentPlanSeats !== undefined &&
-                          currentPlan !== "developer" &&
-                          currentUsage > currentPlanSeats;
-                        const additionalSeats = Number(currentUsage) - Number(currentPlanSeats);
+                          effectiveSeats !== undefined && currentPlan !== "developer" && currentUsage > effectiveSeats;
+                        const additionalSeats = Number(currentUsage) - Number(effectiveSeats);
 
                         if (needsMoreSeats) {
                           return (
-                            <PrimaryButton type="button" onClick={() => redirect(getBillingSettingsPath(tenant.slug))}>
-                              Add {additionalSeats} Seat{additionalSeats === 1 ? "" : "s"} to Continue
-                            </PrimaryButton>
+                            <div className="flex justify-end w-full">
+                              <div className="relative">
+                                {isSavingSeats && (
+                                  <div className="absolute inset-0 flex items-center justify-center bg-background/50 z-10">
+                                    <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                                  </div>
+                                )}
+                                <PrimaryButton
+                                  type="button"
+                                  onClick={() => {
+                                    setRequiredSeats(additionalSeats);
+                                    setManageSeatsOpen(true);
+                                  }}
+                                  disabled={isSavingSeats}
+                                >
+                                  Add {additionalSeats} Seat{additionalSeats === 1 ? "" : "s"} to Continue
+                                </PrimaryButton>
+                              </div>
+                            </div>
                           );
                         }
 
                         return (
-                          <PrimaryButton type="submit" disabled={!form.getValues("emails")?.length}>
-                            Send invite
+                          <>
+                            <PrimaryButton type="submit" disabled={!form.getValues("emails")?.length}>
+                              {`Send invite${form.getValues("emails")?.length === 1 ? "" : "s"}`}
+                            </PrimaryButton>
                             {isLoading && <Loader2 size={18} className="ml-2 animate-spin" />}
-                          </PrimaryButton>
+                          </>
                         );
                       })()}
                     </DialogFooter>
@@ -398,13 +444,12 @@ export default function UserSettings({
       <div className="mt-14">
         <div className="text-[#74747A] mb-1.5 flex">
           <div>
-            {totalUsers} {totalUsers == 1 ? "user" : "users"}
+            {Number(totalUsers) + Number(totalInvites)}{" "}
+            {Number(totalUsers) + Number(totalInvites) === 1 ? "user" : "users"}
           </div>
-          {totalInvites > 0 && (
-            <div className="ml-4">
-              {totalInvites} {totalInvites == 1 ? "invite" : "invites"}
-            </div>
-          )}
+          <div className="ml-4">
+            {openSeats} {openSeats == 1 ? "open seat" : "open seats"}
+          </div>
         </div>
         <div className="max-h-[calc(100vh-365px)] overflow-y-auto">
           <Table>
@@ -473,6 +518,17 @@ export default function UserSettings({
           </div>
         </div>
       </div>
+      <ManageSeatsDialog
+        open={manageSeatsOpen}
+        onOpenChange={setManageSeatsOpen}
+        currentSeats={effectiveSeats}
+        onSave={handleSaveSeats}
+        tenantId={tenant.id}
+        initialAdditionalSeats={requiredSeats}
+        lightBackground={true}
+        initialOpenSeats={0}
+        inviteFlow={true}
+      />
     </div>
   );
 }

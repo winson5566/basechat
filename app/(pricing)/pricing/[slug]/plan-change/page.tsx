@@ -1,5 +1,6 @@
 import assert from "assert";
 
+import Link from "next/link";
 import { CreditNote } from "orb-billing/resources/credit-notes.mjs";
 import { Invoice } from "orb-billing/resources/invoices.mjs";
 
@@ -7,6 +8,7 @@ import { H1 } from "@/components/ui/typography";
 import { getCurrentPlan } from "@/lib/billing/tenant";
 import { changePlan } from "@/lib/orb";
 import { planTypeSchema, PLANS } from "@/lib/orb-types";
+import { getPricingPlansPath } from "@/lib/paths";
 import { provisionBillingCustomer } from "@/lib/server/billing";
 import { BASE_URL, NEXT_PUBLIC_STRIPE_PUBLIC_KEY } from "@/lib/server/settings";
 import { requireAdminContext } from "@/lib/server/utils";
@@ -102,6 +104,11 @@ export default async function UpgradePlan({ searchParams, params }: Props) {
   return (
     <div className="flex justify-center">
       <div>
+        <div className="flex flex-col mb-12">
+          <Link href={getPricingPlansPath(tenant.slug)} className="text-sm text-gray-500 hover:text-gray-700">
+            Cancel
+          </Link>
+        </div>
         <H1 className="pb-12">Upgrade to {targetPlan.displayName}</H1>
         <UpgradePlanContent
           tenant={tenantWithMetadata}

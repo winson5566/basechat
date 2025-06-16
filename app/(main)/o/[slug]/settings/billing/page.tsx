@@ -105,7 +105,7 @@ export default async function BillingSettingsPage({ params }: Props) {
     <div className="flex justify-center overflow-auto w-full h-full">
       <div className="max-w-[1140px] w-full p-4 flex-grow flex">
         <SettingsNav tenant={tenant} billingEnabled={BILLING_ENABLED} />
-        {mustProvisionBillingCustomer ? (
+        {mustProvisionBillingCustomer || currentPlan?.name === "developer" ? (
           <EmptyBilling pricingPlansPath={getPricingPlansPath(tenant.slug)} />
         ) : (
           <BillingSettings

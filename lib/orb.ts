@@ -10,7 +10,13 @@ import { Plan, Price, Subscription, SubscriptionSchedulePlanChangeParams } from 
 import { getCurrentPlan } from "./billing/tenant";
 import { PlanType, SEAT_ADD_ON_NAME, SeatChangePreview } from "./orb-types";
 import { getExistingMetadata } from "./server/billing";
-import { ORB_API_KEY, ORB_DEVELOPER_PLAN_ID, ORB_PRO_PLAN_ID, ORB_STARTER_PLAN_ID } from "./server/settings";
+import {
+  ORB_API_KEY,
+  ORB_DEVELOPER_PLAN_ID,
+  ORB_PRO_ANNUAL_PLAN_ID,
+  ORB_PRO_PLAN_ID,
+  ORB_STARTER_PLAN_ID,
+} from "./server/settings";
 import { nowUtc } from "./utils";
 
 export async function getSubscriptions(orbCustomerId: string) {
@@ -238,22 +244,26 @@ export async function getPlanIdFromType(planType: PlanType) {
       return ORB_STARTER_PLAN_ID;
     case "pro":
       return ORB_PRO_PLAN_ID;
+    case "proAnnual":
+      return ORB_PRO_ANNUAL_PLAN_ID;
     default:
       assertNever(planType);
   }
 }
 
 export async function getPlanTypeFromId(planId: string) {
-  if (planId === ORB_DEVELOPER_PLAN_ID) {
-    return "developer";
+  switch (planId) {
+    case ORB_DEVELOPER_PLAN_ID:
+      return "developer";
+    case ORB_STARTER_PLAN_ID:
+      return "starter";
+    case ORB_PRO_PLAN_ID:
+      return "pro";
+    case ORB_PRO_ANNUAL_PLAN_ID:
+      return "proAnnual";
+    default:
+      return undefined;
   }
-  if (planId === ORB_STARTER_PLAN_ID) {
-    return "starter";
-  }
-  if (planId === ORB_PRO_PLAN_ID) {
-    return "pro";
-  }
-  return undefined;
 }
 
 export async function getPlanById(planId: string) {
@@ -373,11 +383,9 @@ export async function previewSeatChange(
   const cancelledCount = currentPeriodBilledCount - currentPlanSeats;
   const hasPendingQuantityChange = cancelledCount !== 0;
   const orbNextCount = nextCount;
-  if (hasPendingQuantityChange) {
-    nextCount = nextCount + cancelledCount;
-  }
+  const adjustedNextCount = hasPendingQuantityChange ? nextCount + cancelledCount : nextCount;
 
-  if (nextCount <= 0) {
+  if (adjustedNextCount <= 0) {
     return {
       immediateInvoice: null,
       upcomingInvoice: originalUpcomingInvoice,
@@ -395,7 +403,7 @@ export async function previewSeatChange(
   const updatedSubRes = await _dryRunQuantityChange({
     subscriptionId: orbSubscriptionId,
     priceId: seatPriceId,
-    quantity: nextCount,
+    quantity: adjustedNextCount,
     changeOption,
   });
   const updatedSub = await updatedSubRes.json();
