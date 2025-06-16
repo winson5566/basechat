@@ -1,13 +1,18 @@
 import assert from "assert";
 
+import "highlight.js/styles/github.css";
 import { format } from "date-fns";
+import { Check, Copy } from "lucide-react";
 import Image from "next/image";
 import { useEffect, useState, useRef, useCallback, useReducer } from "react";
 import Markdown from "react-markdown";
+import rehypeHighlight from "rehype-highlight";
 
+import "@/components/chatbot/style.css";
 import { Skeleton } from "@/components/ui/skeleton";
 import CONNECTOR_MAP from "@/lib/connector-map";
 import { getRagieStreamPath } from "@/lib/paths";
+import { SourceMetadata } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import CloseIcon from "@/public/icons/close.svg";
 import ExternalLinkIcon from "@/public/icons/external-link.svg";
@@ -20,7 +25,6 @@ import VolumeUpIcon from "@/public/icons/volume_up.svg";
 
 import { DocumentResponse } from "./types";
 
-import { SourceMetadata } from "@/lib/types";
 interface PlayerControlsProps {
   isPlaying: boolean;
   isMuted: boolean;
@@ -262,6 +266,54 @@ function PlayerControls({
     </div>
   );
 }
+
+interface CodeBlockProps extends React.HTMLAttributes<HTMLPreElement> {
+  children?: React.ReactNode;
+}
+
+interface ReactElement {
+  props: {
+    children?: React.ReactNode;
+  };
+}
+
+const CodeBlock = ({ children, className, ...props }: CodeBlockProps) => {
+  const [copied, setCopied] = useState(false);
+
+  const getCodeContent = (children: React.ReactNode): string => {
+    if (typeof children === "string") return children;
+    if (Array.isArray(children)) {
+      return children.map((child) => getCodeContent(child)).join("");
+    }
+    if (children && typeof children === "object" && "props" in children) {
+      return getCodeContent((children as ReactElement).props.children);
+    }
+    return "";
+  };
+
+  const code = getCodeContent(children).replace(/\n$/, "");
+
+  const copyToClipboard = async () => {
+    await navigator.clipboard.writeText(code);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  return (
+    <pre className={className} {...props}>
+      <div className="relative group">
+        <code>{children}</code>
+        <button
+          onClick={copyToClipboard}
+          className="absolute top-2 right-2 p-2 rounded-md bg-gray-700/50 hover:bg-gray-700/70 text-gray-200 opacity-0 group-hover:opacity-100 transition-opacity"
+          title="Copy to clipboard"
+        >
+          {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+        </button>
+      </div>
+    </pre>
+  );
+};
 
 interface Props {
   className?: string;
@@ -599,7 +651,15 @@ export default function Summary({ className, source, slug, onCloseClick = () => 
         </div>
       )}
       <div className="text-[12px] font-bold mb-4">Summary</div>
-      <Markdown className="markdown">{documentData.summary}</Markdown>
+      <Markdown
+        className="markdown"
+        rehypePlugins={[rehypeHighlight]}
+        components={{
+          pre: CodeBlock,
+        }}
+      >
+        {documentData.summary}
+      </Markdown>
     </div>
   );
 }
