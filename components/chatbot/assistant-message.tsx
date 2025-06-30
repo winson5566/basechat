@@ -47,9 +47,9 @@ const Citation = ({ source, onClick = () => {} }: { source: SourceMetadata; onCl
       {connector && <Image src={connector[1]} alt={connector[0]} width={24} height={24} className="mr-1" />}
       {(!source.source_type || source.source_type === "manual") && (
         <>
-          {isAudio && <FileAudio className="w-6 h-6 mr-1" />}
-          {isVideo && <FileVideo className="w-6 h-6 mr-1" />}
-          {isImage && <FileImage className="w-6 h-6 mr-1" />}
+          {isAudio && <FileAudio className="w-4 h-4 mr-1" />}
+          {isVideo && <FileVideo className="w-4 h-4 mr-1" />}
+          {isImage && <FileImage className="w-4 h-4 mr-1" />}
         </>
       )}
       {formatSourceName(source.documentName)}
