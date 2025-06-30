@@ -44,7 +44,7 @@ const Citation = ({ source, onClick = () => {} }: { source: SourceMetadata; onCl
 
   return (
     <button className="rounded-[20px] flex items-center border px-3 py-1.5 mr-3 mb-3" onClick={onClick}>
-      {connector && <Image src={connector[1]} alt={connector[0]} className="mr-1" />}
+      {connector && <Image src={connector[1]} alt={connector[0]} width={24} height={24} className="mr-1" />}
       {(!source.source_type || source.source_type === "manual") && (
         <>
           {isAudio && <FileAudio className="w-4 h-4 mr-1" />}

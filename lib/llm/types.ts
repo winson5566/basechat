@@ -48,7 +48,7 @@ export const SPECIAL_LLAMA_PROMPT = `It is extremely important that you only res
 // Default values
 // If adding a new provider, update app/api/conversations/[conversationId]/messages/utils.ts using the vercel ai-sdk
 // If changing the DEFAULT_NAMING_MODEL, update createConversationName in app/api/conversations/[conversationId]/messages/utils.ts to use appropriate provider
-export const DEFAULT_MODEL = "claude-3-7-sonnet-latest";
+export const DEFAULT_MODEL = "claude-sonnet-4-20250514";
 export const DEFAULT_PROVIDER = "anthropic";
 export const DEFAULT_NAMING_MODEL = "gpt-4o-mini";
 
