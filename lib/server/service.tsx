@@ -2,7 +2,7 @@ import assert from "assert";
 
 import { render } from "@react-email/components";
 import { User as SlackUser } from "@slack/web-api/dist/types/response/UsersInfoResponse";
-import { asc, and, eq, ne, sql, inArray } from "drizzle-orm";
+import { asc, and, eq, ne, sql, inArray, like, or } from "drizzle-orm";
 import { union } from "drizzle-orm/pg-core";
 import nodemailer from "nodemailer";
 import SMTPConnection from "nodemailer/lib/smtp-connection";
@@ -40,13 +40,14 @@ export async function createTenant(userId: string, name: string) {
     }
 
     // Check if slug exists and append number if needed
-    const existingSlugs = await db
-      .select({ slug: schema.tenants.slug })
+    const result = await db
+      .select({ count: sql<number>`count(*)` })
       .from(schema.tenants)
-      .where(eq(schema.tenants.slug, slug));
+      .where(or(eq(schema.tenants.slug, slug), like(schema.tenants.slug, `${slug}-%`)));
+    const numExistingSlugs = result[0]?.count ?? 0;
 
-    if (existingSlugs.length > 0) {
-      let counter = 1;
+    if (numExistingSlugs > 0) {
+      let counter = numExistingSlugs;
       let newSlug = `${slug}-${counter}`;
 
       while (
