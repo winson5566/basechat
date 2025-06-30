@@ -2,7 +2,7 @@ import assert from "assert";
 
 import { render } from "@react-email/components";
 import { User as SlackUser } from "@slack/web-api/dist/types/response/UsersInfoResponse";
-import { asc, and, eq, ne, sql, inArray } from "drizzle-orm";
+import { asc, and, eq, ne, sql, inArray, like, or } from "drizzle-orm";
 import { union } from "drizzle-orm/pg-core";
 import nodemailer from "nodemailer";
 import SMTPConnection from "nodemailer/lib/smtp-connection";
@@ -20,46 +20,52 @@ import { getRagieClientAndPartition } from "./ragie";
 
 type Role = (typeof schema.rolesEnum.enumValues)[number];
 
+async function getUniqueSlug(name: string) {
+  // Remove any non-alphanumeric characters except hyphens and spaces
+  let slug = name
+    .trim()
+    .toLowerCase()
+    .replace(/[^\w\s-]/g, "")
+    // Replace spaces and repeated hyphens with single hyphen
+    .replace(/[\s_-]+/g, "-")
+    // Remove leading/trailing hyphens
+    .replace(/^-+|-+$/g, "");
+
+  // Ensure slug is not empty
+  if (!slug) {
+    slug = "tenant";
+  }
+
+  // Check if slug exists and append number if needed
+  const result = await db
+    .select({ count: sql<number>`count(*)` })
+    .from(schema.tenants)
+    .where(or(eq(schema.tenants.slug, slug), like(schema.tenants.slug, `${slug}-%`)));
+  const numExistingSlugs = Number(result[0]?.count ?? 0);
+
+  if (numExistingSlugs > 0) {
+    let counter = 1;
+    let newSlug = `${slug}-${numExistingSlugs + counter - 1}`;
+
+    while (
+      (await db.select({ slug: schema.tenants.slug }).from(schema.tenants).where(eq(schema.tenants.slug, newSlug)))
+        .length > 0 &&
+      counter < 10
+    ) {
+      counter++;
+      newSlug = `${slug}-${numExistingSlugs + counter - 1}`;
+    }
+
+    slug = newSlug;
+  }
+  return slug;
+}
+
 export async function createTenant(userId: string, name: string) {
   const TWO_WEEKS_IN_MS = 14 * 24 * 60 * 60 * 1000;
 
   try {
-    // Remove any non-alphanumeric characters except hyphens and spaces
-    let slug = name
-      .trim()
-      .toLowerCase()
-      .replace(/[^\w\s-]/g, "")
-      // Replace spaces and repeated hyphens with single hyphen
-      .replace(/[\s_-]+/g, "-")
-      // Remove leading/trailing hyphens
-      .replace(/^-+|-+$/g, "");
-
-    // Ensure slug is not empty
-    if (!slug) {
-      slug = "tenant";
-    }
-
-    // Check if slug exists and append number if needed
-    const existingSlugs = await db
-      .select({ slug: schema.tenants.slug })
-      .from(schema.tenants)
-      .where(eq(schema.tenants.slug, slug));
-
-    if (existingSlugs.length > 0) {
-      let counter = 1;
-      let newSlug = `${slug}-${counter}`;
-
-      while (
-        (await db.select({ slug: schema.tenants.slug }).from(schema.tenants).where(eq(schema.tenants.slug, newSlug)))
-          .length > 0 &&
-        counter < 10
-      ) {
-        counter++;
-        newSlug = `${slug}-${counter}`;
-      }
-
-      slug = newSlug;
-    }
+    const slug = await getUniqueSlug(name);
 
     const tenants = await db
       .insert(schema.tenants)
