@@ -9,4 +9,5 @@ export type SourceMetadata = {
   documentStreamUrl?: string;
   startTime?: number;
   endTime?: number;
+  imageUrl?: string;
 };
