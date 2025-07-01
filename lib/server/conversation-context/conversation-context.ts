@@ -196,8 +196,6 @@ export class ReplyGenerator {
   async generateStream(context: ReplyContext) {
     // Special handling for o3 model which has streaming issues
     if (this._generator.model === "o3-2025-04-16") {
-      console.log("Using generateObject fallback for o3 model");
-
       try {
         const result = await this._generator.generateObject({
           messages: context.messages,
