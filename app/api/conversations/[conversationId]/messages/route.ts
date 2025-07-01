@@ -71,5 +71,19 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       },
     );
   }
-  return stream.toTextStreamResponse({ headers: { "x-message-id": messageId, "x-model": model } });
+
+  // Handle different stream types
+  if (stream instanceof ReadableStream) {
+    // custom ReadableStream for o3 model
+    return new Response(stream, {
+      headers: {
+        "content-type": "text/plain; charset=utf-8",
+        "x-message-id": messageId,
+        "x-model": model,
+      },
+    });
+  } else {
+    // AI SDK StreamObjectResult
+    return stream.toTextStreamResponse({ headers: { "x-message-id": messageId, "x-model": model } });
+  }
 }

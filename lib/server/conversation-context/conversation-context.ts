@@ -194,6 +194,46 @@ export class ReplyGenerator {
   }
 
   async generateStream(context: ReplyContext) {
+    // Special handling for o3 model which has streaming issues
+    if (this._generator.model === "o3-2025-04-16") {
+      console.log("Using generateObject fallback for o3 model");
+
+      try {
+        const result = await this._generator.generateObject({
+          messages: context.messages,
+        });
+
+        const pending = await this._messageDao.create({
+          conversationId: context.conversationId,
+          role: "assistant",
+          content: result.message,
+          sources: context.sources,
+          model: this._generator.model,
+        });
+
+        // Create a simple stream that immediately returns the content
+        const stream = new ReadableStream({
+          start(controller) {
+            controller.enqueue(new TextEncoder().encode(JSON.stringify(result)));
+            controller.close();
+          },
+        });
+
+        return [stream, pending.id] as const;
+      } catch (error) {
+        console.log("Error with o3 generateObject fallback:", error);
+        const pending = await this._messageDao.create({
+          conversationId: context.conversationId,
+          role: "assistant",
+          content: FAILED_MESSAGE_CONTENT,
+          sources: context.sources,
+          model: this._generator.model,
+        });
+        return [null, pending.id] as const;
+      }
+    }
+
+    // Original streaming logic for other models
     const pending = await this._messageDao.create({
       conversationId: context.conversationId,
       role: "assistant",
