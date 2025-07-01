@@ -221,7 +221,6 @@ export class ReplyGenerator {
 
         return [stream, pending.id] as const;
       } catch (error) {
-        console.log("Error with o3 generateObject fallback:", error);
         const pending = await this._messageDao.create({
           conversationId: context.conversationId,
           role: "assistant",
