@@ -35,6 +35,7 @@ async function getUniqueSlug(name: string) {
   if (!slug) {
     slug = "tenant";
   }
+  console.log("trimmed slug: ", slug);
 
   // Check if slug exists and append number if needed
   const result = await db
@@ -43,9 +44,13 @@ async function getUniqueSlug(name: string) {
     .where(or(eq(schema.tenants.slug, slug), like(schema.tenants.slug, `${slug}-%`)));
   const numExistingSlugs = Number(result[0]?.count ?? 0);
 
+  console.log("numExistingSlugs: ", numExistingSlugs);
+
   if (numExistingSlugs > 0) {
     let counter = 1;
     let newSlug = `${slug}-${numExistingSlugs + counter - 1}`;
+    console.log("counter: ", counter);
+    console.log("newSlug: ", newSlug);
 
     while (
       (await db.select({ slug: schema.tenants.slug }).from(schema.tenants).where(eq(schema.tenants.slug, newSlug)))
@@ -63,9 +68,11 @@ async function getUniqueSlug(name: string) {
 
 export async function createTenant(userId: string, name: string) {
   const TWO_WEEKS_IN_MS = 14 * 24 * 60 * 60 * 1000;
+  console.log("in createTenant");
 
   try {
     const slug = await getUniqueSlug(name);
+    console.log("using this slug: ", slug);
 
     const tenants = await db
       .insert(schema.tenants)
@@ -75,7 +82,11 @@ export async function createTenant(userId: string, name: string) {
     assert(tenants.length === 1);
     const tenantId = tenants[0].id;
 
+    console.log("created tenant ID: ", tenantId);
+
     const profile = await createProfile(tenantId, userId, "admin");
+
+    console.log("created profile: ", profile);
 
     if (!isNaN(settings.DEFAULT_PARTITION_LIMIT)) {
       const { client, partition } = await getRagieClientAndPartition(tenantId);
