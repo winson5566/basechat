@@ -403,7 +403,7 @@ export default function Summary({ className, source, slug, onCloseClick = () => 
       ? CONNECTOR_MAP[documentData.metadata.source_type][1]
       : null;
 
-  let mediaType: null | "audio" | "video" = null;
+  let mediaType: null | "audio" | "video" | "image" = null;
   if (source.streamUrl) {
     const streamUrl = new URL(source.streamUrl);
     if (streamUrl.searchParams.get("media_type")?.startsWith("video")) {
@@ -411,6 +411,8 @@ export default function Summary({ className, source, slug, onCloseClick = () => 
     } else if (streamUrl.searchParams.get("media_type")?.startsWith("audio")) {
       mediaType = "audio";
     }
+  } else if (source.imageUrl) {
+    mediaType = "image";
   }
 
   // Add effect to ensure progress bar updates after drag
@@ -648,6 +650,11 @@ export default function Summary({ className, source, slug, onCloseClick = () => 
               <Image src={ExternalLinkIcon} alt="Download" className="ml-1" />
             </a>
           )}
+        </div>
+      )}
+      {mediaType === "image" && source.imageUrl && (
+        <div className="mb-6">
+          <Image src={getRagieStreamPath(slug, source.imageUrl)} alt="Image" width={500} height={500} />
         </div>
       )}
       <div className="text-[12px] font-bold mb-4">Summary</div>

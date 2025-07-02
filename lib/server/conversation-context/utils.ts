@@ -71,6 +71,8 @@ export async function getRetrievalSystemPrompt(
         ? chunk.links.document_audio_stream?.href
         : undefined;
 
+    const imageUrl = chunk.links.self_image?.href ?? undefined;
+
     return {
       ...chunk.documentMetadata,
       source_type: chunk.documentMetadata.source_type,
@@ -83,6 +85,7 @@ export async function getRetrievalSystemPrompt(
       documentStreamUrl,
       startTime: chunk.metadata?.start_time,
       endTime: chunk.metadata?.end_time,
+      imageUrl,
     };
   });
 
