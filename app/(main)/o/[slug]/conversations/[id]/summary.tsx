@@ -652,9 +652,9 @@ export default function Summary({ className, source, slug, onCloseClick = () => 
           )}
         </div>
       )}
-      {mediaType === "image" && (
+      {mediaType === "image" && source.imageUrl && (
         <div className="mb-6">
-          <Image src={getRagieStreamPath(slug, source.imageUrl!)} alt="Image" width={500} height={500} />
+          <Image src={getRagieStreamPath(slug, source.imageUrl)} alt="Image" width={500} height={500} />
         </div>
       )}
       <div className="text-[12px] font-bold mb-4">Summary</div>
