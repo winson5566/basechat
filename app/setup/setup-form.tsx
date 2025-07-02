@@ -24,19 +24,26 @@ export default function SetupForm() {
   const router = useRouter();
 
   const [failureMessage, setFailureMessage] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
+    setIsLoading(true);
     setFailureMessage(null);
 
-    const res = await fetch("/api/setup", { method: "POST", body: JSON.stringify(values) });
-    if (res.status < 200 || res.status >= 300) {
-      setFailureMessage("An unexpected error occurred. Could not finish setup.");
-      return;
-    }
+    try {
+      const res = await fetch("/api/setup", { method: "POST", body: JSON.stringify(values) });
+      if (res.status < 200 || res.status >= 300) {
+        throw new Error(`HTTP error! status: ${res.status}`);
+      }
 
-    const data = await res.json();
-    const { tenant } = setupSchema.parse(data);
-    router.push(getTenantPath(tenant.slug));
+      const data = await res.json();
+      const { tenant } = setupSchema.parse(data);
+      router.push(getTenantPath(tenant.slug));
+    } catch (error) {
+      setFailureMessage("An unexpected error occurred. Could not finish setup.");
+    } finally {
+      setIsLoading(false);
+    }
   }
 
   return (
@@ -54,6 +61,7 @@ export default function SetupForm() {
                   type="text"
                   placeholder="Company name"
                   className="py-2 px-4 rounded border border-[#F5F5F7]"
+                  disabled={isLoading}
                   {...field}
                 />
               </FormControl>
@@ -63,9 +71,10 @@ export default function SetupForm() {
         ></FormField>
         <button
           type="submit"
-          className="bg-[#D946EF] font-semibold text-white flex justify-center w-full py-2.5 rounded-[54px]"
+          disabled={isLoading}
+          className="bg-[#D946EF] font-semibold text-white flex justify-center w-full py-2.5 rounded-[54px] disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          Build my chatbot
+          {isLoading ? "Building..." : "Build my chatbot"}
         </button>
       </form>
     </Form>
