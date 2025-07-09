@@ -1,12 +1,48 @@
 import assert from "assert";
 
+import Image from "next/image";
 import { redirect } from "next/navigation";
 
+import RagieLogo from "@/components/ragie-logo";
 import { acceptInvite, findInviteById, setCurrentProfileId } from "@/lib/server/service";
+import * as settings from "@/lib/server/settings";
 import { requireSession } from "@/lib/server/utils";
 
 interface Props {
   searchParams: Promise<{ invite?: string }>;
+}
+
+function ErrorPage({ title, message }: { title: string; message: string }) {
+  return (
+    <div className="h-screen w-full flex flex-col items-center bg-white overflow-hidden">
+      <div className="flex-1 w-full overflow-y-auto">
+        <div className="w-full max-w-[442px] px-4 pt-10 mx-auto h-full flex flex-col items-center justify-center max-[460px]:px-8">
+          <div className="flex items-center mb-16 w-full max-[460px]:justify-start max-[460px]:mr-6">
+            <Image
+              src="/images/title-logo.svg"
+              alt={settings.APP_NAME}
+              width={410}
+              height={64}
+              className="max-w-[410px] max-h-[64px] max-[460px]:max-w-[185px] max-[460px]:max-h-[24px]"
+              priority
+            />
+          </div>
+          <div className="flex flex-col items-center w-full">
+            <div className="self-start text-[24px] font-bold mb-12">{title}</div>
+            <div className="text-red-500 text-center mb-4">{message}</div>
+          </div>
+        </div>
+      </div>
+      <div className="h-20 shrink-0 w-full bg-[#27272A] flex items-center justify-center">
+        <div className="mr-2.5 text-md text-[#FEFEFE]">Powered by</div>
+        <div>
+          <a href="https://ragie.ai/?utm_source=oss-chatbot" target="_blank">
+            <RagieLogo />
+          </a>
+        </div>
+      </div>
+    </div>
+  );
 }
 
 export default async function AcceptInvitePage({ searchParams }: Props) {
@@ -15,13 +51,18 @@ export default async function AcceptInvitePage({ searchParams }: Props) {
 
   assert(params.invite, "Bad request");
 
-  const invite = await findInviteById(params.invite);
+  // Handle invalid UUID format gracefully
+  let invite;
+  try {
+    invite = await findInviteById(params.invite);
+  } catch (error) {
+    // This will catch database errors from invalid UUID format
+    console.error("Error finding invite:", error);
+    return <ErrorPage title="Invalid Invite Link" message="Invalid invite ID. Please check the link and try again." />;
+  }
+
   if (!invite) {
-    return (
-      <div className="h-full w-full flex flex-col justify-center items-center bg-white">
-        <p>Could not find invite.</p>
-      </div>
-    );
+    return <ErrorPage title="Invalid Invite" message="Could not find invite. Please check the link and try again." />;
   }
 
   try {
@@ -34,13 +75,14 @@ export default async function AcceptInvitePage({ searchParams }: Props) {
       throw e;
     } else {
       // some other error occurred
-      console.error(e);
+      console.error("Error accepting invite:", e);
     }
   }
 
   return (
-    <div className="h-full w-full flex flex-col justify-center items-center bg-white">
-      <p>Could not process invite.</p>
-    </div>
+    <ErrorPage
+      title="Error Processing Invite"
+      message="Could not process invite. Please try again or contact support."
+    />
   );
 }

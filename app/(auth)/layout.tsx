@@ -32,7 +32,7 @@ export default function Layout({ children }: Readonly<{ children: React.ReactNod
       <div className="h-20 shrink-0 w-full bg-[#27272A] flex items-center justify-center">
         <div className={`mr-2.5 text-md text-[#FEFEFE] ${inter.className}`}>Powered by</div>
         <div>
-          <a href="https://ragie.ai/?utm_source=oss-chatbot">
+          <a href="https://ragie.ai/?utm_source=oss-chatbot" target="_blank">
             <RagieLogo />
           </a>
         </div>
