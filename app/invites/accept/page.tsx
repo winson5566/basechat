@@ -4,7 +4,14 @@ import Image from "next/image";
 import { redirect } from "next/navigation";
 
 import RagieLogo from "@/components/ragie-logo";
-import { acceptInvite, findInviteById, setCurrentProfileId } from "@/lib/server/service";
+import { getTenantPath } from "@/lib/paths";
+import {
+  acceptInvite,
+  findInviteById,
+  setCurrentProfileId,
+  findUserById,
+  getTenantsByUserId,
+} from "@/lib/server/service";
 import * as settings from "@/lib/server/settings";
 import { requireSession } from "@/lib/server/utils";
 
@@ -68,7 +75,20 @@ export default async function AcceptInvitePage({ searchParams }: Props) {
   try {
     const profile = await acceptInvite(session.user.id, params.invite);
     await setCurrentProfileId(session.user.id, profile.id);
-    redirect("/");
+
+    // Fetch the updated user data to get the new currentProfileId
+    const updatedUser = await findUserById(session.user.id);
+    assert(updatedUser, "User not found after profile update");
+
+    const tenants = await getTenantsByUserId(session.user.id);
+    const newTenant = tenants.find((t) => t.id === profile.tenantId);
+
+    if (!newTenant) {
+      return <ErrorPage title="Error" message="Could not find tenant information. Please try again." />;
+    }
+
+    // Redirect directly to the new tenant
+    redirect(getTenantPath(newTenant.slug));
   } catch (e) {
     // NEXT_REDIRECT is thrown by redirect("/") and should be rethrown
     if (e instanceof Error && e.message === "NEXT_REDIRECT") {
