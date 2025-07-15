@@ -4,6 +4,7 @@ import { render } from "@react-email/components";
 import { User as SlackUser } from "@slack/web-api/dist/types/response/UsersInfoResponse";
 import { asc, and, eq, ne, sql, inArray, like, or } from "drizzle-orm";
 import { union } from "drizzle-orm/pg-core";
+import { unstable_cache } from "next/cache";
 import nodemailer from "nodemailer";
 import SMTPConnection from "nodemailer/lib/smtp-connection";
 
@@ -268,6 +269,16 @@ export async function createInvites(tenantId: string, invitedBy: string, emails:
 
   return invites;
 }
+
+export const getCachedAuthContextByUserId = unstable_cache(
+  async (userId: string, slug: string) => {
+    return await getAuthContextByUserId(userId, slug);
+  },
+  ["auth-context-by-user-id"],
+  {
+    revalidate: 60 * 60 * 24, // 24 hours
+  },
+);
 
 export async function getAuthContextByUserId(userId: string, slug: string) {
   const rs = await db
