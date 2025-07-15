@@ -89,7 +89,7 @@ export default function Header({
   const [tenants, setTenants] = useState<z.infer<typeof tenantListResponseSchema>>([]);
 
   const daysRemaining = tenant.trialExpiresAt
-    ? Math.ceil((tenant.trialExpiresAt.getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))
+    ? Math.max(0, Math.ceil((tenant.trialExpiresAt.getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)))
     : 0;
 
   useEffect(() => {
