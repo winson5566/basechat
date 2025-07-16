@@ -4,6 +4,7 @@ import { render } from "@react-email/components";
 import { User as SlackUser } from "@slack/web-api/dist/types/response/UsersInfoResponse";
 import { asc, and, eq, ne, sql, inArray, like, or } from "drizzle-orm";
 import { union } from "drizzle-orm/pg-core";
+import { unstable_cache } from "next/cache";
 import nodemailer from "nodemailer";
 import SMTPConnection from "nodemailer/lib/smtp-connection";
 
@@ -269,7 +270,8 @@ export async function createInvites(tenantId: string, invitedBy: string, emails:
   return invites;
 }
 
-export async function getAuthContextByUserId(userId: string, slug: string) {
+// Internal function that gets data from DB - this gets cached
+async function getAuthContextByUserIdInternal(userId: string, slug: string) {
   const rs = await db
     .select()
     .from(schema.tenants)
@@ -286,6 +288,51 @@ export async function getAuthContextByUserId(userId: string, slug: string) {
       ...row.tenants,
       enabledModels: getEnabledModels(row.tenants.enabledModels),
     },
+  };
+}
+
+// Cached version that returns serialized data
+const getCachedAuthContextByUserIdInternal = unstable_cache(
+  async (userId: string, slug: string) => {
+    return await getAuthContextByUserIdInternal(userId, slug);
+  },
+  ["auth-context-by-user-id"],
+  {
+    revalidate: 60 * 60 * 24, // 24 hours
+  },
+);
+
+// Public function that transforms cached data back to proper types
+export async function getCachedAuthContextByUserId(userId: string, slug: string) {
+  const cachedResult = await getCachedAuthContextByUserIdInternal(userId, slug);
+
+  // Transform the tenant object to ensure Date fields are proper Date objects
+  // This is necessary because unstable_cache serializes to JSON, converting Date objects to strings
+  const tenant = {
+    ...cachedResult.tenant,
+    // Convert date strings back to Date objects
+    trialExpiresAt: new Date(cachedResult.tenant.trialExpiresAt),
+    partitionLimitExceededAt: cachedResult.tenant.partitionLimitExceededAt
+      ? new Date(cachedResult.tenant.partitionLimitExceededAt)
+      : null,
+    createdAt: new Date(cachedResult.tenant.createdAt),
+    updatedAt: new Date(cachedResult.tenant.updatedAt),
+    // Transform metadata plans dates if they exist
+    metadata: cachedResult.tenant.metadata
+      ? {
+          ...cachedResult.tenant.metadata,
+          plans: cachedResult.tenant.metadata.plans?.map((plan) => ({
+            ...plan,
+            endedAt: plan.endedAt ? new Date(plan.endedAt) : null,
+            startedAt: new Date(plan.startedAt),
+          })),
+        }
+      : cachedResult.tenant.metadata,
+  };
+
+  return {
+    profile: cachedResult.profile,
+    tenant,
   };
 }
 
