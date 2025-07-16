@@ -330,8 +330,15 @@ export async function getCachedAuthContextByUserId(userId: string, slug: string)
       : cachedResult.tenant.metadata,
   };
 
+  // Transform profile dates as well
+  const profile = {
+    ...cachedResult.profile,
+    createdAt: new Date(cachedResult.profile.createdAt),
+    updatedAt: new Date(cachedResult.profile.updatedAt),
+  };
+
   return {
-    profile: cachedResult.profile,
+    profile,
     tenant,
   };
 }
