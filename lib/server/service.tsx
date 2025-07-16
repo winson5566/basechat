@@ -63,14 +63,14 @@ async function getUniqueSlug(name: string) {
 }
 
 export async function createTenant(userId: string, name: string) {
-  const TWO_WEEKS_IN_MS = 14 * 24 * 60 * 60 * 1000;
+  const ONE_WEEK_IN_MS = 7 * 24 * 60 * 60 * 1000;
 
   try {
     const slug = await getUniqueSlug(name);
 
     const tenants = await db
       .insert(schema.tenants)
-      .values({ name, slug, trialExpiresAt: new Date(Date.now() + TWO_WEEKS_IN_MS) })
+      .values({ name, slug, trialExpiresAt: new Date(Date.now() + ONE_WEEK_IN_MS) })
       .returning({ id: schema.tenants.id, slug: schema.tenants.slug });
 
     assert(tenants.length === 1);
