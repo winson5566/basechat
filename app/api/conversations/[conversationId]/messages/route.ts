@@ -18,7 +18,18 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
   const { conversationId } = await params;
   const messages = await getConversationMessages(tenant.id, profile.id, conversationId);
 
-  return Response.json(conversationMessagesResponseSchema.parse(messages));
+  // this could be the culprit
+  try {
+    const parsedMessages = conversationMessagesResponseSchema.safeParse(messages);
+    if (!parsedMessages.success) {
+      console.error("[DEBUG]Parsing error:", parsedMessages.error);
+      return Response.json({ error: "Failed to parse messages" }, { status: 400 });
+    }
+    return Response.json(parsedMessages.data);
+  } catch (error) {
+    console.error("[DEBUG]Unexpected error during parsing:", error);
+    return Response.json({ error: "Unexpected error occurred" }, { status: 500 });
+  }
 }
 
 export async function POST(request: NextRequest, { params }: { params: Promise<{ conversationId: string }> }) {
