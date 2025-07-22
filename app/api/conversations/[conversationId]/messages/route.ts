@@ -13,21 +13,32 @@ import { FAILED_MESSAGE_CONTENT } from "@/lib/server/conversation-context/utils"
 import { getConversation, getConversationMessages } from "@/lib/server/service";
 import { requireAuthContextFromRequest } from "@/lib/server/utils";
 
+function cleanUpMessages(messages: any) {
+  let cleanMessages = messages.map((msg: any) => {
+    if (msg.content === null) {
+      return { ...msg, content: "Message not found." };
+    }
+    return msg;
+  });
+  return cleanMessages;
+}
+
 export async function GET(request: NextRequest, { params }: { params: Promise<{ conversationId: string }> }) {
   const { profile, tenant } = await requireAuthContextFromRequest(request);
   const { conversationId } = await params;
   const messages = await getConversationMessages(tenant.id, profile.id, conversationId);
+  const cleanMessages = cleanUpMessages(messages);
 
   // this could be the culprit
   try {
-    const parsedMessages = conversationMessagesResponseSchema.safeParse(messages);
+    const parsedMessages = conversationMessagesResponseSchema.safeParse(cleanMessages);
     if (!parsedMessages.success) {
-      console.error("[DEBUG]Parsing error:", parsedMessages.error);
+      console.error("Parsing error:", parsedMessages.error);
       return Response.json({ error: "Failed to parse messages" }, { status: 400 });
     }
     return Response.json(parsedMessages.data);
   } catch (error) {
-    console.error("[DEBUG]Unexpected error during parsing:", error);
+    console.error("Unexpected error during parsing:", error);
     return Response.json({ error: "Unexpected error occurred" }, { status: 500 });
   }
 }
