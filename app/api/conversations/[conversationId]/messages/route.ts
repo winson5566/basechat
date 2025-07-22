@@ -14,7 +14,7 @@ import { getConversation, getConversationMessages } from "@/lib/server/service";
 import { requireAuthContextFromRequest } from "@/lib/server/utils";
 
 function cleanUpMessages(messages: any) {
-  let cleanMessages = messages.map((msg: any) => {
+  const cleanMessages = messages.map((msg: any) => {
     if (msg.content === null) {
       return { ...msg, content: "Message not found." };
     }

@@ -60,7 +60,7 @@
     "nodemailer": "^6.9.16",
     "orb-billing": "^4.73.0",
     "pg": "^8.13.1",
-    "ragie": "^1.9.0",
+    "ragie": "^1.12.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-dropzone": "^14.3.8",
