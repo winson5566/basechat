@@ -8,15 +8,15 @@ import { getBillingSettingsPath, getPricingPlansPath } from "@/lib/paths";
 import { BillingInformation } from "./billing-information";
 import ProcessingInformation from "./processing-information";
 
-type PartitionInfo = {
+export type PartitionInfo = {
   name: string;
   isDefault: boolean;
-  limitExceededAt: Date | null;
+  limitExceededAt?: Date | null | undefined;
   limits: {
-    pagesProcessedLimitMonthly: number | null;
-    pagesHostedLimitMonthly: number | null;
-    pagesProcessedLimitMax: number | null;
-    pagesHostedLimitMax: number | null;
+    pagesProcessedLimitMonthly?: number | null | undefined;
+    pagesHostedLimitMonthly?: number | null | undefined;
+    pagesProcessedLimitMax?: number | null | undefined;
+    pagesHostedLimitMax?: number | null | undefined;
   };
   stats: {
     pagesProcessedMonthly: number;
@@ -42,7 +42,7 @@ type Props = {
   tenant: {
     id: string;
     slug: string;
-    partitionLimitExceededAt: Date | null;
+    partitionLimitExceededAt: Date | null | undefined;
     paidStatus: string;
     metadata: {
       stripeCustomerId?: string;

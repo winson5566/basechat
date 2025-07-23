@@ -2,24 +2,7 @@
 
 import { Card } from "@/components/ui/card";
 
-type PartitionInfo = {
-  name: string;
-  isDefault: boolean;
-  limitExceededAt: Date | null;
-  limits: {
-    pagesProcessedLimitMonthly: number | null;
-    pagesHostedLimitMonthly: number | null;
-    pagesProcessedLimitMax: number | null;
-    pagesHostedLimitMax: number | null;
-  };
-  stats: {
-    pagesProcessedMonthly: number;
-    pagesHostedMonthly: number;
-    pagesProcessedTotal: number;
-    pagesHostedTotal: number;
-    documentCount: number;
-  };
-};
+import { PartitionInfo } from "./billing-settings";
 
 interface ProcessingInformationProps {
   partitionInfo: PartitionInfo;
