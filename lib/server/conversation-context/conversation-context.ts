@@ -1,6 +1,4 @@
-import assert from "assert";
-
-import { AllMessageEvents, AppMentionEvent, GenericMessageEvent } from "@slack/web-api";
+import { AppMentionEvent, GenericMessageEvent } from "@slack/web-api";
 import { CoreMessage } from "ai";
 import assertNever from "assert-never";
 
@@ -219,6 +217,7 @@ export class ReplyGenerator {
 
         return [stream, pending.id] as const;
       } catch (error) {
+        console.error("Error generating stream with o3:", error);
         const pending = await this._messageDao.create({
           conversationId: context.conversationId,
           role: "assistant",
@@ -240,9 +239,13 @@ export class ReplyGenerator {
     });
 
     try {
+      const startTime = Date.now();
       const stream = this._generator.generateStream(context, {
         onFinish: async (event) => {
+          const endTime = Date.now();
+          console.log(`Stream generation took ${endTime - startTime} ms`);
           if (!event.object) {
+            console.error("AI response has no object in event.");
             await this._messageDao.update(pending.id, {
               content: FAILED_MESSAGE_CONTENT,
             });
@@ -255,6 +258,7 @@ export class ReplyGenerator {
       });
       return [stream, pending.id] as const;
     } catch (error) {
+      console.error("Error generating stream:", error);
       await this._messageDao.update(pending.id, {
         content: FAILED_MESSAGE_CONTENT,
       });

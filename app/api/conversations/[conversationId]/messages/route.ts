@@ -13,12 +13,23 @@ import { FAILED_MESSAGE_CONTENT } from "@/lib/server/conversation-context/utils"
 import { getConversation, getConversationMessages } from "@/lib/server/service";
 import { requireAuthContextFromRequest } from "@/lib/server/utils";
 
+function cleanUpMessages(messages: any) {
+  const cleanMessages = messages.map((msg: any) => {
+    if (msg.content === null) {
+      return { ...msg, content: "Message not found." };
+    }
+    return msg;
+  });
+  return cleanMessages;
+}
+
 export async function GET(request: NextRequest, { params }: { params: Promise<{ conversationId: string }> }) {
   const { profile, tenant } = await requireAuthContextFromRequest(request);
   const { conversationId } = await params;
   const messages = await getConversationMessages(tenant.id, profile.id, conversationId);
+  const cleanMessages = cleanUpMessages(messages);
 
-  return Response.json(conversationMessagesResponseSchema.parse(messages));
+  return Response.json(conversationMessagesResponseSchema.parse(cleanMessages));
 }
 
 export async function POST(request: NextRequest, { params }: { params: Promise<{ conversationId: string }> }) {

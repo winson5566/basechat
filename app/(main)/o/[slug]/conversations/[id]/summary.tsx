@@ -132,6 +132,7 @@ function PlayerControls({
         cleanupDrag();
       },
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dragState.isDragging, onProgressClick, cleanupDrag]);
 
   const handleDragStart = useCallback(
@@ -164,6 +165,7 @@ function PlayerControls({
       const newTime = calculateNewTime(e.clientX);
       dispatch({ type: "UPDATE_PREVIEW", time: newTime });
     },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [dragState.isDragging],
   );
 
@@ -183,9 +185,10 @@ function PlayerControls({
 
   // Cleanup on unmount
   useEffect(() => {
+    const timeoutId = dragTimeoutRef.current;
     return () => {
-      if (dragTimeoutRef.current) {
-        clearTimeout(dragTimeoutRef.current);
+      if (timeoutId) {
+        clearTimeout(timeoutId);
       }
       cleanupDrag();
       onDragStateChange(false);

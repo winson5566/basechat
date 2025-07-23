@@ -2,24 +2,7 @@
 
 import { Card } from "@/components/ui/card";
 
-type PartitionInfo = {
-  name: string;
-  isDefault: boolean;
-  limitExceededAt: Date | null;
-  limits: {
-    pagesProcessedLimitMonthly: number | null;
-    pagesHostedLimitMonthly: number | null;
-    pagesProcessedLimitMax: number | null;
-    pagesHostedLimitMax: number | null;
-  };
-  stats: {
-    pagesProcessedMonthly: number;
-    pagesHostedMonthly: number;
-    pagesProcessedTotal: number;
-    pagesHostedTotal: number;
-    documentCount: number;
-  };
-};
+import { PartitionInfo } from "./billing-settings";
 
 interface ProcessingInformationProps {
   partitionInfo: PartitionInfo;
@@ -54,22 +37,22 @@ export default function ProcessingInformation({ partitionInfo }: ProcessingInfor
                 <div className="space-y-2">
                   <p className="text-sm">
                     <span className="text-[#1D1D1F]">Monthly Pages Processed:</span>{" "}
-                    {partitionInfo.stats.pagesProcessedMonthly.toFixed(2)}
+                    {(partitionInfo.stats.pagesProcessedMonthly ?? 0).toFixed(2)}
                   </p>
                   <p className="text-sm">
                     <span className="text-[#1D1D1F]">Monthly Pages Hosted:</span>{" "}
-                    {partitionInfo.stats.pagesHostedMonthly.toFixed(2)}
+                    {(partitionInfo.stats.pagesHostedMonthly ?? 0).toFixed(2)}
                   </p>
                   <p className="text-sm">
                     <span className="text-[#1D1D1F]">Total Pages Processed:</span>{" "}
-                    {partitionInfo.stats.pagesProcessedTotal.toFixed(2)}
+                    {(partitionInfo.stats.pagesProcessedTotal ?? 0).toFixed(2)}
                   </p>
                   <p className="text-sm">
                     <span className="text-[#1D1D1F]">Total Pages Hosted:</span>{" "}
-                    {partitionInfo.stats.pagesHostedTotal.toFixed(2)}
+                    {(partitionInfo.stats.pagesHostedTotal ?? 0).toFixed(2)}
                   </p>
                   <p className="text-sm">
-                    <span className="text-[#1D1D1F]">Total Documents:</span> {partitionInfo.stats.documentCount}
+                    <span className="text-[#1D1D1F]">Total Documents:</span> {partitionInfo.stats.documentCount ?? 0}
                   </p>
                 </div>
               </div>
