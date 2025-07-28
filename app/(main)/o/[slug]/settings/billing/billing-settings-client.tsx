@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getPricingPlansPath } from "@/lib/paths";
 
+import { getBillingInfo } from "./actions";
 import BillingSettings from "./billing-settings";
 import { EmptyBilling } from "./empty-billing";
 
@@ -30,13 +31,9 @@ export default function BillingSettingsClient({ tenant, defaultPartitionLimit }:
     let isMounted = true;
     setLoading(true);
     setError(null);
-    fetch("/api/billing/get-info", {
-      method: "POST",
-      headers: { tenant: tenant.slug },
-    })
-      .then(async (res) => {
-        if (!res.ok) throw new Error("Failed to fetch billing information");
-        const data = await res.json();
+
+    getBillingInfo(tenant.slug)
+      .then((data) => {
         if (isMounted) {
           setBillingData(data.billingData);
           setMustProvisionBillingCustomer(data.mustProvisionBillingCustomer);
@@ -52,7 +49,7 @@ export default function BillingSettingsClient({ tenant, defaultPartitionLimit }:
     return () => {
       isMounted = false;
     };
-  }, [tenant.id, tenant.slug]);
+  }, [tenant.slug]);
 
   if (loading) {
     return (
