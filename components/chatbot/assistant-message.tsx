@@ -58,6 +58,11 @@ const Citation = ({ source, onClick = () => {} }: { source: SourceMetadata; onCl
           ({format(source.startTime)} - {format(source.endTime)})
         </span>
       )}
+      {source.startPage && source.endPage && (
+        <span className="pl-2 text-xs text-muted-foreground">
+          {source.startPage === source.endPage ? source.startPage : `${source.startPage} - ${source.endPage}`}
+        </span>
+      )}
     </button>
   );
 };

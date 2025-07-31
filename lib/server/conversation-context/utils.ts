@@ -86,6 +86,8 @@ export async function getRetrievalSystemPrompt(
       startTime: chunk.metadata?.start_time,
       endTime: chunk.metadata?.end_time,
       imageUrl,
+      startPage: chunk.metadata?.start_page,
+      endPage: chunk.metadata?.end_page,
     };
   });
 

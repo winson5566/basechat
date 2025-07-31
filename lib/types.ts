@@ -10,4 +10,6 @@ export type SourceMetadata = {
   startTime?: number;
   endTime?: number;
   imageUrl?: string;
+  startPage?: number;
+  endPage?: number;
 };
