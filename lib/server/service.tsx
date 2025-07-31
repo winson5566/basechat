@@ -4,12 +4,9 @@ import { render } from "@react-email/components";
 import { User as SlackUser } from "@slack/web-api/dist/types/response/UsersInfoResponse";
 import { asc, and, eq, ne, sql, inArray, like, or } from "drizzle-orm";
 import { union } from "drizzle-orm/pg-core";
-import { unstable_cache } from "next/cache";
+import { unstable_cache, revalidateTag, revalidatePath } from "next/cache";
 import nodemailer from "nodemailer";
 import SMTPConnection from "nodemailer/lib/smtp-connection";
-
-const { revalidateTag } = await import("next/cache");
-const { revalidatePath } = await import("next/cache");
 
 import { Member, MemberType } from "@/lib/api";
 import { getEnabledModels } from "@/lib/llm/types";
