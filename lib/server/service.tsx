@@ -777,7 +777,7 @@ export async function linkUsers(fromUserId: string, toUserId: string) {
     }
 
     if (realUserProfile) {
-      await tx.update(schema.users).set({ currentProfileId: realUserProfile.id }).where(eq(schema.users.id, toUserId));
+      await setCurrentProfileId(toUserId, realUserProfile.id);
     }
 
     // Invalidate the auth context cache to set new profile
