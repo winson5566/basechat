@@ -4,7 +4,7 @@ import { render } from "@react-email/components";
 import { User as SlackUser } from "@slack/web-api/dist/types/response/UsersInfoResponse";
 import { asc, and, eq, ne, sql, inArray, like, or } from "drizzle-orm";
 import { union } from "drizzle-orm/pg-core";
-import { unstable_cache } from "next/cache";
+import { unstable_cache, revalidateTag, revalidatePath } from "next/cache";
 import nodemailer from "nodemailer";
 import SMTPConnection from "nodemailer/lib/smtp-connection";
 
@@ -299,8 +299,25 @@ const getCachedAuthContextByUserIdInternal = unstable_cache(
   ["auth-context-by-user-id"],
   {
     revalidate: 60 * 60 * 24, // 24 hours
+    tags: ["auth-context"],
   },
 );
+
+export async function invalidateAuthContextCache(userId: string) {
+  try {
+    // Revalidate the auth-context tag
+    revalidateTag("auth-context");
+    console.log(`Cache invalidated for user: ${userId}`);
+  } catch (error) {
+    console.warn("Failed to invalidate auth context cache:", error);
+    // Fallback to revalidatePath if revalidateTag fails
+    try {
+      revalidatePath("/", "layout");
+    } catch (fallbackError) {
+      console.error("Failed to invalidate cache with fallback method:", fallbackError);
+    }
+  }
+}
 
 // Public function that transforms cached data back to proper types
 export async function getCachedAuthContextByUserId(userId: string, slug: string) {
@@ -444,14 +461,14 @@ export async function findTenantBySlug(slug: string) {
 export async function setCurrentProfileId(userId: string, profileId: string) {
   await db.transaction(async (tx) => {
     // Validate profile exists and is scoped to the userId
-    const rs = await db
+    const rs = await tx
       .select({ id: schema.profiles.id })
       .from(schema.profiles)
       .where(and(eq(schema.profiles.userId, userId), eq(schema.profiles.id, profileId)));
     assert(rs.length === 1, "expect single record");
     const profile = rs[0];
 
-    await db.update(schema.users).set({ currentProfileId: profile.id }).where(eq(schema.users.id, userId));
+    await tx.update(schema.users).set({ currentProfileId: profile.id }).where(eq(schema.users.id, userId));
   });
 }
 
@@ -728,8 +745,44 @@ export async function deleteTenantLogo(tenantId: string) {
     .where(eq(schema.tenants.id, tenantId));
 }
 
-export function linkUsers(fromUserId: string, toUserId: string) {
-  return db.update(schema.profiles).set({ userId: toUserId }).where(eq(schema.profiles.userId, fromUserId));
+export async function linkUsers(fromUserId: string, toUserId: string) {
+  return await db.transaction(async (tx) => {
+    // Get all profiles for the anonymous user
+    const anonymousProfiles = await tx.select().from(schema.profiles).where(eq(schema.profiles.userId, fromUserId));
+
+    // Get all profiles for the real user
+    const realUserProfiles = await tx.select().from(schema.profiles).where(eq(schema.profiles.userId, toUserId));
+
+    // Map tenantId -> real user profile
+    const realUserProfileMap = new Map(realUserProfiles.map((profile) => [profile.tenantId, profile]));
+
+    let realUserProfile = undefined;
+
+    for (const anonymousProfile of anonymousProfiles) {
+      realUserProfile = realUserProfileMap.get(anonymousProfile.tenantId);
+
+      // Create a guest profile in this tenant for the authenticated user if doesn't exist
+      if (!realUserProfile) {
+        realUserProfile = await createProfile(anonymousProfile.tenantId, toUserId, "guest");
+      }
+
+      // Transfer all conversations from anonymous profile to authenticated profile
+      await tx
+        .update(schema.conversations)
+        .set({ profileId: realUserProfile.id })
+        .where(eq(schema.conversations.profileId, anonymousProfile.id));
+
+      // Delete the anonymous profile
+      await tx.delete(schema.profiles).where(eq(schema.profiles.id, anonymousProfile.id));
+    }
+
+    if (realUserProfile) {
+      await setCurrentProfileId(toUserId, realUserProfile.id);
+    }
+
+    // Invalidate the auth context cache to set new profile
+    await invalidateAuthContextCache(toUserId);
+  });
 }
 
 export async function updateTenantPaidStatus(tenantId: string, paidStatus: "trial" | "active" | "expired") {
