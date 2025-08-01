@@ -34,6 +34,17 @@ export const getRagieStreamPath = (slug: string, streamUrl: string) => {
   return `/api/ragie/stream?${params.toString()}`;
 };
 
+export const getRagieSourcePath = (slug: string, sourceUrl: string, page?: number) => {
+  const params = new URLSearchParams({ url: sourceUrl, tenant: slug });
+
+  const baseUrl = `/api/ragie/source?${params.toString()}`;
+
+  if (page) {
+    return `${baseUrl}#page=${page}`;
+  }
+  return baseUrl;
+};
+
 export const getPricingPlanChangePath = (slug: string) => `/pricing/${slug}/plan-change`;
 
 export const getPricingPlansPath = (slug: string) => `/pricing/${slug}/plans`;

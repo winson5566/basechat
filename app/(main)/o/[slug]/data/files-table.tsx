@@ -233,7 +233,7 @@ export default function FilesTable({
           <hr className="my-4" />
           <div className="flex justify-between items-center mb-4">
             <div className="text-sm text-gray-500">
-              {totalDocuments} {totalDocuments === 1 ? "file" : "files"}
+              {totalDocuments.toLocaleString()} {totalDocuments === 1 ? "file" : "files"}
             </div>
             <div className="flex items-center gap-2">
               <button

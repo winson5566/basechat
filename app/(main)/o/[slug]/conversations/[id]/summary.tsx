@@ -11,7 +11,7 @@ import rehypeHighlight from "rehype-highlight";
 import "@/components/chatbot/style.css";
 import { Skeleton } from "@/components/ui/skeleton";
 import CONNECTOR_MAP from "@/lib/connector-map";
-import { getRagieStreamPath } from "@/lib/paths";
+import { getRagieSourcePath, getRagieStreamPath } from "@/lib/paths";
 import { SourceMetadata } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import CloseIcon from "@/public/icons/close.svg";
@@ -461,6 +461,11 @@ export default function Summary({ className, source, slug, onCloseClick = () => 
     );
   }
 
+  let sourceUrl = documentData.metadata.source_url;
+  if (!sourceUrl && source.ragieSourceUrl) {
+    sourceUrl = getRagieSourcePath(slug, source.ragieSourceUrl);
+  }
+
   return (
     <div className={cn(className, "relative")}>
       <div className="absolute top-4 right-4">
@@ -471,7 +476,7 @@ export default function Summary({ className, source, slug, onCloseClick = () => 
       <div className="flex justify-between mb-6">
         <div className="text-[#74747A]">Updated {format(documentData.updatedAt, "MM/dd/yyyy")}</div>
         {!source.streamUrl && (
-          <a href={documentData.metadata.source_url} target="_blank" className="text-[#7749F8] flex">
+          <a href={sourceUrl} target="_blank" className="text-[#7749F8] flex">
             View in source
             <Image src={ExternalLinkIcon} alt="Open in new window" />
           </a>
@@ -660,7 +665,53 @@ export default function Summary({ className, source, slug, onCloseClick = () => 
           <Image src={getRagieStreamPath(slug, source.imageUrl)} alt="Image" width={500} height={500} />
         </div>
       )}
-      <div className="text-[12px] font-bold mb-4">Summary</div>
+
+      {((source.mergedRanges && source.mergedRanges.length > 0) || (source.startPage && source.endPage)) && (
+        <>
+          <div className="text-[12px] font-bold mb-4">Cited text</div>
+          {source.mergedRanges && source.mergedRanges.length > 0 ? (
+            <div className="text-[#7749F8] text-sm">
+              {source.mergedRanges.map((range, index) => (
+                <div key={index} className="my-2">
+                  <a
+                    href={
+                      source.ragieSourceUrl
+                        ? getRagieSourcePath(slug, source.ragieSourceUrl, range.startPage)
+                        : undefined
+                    }
+                    target="_blank"
+                  >
+                    {range.startPage && range.endPage
+                      ? range.startPage === range.endPage
+                        ? `Page ${range.startPage}`
+                        : `Pages ${range.startPage}-${range.endPage}`
+                      : range.startPage
+                        ? `Page ${range.startPage}`
+                        : null}
+                  </a>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-[#7749F8] text-sm">
+              <a
+                href={
+                  source.ragieSourceUrl ? getRagieSourcePath(slug, source.ragieSourceUrl, source.startPage) : undefined
+                }
+                target="_blank"
+              >
+                {source.startPage &&
+                  source.endPage &&
+                  (source.startPage === source.endPage
+                    ? `Page ${source.startPage}`
+                    : `Pages ${source.startPage}-${source.endPage}`)}
+              </a>
+            </div>
+          )}
+        </>
+      )}
+
+      <div className="text-[12px] font-bold my-4">Summary</div>
       <Markdown
         className="markdown"
         rehypePlugins={[rehypeHighlight]}
