@@ -11,10 +11,14 @@ const paramsSchema = z.object({
 });
 
 export async function GET(request: NextRequest) {
-  const params = paramsSchema.parse({
+  const parsedParams = paramsSchema.safeParse({
     tenant: request.nextUrl.searchParams.get("tenant"),
     url: request.nextUrl.searchParams.get("url"),
   });
+  if (!parsedParams.success) {
+    return new Response("Invalid URL params", { status: 422 });
+  }
+  const params = parsedParams.data;
 
   const { tenant } = await requireAuthContext(params.tenant);
 

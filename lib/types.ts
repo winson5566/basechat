@@ -13,4 +13,5 @@ export type SourceMetadata = {
   startPage?: number;
   endPage?: number;
   ragieSourceUrl?: string;
+  mergedRanges?: { startPage: number; endPage: number }[];
 };
