@@ -12,4 +12,5 @@ export type SourceMetadata = {
   imageUrl?: string;
   startPage?: number;
   endPage?: number;
+  ragieSourceUrl?: string;
 };

@@ -11,7 +11,7 @@ import rehypeHighlight from "rehype-highlight";
 import "@/components/chatbot/style.css";
 import { Skeleton } from "@/components/ui/skeleton";
 import CONNECTOR_MAP from "@/lib/connector-map";
-import { getRagieStreamPath } from "@/lib/paths";
+import { getRagieSourcePath, getRagieStreamPath } from "@/lib/paths";
 import { SourceMetadata } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import CloseIcon from "@/public/icons/close.svg";
@@ -461,6 +461,11 @@ export default function Summary({ className, source, slug, onCloseClick = () => 
     );
   }
 
+  let sourceUrl = documentData.metadata.source_url;
+  if (!sourceUrl && source.ragieSourceUrl) {
+    sourceUrl = getRagieSourcePath(slug, source.ragieSourceUrl, source.startPage);
+  }
+
   return (
     <div className={cn(className, "relative")}>
       <div className="absolute top-4 right-4">
@@ -471,7 +476,7 @@ export default function Summary({ className, source, slug, onCloseClick = () => 
       <div className="flex justify-between mb-6">
         <div className="text-[#74747A]">Updated {format(documentData.updatedAt, "MM/dd/yyyy")}</div>
         {!source.streamUrl && (
-          <a href={documentData.metadata.source_url} target="_blank" className="text-[#7749F8] flex">
+          <a href={sourceUrl} target="_blank" className="text-[#7749F8] flex">
             View in source
             <Image src={ExternalLinkIcon} alt="Open in new window" />
           </a>
