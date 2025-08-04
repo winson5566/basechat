@@ -1,12 +1,17 @@
 import assert from "assert";
 
-import { eq } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
 import { NextRequest } from "next/server";
 
+import { getPricingPlansPath } from "@/lib/paths";
 import db from "@/lib/server/db";
 import * as schema from "@/lib/server/db/schema";
-import { saveConnection } from "@/lib/server/service";
-import { DEFAULT_PARTITION_LIMIT, RAGIE_WEBHOOK_SECRET } from "@/lib/server/settings";
+import {
+  saveConnection,
+  sendPageLimitNotificationEmail,
+  invalidateAuthContextCacheForTenant,
+} from "@/lib/server/service";
+import { DEFAULT_PARTITION_LIMIT, RAGIE_WEBHOOK_SECRET, BASE_URL } from "@/lib/server/settings";
 import { validateSignature } from "@/lib/server/utils";
 
 interface WebhookEvent {
@@ -58,7 +63,32 @@ async function handlePartitionLimitEvent(event: WebhookEvent) {
       console.error("Failed to update tenant:", error);
       return Response.json({ error: "Failed to update tenant settings" }, { status: 500 });
     }
+
+    try {
+      // Get all admin users for this tenant
+      const adminUsers = await db
+        .select({
+          name: schema.users.name,
+          email: schema.users.email,
+        })
+        .from(schema.profiles)
+        .innerJoin(schema.users, eq(schema.profiles.userId, schema.users.id))
+        .where(and(eq(schema.profiles.tenantId, event.payload.partition), eq(schema.profiles.role, "admin")));
+
+      // Send notification email to each admin user with valid email
+      const upgradeLink = `${BASE_URL}${getPricingPlansPath(tenantResult[0].slug)}`;
+      for (const adminUser of adminUsers) {
+        if (adminUser.email) {
+          await sendPageLimitNotificationEmail(adminUser.email, tenantResult[0].name, upgradeLink);
+        }
+      }
+    } catch (error) {
+      console.error("Failed to notify admin users:", error);
+    }
   }
+
+  // Invalidate auth context cache for all users in this tenant
+  await invalidateAuthContextCacheForTenant(event.payload.partition);
 
   return Response.json({ message: "success" });
 }

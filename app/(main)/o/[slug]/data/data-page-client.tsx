@@ -1,10 +1,12 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { useState } from "react";
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import WarningMessage from "@/components/warning-message";
+import { getPricingPlansPath } from "@/lib/paths";
 import ManageDataPreviewIcons from "@/public/manage-data-preview-icons.svg";
 
 import AddConnectionMenu from "./add-connection-menu";
@@ -69,8 +71,11 @@ export default function DataPageClient({
       </div>
       {!isNaN(defaultPartitionLimit) && tenant.partitionLimitExceededAt && (
         <WarningMessage className="mt-4">
-          You have reached the page processing limit for this chatbot. Please contact support@ragie.ai if you need
-          assistance.
+          You have reached the page processing limit for this chatbot. Please{" "}
+          <Link href={getPricingPlansPath(tenant.slug)} className={"underline"}>
+            upgrade plans
+          </Link>{" "}
+          to continue or contact support@ragie.ai if you need assistance.
         </WarningMessage>
       )}
       <Tabs defaultValue="files" className="flex flex-col h-full mt-8">

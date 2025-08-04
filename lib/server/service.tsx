@@ -12,7 +12,7 @@ import { Member, MemberType } from "@/lib/api";
 import { getEnabledModels } from "@/lib/llm/types";
 import * as settings from "@/lib/server/settings";
 
-import { InviteHtml, ResetPasswordHtml } from "../mail";
+import { InviteHtml, PagesLimitReachedHtml, ResetPasswordHtml } from "../mail";
 
 import { provisionBillingCustomer } from "./billing";
 import db from "./db";
@@ -316,6 +316,27 @@ export async function invalidateAuthContextCache(userId: string) {
     } catch (fallbackError) {
       console.error("Failed to invalidate cache with fallback method:", fallbackError);
     }
+  }
+}
+
+// Helper function to invalidate auth context cache for all users in a tenant
+export async function invalidateAuthContextCacheForTenant(tenantId: string) {
+  try {
+    // Get all user IDs for this tenant
+    const userProfiles = await db
+      .select({
+        userId: schema.profiles.userId,
+      })
+      .from(schema.profiles)
+      .where(eq(schema.profiles.tenantId, tenantId));
+
+    // Invalidate cache for each user
+    const invalidationPromises = userProfiles.map((profile) => invalidateAuthContextCache(profile.userId));
+
+    await Promise.allSettled(invalidationPromises);
+    console.log(`Cache invalidated for ${userProfiles.length} users in tenant: ${tenantId}`);
+  } catch (error) {
+    console.error("Failed to invalidate auth context cache for tenant:", error);
   }
 }
 
@@ -793,4 +814,13 @@ export async function createSlackUser(slackUserId: string, slackUser: SlackUser)
   const rs = await db.insert(schema.users).values({ slackUserId, slackUser: slackUser }).returning();
   assert(rs.length === 1, "expect single record");
   return rs[0];
+}
+
+export async function sendPageLimitNotificationEmail(email: string, tenantName: string, upgradeLink: string) {
+  await sendMail({
+    to: email,
+    subject: "Page Limit Reached",
+    text: "You've reached your page processing limit",
+    html: await render(<PagesLimitReachedHtml tenantName={tenantName} link={upgradeLink} />),
+  });
 }
