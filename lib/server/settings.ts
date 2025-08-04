@@ -2,6 +2,8 @@ export const APP_NAME = "Base Chat";
 
 export const AUTH_SECRET = process.env.AUTH_SECRET!;
 
+export const ADMIN_SECRET = process.env.ADMIN_SECRET!;
+
 export const COMPANY_NAME = "Acme Corp";
 
 // assert(process.env.BASE_URL);

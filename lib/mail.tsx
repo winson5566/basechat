@@ -104,3 +104,36 @@ export const InviteHtml = ({ name, link }: { name: string | null; link: string }
     </Layout>
   );
 };
+
+export const PagesLimitReachedHtml = ({ tenantName, link }: { tenantName: string | null; link: string }) => {
+  return (
+    <Layout preview={`You have reached your ${settings.APP_NAME} page processing limit`}>
+      <Section>
+        <Text className="text-[#1D1D1F] text-[24px] mb-8 font-bold">
+          You&apos;ve reached your page processing limit
+        </Text>
+        <Text className="text-[#1D1D1F] text-[18px] mb-6">
+          You&apos;ve reached the page limit for your current plan
+          {tenantName ? ` on the chatbot "${tenantName}."` : "."}
+        </Text>
+        <Text className="text-[#1D1D1F] text-[18px] mb-8">
+          Upgrade your plan to get immediate access to more pages and keep the conversation going.
+        </Text>
+
+        <Button
+          href={link}
+          className="w-full text-center my-8 rounded-[54px] bg-[#D946EF] py-2.5 text-white font-semibold"
+        >
+          Upgrade Plan
+        </Button>
+
+        <Text className="text-[#1D1D1F] text-[18px]">
+          Have questions about your usage or plan?{" "}
+          <a href="mailto:sales@ragie.ai" className="underline text-[#D946EF]">
+            Contact us
+          </a>
+        </Text>
+      </Section>
+    </Layout>
+  );
+};
