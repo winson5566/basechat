@@ -50,26 +50,16 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: `Tenant not found: ${tenantId}` }, { status: 404 });
     }
 
-    // Get count of users for this tenant
-    const userProfiles = await db
-      .select({
-        userId: schema.profiles.userId,
-      })
-      .from(schema.profiles)
-      .where(eq(schema.profiles.tenantId, tenantId));
-
     // Invalidate cache for all users in this tenant
     await invalidateAuthContextCacheForTenant(tenantId);
 
     return NextResponse.json({
       success: true,
-      method: "tenant-specific-tag",
       tenant: {
         id: tenant.id,
         name: tenant.name,
         slug: tenant.slug,
       },
-      affectedUsers: userProfiles.length,
     });
   } catch (error) {
     console.error("Failed to invalidate tenant cache:", error);

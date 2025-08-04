@@ -15,6 +15,7 @@ export async function middleware(request: NextRequest) {
       pathname !== "/change-password" &&
       !pathname.startsWith("/check") &&
       !pathname.startsWith("/api/auth/callback") &&
+      !pathname.startsWith("/api/admin") &&
       !pathname.startsWith("/healthz") &&
       !pathname.startsWith("/images")
     ) {
