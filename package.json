@@ -119,6 +119,7 @@
     },
     "drizzle-kit": {
       "esbuild": "0.25.0"
-    }
+    },
+    "form-data": "^4.0.4"
   }
 }
