@@ -99,10 +99,113 @@ export async function getRetrievalSystemPrompt(
     };
   });
 
+  // Deduplicate sources by documentId and merge contiguous ranges
+  const groupedByDocument = sources.reduce<Record<string, SourceMetadata[]>>((acc, source) => {
+    if (!acc[source.documentId]) {
+      acc[source.documentId] = [];
+    }
+    acc[source.documentId].push(source);
+    return acc;
+  }, {});
+
+  const dedupedSources: SourceMetadata[] = Object.entries(groupedByDocument).map(([documentId, sources]) => {
+    // Extract all page ranges from sources
+    const pageRanges: { startPage: number; endPage: number }[] = [];
+
+    sources.forEach((source) => {
+      if (
+        source.startPage &&
+        source.endPage &&
+        typeof source.startPage === "number" &&
+        typeof source.endPage === "number"
+      ) {
+        pageRanges.push({ startPage: source.startPage, endPage: source.endPage });
+      }
+    });
+
+    // Sort page ranges by startPage
+    pageRanges.sort((a, b) => a.startPage - b.startPage);
+
+    // Merge contiguous page ranges
+    const mergedRanges: { startPage: number; endPage: number }[] = [];
+    let currentRange: { startPage: number; endPage: number } | null = null;
+
+    pageRanges.forEach((range) => {
+      if (!currentRange) {
+        currentRange = { ...range };
+      } else if (currentRange.endPage + 1 >= range.startPage) {
+        // Ranges are contiguous or overlapping, merge them
+        currentRange.endPage = Math.max(currentRange.endPage, range.endPage);
+      } else {
+        // Ranges are not contiguous, start a new range
+        mergedRanges.push(currentRange);
+        currentRange = { ...range };
+      }
+    });
+
+    if (currentRange) {
+      mergedRanges.push(currentRange);
+    }
+
+    // Extract all time ranges from sources
+    const timeRanges: { startTime: number; endTime: number }[] = [];
+
+    sources.forEach((source) => {
+      if (
+        source.startTime &&
+        source.endTime &&
+        typeof source.startTime === "number" &&
+        typeof source.endTime === "number"
+      ) {
+        timeRanges.push({ startTime: source.startTime, endTime: source.endTime });
+      }
+    });
+
+    // Sort time ranges by startTime
+    timeRanges.sort((a, b) => a.startTime - b.startTime);
+
+    // Merge contiguous time ranges
+    const mergedTimeRanges: { startTime: number; endTime: number }[] = [];
+    let currentTimeRange: { startTime: number; endTime: number } | null = null;
+
+    timeRanges.forEach((range) => {
+      if (!currentTimeRange) {
+        currentTimeRange = { ...range };
+      } else if (currentTimeRange.endTime >= range.startTime) {
+        // Ranges are contiguous or overlapping, merge them
+        currentTimeRange.endTime = Math.max(currentTimeRange.endTime, range.endTime);
+      } else {
+        // Ranges are not contiguous, start a new range
+        mergedTimeRanges.push(currentTimeRange);
+        currentTimeRange = { ...range };
+      }
+    });
+
+    if (currentTimeRange) {
+      mergedTimeRanges.push(currentTimeRange);
+    }
+
+    // Create the merged source with all other properties from the first source
+    const baseSource = sources[0];
+    const mergedSource: SourceMetadata = {
+      ...baseSource,
+      startPage: mergedRanges.length > 0 ? mergedRanges[0].startPage : baseSource.startPage,
+      endPage: mergedRanges.length > 0 ? mergedRanges[mergedRanges.length - 1].endPage : baseSource.endPage,
+      startTime: mergedTimeRanges.length > 0 ? mergedTimeRanges[0].startTime : baseSource.startTime,
+      endTime: mergedTimeRanges.length > 0 ? mergedTimeRanges[mergedTimeRanges.length - 1].endTime : baseSource.endTime,
+    };
+
+    // Store the merged ranges for display
+    mergedSource.mergedRanges = mergedRanges;
+    mergedSource.mergedTimeRanges = mergedTimeRanges;
+
+    return mergedSource;
+  });
+
   const company = { name: tenant.name };
   return {
     content: renderSystemPrompt({ company, chunks }, tenant.systemPrompt),
-    sources,
+    sources: dedupedSources,
   };
 }
 
