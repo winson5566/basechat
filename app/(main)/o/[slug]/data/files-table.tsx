@@ -276,9 +276,7 @@ export default function FilesTable({
                 <TableBody>
                   {allFiles.map((file) => (
                     <TableRow key={file.id} noHover>
-                      <TableCell className="font-medium flex items-center">
-                        <div>{file.name}</div>
-                      </TableCell>
+                      <TableCell className="font-medium">{file.name}</TableCell>
                       <TableCell>
                         {file.metadata?.source_type &&
                         file.metadata.source_type !== "manual" &&
