@@ -19,13 +19,13 @@ import {
   LLM_LOGO_MAP,
   LLMModel,
   modelArraySchema,
-  getEnabledModels,
+  getEnabledModelsFromDisabled,
   modelSchema,
 } from "@/lib/llm/types";
 import * as schema from "@/lib/server/db/schema";
 
 const formSchema = z.object({
-  enabledModels: modelArraySchema,
+  disabledModels: modelArraySchema,
   defaultModel: modelSchema,
   isBreadth: z.boolean().default(false),
   overrideBreadth: z.boolean().default(true),
@@ -39,36 +39,43 @@ type FormValues = z.infer<typeof formSchema>;
 
 const ModelsField = (form: UseFormReturn<FormValues>) => {
   const handleToggleModel = (model: LLMModel, isEnabled: boolean) => {
-    const currentModels = getEnabledModels(form.getValues("enabledModels"));
+    const currentDisabledModels = form.getValues("disabledModels") || [];
+    const currentEnabledModels = getEnabledModelsFromDisabled(currentDisabledModels);
 
-    if (isEnabled && !currentModels.includes(model)) {
-      const newEnabledModels = [...currentModels, model];
-      form.setValue("enabledModels", newEnabledModels, {
+    if (isEnabled && !currentEnabledModels.includes(model)) {
+      // Enable model by removing it from disabled list
+      const newDisabledModels = currentDisabledModels.filter((m) => m !== model);
+      form.setValue("disabledModels", newDisabledModels, {
         shouldDirty: true,
         shouldValidate: true,
       });
 
       // If this is now the only enabled model, set it as default
+      const newEnabledModels = getEnabledModelsFromDisabled(newDisabledModels);
       if (newEnabledModels.length === 1) {
         form.setValue("defaultModel", model, {
           shouldDirty: true,
           shouldValidate: true,
         });
       }
-    } else if (!isEnabled && currentModels.includes(model)) {
-      const newEnabledModels = currentModels.filter((m) => m !== model);
-      form.setValue("enabledModels", newEnabledModels, {
+    } else if (!isEnabled && currentEnabledModels.includes(model)) {
+      // Disable model by adding it to disabled list
+      const newDisabledModels = [...currentDisabledModels, model];
+      form.setValue("disabledModels", newDisabledModels, {
         shouldDirty: true,
         shouldValidate: true,
       });
 
       // If we're disabling the current default model and there are other models available,
       // set the first remaining enabled model as default
-      if (model === form.getValues("defaultModel") && newEnabledModels.length > 0) {
-        form.setValue("defaultModel", newEnabledModels[0], {
-          shouldDirty: true,
-          shouldValidate: true,
-        });
+      if (model === form.getValues("defaultModel")) {
+        const remainingEnabledModels = getEnabledModelsFromDisabled(newDisabledModels);
+        if (remainingEnabledModels.length > 0) {
+          form.setValue("defaultModel", remainingEnabledModels[0], {
+            shouldDirty: true,
+            shouldValidate: true,
+          });
+        }
       }
     }
   };
@@ -83,7 +90,7 @@ const ModelsField = (form: UseFormReturn<FormValues>) => {
   return (
     <FormField
       control={form.control}
-      name="enabledModels"
+      name="disabledModels"
       render={({ field }) => (
         <FormItem className="flex flex-col">
           <div className="mb-5">
@@ -92,7 +99,7 @@ const ModelsField = (form: UseFormReturn<FormValues>) => {
           </div>
           <div className="space-y-5 pl-8">
             {ALL_VALID_MODELS.map((model) => {
-              const isEnabled = field.value?.includes(model);
+              const isEnabled = !field.value?.includes(model);
               const isDefault = model === form.getValues("defaultModel");
               const [_, logoPath] = LLM_LOGO_MAP[model as string];
               return (
@@ -315,7 +322,7 @@ export default function ModelSettings({ tenant }: Props) {
 
   const formattedTenant = useMemo(() => {
     const {
-      enabledModels,
+      disabledModels,
       defaultModel,
       isBreadth,
       overrideBreadth,
@@ -329,7 +336,7 @@ export default function ModelSettings({ tenant }: Props) {
     // Zod only uses default values when the value is undefined. They come in as null
     // Change fields you want to have defaults to undefined.
     return {
-      enabledModels: enabledModels,
+      disabledModels: disabledModels,
       defaultModel: defaultModel ?? undefined,
       isBreadth: isBreadth ?? undefined,
       overrideBreadth: overrideBreadth ?? undefined,
@@ -350,8 +357,16 @@ export default function ModelSettings({ tenant }: Props) {
     setLoading(true);
 
     try {
+      // Validate that at least one model is enabled
+      const enabledModels = getEnabledModelsFromDisabled(values.disabledModels);
+      if (enabledModels.length === 0) {
+        toast.error("Please enable at least one model before saving.");
+        setLoading(false);
+        return;
+      }
+
       const payload = updateTenantSchema.parse({
-        enabledModels: values.enabledModels,
+        disabledModels: values.disabledModels,
         defaultModel: values.defaultModel,
         isBreadth: values.isBreadth,
         overrideBreadth: values.overrideBreadth,

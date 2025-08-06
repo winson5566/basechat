@@ -65,20 +65,19 @@ export const modelSchema = z.enum(ALL_VALID_MODELS as [string, ...string[]]);
 // Type for validated model names
 export type LLMModel = z.infer<typeof modelSchema>;
 
-// Schema for array of models (used for enabledModels)
-export const modelArraySchema = z.array(modelSchema).min(1, "At least one model must be enabled").nullable();
+// Schema for array of models (used for disabledModels)
+export const modelArraySchema = z.array(modelSchema).nullable();
 
-// Helper function to get enabled models, handling null case
-export function getEnabledModels(enabledModels: string[] | null): string[] {
-  if (enabledModels === null) {
-    return ALL_VALID_MODELS;
+// Helper function to get disabled models, handling null case
+export function getDisabledModels(disabledModels: string[] | null): string[] {
+  if (disabledModels === null) {
+    return [];
   }
   // Filter out any models that aren't in ALL_VALID_MODELS
-  return enabledModels.filter((model) => ALL_VALID_MODELS.includes(model));
+  return disabledModels.filter((model) => ALL_VALID_MODELS.includes(model));
 }
 
-/// ***** DURING TRANSITION *******
-// Helper function to get enabled models from disabled models (new approach)
+// Helper function to get enabled models from disabled models
 export function getEnabledModelsFromDisabled(disabledModels: string[] | null): string[] {
   if (disabledModels === null) {
     return ALL_VALID_MODELS;
@@ -87,15 +86,6 @@ export function getEnabledModelsFromDisabled(disabledModels: string[] | null): s
   return ALL_VALID_MODELS.filter((model) => !disabledModels.includes(model));
 }
 
-// Helper function to get disabled models from enabled models (for migration)
-export function getDisabledModelsFromEnabled(enabledModels: string[] | null): string[] {
-  if (enabledModels === null) {
-    return [];
-  }
-  // Return all valid models that are not in the enabled list
-  return ALL_VALID_MODELS.filter((model) => !enabledModels.includes(model));
-}
-/// ***** DURING TRANSITION *******
 export function getProviderForModel(model: string): LLMProvider | null {
   // Validate the model first
   const parsed = modelSchema.safeParse(model);
