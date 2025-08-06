@@ -61,6 +61,7 @@ export const updateTenantSchema = z.object({
   isPublic: z.boolean().optional(),
   name: z.string().optional(),
   enabledModels: modelArraySchema.optional(),
+  disabledModels: modelArraySchema.optional(),
   defaultModel: modelSchema.optional(),
   isBreadth: z.boolean().optional(),
   rerankEnabled: z.boolean().optional(),

@@ -285,7 +285,7 @@ async function getAuthContextByUserIdInternal(userId: string, slug: string) {
   return {
     profile: row.profiles,
     tenant: {
-      ...row.tenants,
+      ...row.tenants, // TODO: after populating the disabled_models column, stop using the enabled_models column
       enabledModels: row.tenants.disabledModels
         ? getEnabledModelsFromDisabled(row.tenants.disabledModels)
         : getEnabledModels(row.tenants.enabledModels),
