@@ -1,0 +1,1 @@
+ALTER TABLE "tenants" ADD COLUMN "disabled_models" text[] DEFAULT '{}';

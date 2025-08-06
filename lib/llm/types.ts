@@ -77,6 +77,25 @@ export function getEnabledModels(enabledModels: string[] | null): string[] {
   return enabledModels.filter((model) => ALL_VALID_MODELS.includes(model));
 }
 
+/// ***** DURING TRANSITION *******
+// Helper function to get enabled models from disabled models (new approach)
+export function getEnabledModelsFromDisabled(disabledModels: string[] | null): string[] {
+  if (disabledModels === null) {
+    return ALL_VALID_MODELS;
+  }
+  // Return all valid models except the disabled ones
+  return ALL_VALID_MODELS.filter((model) => !disabledModels.includes(model));
+}
+
+// Helper function to get disabled models from enabled models (for migration)
+export function getDisabledModelsFromEnabled(enabledModels: string[] | null): string[] {
+  if (enabledModels === null) {
+    return [];
+  }
+  // Return all valid models that are not in the enabled list
+  return ALL_VALID_MODELS.filter((model) => !enabledModels.includes(model));
+}
+/// ***** DURING TRANSITION *******
 export function getProviderForModel(model: string): LLMProvider | null {
   // Validate the model first
   const parsed = modelSchema.safeParse(model);

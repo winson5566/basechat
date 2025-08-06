@@ -9,7 +9,7 @@ import nodemailer from "nodemailer";
 import SMTPConnection from "nodemailer/lib/smtp-connection";
 
 import { Member, MemberType } from "@/lib/api";
-import { getEnabledModels } from "@/lib/llm/types";
+import { getEnabledModels, getEnabledModelsFromDisabled } from "@/lib/llm/types";
 import * as settings from "@/lib/server/settings";
 
 import { InviteHtml, PagesLimitReachedHtml, ResetPasswordHtml } from "../mail";
@@ -286,7 +286,9 @@ async function getAuthContextByUserIdInternal(userId: string, slug: string) {
     profile: row.profiles,
     tenant: {
       ...row.tenants,
-      enabledModels: getEnabledModels(row.tenants.enabledModels),
+      enabledModels: row.tenants.disabledModels
+        ? getEnabledModelsFromDisabled(row.tenants.disabledModels)
+        : getEnabledModels(row.tenants.enabledModels),
     },
   };
 }

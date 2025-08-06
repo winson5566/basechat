@@ -83,6 +83,7 @@ export const tenants = pgTable(
     logoObjectName: text("logo_object_name"), // The name of the object in the bucket
     logoUrl: text("logo_url"), // The publicly accessible URL of the object
     enabledModels: text("enabled_models").array().default(ALL_VALID_MODELS).$type<z.infer<typeof modelArraySchema>>(),
+    disabledModels: text("disabled_models").array().default([]).$type<z.infer<typeof modelArraySchema>>(),
     defaultModel: text("default_model").default(DEFAULT_MODEL).$type<z.infer<typeof modelSchema>>(),
     isBreadth: boolean("is_breadth").default(false),
     rerankEnabled: boolean("rerank_enabled").default(false),
