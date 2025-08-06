@@ -15,7 +15,8 @@
     "update-api-key": "node scripts/update-api-key.js",
     "update-partition-limit": "node scripts/update-partition-limit.js",
     "update-all-partition-limits": "node scripts/update-all-partition-limits.js",
-    "enable-claude-sonnet-4": "node scripts/enable-claude-sonnet-4.js"
+    "enable-claude-sonnet-4": "node scripts/enable-claude-sonnet-4.js",
+    "migrate-to-disabled-models": "node scripts/migrate-to-disabled-models.js"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^1.2.1",
