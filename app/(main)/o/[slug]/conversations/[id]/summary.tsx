@@ -267,6 +267,20 @@ export default function Summary({ className, source, slug, onCloseClick = () => 
                     src={getRagieStreamPath(slug, source.streamUrl)}
                     controls={false}
                     preload="metadata"
+                    onCanPlay={() => {
+                      assert(audioRef.current, "audioRef not loaded");
+                      // Use the first time range from mergedTimeRanges if available, otherwise fall back to startTime
+                      const seekTime =
+                        source.mergedTimeRanges && source.mergedTimeRanges.length > 0
+                          ? source.mergedTimeRanges[0].startTime
+                          : source.startTime;
+                      const canSeek = audioRef.current.seekable.end(0) >= seekTime!;
+                      if (canSeek && !didInitialSeek) {
+                        audioRef.current.currentTime = seekTime || 0;
+                        setCurrentTime(seekTime || 0);
+                        setDidInitialSeek(true);
+                      }
+                    }}
                     onLoadedMetadata={() => {
                       assert(audioRef.current, "audioRef not loaded");
                       setDuration(audioRef.current.duration);
