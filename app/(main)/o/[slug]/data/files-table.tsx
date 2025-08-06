@@ -276,11 +276,11 @@ export default function FilesTable({
                 <TableBody>
                   {allFiles.map((file) => (
                     <TableRow key={file.id} noHover>
-                      <TableCell className="font-medium flex items-center">
-                        <div>{file.name}</div>
-                      </TableCell>
+                      <TableCell className="font-medium">{file.name}</TableCell>
                       <TableCell>
-                        {file.metadata?.source_type && file.metadata.source_type !== "manual" ? (
+                        {file.metadata?.source_type &&
+                        file.metadata.source_type !== "manual" &&
+                        CONNECTOR_MAP[file.metadata.source_type] ? (
                           <div className="flex items-center gap-2">
                             <Image
                               src={CONNECTOR_MAP[file.metadata.source_type][1]}

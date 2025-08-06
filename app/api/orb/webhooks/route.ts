@@ -185,33 +185,46 @@ async function handlePlanChanged(tenantId: string, payload: OrbWebhookPayload) {
     .filter((t: any) => t.price_id === planSeatPrice?.id)
     .sort((a: any, b: any) => new Date(b.effective_date).getTime() - new Date(a.effective_date).getTime())[0]?.quantity;
 
-  await db
-    .update(schema.tenants)
-    .set({
-      metadata: {
-        stripeCustomerId: existingMetadata.stripeCustomerId,
-        orbSubscriptionId: existingMetadata.orbSubscriptionId,
-        orbCustomerId: existingMetadata.orbCustomerId,
-        plans: [
-          ...existingPlans.map((plan: TenantPlan) => ({
-            ...plan,
-            endedAt: plan.endedAt ? plan.endedAt : new Date(), // End all previous plans
-          })),
-          {
-            id: payload.subscription.id,
-            name: newPlanType || "developer",
-            startedAt: new Date(payload.subscription.start_date),
-            endedAt: null,
-            tier: payload.subscription.plan.id,
-            seats: quantity,
-          },
-        ],
-      },
-      paidStatus:
-        payload.subscription.plan.id === (await getPlanIdFromType("developer")) ? existingPaidStatus : "active",
-    })
-    .where(eq(schema.tenants.id, tenantId));
+  await db.transaction(async (tx) => {
+    await tx
+      .update(schema.tenants)
+      .set({
+        metadata: {
+          stripeCustomerId: existingMetadata.stripeCustomerId,
+          orbSubscriptionId: existingMetadata.orbSubscriptionId,
+          orbCustomerId: existingMetadata.orbCustomerId,
+          plans: [
+            ...existingPlans.map((plan: TenantPlan) => ({
+              ...plan,
+              endedAt: plan.endedAt ? plan.endedAt : new Date(), // End all previous plans
+            })),
+            {
+              id: payload.subscription.id,
+              name: newPlanType || "developer",
+              startedAt: new Date(payload.subscription.start_date),
+              endedAt: null,
+              tier: payload.subscription.plan.id,
+              seats: quantity,
+            },
+          ],
+        },
+        paidStatus:
+          payload.subscription.plan.id === (await getPlanIdFromType("developer")) ? existingPaidStatus : "active",
+      })
+      .where(eq(schema.tenants.id, tenantId));
 
+    // If there's a new plan type, also update the partition limit exceeded flag
+    if (newPlanType) {
+      await tx
+        .update(schema.tenants)
+        .set({
+          partitionLimitExceededAt: null,
+        })
+        .where(eq(schema.tenants.id, tenantId));
+    }
+  });
+
+  // Handle external API call after the transaction to avoid potential issues
   if (newPlanType) {
     const newPartitionLimit = PLANS[newPlanType as PlanType].partitionLimit;
     const { client, partition } = await getRagieClientAndPartition(tenantId);
@@ -221,12 +234,6 @@ async function handlePlanChanged(tenantId: string, payload: OrbWebhookPayload) {
         pagesProcessedLimitMax: newPartitionLimit,
       },
     });
-    await db
-      .update(schema.tenants)
-      .set({
-        partitionLimitExceededAt: null,
-      })
-      .where(eq(schema.tenants.id, tenantId));
   }
 
   // Invalidate auth context cache for all users in this tenant

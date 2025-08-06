@@ -74,7 +74,7 @@ export function getStatusDisplayName(status: string): string {
     summary_indexed: "Indexing",
     keyword_indexed: "Indexing",
     ready: "Ready",
-    failed: "Sync error",
+    failed: "Failed",
   };
 
   return statusMap[status] || "Syncing";
