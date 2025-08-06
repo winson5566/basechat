@@ -1,6 +1,6 @@
 import { eq } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/node-postgres";
-import { pgTable, text } from "drizzle-orm/pg-core";
+import { pgTable, text, timestamp } from "drizzle-orm/pg-core";
 // required for local:
 // import dotenv from "dotenv";
 // dotenv.config();
@@ -25,24 +25,18 @@ const ALL_VALID_MODELS = [
   "claude-opus-4-20250514",
 ];
 
-function showUsage() {
-  console.log("Usage: npm run migrate-to-disabled-models");
-  process.exit(1);
-}
-
-if (process.argv.length > 2) {
-  console.log("Error: Arguments provided");
-  showUsage();
-}
-
-const db = drizzle(databaseUrl);
-
 const tenantsSchema = pgTable("tenants", {
   id: text("id").primaryKey(),
   slug: text("slug").notNull(),
   enabledModels: text("enabled_models").array(),
   disabledModels: text("disabled_models").array(),
+  updatedAt: timestamp("updated_at", { withTimezone: true, mode: "date" }).$onUpdate(() => new Date()),
 });
+
+function showUsage() {
+  console.log("Usage: npm run migrate-to-disabled-models");
+  process.exit(1);
+}
 
 function getDisabledModelsFromEnabled(enabledModels) {
   if (enabledModels === null) {
@@ -51,8 +45,6 @@ function getDisabledModelsFromEnabled(enabledModels) {
 
   return ALL_VALID_MODELS.filter((model) => !enabledModels.includes(model));
 }
-
-console.log("Migrating to disabled_models approach...");
 
 async function migrateToDisabledModels() {
   try {
@@ -87,6 +79,15 @@ async function migrateToDisabledModels() {
     process.exit(1);
   }
 }
+
+if (process.argv.length > 2) {
+  console.log("Error: Arguments provided");
+  showUsage();
+}
+
+const db = drizzle(databaseUrl);
+
+console.log("Migrating to disabled_models approach...");
 
 migrateToDisabledModels()
   .then(() => {
