@@ -2,7 +2,7 @@ import { eq } from "drizzle-orm";
 import { NextRequest } from "next/server";
 
 import { updateTenantSchema } from "@/lib/api";
-import { modelArraySchema } from "@/lib/llm/types";
+import { getDisabledModelsFromEnabled, modelArraySchema } from "@/lib/llm/types";
 import db from "@/lib/server/db";
 import * as schema from "@/lib/server/db/schema";
 import { requireAdminContextFromRequest } from "@/lib/server/utils";
@@ -19,6 +19,8 @@ export async function PATCH(request: NextRequest) {
     if (!modelParseResult.success) {
       return Response.json({ error: "Invalid model array" }, { status: 400 });
     }
+    // TODO: after populating the disabled_models column, stop using the enabled_models column
+    update.disabledModels = getDisabledModelsFromEnabled(update.enabledModels);
   }
 
   try {
