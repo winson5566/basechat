@@ -285,7 +285,7 @@ export async function getPlanTypeFromId(planId: string) {
   }
 }
 
-export function isCurrentlyOnFreeTier(currentPlan: TenantPlan): boolean {
+export async function isCurrentlyOnFreeTier(currentPlan: TenantPlan): Promise<boolean> {
   return currentPlan.name === "developer";
 }
 

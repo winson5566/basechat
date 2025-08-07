@@ -37,7 +37,7 @@ export async function POST(req: NextRequest) {
     let onFreeTier = false;
     const currentPlan = getCurrentPlan(metadata);
     if (currentPlan) {
-      onFreeTier = isCurrentlyOnFreeTier(currentPlan);
+      onFreeTier = await isCurrentlyOnFreeTier(currentPlan);
     } else {
       onFreeTier = true;
     }

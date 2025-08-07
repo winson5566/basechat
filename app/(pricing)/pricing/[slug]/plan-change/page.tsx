@@ -80,7 +80,7 @@ export default async function UpgradePlan({ searchParams, params }: Props) {
 
   let onFreeTier = false;
   if (currentPlan) {
-    onFreeTier = isCurrentlyOnFreeTier(currentPlan);
+    onFreeTier = await isCurrentlyOnFreeTier(currentPlan);
   } else {
     onFreeTier = true;
   }
