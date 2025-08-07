@@ -10,7 +10,13 @@ import {
   CreateConversationMessageRequest,
   createConversationMessageResponseSchema,
 } from "@/lib/api";
-import { DEFAULT_MODEL, getEnabledModels, getProviderForModel, LLMModel, modelSchema } from "@/lib/llm/types";
+import {
+  DEFAULT_MODEL,
+  getEnabledModelsFromDisabled,
+  getProviderForModel,
+  LLMModel,
+  modelSchema,
+} from "@/lib/llm/types";
 
 import { SourceMetadata } from "../../lib/types";
 
@@ -33,7 +39,7 @@ interface Props {
     logoUrl?: string | null;
     slug: string;
     id: string;
-    enabledModels: LLMModel[];
+    disabledModels: LLMModel[];
     defaultModel: LLMModel | null;
     isBreadth: boolean | null;
     rerankEnabled: boolean | null;
@@ -56,7 +62,7 @@ export default function Chatbot({ tenant, conversationId, initMessage, onSelecte
   const pendingMessageRef = useRef<null | { id: string; model: LLMModel }>(null);
   pendingMessageRef.current = pendingMessage;
 
-  const enabledModels = useMemo(() => getEnabledModels(tenant.enabledModels), [tenant.enabledModels]);
+  const enabledModels = useMemo(() => getEnabledModelsFromDisabled(tenant.disabledModels), [tenant.disabledModels]);
 
   // Get initial settings from localStorage if they exist
   const [isBreadth, setIsBreadth] = useState(() => {

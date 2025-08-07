@@ -5,6 +5,12 @@ export const PROVIDER_CONFIG = {
   openai: {
     models: ["gpt-4o", "gpt-3.5-turbo", "gpt-4.1-2025-04-14", "o3-2025-04-16"] as const,
     logo: "/openai.svg",
+    modelLogos: {
+      "gpt-4o": "/openai.svg",
+      "gpt-3.5-turbo": "/openai.svg",
+      "gpt-4.1-2025-04-14": "/openai.svg",
+      "o3-2025-04-16": "/openai.svg",
+    } as const,
     displayNames: {
       "gpt-4o": "GPT-4o",
       "gpt-3.5-turbo": "GPT-3.5 Turbo",
@@ -15,6 +21,10 @@ export const PROVIDER_CONFIG = {
   google: {
     models: ["gemini-2.0-flash", "gemini-1.5-pro"] as const,
     logo: "/gemini.svg",
+    modelLogos: {
+      "gemini-2.0-flash": "/gemini.svg",
+      "gemini-1.5-pro": "/gemini.svg",
+    } as const,
     displayNames: {
       "gemini-2.0-flash": "Gemini 2.0 Flash",
       "gemini-1.5-pro": "Gemini 1.5 Pro",
@@ -28,6 +38,12 @@ export const PROVIDER_CONFIG = {
       "claude-sonnet-4-20250514",
     ] as const,
     logo: "/anthropic.svg",
+    modelLogos: {
+      "claude-3-7-sonnet-latest": "/anthropic.svg",
+      "claude-3-5-haiku-latest": "/anthropic.svg",
+      "claude-opus-4-20250514": "/anthropic.svg",
+      "claude-sonnet-4-20250514": "/anthropic.svg",
+    } as const,
     displayNames: {
       "claude-3-7-sonnet-latest": "Claude 3.7 Sonnet",
       "claude-3-5-haiku-latest": "Claude 3.5 Haiku",
@@ -36,15 +52,41 @@ export const PROVIDER_CONFIG = {
     } as const,
   },
   groq: {
-    models: ["meta-llama/llama-4-scout-17b-16e-instruct"] as const,
+    models: [
+      "meta-llama/llama-4-scout-17b-16e-instruct",
+      "openai/gpt-oss-20b",
+      "openai/gpt-oss-120b",
+      "moonshotai/kimi-k2-instruct",
+    ] as const,
     logo: "/meta.svg",
+    modelLogos: {
+      "meta-llama/llama-4-scout-17b-16e-instruct": "/meta.svg",
+      "openai/gpt-oss-20b": "/openai.svg",
+      "openai/gpt-oss-120b": "/openai.svg",
+      "moonshotai/kimi-k2-instruct": "/moonshot.svg",
+    } as const,
     displayNames: {
       "meta-llama/llama-4-scout-17b-16e-instruct": "Llama 4 Scout",
+      "openai/gpt-oss-20b": "GPT-OSS 20B",
+      "openai/gpt-oss-120b": "GPT-OSS 120B",
+      "moonshotai/kimi-k2-instruct": "Kimi K2",
     } as const,
   },
 } as const;
 
 export const SPECIAL_LLAMA_PROMPT = `It is extremely important that you only respond in the "message" field in JSON format. Use the "usedSourceIndexes" field for any sources used, or an empty array if no sources are used. Do not return any fields that do not match the given schema.`;
+
+export const KIMI_K2_PROMPT = `You must respond with a valid JSON object containing exactly two fields:
+1. "message": Your response as a string
+2. "usedSourceIndexes": An array of numbers representing the indexes of sources used, or an empty array if no sources were used
+
+Example format:
+{
+  "message": "Your response here",
+  "usedSourceIndexes": [0, 1]
+}
+
+Do not include any other fields or text outside the JSON object.`;
 
 // Default values
 // If adding a new provider, update app/api/conversations/[conversationId]/messages/utils.ts using the vercel ai-sdk
@@ -65,20 +107,19 @@ export const modelSchema = z.enum(ALL_VALID_MODELS as [string, ...string[]]);
 // Type for validated model names
 export type LLMModel = z.infer<typeof modelSchema>;
 
-// Schema for array of models (used for enabledModels)
-export const modelArraySchema = z.array(modelSchema).min(1, "At least one model must be enabled").nullable();
+// Schema for array of models (used for disabledModels)
+export const modelArraySchema = z.array(modelSchema).nullable();
 
-// Helper function to get enabled models, handling null case
-export function getEnabledModels(enabledModels: string[] | null): string[] {
-  if (enabledModels === null) {
-    return ALL_VALID_MODELS;
+// Helper function to get disabled models, handling null case
+export function getDisabledModels(disabledModels: string[] | null): string[] {
+  if (disabledModels === null) {
+    return [];
   }
   // Filter out any models that aren't in ALL_VALID_MODELS
-  return enabledModels.filter((model) => ALL_VALID_MODELS.includes(model));
+  return disabledModels.filter((model) => ALL_VALID_MODELS.includes(model));
 }
 
-/// ***** DURING TRANSITION *******
-// Helper function to get enabled models from disabled models (new approach)
+// Helper function to get enabled models from disabled models
 export function getEnabledModelsFromDisabled(disabledModels: string[] | null): string[] {
   if (disabledModels === null) {
     return ALL_VALID_MODELS;
@@ -87,15 +128,6 @@ export function getEnabledModelsFromDisabled(disabledModels: string[] | null): s
   return ALL_VALID_MODELS.filter((model) => !disabledModels.includes(model));
 }
 
-// Helper function to get disabled models from enabled models (for migration)
-export function getDisabledModelsFromEnabled(enabledModels: string[] | null): string[] {
-  if (enabledModels === null) {
-    return [];
-  }
-  // Return all valid models that are not in the enabled list
-  return ALL_VALID_MODELS.filter((model) => !enabledModels.includes(model));
-}
-/// ***** DURING TRANSITION *******
 export function getProviderForModel(model: string): LLMProvider | null {
   // Validate the model first
   const parsed = modelSchema.safeParse(model);
@@ -113,7 +145,12 @@ export function getProviderForModel(model: string): LLMProvider | null {
 export const LLM_LOGO_MAP = Object.fromEntries(
   ALL_VALID_MODELS.map((model) => {
     const provider = getProviderForModel(model);
-    return [model, [model, provider ? PROVIDER_CONFIG[provider].logo : ""]];
+    if (!provider) return [model, [model, ""]];
+
+    const providerConfig = PROVIDER_CONFIG[provider];
+    // Use model-specific logo if available, otherwise fall back to provider logo
+    const logo = providerConfig.modelLogos?.[model as keyof typeof providerConfig.modelLogos] || providerConfig.logo;
+    return [model, [model, logo]];
   }),
 ) as Record<LLMModel, [string, string]>;
 

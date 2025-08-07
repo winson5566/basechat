@@ -6,14 +6,12 @@ import { useGlobalState } from "@/app/(main)/o/[slug]/context";
 import Chatbot from "@/components/chatbot";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Profile } from "@/lib/api";
-import { LLMModel } from "@/lib/llm/types";
+import { LLMModel, getEnabledModelsFromDisabled } from "@/lib/llm/types";
 import { SourceMetadata } from "@/lib/types";
 
 import { ProfileProvider } from "../../profile-context";
 
-
 import Summary from "./summary";
-
 
 interface Props {
   id: string;
@@ -22,7 +20,7 @@ interface Props {
     logoUrl?: string | null;
     slug: string;
     id: string;
-    enabledModels: LLMModel[];
+    disabledModels: LLMModel[];
     defaultModel: LLMModel | null;
     isBreadth: boolean | null;
     rerankEnabled: boolean | null;
@@ -49,16 +47,17 @@ export default function Conversation({ id, tenant, profile }: Props) {
   } = useGlobalState();
 
   // Move the default model logic outside useEffect
-  const defaultModel = tenant.defaultModel || tenant.enabledModels[0];
+  const enabledModels = getEnabledModelsFromDisabled(tenant.disabledModels);
+  const defaultModel = tenant.defaultModel || enabledModels[0];
 
   // Simplified useEffect that only handles validation
   useEffect(() => {
-    if (initialModel && tenant.enabledModels.length > 0) {
-      if (!tenant.enabledModels.includes(initialModel)) {
+    if (initialModel && enabledModels.length > 0) {
+      if (!enabledModels.includes(initialModel)) {
         setInitialModel(defaultModel);
       }
     }
-  }, [initialModel, tenant.enabledModels, setInitialModel, defaultModel]);
+  }, [initialModel, enabledModels, setInitialModel, defaultModel]);
 
   // Only clear the initial message if it has been consumed
   useEffect(() => {

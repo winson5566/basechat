@@ -1,7 +1,7 @@
 import { NextRequest } from "next/server";
 
 import { conversationMessagesResponseSchema, createConversationMessageRequestSchema } from "@/lib/api";
-import { DEFAULT_MODEL, DEFAULT_PROVIDER, getProviderForModel } from "@/lib/llm/types";
+import { DEFAULT_MODEL, DEFAULT_PROVIDER, getProviderForModel, getEnabledModelsFromDisabled } from "@/lib/llm/types";
 import {
   ConversationContext,
   MessageDAO,
@@ -47,7 +47,8 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 
   let provider = getProviderForModel(modelInJson);
   let model = modelInJson;
-  if (!provider || !tenant.enabledModels.includes(modelInJson)) {
+  const enabledModels = getEnabledModelsFromDisabled(tenant.disabledModels);
+  if (!provider || !enabledModels.includes(modelInJson)) {
     console.log(`Invalid model or model not enabled for tenant: ${model}`);
     console.log(`Using default model: ${DEFAULT_MODEL} and default provider: ${DEFAULT_PROVIDER}`);
     provider = DEFAULT_PROVIDER;

@@ -15,7 +15,7 @@ import {
 } from "drizzle-orm/pg-core";
 import { z } from "zod";
 
-import { DEFAULT_MODEL, ALL_VALID_MODELS, modelSchema, modelArraySchema } from "@/lib/llm/types";
+import { DEFAULT_MODEL, modelSchema, modelArraySchema } from "@/lib/llm/types";
 
 const timestampFields = {
   createdAt: timestamp("created_at", { withTimezone: true, mode: "date" }).defaultNow().notNull(),
@@ -82,7 +82,6 @@ export const tenants = pgTable(
     logoFileName: text("logo_file_name"), // The name of the file that was uploaded
     logoObjectName: text("logo_object_name"), // The name of the object in the bucket
     logoUrl: text("logo_url"), // The publicly accessible URL of the object
-    enabledModels: text("enabled_models").array().default(ALL_VALID_MODELS).$type<z.infer<typeof modelArraySchema>>(),
     disabledModels: text("disabled_models").array().default([]).$type<z.infer<typeof modelArraySchema>>(),
     defaultModel: text("default_model").default(DEFAULT_MODEL).$type<z.infer<typeof modelSchema>>(),
     isBreadth: boolean("is_breadth").default(false),

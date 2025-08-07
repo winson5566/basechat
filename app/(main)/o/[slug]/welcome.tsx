@@ -11,7 +11,7 @@ import Logo from "@/components/tenant/logo/logo";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Profile } from "@/lib/api";
 import { DEFAULT_WELCOME_MESSAGE } from "@/lib/constants";
-import { DEFAULT_MODEL, LLMModel, modelSchema, getEnabledModels } from "@/lib/llm/types";
+import { DEFAULT_MODEL, LLMModel, modelSchema, getEnabledModelsFromDisabled } from "@/lib/llm/types";
 import { getConversationPath } from "@/lib/paths";
 import * as schema from "@/lib/server/db/schema";
 
@@ -37,7 +37,7 @@ export default function Welcome({ tenant, className, profile }: Props) {
   const [prioritizeRecent, setPrioritizeRecent] = useState(tenant.prioritizeRecent ?? false);
   const [settingsLoaded, setSettingsLoaded] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
-  const enabledModels = useMemo(() => getEnabledModels(tenant.enabledModels), [tenant.enabledModels]);
+  const enabledModels = useMemo(() => getEnabledModelsFromDisabled(tenant.disabledModels), [tenant.disabledModels]);
 
   const [selectedModel, setSelectedModel] = useState<LLMModel>(() => {
     if (typeof window !== "undefined") {
