@@ -15,7 +15,7 @@ import { assertNever } from "assert-never";
 import { z } from "zod";
 
 import { createConversationMessageResponseSchema } from "@/lib/api";
-import { DEFAULT_PROVIDER, getProviderForModel, SPECIAL_LLAMA_PROMPT } from "@/lib/llm/types";
+import { DEFAULT_PROVIDER, getProviderForModel, SPECIAL_LLAMA_PROMPT, KIMI_K2_PROMPT } from "@/lib/llm/types";
 
 export type ConversationMessageResponse = z.infer<typeof createConversationMessageResponseSchema>;
 
@@ -69,9 +69,15 @@ export abstract class AbstractGenerator implements Generator {
 
   protected abstract _languageModelFactory(model: string): LanguageModel;
 
-  protected _getSystem(): string | undefined {
+  protected _getSystem = () => {
+    if (this.model === "moonshotai/kimi-k2-instruct") {
+      return KIMI_K2_PROMPT;
+    }
+    if (this.model === "meta-llama/llama-4-scout-17b-16e-instruct") {
+      return SPECIAL_LLAMA_PROMPT;
+    }
     return undefined;
-  }
+  };
 
   async generateObject(context: GenerateContext) {
     const model = this._languageModelFactory(this.model);
@@ -135,8 +141,6 @@ export class GoogleGenerator extends SortedMessageGenerator {
 
 export class GroqGenerator extends AbstractGenerator {
   _languageModelFactory = (model: string) => groq(model);
-
-  protected _getSystem = () => SPECIAL_LLAMA_PROMPT;
 }
 
 export class OpenAIGenerator extends AbstractGenerator {
