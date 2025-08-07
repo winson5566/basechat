@@ -16,6 +16,7 @@ import {
   ORB_PRO_ANNUAL_PLAN_ID,
   ORB_PRO_PLAN_ID,
   ORB_STARTER_PLAN_ID,
+  ORB_PRO_SEATS_ONLY_PLAN_ID,
 } from "./server/settings";
 import { nowUtc } from "./utils";
 
@@ -246,6 +247,8 @@ export async function getPlanIdFromType(planType: PlanType) {
       return ORB_PRO_PLAN_ID;
     case "proAnnual":
       return ORB_PRO_ANNUAL_PLAN_ID;
+    case "proSeatsOnly":
+      return ORB_PRO_SEATS_ONLY_PLAN_ID;
     default:
       assertNever(planType);
   }
@@ -261,6 +264,8 @@ export async function getPlanTypeFromId(planId: string) {
       return "pro";
     case ORB_PRO_ANNUAL_PLAN_ID:
       return "proAnnual";
+    case ORB_PRO_SEATS_ONLY_PLAN_ID:
+      return "proSeatsOnly";
     default:
       return undefined;
   }
