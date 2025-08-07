@@ -6,7 +6,7 @@ import { Invoice } from "orb-billing/resources/invoices.mjs";
 
 import { H1 } from "@/components/ui/typography";
 import { getCurrentPlan } from "@/lib/billing/tenant";
-import { changePlan } from "@/lib/orb";
+import { changePlan, isCurrentlyOnFreeTier } from "@/lib/orb";
 import { planTypeSchema, PLANS } from "@/lib/orb-types";
 import { getPricingPlansPath } from "@/lib/paths";
 import { provisionBillingCustomer } from "@/lib/server/billing";
@@ -67,6 +67,7 @@ export default async function UpgradePlan({ searchParams, params }: Props) {
   }
 
   const tenantWithMetadata = {
+    id: tenant.id,
     slug: tenant.slug,
     metadata: {
       stripeCustomerId,
@@ -75,10 +76,16 @@ export default async function UpgradePlan({ searchParams, params }: Props) {
     },
   };
 
-  //TODO: ^ the stripe and orb info here in the metadata are from creation above, not from DB
-
   // Get preview of plan change
-  const changePreview = await changePlan(targetPlan.planType, true, tenantWithMetadata);
+
+  let onFreeTier = false;
+  if (currentPlan) {
+    onFreeTier = isCurrentlyOnFreeTier(currentPlan);
+  } else {
+    onFreeTier = true;
+  }
+
+  const changePreview = await changePlan(targetPlan.planType, true, onFreeTier, tenantWithMetadata);
   const previewInvoices = ((changePreview as any)?.changed_resources?.created_invoices || []).map(
     (invoice: Invoice) => ({
       id: invoice.id,
