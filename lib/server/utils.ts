@@ -9,7 +9,12 @@ import auth from "@/auth";
 
 import { getCheckPath, getSignInPath, getTenantPath } from "../paths";
 
-import { findTenantBySlug, getCachedAuthContextByUserId, updateTenantPaidStatus } from "./service";
+import {
+  findTenantBySlug,
+  getCachedAuthContextByUserId,
+  invalidateAuthContextCacheForTenant,
+  updateTenantPaidStatus,
+} from "./service";
 import { BILLING_ENABLED } from "./settings";
 
 const tenantSchema = z.string();
@@ -33,6 +38,7 @@ export async function requireAuthContext(slug: string) {
     tenant.trialExpiresAt < new Date()
   ) {
     await updateTenantPaidStatus(tenant.id, "expired");
+    await invalidateAuthContextCacheForTenant(tenant.id);
   }
 
   return { profile, tenant, session };

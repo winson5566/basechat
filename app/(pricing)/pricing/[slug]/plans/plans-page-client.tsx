@@ -13,7 +13,9 @@ import { getDataPath } from "@/lib/paths";
 // Helper function to normalize pro and proAnnual
 function normalizePlanName(planName: string | undefined): string | undefined {
   if (!planName) return undefined;
-  return planName === "proAnnual" ? "pro" : planName;
+  if (planName === "proAnnual") return "pro";
+  if (planName === "proSeatsOnly") return "pro";
+  return planName;
 }
 
 interface PlansPageContentProps {
@@ -21,7 +23,7 @@ interface PlansPageContentProps {
     name: string;
     slug: string;
   };
-  currentPlanName: string | undefined; // "developer" "starter" "pro" "proAnnual"
+  currentPlanName: string | undefined; // "developer" "starter" "pro" "proAnnual" "proSeatsOnly"
 }
 
 function TierFeatureContent({ check, text }: { check: boolean; text: React.ReactNode | string | undefined }) {

@@ -121,7 +121,7 @@ export function getDisabledModels(disabledModels: string[] | null): string[] {
 
 // Helper function to get enabled models from disabled models
 export function getEnabledModelsFromDisabled(disabledModels: string[] | null): string[] {
-  if (disabledModels === null) {
+  if (!disabledModels?.length) {
     return ALL_VALID_MODELS;
   }
   // Return all valid models except the disabled ones

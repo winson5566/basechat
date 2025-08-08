@@ -10,6 +10,7 @@ import { changePlan, isCurrentlyOnFreeTier } from "@/lib/orb";
 import { planTypeSchema, PLANS } from "@/lib/orb-types";
 import { getPricingPlansPath } from "@/lib/paths";
 import { provisionBillingCustomer } from "@/lib/server/billing";
+import { getMembersByTenantId } from "@/lib/server/service";
 import { BASE_URL, NEXT_PUBLIC_STRIPE_PUBLIC_KEY } from "@/lib/server/settings";
 import { requireAdminContext } from "@/lib/server/utils";
 import { getStripeCustomer } from "@/lib/stripe";
@@ -54,7 +55,7 @@ export default async function UpgradePlan({ searchParams, params }: Props) {
   assert(typeof orbSubscriptionId === "string", "Orb subscription ID not found");
 
   const currentPlan = metadata ? getCurrentPlan(metadata) : null;
-  const currentSeatCount = currentPlan?.seats ?? 0;
+  let currentSeatCount = currentPlan?.seats ?? 0;
 
   const customer = await getStripeCustomer(stripeCustomerId);
   if (customer.deleted) {
@@ -83,6 +84,11 @@ export default async function UpgradePlan({ searchParams, params }: Props) {
     onFreeTier = await isCurrentlyOnFreeTier(currentPlan);
   } else {
     onFreeTier = true;
+  }
+
+  if (onFreeTier) {
+    const { totalUsers, totalInvites } = await getMembersByTenantId(tenant.id, 1, 10);
+    currentSeatCount = Number(totalUsers) + Number(totalInvites);
   }
 
   const changePreview = await changePlan(targetPlan.planType, true, onFreeTier, tenantWithMetadata);

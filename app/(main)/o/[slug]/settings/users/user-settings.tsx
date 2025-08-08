@@ -92,6 +92,7 @@ export default function UserSettings({
   const openSeats = currentPlanSeats ? currentPlanSeats - (Number(totalUsers) + Number(totalInvites)) : 0;
 
   const chatbotDisabled = tenant.paidStatus === "expired";
+  const chatbotFreeTier = tenant.paidStatus === "trial";
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -161,7 +162,11 @@ export default function UserSettings({
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     const currentUsage = Number(totalUsers) + Number(totalInvites) + values.emails.length;
-    const needsMoreSeats = effectiveSeats !== undefined && currentPlan !== "developer" && currentUsage > effectiveSeats;
+    const needsMoreSeats =
+      effectiveSeats !== undefined &&
+      currentPlan !== undefined &&
+      currentPlan !== "developer" &&
+      currentUsage > effectiveSeats;
 
     if (needsMoreSeats) {
       toast.error("You need to add more seats to continue");
@@ -335,23 +340,25 @@ export default function UserSettings({
                 <DialogHeader>
                   <DialogTitle>Invite users</DialogTitle>
                 </DialogHeader>
-                {effectiveSeats !== undefined && currentPlan !== "developer" && (
-                  <div className="text-sm text-[#74747A] mt-2">
-                    {(() => {
-                      const currentUsage =
-                        Number(totalUsers) + Number(totalInvites) + (form.getValues("emails")?.length || 0);
-                      const remaining = effectiveSeats - currentUsage;
-                      if (remaining > 0) {
-                        return `${remaining} seat${remaining === 1 ? "" : "s"} left`;
-                      } else if (remaining === 0) {
-                        return "0 seats left";
-                      } else {
-                        const additional = Math.abs(remaining);
-                        return `0 seats left, ${additional} additional seat${additional === 1 ? "" : "s"} required`;
-                      }
-                    })()}
-                  </div>
-                )}
+                {effectiveSeats !== undefined &&
+                  currentPlan !== undefined &&
+                  currentPlan !== "developer" && ( // TODO: handle if currentPlan is undefined
+                    <div className="text-sm text-[#74747A] mt-2">
+                      {(() => {
+                        const currentUsage =
+                          Number(totalUsers) + Number(totalInvites) + (form.getValues("emails")?.length || 0);
+                        const remaining = effectiveSeats - currentUsage;
+                        if (remaining > 0) {
+                          return `${remaining} seat${remaining === 1 ? "" : "s"} left`;
+                        } else if (remaining === 0) {
+                          return "0 seats left";
+                        } else {
+                          const additional = Math.abs(remaining);
+                          return `0 seats left, ${additional} additional seat${additional === 1 ? "" : "s"} required`;
+                        }
+                      })()}
+                    </div>
+                  )}
                 <Form {...form}>
                   <form onSubmit={form.handleSubmit(onSubmit)}>
                     <FormField
@@ -397,7 +404,10 @@ export default function UserSettings({
                         const currentUsage =
                           Number(totalUsers) + Number(totalInvites) + (form.getValues("emails")?.length || 0);
                         const needsMoreSeats =
-                          effectiveSeats !== undefined && currentPlan !== "developer" && currentUsage > effectiveSeats;
+                          effectiveSeats !== undefined &&
+                          currentPlan !== undefined &&
+                          currentPlan !== "developer" &&
+                          currentUsage > effectiveSeats;
                         const additionalSeats = Number(currentUsage) - Number(effectiveSeats);
 
                         if (needsMoreSeats) {
@@ -447,9 +457,11 @@ export default function UserSettings({
             {Number(totalUsers) + Number(totalInvites)}{" "}
             {Number(totalUsers) + Number(totalInvites) === 1 ? "user" : "users"}
           </div>
-          <div className="ml-4">
-            {openSeats} {openSeats == 1 ? "open seat" : "open seats"}
-          </div>
+          {!chatbotFreeTier && (
+            <div className="ml-4">
+              {openSeats} {openSeats == 1 ? "open seat" : "open seats"}
+            </div>
+          )}
         </div>
         <div className="max-h-[calc(100vh-365px)] overflow-y-auto">
           <Table>
