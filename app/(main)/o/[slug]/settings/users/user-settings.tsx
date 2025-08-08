@@ -108,9 +108,6 @@ export default function UserSettings({
     currentPlan: string | undefined,
     currentUsage?: number,
   ): boolean => {
-    console.log("effectiveSeats", effectiveSeats);
-    console.log("currentPlan", currentPlan);
-    console.log("currentUsage", currentUsage);
     if (effectiveSeats === undefined || currentPlan === undefined || currentPlan === "developer") {
       return false;
     }
