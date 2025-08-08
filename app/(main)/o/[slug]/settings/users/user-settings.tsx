@@ -108,6 +108,9 @@ export default function UserSettings({
     currentPlan: string | undefined,
     currentUsage?: number,
   ): boolean => {
+    console.log("effectiveSeats", effectiveSeats);
+    console.log("currentPlan", currentPlan);
+    console.log("currentUsage", currentUsage);
     if (effectiveSeats === undefined || currentPlan === undefined || currentPlan === "developer") {
       return false;
     }
@@ -350,7 +353,7 @@ export default function UserSettings({
                 <DialogHeader>
                   <DialogTitle>Invite users</DialogTitle>
                 </DialogHeader>
-                {needMoreSeats(effectiveSeats, currentPlan) && (
+                {effectiveSeats !== undefined && currentPlan !== undefined && currentPlan !== "developer" && (
                   <div className="text-sm text-[#74747A] mt-2">
                     {(() => {
                       const currentUsage = totalUsers + totalInvites + (form.getValues("emails")?.length || 0);
