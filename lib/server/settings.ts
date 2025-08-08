@@ -70,6 +70,7 @@ export const ORB_DEVELOPER_PLAN_ID = process.env.ORB_DEVELOPER_PLAN_ID!;
 export const ORB_STARTER_PLAN_ID = process.env.ORB_STARTER_PLAN_ID!;
 export const ORB_PRO_PLAN_ID = process.env.ORB_PRO_PLAN_ID!;
 export const ORB_PRO_ANNUAL_PLAN_ID = process.env.ORB_PRO_ANNUAL_PLAN_ID!;
+export const ORB_PRO_SEATS_ONLY_PLAN_ID = process.env.ORB_PRO_SEATS_ONLY_PLAN_ID!;
 
 // Google Cloud Tasks - Optional
 export const GOOGLE_PROJECT_ID = process.env.GOOGLE_PROJECT_ID;

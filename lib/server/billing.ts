@@ -84,7 +84,7 @@ export async function provisionBillingCustomer(tenantId: string, userFullName: s
     if (!orbSubscriptionId) {
       const seatPriceId = await getPlanSeatId(await getPlanById(ORB_DEVELOPER_PLAN_ID));
       const { totalUsers, totalInvites } = await getMembersByTenantId(tenantId, 1, 10);
-      const usedSeatCount = Number(totalUsers) + Number(totalInvites);
+      const usedSeatCount = totalUsers + totalInvites;
       const orbSubscription = await orb.subscriptions.create({
         customer_id: orbCustomerId,
         plan_id: ORB_DEVELOPER_PLAN_ID,

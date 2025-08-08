@@ -1,12 +1,14 @@
 import Orb from "orb-billing";
 import { z } from "zod";
 
+// used on the pricing page for in-app upgrades
 export const tierSchema = z.union([
   z.literal("developer"),
   z.literal("starter"),
   z.literal("pro"),
   z.literal("proAnnual"),
   z.literal("enterprise"),
+  z.literal("proSeatsOnly"),
 ]);
 
 export type Tier = z.infer<typeof tierSchema>;
@@ -16,6 +18,7 @@ export const planTypeSchema = z.union([
   z.literal("starter"),
   z.literal("pro"),
   z.literal("proAnnual"),
+  z.literal("proSeatsOnly"),
 ]);
 
 export type PlanType = z.infer<typeof planTypeSchema>;
@@ -95,9 +98,23 @@ export const PLANS: Record<PlanType, PlanDef> = {
     hostingLimit: 100, // 100 GB
     alternateCycleType: "pro",
   },
+  proSeatsOnly: {
+    // special plan for tenants using their own api key and paying for Ragie Pro plan.
+    planType: "proSeatsOnly", // must upgrade with sales assist, webhook will update plan
+    billingCycle: "monthly",
+    tier: "proSeatsOnly",
+    price: 0,
+    displayName: "Pro",
+    description: "Designed for growing teams and content",
+    partitionLimit: 60000,
+    streamingLimit: 1, // 1 TB
+    audioLimit: 100,
+    videoLimit: 100,
+    hostingLimit: 100, // 100 GB
+  },
 };
 
-export const TIER_UPGRADE_PATH = ["developer", "starter", "pro", "proAnnual", "enterprise"] as const;
+export const TIER_UPGRADE_PATH = ["developer", "starter", "pro", "proAnnual", "proSeatsOnly", "enterprise"] as const;
 
 export const SEAT_ADD_ON_NAME = "Seat license";
 export const SEAT_COST = 18;

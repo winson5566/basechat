@@ -5,17 +5,19 @@ import assert from "assert";
 import assertNever from "assert-never";
 import { addMonths, startOfMonth, differenceInDays } from "date-fns";
 import Orb from "orb-billing";
-import { Plan, Price, Subscription, SubscriptionSchedulePlanChangeParams } from "orb-billing/resources/index.mjs";
+import { Plan, Price, Subscription } from "orb-billing/resources/index.mjs";
 
-import { getCurrentPlan } from "./billing/tenant";
+import { getCurrentPlan, TenantPlan } from "./billing/tenant";
 import { PlanType, SEAT_ADD_ON_NAME, SeatChangePreview } from "./orb-types";
 import { getExistingMetadata } from "./server/billing";
+import { getMembersByTenantId } from "./server/service";
 import {
   ORB_API_KEY,
   ORB_DEVELOPER_PLAN_ID,
   ORB_PRO_ANNUAL_PLAN_ID,
   ORB_PRO_PLAN_ID,
   ORB_STARTER_PLAN_ID,
+  ORB_PRO_SEATS_ONLY_PLAN_ID,
 } from "./server/settings";
 import { nowUtc } from "./utils";
 
@@ -99,7 +101,9 @@ export async function updateSeats(orbSubscriptionId: string, seats: number) {
 export async function changePlan(
   nextPlanType: PlanType,
   preview: boolean = false,
+  isCurrentlyOnFreeTier: boolean = false,
   tenant: {
+    id: string;
     metadata: {
       stripeCustomerId: string;
       orbCustomerId: string;
@@ -113,7 +117,18 @@ export async function changePlan(
   }
 
   const sub = await orb.subscriptions.fetch(tenant.metadata.orbSubscriptionId);
-  const seatCount = await getUpcomingSubscriptionSeatCount(sub);
+
+  let seatCount = 0;
+  // Users are not able to purchase seats on free tier
+  // If users are upgrading from free tier, they may have multiple users with 0 seats in the Orb plan
+  // We need to make them pay for all active users upon plan upgrade
+  if (isCurrentlyOnFreeTier) {
+    const { totalUsers, totalInvites } = await getMembersByTenantId(tenant.id, 1, 10);
+    seatCount = totalUsers + totalInvites;
+  } else {
+    seatCount = await getUpcomingSubscriptionSeatCount(sub);
+  }
+
   const currPlan = sub.plan;
   if (!currPlan) {
     throw new Error("Current plan not found");
@@ -246,6 +261,8 @@ export async function getPlanIdFromType(planType: PlanType) {
       return ORB_PRO_PLAN_ID;
     case "proAnnual":
       return ORB_PRO_ANNUAL_PLAN_ID;
+    case "proSeatsOnly":
+      return ORB_PRO_SEATS_ONLY_PLAN_ID;
     default:
       assertNever(planType);
   }
@@ -261,9 +278,15 @@ export async function getPlanTypeFromId(planId: string) {
       return "pro";
     case ORB_PRO_ANNUAL_PLAN_ID:
       return "proAnnual";
+    case ORB_PRO_SEATS_ONLY_PLAN_ID:
+      return "proSeatsOnly";
     default:
       return undefined;
   }
+}
+
+export async function isCurrentlyOnFreeTier(currentPlan: TenantPlan): Promise<boolean> {
+  return currentPlan.name === "developer";
 }
 
 export async function getPlanById(planId: string) {

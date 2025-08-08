@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
-import { changePlan, isCurrentlyOnSubscription } from "@/lib/orb";
+import { getCurrentPlan } from "@/lib/billing/tenant";
+import { changePlan, isCurrentlyOnFreeTier, isCurrentlyOnSubscription } from "@/lib/orb";
 import { requireAdminContextFromRequest } from "@/lib/server/utils";
 
 export async function POST(req: NextRequest) {
@@ -20,6 +21,7 @@ export async function POST(req: NextRequest) {
     }
 
     const tenantWithMetadata = {
+      id: tenant.id,
       metadata: {
         stripeCustomerId,
         orbCustomerId,
@@ -31,7 +33,16 @@ export async function POST(req: NextRequest) {
     if (onSubscription) {
       return NextResponse.json({ error: "You are already on that plan" }, { status: 400 });
     }
-    const updatedSubscription = await changePlan(planType, false, tenantWithMetadata);
+
+    let onFreeTier = false;
+    const currentPlan = getCurrentPlan(metadata);
+    if (currentPlan) {
+      onFreeTier = await isCurrentlyOnFreeTier(currentPlan);
+    } else {
+      onFreeTier = true;
+    }
+
+    const updatedSubscription = await changePlan(planType, false, onFreeTier, tenantWithMetadata);
 
     return NextResponse.json({ success: true, subscription: updatedSubscription });
   } catch (error) {
