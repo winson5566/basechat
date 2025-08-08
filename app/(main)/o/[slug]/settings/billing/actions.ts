@@ -87,7 +87,7 @@ export async function getBillingInfo(tenantSlug: string) {
 
     // Get user count
     const { totalUsers, totalInvites } = await getMembersByTenantId(tenant.id, 1, 10);
-    const userCount = Number(totalUsers) + Number(totalInvites);
+    const userCount = totalUsers + totalInvites;
 
     // Orb data
     const orb = new Orb({ apiKey: ORB_API_KEY });

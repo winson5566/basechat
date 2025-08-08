@@ -89,7 +89,7 @@ export default function UserSettings({
   const [effectiveSeats, setEffectiveSeats] = useState(currentPlanSeats || 0);
   const loadMoreRef = useRef<HTMLDivElement>(null);
 
-  const openSeats = currentPlanSeats ? currentPlanSeats - (Number(totalUsers) + Number(totalInvites)) : 0;
+  const openSeats = currentPlanSeats ? currentPlanSeats - (totalUsers + totalInvites) : 0;
 
   const chatbotDisabled = tenant.paidStatus === "expired";
   const chatbotFreeTier = tenant.paidStatus === "trial";
@@ -101,6 +101,20 @@ export default function UserSettings({
 
   const resetForm = () => {
     form.reset();
+  };
+
+  const needMoreSeats = (
+    effectiveSeats: number | undefined,
+    currentPlan: string | undefined,
+    currentUsage?: number,
+  ): boolean => {
+    if (effectiveSeats === undefined || currentPlan === undefined || currentPlan === "developer") {
+      return false;
+    }
+    if (currentUsage !== undefined) {
+      return currentUsage > effectiveSeats;
+    }
+    return false;
   };
 
   const handleEmailsChange = (value: string) => {
@@ -161,12 +175,8 @@ export default function UserSettings({
   }, [loadMore]);
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    const currentUsage = Number(totalUsers) + Number(totalInvites) + values.emails.length;
-    const needsMoreSeats =
-      effectiveSeats !== undefined &&
-      currentPlan !== undefined &&
-      currentPlan !== "developer" &&
-      currentUsage > effectiveSeats;
+    const currentUsage = totalUsers + totalInvites + values.emails.length;
+    const needsMoreSeats = needMoreSeats(effectiveSeats, currentPlan, currentUsage);
 
     if (needsMoreSeats) {
       toast.error("You need to add more seats to continue");
@@ -340,25 +350,22 @@ export default function UserSettings({
                 <DialogHeader>
                   <DialogTitle>Invite users</DialogTitle>
                 </DialogHeader>
-                {effectiveSeats !== undefined &&
-                  currentPlan !== undefined &&
-                  currentPlan !== "developer" && ( // TODO: handle if currentPlan is undefined
-                    <div className="text-sm text-[#74747A] mt-2">
-                      {(() => {
-                        const currentUsage =
-                          Number(totalUsers) + Number(totalInvites) + (form.getValues("emails")?.length || 0);
-                        const remaining = effectiveSeats - currentUsage;
-                        if (remaining > 0) {
-                          return `${remaining} seat${remaining === 1 ? "" : "s"} left`;
-                        } else if (remaining === 0) {
-                          return "0 seats left";
-                        } else {
-                          const additional = Math.abs(remaining);
-                          return `0 seats left, ${additional} additional seat${additional === 1 ? "" : "s"} required`;
-                        }
-                      })()}
-                    </div>
-                  )}
+                {needMoreSeats(effectiveSeats, currentPlan) && (
+                  <div className="text-sm text-[#74747A] mt-2">
+                    {(() => {
+                      const currentUsage = totalUsers + totalInvites + (form.getValues("emails")?.length || 0);
+                      const remaining = effectiveSeats - currentUsage;
+                      if (remaining > 0) {
+                        return `${remaining} seat${remaining === 1 ? "" : "s"} left`;
+                      } else if (remaining === 0) {
+                        return "0 seats left";
+                      } else {
+                        const additional = Math.abs(remaining);
+                        return `0 seats left, ${additional} additional seat${additional === 1 ? "" : "s"} required`;
+                      }
+                    })()}
+                  </div>
+                )}
                 <Form {...form}>
                   <form onSubmit={form.handleSubmit(onSubmit)}>
                     <FormField
@@ -401,14 +408,9 @@ export default function UserSettings({
                     />
                     <DialogFooter className="mt-8">
                       {(() => {
-                        const currentUsage =
-                          Number(totalUsers) + Number(totalInvites) + (form.getValues("emails")?.length || 0);
-                        const needsMoreSeats =
-                          effectiveSeats !== undefined &&
-                          currentPlan !== undefined &&
-                          currentPlan !== "developer" &&
-                          currentUsage > effectiveSeats;
-                        const additionalSeats = Number(currentUsage) - Number(effectiveSeats);
+                        const currentUsage = totalUsers + totalInvites + (form.getValues("emails")?.length || 0);
+                        const needsMoreSeats = needMoreSeats(effectiveSeats, currentPlan, currentUsage);
+                        const additionalSeats = currentUsage - effectiveSeats;
 
                         if (needsMoreSeats) {
                           return (
@@ -454,8 +456,7 @@ export default function UserSettings({
       <div className="mt-14">
         <div className="text-[#74747A] mb-1.5 flex">
           <div>
-            {Number(totalUsers) + Number(totalInvites)}{" "}
-            {Number(totalUsers) + Number(totalInvites) === 1 ? "user" : "users"}
+            {totalUsers + totalInvites} {totalUsers + totalInvites === 1 ? "user" : "users"}
           </div>
           {!chatbotFreeTier && (
             <div className="ml-4">

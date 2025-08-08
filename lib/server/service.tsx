@@ -165,11 +165,11 @@ export async function saveConnection(tenantId: string, ragieConnectionId: string
   }
 }
 
-export async function getMembersByTenantId(
+async function getMembersByTenantIdInternal(
   tenantId: string,
   page: number = 1,
   pageSize: number = 10,
-): Promise<{ members: Member[]; totalUsers: number; totalInvites: number }> {
+): Promise<{ members: Member[]; totalUsersInternal: number; totalInvitesInternal: number }> {
   const offset = (page - 1) * pageSize;
 
   const [members, totalUsers, totalInvites] = await Promise.all([
@@ -211,7 +211,22 @@ export async function getMembersByTenantId(
       .where(eq(schema.invites.tenantId, tenantId)),
   ]);
 
-  return { members, totalUsers: totalUsers[0].count, totalInvites: totalInvites[0].count };
+  return { members, totalUsersInternal: totalUsers[0].count, totalInvitesInternal: totalInvites[0].count };
+}
+
+export async function getMembersByTenantId(
+  tenantId: string,
+  page: number = 1,
+  pageSize: number = 10,
+): Promise<{ members: Member[]; totalUsers: number; totalInvites: number }> {
+  const { members, totalUsersInternal, totalInvitesInternal } = await getMembersByTenantIdInternal(
+    tenantId,
+    page,
+    pageSize,
+  );
+  const totalUsers = Number(totalUsersInternal);
+  const totalInvites = Number(totalInvitesInternal);
+  return { members, totalUsers, totalInvites };
 }
 
 export async function getFirstTenantByUserId(id: string) {

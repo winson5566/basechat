@@ -124,7 +124,7 @@ export async function changePlan(
   // We need to make them pay for all active users upon plan upgrade
   if (isCurrentlyOnFreeTier) {
     const { totalUsers, totalInvites } = await getMembersByTenantId(tenant.id, 1, 10);
-    seatCount = Number(totalUsers) + Number(totalInvites);
+    seatCount = totalUsers + totalInvites;
   } else {
     seatCount = await getUpcomingSubscriptionSeatCount(sub);
   }

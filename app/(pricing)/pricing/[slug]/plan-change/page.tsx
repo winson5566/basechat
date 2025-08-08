@@ -88,7 +88,7 @@ export default async function UpgradePlan({ searchParams, params }: Props) {
 
   if (onFreeTier) {
     const { totalUsers, totalInvites } = await getMembersByTenantId(tenant.id, 1, 10);
-    currentSeatCount = Number(totalUsers) + Number(totalInvites);
+    currentSeatCount = totalUsers + totalInvites;
   }
 
   const changePreview = await changePlan(targetPlan.planType, true, onFreeTier, tenantWithMetadata);
