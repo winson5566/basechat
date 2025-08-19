@@ -56,7 +56,7 @@ function FeatureItem() {
             <td key={tierId} className="border-b py-3">
               <TierFeatureContent
                 check={false}
-                text={isEnterprise ? "Custom" : `${plan?.partitionLimit.toLocaleString()} pages`}
+                text={isEnterprise ? "Custom" : `${plan.partitionLimit!.toLocaleString()} pages`}
               />
             </td>
           );
