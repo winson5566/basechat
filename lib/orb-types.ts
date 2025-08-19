@@ -35,7 +35,7 @@ export type PlanDef = {
   displayName: string;
   alternateCycleType?: PlanType;
   description: string;
-  partitionLimit: number;
+  partitionLimit: number | null;
   hasCustomPricing?: boolean;
   streamingLimit: number;
   audioLimit: number;
@@ -106,7 +106,7 @@ export const PLANS: Record<PlanType, PlanDef> = {
     price: 0,
     displayName: "Pro",
     description: "Designed for growing teams and content",
-    partitionLimit: 60000,
+    partitionLimit: null, // don't enforce partition limits if tenant brings their own api key
     streamingLimit: 1, // 1 TB
     audioLimit: 100,
     videoLimit: 100,
