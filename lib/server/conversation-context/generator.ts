@@ -86,7 +86,7 @@ export abstract class AbstractGenerator implements Generator {
     const { object } = await generateObject({
       messages,
       model,
-      temperature: 0.3,
+      temperature: this.model === "gpt-5" ? 1 : 0.3, // GPT-5 requires a temp of 1
       system: this._getSystem(),
       output: "object",
       schema: createConversationMessageResponseSchema,
@@ -99,7 +99,7 @@ export abstract class AbstractGenerator implements Generator {
     return streamObject({
       messages: filterMessages(context.messages),
       model: this._languageModelFactory(this.model),
-      temperature: 0.3,
+      temperature: this.model === "gpt-5" ? 1 : 0.3, // GPT-5 requires a temp of 1
       system: this._getSystem(),
       schema: createConversationMessageResponseSchema,
       onFinish: options.onFinish,

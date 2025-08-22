@@ -3,19 +3,21 @@ import { z } from "zod";
 // Single source of truth for providers and their models
 export const PROVIDER_CONFIG = {
   openai: {
-    models: ["gpt-4o", "gpt-3.5-turbo", "gpt-4.1-2025-04-14", "o3-2025-04-16"] as const,
+    models: ["gpt-4o", "gpt-3.5-turbo", "gpt-4.1-2025-04-14", "o3-2025-04-16", "gpt-5"] as const,
     logo: "/openai.svg",
     modelLogos: {
       "gpt-4o": "/openai.svg",
       "gpt-3.5-turbo": "/openai.svg",
       "gpt-4.1-2025-04-14": "/openai.svg",
       "o3-2025-04-16": "/openai.svg",
+      "gpt-5": "/openai.svg",
     } as const,
     displayNames: {
       "gpt-4o": "GPT-4o",
       "gpt-3.5-turbo": "GPT-3.5 Turbo",
       "gpt-4.1-2025-04-14": "GPT-4.1",
       "o3-2025-04-16": "o3",
+      "gpt-5": "GPT-5",
     } as const,
   },
   google: {
