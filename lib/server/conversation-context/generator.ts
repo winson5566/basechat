@@ -15,7 +15,13 @@ import { assertNever } from "assert-never";
 import { z } from "zod";
 
 import { createConversationMessageResponseSchema } from "@/lib/api";
-import { DEFAULT_PROVIDER, getProviderForModel, SPECIAL_LLAMA_PROMPT, KIMI_K2_PROMPT } from "@/lib/llm/types";
+import {
+  DEFAULT_PROVIDER,
+  getProviderForModel,
+  SPECIAL_LLAMA_PROMPT,
+  KIMI_K2_PROMPT,
+  GPT_5_PROMPT,
+} from "@/lib/llm/types";
 
 export type ConversationMessageResponse = z.infer<typeof createConversationMessageResponseSchema>;
 
@@ -75,6 +81,9 @@ export abstract class AbstractGenerator implements Generator {
     }
     if (this.model === "meta-llama/llama-4-scout-17b-16e-instruct") {
       return SPECIAL_LLAMA_PROMPT;
+    }
+    if (this.model === "gpt-5") {
+      return GPT_5_PROMPT;
     }
     return undefined;
   };

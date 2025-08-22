@@ -90,6 +90,15 @@ Example format:
 
 Do not include any other fields or text outside the JSON object.`;
 
+export const GPT_5_PROMPT = `It is extremely important that you only respond in the "message" field in JSON format. Make sure to include ALL of your thoughts in the message field and nowhere else.
+Example format:
+{
+  "message": "Your response here",
+  "usedSourceIndexes": [0, 1]
+}
+
+Do not include any other fields or text outside the JSON object.`;
+
 // Default values
 // If adding a new provider, update app/api/conversations/[conversationId]/messages/utils.ts using the vercel ai-sdk
 // If changing the DEFAULT_NAMING_MODEL, update createConversationName in app/api/conversations/[conversationId]/messages/utils.ts to use appropriate provider
