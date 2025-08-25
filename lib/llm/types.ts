@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+const DEFAULT_TEMPERATURE = 0.3;
+
 // System prompts for specific models
 export const SPECIAL_LLAMA_PROMPT = `It is extremely important that you only respond in the "message" field in JSON format. Use the "usedSourceIndexes" field for any sources used, or an empty array if no sources are used. Do not return any fields that do not match the given schema.`;
 
@@ -44,10 +46,10 @@ export const PROVIDER_CONFIG = {
       "gpt-5": "GPT-5",
     } as const,
     modelConfigs: {
-      "gpt-4o": { temperature: 0.3, systemPrompt: undefined },
-      "gpt-3.5-turbo": { temperature: 0.3, systemPrompt: undefined },
-      "gpt-4.1-2025-04-14": { temperature: 0.3, systemPrompt: undefined },
-      "o3-2025-04-16": { temperature: 0.3, systemPrompt: undefined },
+      "gpt-4o": { temperature: DEFAULT_TEMPERATURE },
+      "gpt-3.5-turbo": { temperature: DEFAULT_TEMPERATURE },
+      "gpt-4.1-2025-04-14": { temperature: DEFAULT_TEMPERATURE },
+      "o3-2025-04-16": { temperature: DEFAULT_TEMPERATURE },
       "gpt-5": { temperature: 1, systemPrompt: GPT_5_PROMPT },
     } as const,
   },
@@ -63,8 +65,8 @@ export const PROVIDER_CONFIG = {
       "gemini-1.5-pro": "Gemini 1.5 Pro",
     } as const,
     modelConfigs: {
-      "gemini-2.0-flash": { temperature: 0.3, systemPrompt: undefined },
-      "gemini-1.5-pro": { temperature: 0.3, systemPrompt: undefined },
+      "gemini-2.0-flash": { temperature: DEFAULT_TEMPERATURE },
+      "gemini-1.5-pro": { temperature: DEFAULT_TEMPERATURE },
     } as const,
   },
   anthropic: {
@@ -88,10 +90,10 @@ export const PROVIDER_CONFIG = {
       "claude-sonnet-4-20250514": "Claude 4 Sonnet",
     } as const,
     modelConfigs: {
-      "claude-3-7-sonnet-latest": { temperature: 0.3, systemPrompt: undefined },
-      "claude-3-5-haiku-latest": { temperature: 0.3, systemPrompt: undefined },
-      "claude-opus-4-20250514": { temperature: 0.3, systemPrompt: undefined },
-      "claude-sonnet-4-20250514": { temperature: 0.3, systemPrompt: undefined },
+      "claude-3-7-sonnet-latest": { temperature: DEFAULT_TEMPERATURE },
+      "claude-3-5-haiku-latest": { temperature: DEFAULT_TEMPERATURE },
+      "claude-opus-4-20250514": { temperature: DEFAULT_TEMPERATURE },
+      "claude-sonnet-4-20250514": { temperature: DEFAULT_TEMPERATURE },
     } as const,
   },
   groq: {
@@ -115,10 +117,13 @@ export const PROVIDER_CONFIG = {
       "moonshotai/kimi-k2-instruct": "Kimi K2",
     } as const,
     modelConfigs: {
-      "meta-llama/llama-4-scout-17b-16e-instruct": { temperature: 0.3, systemPrompt: SPECIAL_LLAMA_PROMPT },
-      "openai/gpt-oss-20b": { temperature: 0.3, systemPrompt: undefined },
-      "openai/gpt-oss-120b": { temperature: 0.3, systemPrompt: undefined },
-      "moonshotai/kimi-k2-instruct": { temperature: 0.3, systemPrompt: KIMI_K2_PROMPT },
+      "meta-llama/llama-4-scout-17b-16e-instruct": {
+        temperature: DEFAULT_TEMPERATURE,
+        systemPrompt: SPECIAL_LLAMA_PROMPT,
+      },
+      "openai/gpt-oss-20b": { temperature: DEFAULT_TEMPERATURE },
+      "openai/gpt-oss-120b": { temperature: DEFAULT_TEMPERATURE },
+      "moonshotai/kimi-k2-instruct": { temperature: DEFAULT_TEMPERATURE, systemPrompt: KIMI_K2_PROMPT },
     } as const,
   },
 } as const;
