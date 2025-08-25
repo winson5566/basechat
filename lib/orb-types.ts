@@ -19,6 +19,7 @@ export const planTypeSchema = z.union([
   z.literal("pro"),
   z.literal("proAnnual"),
   z.literal("proSeatsOnly"),
+  z.literal("enterprise"),
 ]);
 
 export type PlanType = z.infer<typeof planTypeSchema>;
@@ -107,6 +108,19 @@ export const PLANS: Record<PlanType, PlanDef> = {
     displayName: "Pro",
     description: "Designed for growing teams and content",
     partitionLimit: null, // don't enforce partition limits if tenant brings their own api key
+    streamingLimit: 1, // 1 TB
+    audioLimit: 100,
+    videoLimit: 100,
+    hostingLimit: 100, // 100 GB
+  },
+  enterprise: {
+    planType: "enterprise",
+    billingCycle: "monthly",
+    tier: "enterprise",
+    price: 0, // custom pricing handled by sales team
+    displayName: "Enterprise",
+    description: "Custom enterprise solutions with dedicated support",
+    partitionLimit: null, // no partition limits for enterprise customers
     streamingLimit: 1, // 1 TB
     audioLimit: 100,
     videoLimit: 100,

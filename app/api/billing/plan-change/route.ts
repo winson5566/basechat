@@ -42,6 +42,10 @@ export async function POST(req: NextRequest) {
       onFreeTier = true;
     }
 
+    if (currentPlan?.name === "enterprise") {
+      return NextResponse.json({ error: "Contact sales to upgrade Enterprise plans" }, { status: 400 });
+    }
+
     const updatedSubscription = await changePlan(planType, false, onFreeTier, tenantWithMetadata);
 
     return NextResponse.json({ success: true, subscription: updatedSubscription });

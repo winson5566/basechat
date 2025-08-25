@@ -1,6 +1,6 @@
 export type TenantPlan = {
   id: string; // orb subscription id
-  name: string; // orb plan type "developer" "starter" "pro" "proAnnual" "proSeatsOnly"
+  name: string; // orb plan type "developer" "starter" "pro" "proAnnual" "proSeatsOnly" "enterprise"
   endedAt: Date | null;
   startedAt: Date;
   tier: string; // orb plan id
