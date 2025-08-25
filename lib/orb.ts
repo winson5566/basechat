@@ -116,6 +116,14 @@ export async function changePlan(
     throw new Error("Orb subscription ID not found");
   }
 
+  // Validate that users can only upgrade to predefined self-service plans
+  const allowedUpgradePlans: PlanType[] = ["starter", "pro", "proAnnual"];
+  if (!allowedUpgradePlans.includes(nextPlanType)) {
+    throw new Error(
+      `Plan type "${nextPlanType}" is not available for self-service upgrades. Please contact sales for enterprise plans.`,
+    );
+  }
+
   const sub = await orb.subscriptions.fetch(tenant.metadata.orbSubscriptionId);
 
   let seatCount = 0;
@@ -263,6 +271,10 @@ export async function getPlanIdFromType(planType: PlanType) {
       return ORB_PRO_ANNUAL_PLAN_ID;
     case "proSeatsOnly":
       return ORB_PRO_SEATS_ONLY_PLAN_ID;
+    case "enterprise":
+      // Enterprise plans are created by sales team in Orb
+      // We don't have a predefined ID for them
+      throw new Error("Enterprise plans must be created in Orb by sales team");
     default:
       assertNever(planType);
   }
@@ -281,7 +293,9 @@ export async function getPlanTypeFromId(planId: string) {
     case ORB_PRO_SEATS_ONLY_PLAN_ID:
       return "proSeatsOnly";
     default:
-      return undefined;
+      // If the plan ID is not one of our predefined plans,
+      // assume it's an enterprise plan created by the sales team
+      return "enterprise";
   }
 }
 
@@ -297,6 +311,18 @@ export async function getPlanById(planId: string) {
 
 export async function isCurrentlyOnSubscription(subscription: PlanType, orbCustomerId: string) {
   const currentSubscription = await getSubscription(orbCustomerId);
+  if (subscription === "enterprise") {
+    // For enterprise plans, we need to check if the current subscription
+    // is an enterprise plan (any plan not in our predefined list)
+    if (!currentSubscription?.plan) {
+      return false;
+    }
+
+    // Check if the current plan is an enterprise plan (not in our predefined list)
+    const currentPlanType = await getPlanTypeFromId(currentSubscription.plan.id);
+    return currentPlanType === "enterprise";
+  }
+
   const planId = await getPlanIdFromType(subscription);
   assert(planId, "Plan ID not found");
   return currentSubscription?.plan?.id === planId;
