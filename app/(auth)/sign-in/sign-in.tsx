@@ -17,7 +17,11 @@ export default function SignIn({ redirectTo, reset }: { redirectTo?: string; res
       callbackURL: redirectTo || getStartPath(),
       fetchOptions: {
         onError: (error) => {
-          setError(error.error.message);
+          if (error.error.status === 403) {
+            setError(`Check your inbox — we've sent you a link to verify your email.`);
+          } else {
+            setError(error.error.message);
+          }
         },
       },
     });

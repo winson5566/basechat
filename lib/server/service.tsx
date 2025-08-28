@@ -12,7 +12,7 @@ import { Member, MemberType } from "@/lib/api";
 import { getDisabledModels } from "@/lib/llm/types";
 import * as settings from "@/lib/server/settings";
 
-import { InviteHtml, PagesLimitReachedHtml, ResetPasswordHtml } from "../mail";
+import { InviteHtml, PagesLimitReachedHtml, ResetPasswordHtml, VerifyEmailHtml } from "../mail";
 
 import { provisionBillingCustomer } from "./billing";
 import db from "./db";
@@ -573,6 +573,20 @@ export async function sendResetPasswordEmail(user: { name: string; email: string
     subject: "Reset password verification",
     text: `Click the link below to reset your password:\n\n${link}`,
     html: await render(<ResetPasswordHtml name={user.name} link={link} />),
+  });
+}
+
+export async function sendVerificationEmail(user: { name: string; email: string }, url: string, _token: string) {
+  const urlObj = new URL(url);
+  urlObj.searchParams.set("callbackURL", `${settings.BASE_URL}`);
+
+  const link = urlObj.toString();
+
+  await sendMail({
+    to: user.email,
+    subject: "Email verification",
+    text: `Click the link below to verify your email:\n\n${link}`,
+    html: await render(<VerifyEmailHtml name={user.name} link={link} />),
   });
 }
 
