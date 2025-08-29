@@ -137,3 +137,27 @@ export const PagesLimitReachedHtml = ({ tenantName, link }: { tenantName: string
     </Layout>
   );
 };
+
+export const VerifyEmailHtml = ({ name, link }: { name: string | null; link: string }) => {
+  return (
+    <Layout preview={`Verify your ${settings.APP_NAME} email address`}>
+      <Section>
+        <Text className="text-[#1D1D1F] text-[18px] mb-8">Hi{name ? ` ${name}` : ""},</Text>
+        <Text className="text-[#1D1D1F] text-[18px]">
+          Welcome to {settings.APP_NAME}! Please verify your email address by clicking the button below:
+        </Text>
+
+        <Button
+          href={link}
+          className="w-full text-center my-8 rounded-[54px] bg-[#D946EF] py-2.5 text-white font-semibold"
+        >
+          Verify Email
+        </Button>
+
+        <Text className="text-[#1D1D1F] text-[18px]">
+          If you didn&apos;t create an account with {settings.APP_NAME}, you can safely ignore this email.
+        </Text>
+      </Section>
+    </Layout>
+  );
+};

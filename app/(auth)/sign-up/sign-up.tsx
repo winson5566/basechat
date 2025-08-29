@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useReducer } from "react";
+import { toast } from "sonner";
 import { z } from "zod";
 
 import { signUp } from "@/lib/auth-client";
@@ -58,6 +59,7 @@ export default function SignUp({ redirectTo }: { redirectTo?: string }) {
           dispatch({ type: "setError", error: [error.error.message] });
         },
         onSuccess: () => {
+          toast.info("Check your inbox — we've sent you a link to verify your email.");
           router.push(callbackURL);
         },
       },

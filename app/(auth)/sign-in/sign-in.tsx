@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { toast } from "sonner";
 
 import { signIn } from "@/lib/auth-client";
 import { getStartPath } from "@/lib/paths";
@@ -17,6 +18,9 @@ export default function SignIn({ redirectTo, reset }: { redirectTo?: string; res
       callbackURL: redirectTo || getStartPath(),
       fetchOptions: {
         onError: (error) => {
+          if (error.error.status === 403) {
+            toast.info("Check your inbox — we've sent you a link to verify your email.");
+          }
           setError(error.error.message);
         },
       },

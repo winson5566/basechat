@@ -2,13 +2,12 @@ import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { nextCookies } from "better-auth/next-js";
 import { anonymous } from "better-auth/plugins";
-import { eq } from "drizzle-orm";
 
 import db from "@/lib/server/db";
 import * as schema from "@/lib/server/db/schema";
 import * as settings from "@/lib/server/settings";
 
-import { linkUsers, sendResetPasswordEmail } from "./lib/server/service";
+import { linkUsers, sendResetPasswordEmail, sendVerificationEmail } from "./lib/server/service";
 import { hashPassword, verifyPassword } from "./lib/server/utils";
 
 const socialProviders: Record<string, unknown> = {};
@@ -28,9 +27,19 @@ export const auth = betterAuth({
   }),
   advanced: { generateId: false },
   socialProviders,
+  emailVerification: {
+    sendVerificationEmail: async ({ user, url, token }, request) => {
+      await sendVerificationEmail(user, url, token);
+    },
+    sendOnSignUp: true,
+    sendOnSignIn: true,
+    autoSignInAfterVerification: true,
+    expiresIn: 3600, // 1 hour
+  },
   emailAndPassword: {
     enabled: true,
     minPasswordLength: 6,
+    requireEmailVerification: false, // TODO: change to true to block users from signing if email_verified is false
     sendResetPassword: ({ user, url, token }) => sendResetPasswordEmail(user, url, token),
     resetPasswordTokenExpiresIn: 36000, // seconds
     password: {
