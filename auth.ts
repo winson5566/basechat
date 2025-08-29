@@ -2,7 +2,6 @@ import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { nextCookies } from "better-auth/next-js";
 import { anonymous } from "better-auth/plugins";
-import { eq } from "drizzle-orm";
 
 import db from "@/lib/server/db";
 import * as schema from "@/lib/server/db/schema";
@@ -40,7 +39,7 @@ export const auth = betterAuth({
   emailAndPassword: {
     enabled: true,
     minPasswordLength: 6,
-    requireEmailVerification: true,
+    requireEmailVerification: false, // TODO: change to true to block users from signing if email_verified is false
     sendResetPassword: ({ user, url, token }) => sendResetPasswordEmail(user, url, token),
     resetPasswordTokenExpiresIn: 36000, // seconds
     password: {
