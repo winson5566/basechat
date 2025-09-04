@@ -227,6 +227,11 @@ export default function Summary({ className, source, slug, onCloseClick = () => 
     sourceUrl = getRagieSourcePath(slug, source.ragieSourceUrl);
   }
 
+  let updatedAt = documentData.updatedAt;
+  if (documentData.metadata._source_updated_at) {
+    updatedAt = new Date(documentData.metadata._source_updated_at * 1000).toISOString();
+  }
+
   return (
     <div className={cn(className, "relative")}>
       <div className="absolute top-4 right-4">
@@ -235,7 +240,7 @@ export default function Summary({ className, source, slug, onCloseClick = () => 
       {icon && <Image src={icon} alt="source" width={48} />}
       <div className="wrap text-[24px] font-bold mb-4 break-all">{documentData.name}</div>
       <div className="flex justify-between mb-6">
-        <div className="text-[#74747A]">Updated {format(documentData.updatedAt, "MM/dd/yyyy")}</div>
+        <div className="text-[#74747A]">Updated {format(updatedAt, "MM/dd/yyyy")}</div>
         {!source.streamUrl && (
           <a href={sourceUrl} target="_blank" className="text-[#7749F8] flex">
             View in source
