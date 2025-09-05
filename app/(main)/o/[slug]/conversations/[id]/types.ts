@@ -3,7 +3,8 @@ export interface DocumentResponse {
   metadata: {
     source_type: string;
     source_url: string;
+    _source_updated_at?: number; // Unix timestamp
   };
-  updatedAt: string;
+  updatedAt: string; // ISO string
   summary: string;
 }
