@@ -35,7 +35,7 @@ const functionCallItemSchema = z.object({
 });
 
 const responseOutputItemAddedSchema = z.object({
-  item: z.union([functionCallItemSchema, messageItemSchema]),
+  item: z.union([functionCallItemSchema, messageItemSchema, z.object({ type: z.literal("reasoning") })]),
   type: z.literal("response.output_item.added"),
   output_index: z.number(),
   sequence_number: z.number(),
@@ -72,6 +72,7 @@ const responseOutputItemDoneSchema = z.object({
       status: z.literal("completed"),
       type: z.literal("message"),
     }),
+    z.object({ type: z.literal("reasoning") }),
   ]),
   output_index: z.number(),
   sequence_number: z.number(),
@@ -288,7 +289,7 @@ const responseCodeInterpreterToolCallSchema = z.object({
 });
 
 const responseReasoningItemSchema = z.object({
-  content: z.string(),
+  content: z.string().nullable(),
   type: z.literal("reasoning"),
 });
 

@@ -122,7 +122,13 @@ function agenticRetrieverReducer(state: AgenticRetrieverState, action: AgenticRe
       // console.log("Current in-progress response:", _inprogressResponse);
       // console.log("Current event:", parse(action.payload, OBJ | ARR | STR));
       // const parsed = rawResponseEventSchema.parse(parse(action.payload, OBJ | ARR | STR));
-      const parsed = rawResponseEventSchema.parse(action.payload);
+      console.warn("Raw event payload:", action.payload);
+      const parsedRes = rawResponseEventSchema.safeParse(action.payload);
+      if (!parsedRes.success) {
+        console.error("Failed to parse raw response event:", action.payload, parsedRes.error);
+        return state;
+      }
+      const parsed = parsedRes.data;
       let _streamedResponses = state._streamedResponses;
       switch (parsed.type) {
         case "response.created":
@@ -284,7 +290,8 @@ export default function useAgenticRetriever(): AgenticRetriever {
             break;
           case "run_item_stream_event":
             console.log("Dispatching run item stream event", parsed.item);
-            dispatch({ type: "TAKE_RUN_ITEM_STREAM_EVENT", payload: runItemSchema.parse(parsed.item) });
+            console.error("Run item stream event payload:", parsed.item, typeof parsed.item, parsed);
+            dispatch({ type: "TAKE_RUN_ITEM_STREAM_EVENT", payload: runItemSchema.parse(parsed.data.item) });
             break;
           case "raw_response_event":
             console.log("Dispatching raw response event");
@@ -294,7 +301,7 @@ export default function useAgenticRetriever(): AgenticRetriever {
             console.warn("Unhandled event type:", parsed.type);
         }
       } catch (err) {
-        console.error("Failed to parse generic event:", err);
+        console.error("Failed to parse generic event:", e.data, err);
       }
     };
 
