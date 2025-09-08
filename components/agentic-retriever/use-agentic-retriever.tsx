@@ -1,3 +1,4 @@
+import { EventSourceMessage, fetchEventSource } from "@microsoft/fetch-event-source";
 import { parse, OBJ, ARR, STR } from "partial-json";
 import { useCallback, useEffect, useMemo, useReducer, useRef } from "react";
 import { z } from "zod";
@@ -215,7 +216,8 @@ function agenticRetrieverReducer(state: AgenticRetrieverState, action: AgenticRe
 }
 
 export default function useAgenticRetriever(): AgenticRetriever {
-  const esRef = useRef<EventSource | null>(null);
+  // const esRef = useRef<EventSource | null>(null);
+  const abortControllerRef = useRef<AbortController | null>(null);
   const [state, dispatch] = useReducer(agenticRetrieverReducer, {
     query: "",
     status: "idle",
@@ -238,45 +240,47 @@ export default function useAgenticRetriever(): AgenticRetriever {
 
   const close = useCallback(() => {
     console.log("Closing EventSource");
-    if (esRef.current) {
-      esRef.current.close();
-      esRef.current = null;
-    }
+    // if (esRef.current) {
+    //   esRef.current.close();
+    //   esRef.current = null;
+    // }
   }, []);
 
   const reset = useCallback(() => {
     console.log("Resetting agentic retrieval state");
+    abortControllerRef.current?.abort();
     close();
     dispatch({ type: "RESET" });
   }, [close]);
 
-  const start = useCallback(() => {
+  const start = useCallback(async () => {
     if (typeof window === "undefined") return;
+    abortControllerRef.current = new AbortController();
     // if (!fullUrl) return;
-    if (esRef.current) return; // already open
+    // if (esRef.current) return; // already open
 
-    // Note: native EventSource doesn’t allow custom headers.
-    // If you need headers/bearer tokens, use a polyfill that supports them.
-    const es = new EventSource(`http://localhost:8010/sse?query=${state.query}`, {});
-    esRef.current = es;
+    // // Note: native EventSource doesn’t allow custom headers.
+    // // If you need headers/bearer tokens, use a polyfill that supports them.
+    // const es = new EventSource(`http://localhost:8010/sse?query=${state.query}`, {});
+    // esRef.current = es;
 
-    const handleDebug = (e: MessageEvent) => {
-      console.log("Debug event:", e.data);
-    };
+    // const handleDebug = (e: MessageEvent) => {
+    //   console.log("Debug event:", e.data);
+    // };
 
-    const handleError = (e: Event) => {
+    const handleError = (e: EventSourceMessage) => {
       // Browsers fire 'error' on transient disconnects too; the stream may auto-retry.
       // You can inspect (e as any).data if your server sends a body with errors.
       console.error("Stream error:", e);
       dispatch({ type: "SET_ERROR", payload: e instanceof Error ? e.message : "Unknown error" });
     };
 
-    const handleOpen = () => {
-      console.log("Stream opened");
-      // Note: SET_OPEN is not a valid action type, so we'll just log
-    };
+    // const handleOpen = () => {
+    //   console.log("Stream opened");
+    //   // Note: SET_OPEN is not a valid action type, so we'll just log
+    // };
 
-    const handleEvent = (e: MessageEvent) => {
+    const handleEvent = (e: EventSourceMessage) => {
       console.log("Generic message event:", e.data, e);
       // Attempt to parse and handle different event types
       try {
@@ -305,20 +309,55 @@ export default function useAgenticRetriever(): AgenticRetriever {
       }
     };
 
-    const handleDone = (e: MessageEvent) => {
-      es.close();
-      esRef.current = null;
+    const handleDone = (e: EventSourceMessage) => {
+      // es.close();
+      // esRef.current = null;
       console.log("Stream done event:", e.data);
       dispatch({ type: "TAKE_DONE_EVENT", payload: resultSchema.parse(JSON.parse(e.data)) });
       console.log("Stream closed", e.data);
     };
 
-    es.addEventListener("open", handleOpen);
-    es.addEventListener("message", handleEvent as EventListener);
-    es.addEventListener("error", handleError as EventListener);
-    es.addEventListener("debug", handleDebug as EventListener);
-    es.addEventListener("done", handleDone as EventListener);
-  }, [dispatch, esRef, state.query]);
+    // TODO: Obv stop hardcoding here and PROXY to the actual API
+    await fetchEventSource(`http://localhost:8000/agents/search`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer <API_KEY>`,
+        "Content-Type": "application/json",
+      },
+      async onmessage(event) {
+        console.log("Event:", event);
+        if (event.event === "message") {
+          handleEvent(event);
+        } else if (event.event === "done") {
+          handleDone(event);
+        } else if (event.event === "error") {
+          handleError(event);
+        }
+      },
+      async onopen() {
+        console.log("Stream opened");
+      },
+      async onclose() {
+        console.log("Stream closed");
+      },
+      onerror(event) {
+        console.error("Stream error:", event);
+      },
+      body: JSON.stringify({
+        query: state.query,
+        effort: "medium",
+        partitions: ["16fa0cb5-b859-41a4-aa33-f3140fe2dfcf"],
+        stream: true,
+      }),
+      signal: abortControllerRef.current?.signal,
+    });
+
+    // es.addEventListener("open", handleOpen);
+    // es.addEventListener("message", handleEvent as EventListener);
+    // es.addEventListener("error", handleError as EventListener);
+    // es.addEventListener("debug", handleDebug as EventListener);
+    // es.addEventListener("done", handleDone as EventListener);
+  }, [dispatch, abortControllerRef, state.query]);
 
   useEffect(() => {
     console.log("useAgenticRetrieval effect", state.query);
