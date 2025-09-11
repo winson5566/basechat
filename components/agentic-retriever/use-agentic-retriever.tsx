@@ -4,7 +4,9 @@ import { useCallback, useEffect, useMemo, useReducer, useRef } from "react";
 import { z } from "zod";
 
 import {
+  inProgressCitationStepSchema,
   evidenceSchema,
+  orchestratorThinkSchema,
   orchestratorToolCallSchema,
   rawResponseEventSchema,
   resultSchema,
@@ -12,12 +14,14 @@ import {
   stepResultSchema,
 } from "./types";
 
+type StepType = "think" | "search" | "code" | "answer" | "plan" | "citation" | "surrender";
+
 // TODO: test surrender step
 type AgenticRetrieverState = {
   query: string;
   result: null | z.infer<typeof resultSchema>;
   status: "idle" | "loading" | "error" | "success";
-  currentStepType: "think" | "search" | "code" | "answer" | "plan" | null;
+  currentStepType: StepType | null;
   accumulatedText: string;
   steps: Array<z.infer<typeof stepResultSchema>>;
   _streamedResponses: Array<any>;
@@ -35,7 +39,11 @@ export type AgenticRetriever = {
   status: AgenticRetrieverState["status"];
   currentStepType: AgenticRetrieverState["currentStepType"];
   query: string;
-  currentResponse: z.infer<typeof orchestratorToolCallSchema> | null;
+  currentResponse:
+    | z.infer<typeof orchestratorToolCallSchema>
+    | z.infer<typeof orchestratorThinkSchema>
+    | z.infer<typeof inProgressCitationStepSchema>
+    | null;
   result: AgenticRetrieverState["result"];
   evidence: EvidenceCollection;
   submit: (payload: { query: string }) => void;
@@ -103,27 +111,30 @@ function agenticRetrieverReducer(state: AgenticRetrieverState, action: AgenticRe
         _allEvents: [...state._allEvents, action.payload],
       };
 
-    case "TAKE_RUN_ITEM_STREAM_EVENT":
+    case "TAKE_RUN_ITEM_STREAM_EVENT": {
       let steps = state.steps;
+      let currentStepType = state.currentStepType;
       console.log("TAKE_RUN_ITEM_STREAM_EVENT", action.payload);
       if ("output" in action.payload) {
         steps = [...steps, stepResultSchema.parse(action.payload.output)];
+        currentStepType = "think";
       }
       return {
         ...state,
         steps,
+        currentStepType,
         _runItemStreamEvent: [...state._runItemStreamEvent, action.payload],
         _allEvents: [...state._allEvents, action.payload],
       };
+    }
 
-    case "TAKE_RAW_RESPONSE_EVENT":
-      console.log("TAKE_RAW_RESPONSE_EVENT", action.payload);
+    case "TAKE_RAW_RESPONSE_EVENT": {
       let _inprogressResponse = state._inprogressResponse;
       let currentStepType = state.currentStepType;
       // console.log("Current in-progress response:", _inprogressResponse);
       // console.log("Current event:", parse(action.payload, OBJ | ARR | STR));
       // const parsed = rawResponseEventSchema.parse(parse(action.payload, OBJ | ARR | STR));
-      console.warn("Raw event payload:", action.payload);
+      console.debug("Raw event payload:", action.payload);
       const parsedRes = rawResponseEventSchema.safeParse(action.payload);
       if (!parsedRes.success) {
         console.error("Failed to parse raw response event:", action.payload, parsedRes.error);
@@ -144,16 +155,25 @@ function agenticRetrieverReducer(state: AgenticRetrieverState, action: AgenticRe
           // Check if the item is a function call (which has a name property)
           if (parsed.item.type === "function_call") {
             // Map tool names to step types
-            const toolToStepType: Record<string, "think" | "search" | "code" | "answer" | "plan"> = {
+            const toolToStepType: Record<string, StepType> = {
               plan: "plan",
               search: "search",
               code: "code",
               answer: "answer",
-              transfer_to_citation: "answer",
+              transfer_to_citation: "citation",
+              // TODO: Handle surrender step
               transfer_to_surrender: "answer",
             };
             currentStepType = toolToStepType[parsed.item.name] || "think";
           }
+          break;
+        case "handoff_call_item":
+          console.log("Handoff call item:", parsed);
+          _inprogressResponse = "";
+          break;
+        case "response.output_text.delta":
+          console.log("Output text delta:", parsed);
+          _inprogressResponse += parsed.delta;
           break;
         case "response.function_call_arguments.delta":
           console.log("Function call arguments delta:", parsed);
@@ -182,6 +202,7 @@ function agenticRetrieverReducer(state: AgenticRetrieverState, action: AgenticRe
         _inprogressResponse,
         _streamedResponses,
       };
+    }
 
     case "TAKE_DONE_EVENT": {
       if (state.status !== "loading") {
@@ -216,8 +237,8 @@ function agenticRetrieverReducer(state: AgenticRetrieverState, action: AgenticRe
 }
 
 export default function useAgenticRetriever(): AgenticRetriever {
-  // const esRef = useRef<EventSource | null>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
+  const eventDebugRef = useRef<string>("");
   const [state, dispatch] = useReducer(agenticRetrieverReducer, {
     query: "",
     status: "idle",
@@ -256,17 +277,6 @@ export default function useAgenticRetriever(): AgenticRetriever {
   const start = useCallback(async () => {
     if (typeof window === "undefined") return;
     abortControllerRef.current = new AbortController();
-    // if (!fullUrl) return;
-    // if (esRef.current) return; // already open
-
-    // // Note: native EventSource doesn’t allow custom headers.
-    // // If you need headers/bearer tokens, use a polyfill that supports them.
-    // const es = new EventSource(`http://localhost:8010/sse?query=${state.query}`, {});
-    // esRef.current = es;
-
-    // const handleDebug = (e: MessageEvent) => {
-    //   console.log("Debug event:", e.data);
-    // };
 
     const handleError = (e: EventSourceMessage) => {
       // Browsers fire 'error' on transient disconnects too; the stream may auto-retry.
@@ -275,34 +285,23 @@ export default function useAgenticRetriever(): AgenticRetriever {
       dispatch({ type: "SET_ERROR", payload: e instanceof Error ? e.message : "Unknown error" });
     };
 
-    // const handleOpen = () => {
-    //   console.log("Stream opened");
-    //   // Note: SET_OPEN is not a valid action type, so we'll just log
-    // };
-
     const handleEvent = (e: EventSourceMessage) => {
-      console.log("Generic message event:", e.data, e);
       // Attempt to parse and handle different event types
       try {
-        console.log("Parsing generic event data:", e.data, e, Object.prototype.toString.call(e.data));
         const parsed = JSON.parse(e.data);
-        console.log("Parsed generic event:", parsed);
+        console.debug("Parsed generic event:", parsed);
         switch (parsed.type) {
           case "agent_updated_stream_event":
-            console.log("Dispatching agent updated stream event");
             dispatch({ type: "TAKE_AGENT_UPDATED_STREAM_EVENT", payload: parsed });
             break;
           case "run_item_stream_event":
-            console.log("Dispatching run item stream event", parsed.item);
-            console.error("Run item stream event payload:", parsed.item, typeof parsed.item, parsed);
             dispatch({ type: "TAKE_RUN_ITEM_STREAM_EVENT", payload: runItemSchema.parse(parsed.data.item) });
             break;
           case "raw_response_event":
-            console.log("Dispatching raw response event");
             dispatch({ type: "TAKE_RAW_RESPONSE_EVENT", payload: parsed.data });
             break;
           default:
-            console.warn("Unhandled event type:", parsed.type);
+            console.warn("Unhandled event type:", parsed, parsed.type);
         }
       } catch (err) {
         console.error("Failed to parse generic event:", e.data, err);
@@ -310,22 +309,28 @@ export default function useAgenticRetriever(): AgenticRetriever {
     };
 
     const handleDone = (e: EventSourceMessage) => {
-      // es.close();
-      // esRef.current = null;
       console.log("Stream done event:", e.data);
-      dispatch({ type: "TAKE_DONE_EVENT", payload: resultSchema.parse(JSON.parse(e.data)) });
+      let doneEvent = resultSchema.safeParse(JSON.parse(e.data));
+      if (!doneEvent.success) {
+        console.error("Failed to parse done event:", e.data, doneEvent.error);
+        dispatch({ type: "SET_ERROR", payload: "Failed to parse done event" });
+        return;
+      }
+      dispatch({ type: "TAKE_DONE_EVENT", payload: doneEvent.data });
       console.log("Stream closed", e.data);
     };
 
     // TODO: Obv stop hardcoding here and PROXY to the actual API
     await fetchEventSource(`http://localhost:8000/agents/search`, {
+      openWhenHidden: true,
       method: "POST",
       headers: {
-        Authorization: `Bearer <API_KEY>`,
+        Authorization: `Bearer tnt_LDaWAeLA9py_LRr7dRHhO0J4mH4IOPvhNm6U4ur9WrYkiI2vn1hgNSA`,
         "Content-Type": "application/json",
       },
       async onmessage(event) {
-        console.log("Event:", event);
+        console.debug("Event:", event);
+        eventDebugRef.current += `event: ${event.event}\n${JSON.stringify(JSON.parse(event.data), null, 2)}\n\n`;
         if (event.event === "message") {
           handleEvent(event);
         } else if (event.event === "done") {
@@ -345,54 +350,59 @@ export default function useAgenticRetriever(): AgenticRetriever {
       },
       body: JSON.stringify({
         query: state.query,
-        effort: "medium",
+        effort: "low",
         partitions: ["16fa0cb5-b859-41a4-aa33-f3140fe2dfcf"],
         stream: true,
       }),
       signal: abortControllerRef.current?.signal,
     });
-
-    // es.addEventListener("open", handleOpen);
-    // es.addEventListener("message", handleEvent as EventListener);
-    // es.addEventListener("error", handleError as EventListener);
-    // es.addEventListener("debug", handleDebug as EventListener);
-    // es.addEventListener("done", handleDone as EventListener);
   }, [dispatch, abortControllerRef, state.query]);
 
   useEffect(() => {
-    console.log("useAgenticRetrieval effect", state.query);
     if (state.query) {
       // reset(); // reset state before starting a new query
-      console.log("---->>> DO START");
       start();
     }
   }, [state.query, start, reset]);
 
-  const partialJson = state._inprogressResponse ? parse(state._inprogressResponse, OBJ | ARR | STR) : null;
-  if (partialJson) {
-    console.log("partial-json", partialJson);
+  let partialJson = null;
+  try {
+    partialJson = state._inprogressResponse ? parse(state._inprogressResponse, OBJ | ARR | STR) : null;
+    console.debug("partial-json", partialJson);
+  } catch (err) {
+    console.error("Failed to parse in progress response", state._inprogressResponse, err);
   }
 
   // TODO: Memoize currentResponse
-  let currentResponse: null | z.infer<typeof orchestratorToolCallSchema> = null;
-  const safeParse = orchestratorToolCallSchema.safeParse({
-    type: state.currentStepType,
-    arguments: partialJson,
-  });
-  if (safeParse.success) {
-    currentResponse = safeParse.data;
-  } else {
-    // If parsing fails, we can still return a partial response
-    console.warn(partialJson);
-    console.warn("Failed to parse orchestrator tool call schema", safeParse.error);
-  }
-  console.warn(
-    {
+  let currentResponse:
+    | null
+    | z.infer<typeof orchestratorToolCallSchema>
+    | z.infer<typeof orchestratorThinkSchema>
+    | z.infer<typeof inProgressCitationStepSchema> = null;
+  if (state.currentStepType === "think") {
+    currentResponse = { type: "think" };
+  } else if (partialJson && state.currentStepType === "citation") {
+    const safeParse = inProgressCitationStepSchema.safeParse({ ...partialJson, type: "citation" });
+    if (safeParse.success) {
+      currentResponse = safeParse.data;
+    } else {
+      console.error("Failed to parse in progress citation step schema", safeParse.error);
+    }
+  } else if (partialJson) {
+    const safeParse = orchestratorToolCallSchema.safeParse({
       type: state.currentStepType,
       arguments: partialJson,
-    },
-    currentResponse,
-  );
+    });
+    if (safeParse.success) {
+      currentResponse = safeParse.data;
+    } else {
+      // If parsing fails, we can still return a partial response
+      console.error(partialJson);
+      console.error("Failed to parse orchestrator tool call schema", safeParse.error);
+    }
+  }
+
+  console.log("currentResponse", currentResponse, state.currentStepType, partialJson);
 
   const evidence = useMemo(() => {
     const toolCallOutputs = state._runItemStreamEvent.filter((item) => item.type === "tool_call_output_item");

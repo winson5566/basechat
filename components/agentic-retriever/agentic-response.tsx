@@ -1,4 +1,4 @@
-import { Terminal, Search, Code, Brain, MessageSquare, CheckCircle, XCircle, List } from "lucide-react";
+import { Terminal, Search, Code, Brain, MessageSquare, CheckCircle, XCircle, List, BookOpenCheck } from "lucide-react";
 import { useState } from "react";
 import Markdown from "react-markdown";
 import rehypeHighlight from "rehype-highlight";
@@ -53,7 +53,7 @@ function getStepTypeInfo(stepType: Step["type"] | "think") {
       };
     case "plan":
       return {
-        icon: Brain,
+        icon: List,
         color: "text-purple-600",
         bgColor: "bg-purple-100",
         label: "Plan",
@@ -69,13 +69,21 @@ function getStepTypeInfo(stepType: Step["type"] | "think") {
         label: "Answer",
         activeLabel: "Answering",
       };
+    case "citation":
+      return {
+        icon: BookOpenCheck,
+        color: "text-purple-600",
+        bgColor: "bg-purple-100",
+        label: "Citation",
+        activeLabel: "Citing",
+      };
     default:
       return {
         icon: Terminal,
         color: "text-gray-600",
         bgColor: "bg-gray-100",
-        label: "Unknown",
-        activeLabel: "Unknown",
+        label: `Unknown (${stepType})`,
+        activeLabel: `Unknown (${stepType})`,
       };
   }
 }
@@ -114,13 +122,15 @@ function StepHoverCard({ step, index }: { step: Step; index: number }) {
             <div className="space-y-3 text-sm">
               <div>
                 <h4 className="font-medium text-gray-600 mb-1">Current Question:</h4>
-                <p className="text-gray-900">{step.current_question}</p>
+                <p className="text-gray-900">{"current_question" in step ? step.current_question : ""}</p>
               </div>
 
-              <div>
-                <h4 className="font-medium text-gray-600 mb-1">Thought Process:</h4>
-                <p className="text-gray-700 bg-gray-50 p-2 rounded text-xs max-h-20 overflow-y-auto">{step.think}</p>
-              </div>
+              {"think" in step && (
+                <div>
+                  <h4 className="font-medium text-gray-600 mb-1">Thought Process:</h4>
+                  <p className="text-gray-700 bg-gray-50 p-2 rounded text-xs max-h-20 overflow-y-auto">{step.think}</p>
+                </div>
+              )}
 
               {/* Type-specific content preview */}
               {step.type === "answer" && (
@@ -180,6 +190,13 @@ function StepHoverCard({ step, index }: { step: Step; index: number }) {
                 </div>
               )}
 
+              {step.type === "citation" && (
+                <div>
+                  <h4 className="font-medium text-gray-600 mb-1">Citation:</h4>
+                  <p className="text-xs text-gray-700">{step.answer}</p>
+                </div>
+              )}
+
               <div className="pt-2 border-t">
                 <p className="text-xs text-gray-500 italic">Click for full details</p>
               </div>
@@ -216,6 +233,8 @@ function renderStep(step: Step, index: number) {
       return <PlanStep key={stepNumber} step={step} />;
     case "code":
       return <CodingStep key={stepNumber} step={step} />;
+    case "citation":
+      return <div>Citation Step</div>;
     case "surrender":
       return <SurrenderStep key={stepNumber} step={step} />;
     default:
@@ -540,26 +559,32 @@ function SurrenderStep({ step }: { step: Step & { type: "surrender" } }) {
   );
 }
 
-function StreamingResponse({ toolCall }: { toolCall: AgenticRetriever["currentResponse"] }) {
-  if (!toolCall) return null;
+function StreamingResponse({ currentResponse }: { currentResponse: AgenticRetriever["currentResponse"] }) {
+  if (!currentResponse) return null;
   let response = null;
-  switch (toolCall.type) {
+  switch (currentResponse.type) {
     case "plan":
-      response = toolCall.arguments.plan;
+      response = currentResponse.arguments.plan;
       break;
     case "search":
-      response = toolCall.arguments.query;
+      response = currentResponse.arguments.query;
       break;
     case "code":
-      response = toolCall.arguments.code_issue;
+      response = currentResponse.arguments.code_issue;
       break;
     case "answer":
-      response = toolCall.arguments.answer;
+      response = currentResponse.arguments.answer_args?.answer_approach;
+      break;
+    case "think":
+      response = "";
+      break;
+    case "citation":
+      response = currentResponse.answer;
       break;
     default:
-      console.warn("Unknown tool call type:", (toolCall as any).type);
+      console.warn("Unknown tool call type:", (currentResponse as any).type);
   }
-  console.log("Streaming Response", response, toolCall);
+  console.log("Streaming Response", response, currentResponse);
   return (
     <div>
       {response ? (
@@ -567,10 +592,7 @@ function StreamingResponse({ toolCall }: { toolCall: AgenticRetriever["currentRe
           {response}
         </Markdown>
       ) : (
-        <>
-          <Skeleton className="h-6 w-full" />
-          SKELTON
-        </>
+        <></>
       )}
     </div>
   );
@@ -668,7 +690,7 @@ export default function AgenticResponse({ agenticRetriever }: { agenticRetriever
         </AlertTitle>
         <AlertDescription>
           <div className="mt-4">
-            <StreamingResponse toolCall={agenticRetriever.currentResponse} />
+            <StreamingResponse currentResponse={agenticRetriever.currentResponse} />
           </div>
           <EvidenceList evidence={agenticRetriever.evidence} />
         </AlertDescription>

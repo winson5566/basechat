@@ -1,3 +1,4 @@
+import { object } from "better-auth";
 import { z } from "zod";
 
 const toolNames = z.enum(["plan", "search", "code", "answer", "transfer_to_citation", "transfer_to_surrender"]);
@@ -95,11 +96,43 @@ const responseFunctionCallArgumentsDoneSchema = z.object({
   type: z.literal("response.function_call_arguments.done"),
 });
 
+const responseHandoffCallItemSchema = z.object({
+  type: z.literal("handoff_call_item"),
+  raw_item: z.object({
+    arguments: z.string(),
+    call_id: z.string(),
+    name: toolNames,
+    type: z.literal("function_call"),
+  }),
+});
+
+const responseHandoffOutputItemSchema = z.object({
+  type: z.literal("handoff_output_item"),
+  raw_item: z.object({
+    call_id: z.string(),
+    output: z.string(),
+    type: z.literal("function_call_output"),
+  }),
+  source_agent: z.string(),
+  target_agent: z.string(),
+});
+
+const responseOutputTextDeltaSchema = z.object({
+  delta: z.string(),
+  item_id: z.string(),
+  output_index: z.number(),
+  sequence_number: z.number(),
+  type: z.literal("response.output_text.delta"),
+});
+
 export const rawResponseEventSchema = z.union([
   responseOutputItemAddedSchema,
   responseOutputItemDoneSchema,
   responseFunctionCallArgumentsDeltaSchema,
   responseFunctionCallArgumentsDoneSchema,
+  responseOutputTextDeltaSchema,
+  responseHandoffCallItemSchema,
+  responseHandoffOutputItemSchema,
   responseCreatedSchema,
   responseInProgressSchema,
   responseCompletedSchema,
@@ -215,6 +248,11 @@ const surrenderStepSchema = stepResultBaseSchema.extend({
   partial_answer: answerSchema,
 });
 
+export const inProgressCitationStepSchema = z.object({
+  type: z.literal("citation"),
+  answer: z.string().optional().default(""),
+});
+
 export const stepResultSchema = z.union([
   answerStepSchema,
   searchStepSchema,
@@ -222,12 +260,23 @@ export const stepResultSchema = z.union([
   codingStepSchema,
   surrenderStepSchema,
   evaluatedAnswerStepSchema,
+  inProgressCitationStepSchema,
 ]);
 
-const usageSchema = z.object({
-  prompt_tokens: z.number(),
-  completion_tokens: z.number(),
-  total_tokens: z.number(),
+export const finalAnswerSchema = answerSchema.extend({
+  text: z.string(),
+  evidence: z.array(evidenceSchema).default([]),
+  steps: z.array(stepResultSchema),
+  diary: z.string().default(""),
+  usage: z.object({
+    models: z.array(
+      z.object({
+        model_name: z.string(),
+        input_tokens: z.number(),
+        output_tokens: z.number(),
+      }),
+    ),
+  }),
 });
 
 const responseOutputTextSchema = z.object({
@@ -479,7 +528,7 @@ export const orchestratorToolCallSchema = z.union([
   z.object({
     type: z.literal("plan"),
     arguments: z.object({
-      plan: z.string(),
+      plan: z.string().optional(),
     }),
   }),
   z.object({
@@ -491,25 +540,28 @@ export const orchestratorToolCallSchema = z.union([
   z.object({
     type: z.literal("code"),
     arguments: z.object({
-      code_issue: z.string(),
+      code_issue: z.string().optional(),
     }),
   }),
   z.object({
     type: z.literal("answer"),
     arguments: z.object({
-      answer: z.string(),
+      answer_args: z
+        .object({
+          answer_approach: z.string().optional(),
+        })
+        .optional(),
     }),
   }),
 ]);
 
+export const orchestratorThinkSchema = z.object({
+  type: z.literal("think"),
+});
+
 const successfulResultSchema = z.object({
   type: z.literal("success"),
-  data: z.object({
-    text: z.string(),
-    evidence: z.array(evidenceSchema).default([]),
-    steps: z.array(stepResultSchema),
-    diary: z.string().default(""),
-  }),
+  data: finalAnswerSchema,
 });
 
 const errorResultSchema = z.object({
