@@ -21,6 +21,8 @@ type StepType = "think" | "search" | "code" | "answer" | "plan" | "citation" | "
 // TODO: test surrender step
 type AgenticRetrieverState = {
   query: string;
+  runId: string | null;
+  pastResults: Array<{ timestamp: string; runId: string; query: string; result: z.infer<typeof resultSchema> }>;
   result: null | z.infer<typeof resultSchema>;
   status: "idle" | "loading" | "error" | "success";
   currentStepType: StepType | null;
@@ -74,6 +76,10 @@ type TakeDoneEvent = {
   type: "TAKE_DONE_EVENT";
   payload: any;
 };
+type SetRunIdAction = {
+  type: "SET_RUN_ID";
+  payload: string | null;
+};
 
 type ResetAction = {
   type: "RESET";
@@ -90,6 +96,7 @@ type SetErrorAction = {
 
 type AgenticRetrieverAction =
   | SetQueryAction
+  | SetRunIdAction
   | TakeDoneEvent
   | ResetAction
   | RetryAction
@@ -105,6 +112,9 @@ function agenticRetrieverReducer(state: AgenticRetrieverState, action: AgenticRe
         return state;
       }
       return { ...state, status: "loading", query: action.payload };
+
+    case "SET_RUN_ID":
+      return { ...state, runId: action.payload };
 
     case "TAKE_AGENT_UPDATED_STREAM_EVENT":
       return {
@@ -212,6 +222,10 @@ function agenticRetrieverReducer(state: AgenticRetrieverState, action: AgenticRe
       }
       return {
         ...state,
+        pastResults: [
+          ...state.pastResults,
+          { timestamp: new Date().toISOString(), query: state.query, runId: state.runId || "", result: action.payload },
+        ],
         status: action.payload.type,
         result: action.payload,
       };
@@ -238,12 +252,22 @@ function agenticRetrieverReducer(state: AgenticRetrieverState, action: AgenticRe
   }
 }
 
-export default function useAgenticRetriever({ tenantSlug }: { tenantSlug: string }): AgenticRetriever {
+export default function useAgenticRetriever({
+  tenantSlug,
+  onDone,
+  onError,
+}: {
+  tenantSlug: string;
+  onDone: (payload: z.infer<typeof resultSchema>) => Promise<void>;
+  onError: (payload: string) => Promise<void>;
+}): AgenticRetriever {
   const abortControllerRef = useRef<AbortController | null>(null);
   const eventDebugRef = useRef<string>("");
   const [state, dispatch] = useReducer(agenticRetrieverReducer, {
     query: "",
+    runId: null,
     status: "idle",
+    pastResults: [],
     result: null,
     currentStepType: null,
     accumulatedText: "",
@@ -263,10 +287,6 @@ export default function useAgenticRetriever({ tenantSlug }: { tenantSlug: string
 
   const close = useCallback(() => {
     console.log("Closing EventSource");
-    // if (esRef.current) {
-    //   esRef.current.close();
-    //   esRef.current = null;
-    // }
   }, []);
 
   const reset = useCallback(() => {
@@ -280,11 +300,12 @@ export default function useAgenticRetriever({ tenantSlug }: { tenantSlug: string
     if (typeof window === "undefined") return;
     abortControllerRef.current = new AbortController();
 
-    const handleError = (e: EventSourceMessage) => {
+    const handleError = async (e: EventSourceMessage) => {
       // Browsers fire 'error' on transient disconnects too; the stream may auto-retry.
       // You can inspect (e as any).data if your server sends a body with errors.
       console.error("Stream error:", e);
       dispatch({ type: "SET_ERROR", payload: e instanceof Error ? e.message : "Unknown error" });
+      await onError(e instanceof Error ? e.message : "Unknown error");
     };
 
     const handleEvent = (e: EventSourceMessage) => {
@@ -310,7 +331,7 @@ export default function useAgenticRetriever({ tenantSlug }: { tenantSlug: string
       }
     };
 
-    const handleDone = (e: EventSourceMessage) => {
+    const handleDone = async (e: EventSourceMessage) => {
       console.log("Stream done event:", e.data);
       let doneEvent = resultSchema.safeParse(JSON.parse(e.data));
       if (!doneEvent.success) {
@@ -319,6 +340,7 @@ export default function useAgenticRetriever({ tenantSlug }: { tenantSlug: string
         return;
       }
       dispatch({ type: "TAKE_DONE_EVENT", payload: doneEvent.data });
+      await onDone(doneEvent.data);
       console.log("Stream closed", e.data);
     };
 
@@ -332,13 +354,14 @@ export default function useAgenticRetriever({ tenantSlug }: { tenantSlug: string
         if (event.event === "message") {
           handleEvent(event);
         } else if (event.event === "done") {
-          handleDone(event);
+          await handleDone(event);
         } else if (event.event === "error") {
-          handleError(event);
+          await handleError(event);
         }
       },
-      async onopen() {
+      async onopen(response) {
         console.log("Stream opened");
+        dispatch({ type: "SET_RUN_ID", payload: response.headers.get("run-id") || null });
       },
       async onclose() {
         console.log("Stream closed");
@@ -354,7 +377,7 @@ export default function useAgenticRetriever({ tenantSlug }: { tenantSlug: string
       }),
       signal: abortControllerRef.current?.signal,
     });
-  }, [dispatch, abortControllerRef, state.query, tenantSlug]);
+  }, [dispatch, abortControllerRef, state.query, tenantSlug, onDone, onError]);
 
   useEffect(() => {
     if (state.query) {
