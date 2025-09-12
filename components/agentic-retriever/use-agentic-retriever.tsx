@@ -3,6 +3,8 @@ import { parse, OBJ, ARR, STR } from "partial-json";
 import { useCallback, useEffect, useMemo, useReducer, useRef } from "react";
 import { z } from "zod";
 
+import { getRagieAgentsSearchPath } from "@/lib/paths";
+
 import {
   inProgressCitationStepSchema,
   evidenceSchema,
@@ -236,7 +238,7 @@ function agenticRetrieverReducer(state: AgenticRetrieverState, action: AgenticRe
   }
 }
 
-export default function useAgenticRetriever(): AgenticRetriever {
+export default function useAgenticRetriever({ tenantSlug }: { tenantSlug: string }): AgenticRetriever {
   const abortControllerRef = useRef<AbortController | null>(null);
   const eventDebugRef = useRef<string>("");
   const [state, dispatch] = useReducer(agenticRetrieverReducer, {
@@ -321,13 +323,9 @@ export default function useAgenticRetriever(): AgenticRetriever {
     };
 
     // TODO: Obv stop hardcoding here and PROXY to the actual API
-    await fetchEventSource(`http://localhost:8000/agents/search`, {
+    await fetchEventSource(getRagieAgentsSearchPath(), {
       openWhenHidden: true,
       method: "POST",
-      headers: {
-        Authorization: `Bearer tnt_LDaWAeLA9py_LRr7dRHhO0J4mH4IOPvhNm6U4ur9WrYkiI2vn1hgNSA`,
-        "Content-Type": "application/json",
-      },
       async onmessage(event) {
         console.debug("Event:", event);
         eventDebugRef.current += `event: ${event.event}\n${JSON.stringify(JSON.parse(event.data), null, 2)}\n\n`;
@@ -351,12 +349,12 @@ export default function useAgenticRetriever(): AgenticRetriever {
       body: JSON.stringify({
         query: state.query,
         effort: "low",
-        partitions: ["16fa0cb5-b859-41a4-aa33-f3140fe2dfcf"],
         stream: true,
+        tenantSlug,
       }),
       signal: abortControllerRef.current?.signal,
     });
-  }, [dispatch, abortControllerRef, state.query]);
+  }, [dispatch, abortControllerRef, state.query, tenantSlug]);
 
   useEffect(() => {
     if (state.query) {

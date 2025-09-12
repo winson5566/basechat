@@ -66,7 +66,9 @@ export default function Chatbot({ tenant, conversationId, initMessage, onSelecte
 
   const enabledModels = useMemo(() => getEnabledModelsFromDisabled(tenant.disabledModels), [tenant.disabledModels]);
 
-  const agenticRetriever = useAgenticRetriever();
+  const agenticRetriever = useAgenticRetriever({
+    tenantSlug: tenant.slug,
+  });
 
   // Get initial settings from localStorage if they exist
   const [retrievalMode, setRetrievalMode] = useState(() => {
