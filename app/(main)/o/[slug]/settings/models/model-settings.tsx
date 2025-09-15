@@ -17,7 +17,6 @@ import {
   LLM_DISPLAY_NAMES,
   LLM_LOGO_MAP,
   LLMModel,
-  modelArraySchema,
   getEnabledModelsFromDisabled,
   modelSchema,
   NON_AGENTIC_MODELS,
@@ -25,7 +24,7 @@ import {
 import * as schema from "@/lib/server/db/schema";
 
 const formSchema = z.object({
-  disabledModels: modelArraySchema,
+  disabledModels: z.array(z.string()).nullable(),
   defaultModel: modelSchema,
   isBreadth: z.boolean().default(false),
   overrideBreadth: z.boolean().default(true),
