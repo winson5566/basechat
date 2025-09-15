@@ -35,6 +35,7 @@ type AgenticRetrieverState = {
   currentStepType: StepType | null;
   accumulatedText: string;
   steps: Array<z.infer<typeof stepResultSchema>>;
+  _stepTiming: Array<number>;
   _streamedResponses: Array<any>;
   _agentUpdatedStreamEvent: Array<z.infer<any>>;
   _runItemStreamEvent: Array<z.infer<typeof runItemSchema>>;
@@ -57,6 +58,7 @@ export type AgenticRetriever = {
     | null;
   result: AgenticRetrieverState["result"];
   evidence: EvidenceCollection;
+  stepTiming: Array<number>;
   submit: (payload: { query: string }) => void;
   getRun: (id: string) => Run | null;
   reset: () => void;
@@ -73,7 +75,10 @@ type TakeAgentUpdatedStreamEventAction = {
 };
 type TakeRunItemStreamEventAction = {
   type: "TAKE_RUN_ITEM_STREAM_EVENT";
-  payload: z.infer<typeof runItemSchema>;
+  payload: {
+    runItem: z.infer<typeof runItemSchema>;
+    stepDoneTime: number;
+  };
 };
 type TakeRawResponseEventAction = {
   type: "TAKE_RAW_RESPONSE_EVENT";
@@ -84,9 +89,12 @@ type TakeDoneEvent = {
   type: "TAKE_DONE_EVENT";
   payload: z.infer<typeof finalAnswerSchema>;
 };
-type SetRunIdAction = {
-  type: "SET_RUN_ID";
-  payload: string | null;
+type StartRun = {
+  type: "START_RUN";
+  payload: {
+    runId: string;
+    startTime: number;
+  };
 };
 
 type ResetAction = {
@@ -104,7 +112,7 @@ type SetErrorAction = {
 
 type AgenticRetrieverAction =
   | SetQueryAction
-  | SetRunIdAction
+  | StartRun
   | TakeDoneEvent
   | ResetAction
   | RetryAction
@@ -121,8 +129,8 @@ function agenticRetrieverReducer(state: AgenticRetrieverState, action: AgenticRe
       }
       return { ...state, status: "loading", query: action.payload };
 
-    case "SET_RUN_ID":
-      return { ...state, runId: action.payload };
+    case "START_RUN":
+      return { ...state, runId: action.payload.runId, _stepTiming: [action.payload.startTime] };
 
     case "TAKE_AGENT_UPDATED_STREAM_EVENT":
       return {
@@ -134,15 +142,16 @@ function agenticRetrieverReducer(state: AgenticRetrieverState, action: AgenticRe
     case "TAKE_RUN_ITEM_STREAM_EVENT": {
       let steps = state.steps;
       let currentStepType = state.currentStepType;
-      if ("output" in action.payload) {
-        steps = [...steps, stepResultSchema.parse(action.payload.output)];
+      if ("output" in action.payload.runItem) {
+        steps = [...steps, stepResultSchema.parse(action.payload.runItem.output)];
         currentStepType = "think";
       }
       return {
         ...state,
         steps,
         currentStepType,
-        _runItemStreamEvent: [...state._runItemStreamEvent, action.payload],
+        _runItemStreamEvent: [...state._runItemStreamEvent, action.payload.runItem],
+        _stepTiming: [...state._stepTiming, action.payload.stepDoneTime],
         _allEvents: [...state._allEvents, action.payload],
       };
     }
@@ -233,9 +242,26 @@ function agenticRetrieverReducer(state: AgenticRetrieverState, action: AgenticRe
         ...state,
         pastRuns: {
           ...state.pastRuns,
-          [state.runId || ""]: { timestamp: new Date().toISOString(), query: state.query, result: action.payload },
+          [state.runId || ""]: {
+            timestamp: new Date().toISOString(),
+            query: state.query,
+            result: action.payload,
+          },
         },
-        status: "success",
+        status: "idle",
+        currentStepType: null,
+        steps: [],
+        accumulatedText: "",
+        runId: null,
+        query: "",
+        _streamedResponses: [],
+        _agentUpdatedStreamEvent: [],
+        _runItemStreamEvent: [],
+        _rawResponseEvent: [],
+        _allEvents: [],
+        _inprogressResponse: "",
+        _evidence: {},
+        _stepTiming: [],
         result: action.payload,
       };
     }
@@ -282,6 +308,7 @@ export default function useAgenticRetriever({
     currentStepType: null,
     accumulatedText: "",
     steps: [],
+    _stepTiming: [],
     _streamedResponses: [],
     _agentUpdatedStreamEvent: [],
     _runItemStreamEvent: [],
@@ -328,7 +355,13 @@ export default function useAgenticRetriever({
             dispatch({ type: "TAKE_AGENT_UPDATED_STREAM_EVENT", payload: parsed });
             break;
           case "run_item_stream_event":
-            dispatch({ type: "TAKE_RUN_ITEM_STREAM_EVENT", payload: runItemSchema.parse(parsed.data.item) });
+            dispatch({
+              type: "TAKE_RUN_ITEM_STREAM_EVENT",
+              payload: {
+                runItem: runItemSchema.parse(parsed.data.item),
+                stepDoneTime: Date.now(),
+              },
+            });
             break;
           case "raw_response_event":
             dispatch({ type: "TAKE_RAW_RESPONSE_EVENT", payload: parsed.data });
@@ -362,6 +395,12 @@ export default function useAgenticRetriever({
     await fetchEventSource(getRagieAgentsSearchPath(), {
       openWhenHidden: true,
       method: "POST",
+      body: JSON.stringify({
+        query: state.query,
+        effort: "medium",
+        stream: true,
+        tenantSlug,
+      }),
       async onmessage(event) {
         console.debug("Event:", event);
         if (event.event === "message") {
@@ -378,7 +417,7 @@ export default function useAgenticRetriever({
         if (!runId) {
           throw new Error("Run ID is required");
         }
-        dispatch({ type: "SET_RUN_ID", payload: runId });
+        dispatch({ type: "START_RUN", payload: { runId, startTime: Date.now() } });
         await onStart(runId);
       },
       async onclose() {
@@ -387,12 +426,6 @@ export default function useAgenticRetriever({
       onerror(event) {
         console.error("Stream error:", event);
       },
-      body: JSON.stringify({
-        query: state.query,
-        effort: "low",
-        stream: true,
-        tenantSlug,
-      }),
       signal: abortControllerRef.current?.signal,
     });
   }, [dispatch, abortControllerRef, state.query, tenantSlug, onDone, onError, onStart]);
@@ -486,6 +519,7 @@ export default function useAgenticRetriever({
       result: state.result,
       status: state.status,
       steps: state.steps,
+      stepTiming: state._stepTiming,
       currentResponse,
       currentStepType: state.currentStepType,
       evidence,
@@ -498,6 +532,7 @@ export default function useAgenticRetriever({
     state.result,
     state.status,
     state.steps,
+    state._stepTiming,
     currentResponse,
     state.currentStepType,
     evidence,

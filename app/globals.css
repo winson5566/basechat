@@ -92,7 +92,7 @@ body {
   }
 
   .markdown p {
-    @apply mb-4;
+    @apply mb-4 last:mb-0;
   }
 
   .markdown ul {

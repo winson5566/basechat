@@ -20,7 +20,7 @@ import {
 } from "@/lib/llm/types";
 
 import { SourceMetadata } from "../../lib/types";
-import AgenticResponse from "../agentic-retriever/agentic-response";
+import AgenticResponse from "../agentic-retriever/agentic-response-redesign";
 import { finalAnswerSchema, resultSchema } from "../agentic-retriever/types";
 import useAgenticRetriever from "../agentic-retriever/use-agentic-retriever";
 
@@ -383,8 +383,13 @@ export default function Chatbot({ tenant, conversationId, initMessage, onSelecte
               tenantId={tenant.id}
             />
           )}
-          {(agenticRetriever.status !== "idle" || agenticRetriever.result) && (
-            <AgenticResponse agenticRetriever={agenticRetriever} />
+          {agenticRetriever.status !== "idle" && (
+            <AgenticResponse
+              agenticRetriever={agenticRetriever}
+              avatarName={tenant.name}
+              avatarLogoUrl={tenant.logoUrl}
+              tenantId={tenant.id}
+            />
           )}
         </div>
       </div>
