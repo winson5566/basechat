@@ -3,7 +3,8 @@
 import assert from "assert";
 
 import { experimental_useObject as useObject } from "ai/react";
-import { Fragment, useEffect, useMemo, useRef, useState } from "react";
+import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { z } from "zod";
 
 import {
   conversationMessagesResponseSchema,
@@ -20,6 +21,7 @@ import {
 
 import { SourceMetadata } from "../../lib/types";
 import AgenticResponse from "../agentic-retriever/agentic-response";
+import { finalAnswerSchema, resultSchema } from "../agentic-retriever/types";
 import useAgenticRetriever from "../agentic-retriever/use-agentic-retriever";
 
 import AssistantMessage from "./assistant-message";
@@ -59,6 +61,7 @@ interface Props {
 export default function Chatbot({ tenant, conversationId, initMessage, onSelectedSource, onMessageConsumed }: Props) {
   const [localInitMessage, setLocalInitMessage] = useState(initMessage);
   const [messages, setMessages] = useState<Message[]>([]);
+  const [agenticMessages, setAgenticMessages] = useState<Array<AiMessage | UserMessage>>([]);
   const [sourceCache, setSourceCache] = useState<Record<string, SourceMetadata[]>>({});
   const [pendingMessage, setPendingMessage] = useState<null | { id: string; model: LLMModel }>(null);
   const pendingMessageRef = useRef<null | { id: string; model: LLMModel }>(null);
@@ -66,27 +69,70 @@ export default function Chatbot({ tenant, conversationId, initMessage, onSelecte
 
   const enabledModels = useMemo(() => getEnabledModelsFromDisabled(tenant.disabledModels), [tenant.disabledModels]);
 
+  const handleAgenticStart = useCallback((runId: string) => {
+    console.log("Agentic retrieval mode started with run ID:", runId);
+    return Promise.resolve();
+  }, []);
+
+  const handleAgenticDone = useCallback((payload: z.infer<typeof finalAnswerSchema>) => {
+    console.log("Agentic retrieval mode done with payload:", payload);
+    setAgenticMessages((prev) => [
+      ...prev,
+      {
+        content: payload.text,
+        role: "assistant",
+        id: createRandomId(),
+        sources: payload.evidence
+          .filter((e) => e.type === "ragie")
+          .map(
+            (e) =>
+              ({
+                source_type: e.document_metadata.source_type || "API",
+                file_path: e.document_metadata.file_path || "",
+                source_url: e.document_metadata.source_url || "",
+                documentId: e.document_id,
+                documentName: e.document_name,
+              }) as SourceMetadata,
+          ),
+        model: "Deep Search",
+      },
+    ]);
+    return Promise.resolve();
+  }, []);
+
+  const handleAgenticError = useCallback((payload: string) => {
+    console.log("Agentic retrieval mode error with payload:", payload);
+    return Promise.resolve();
+  }, []);
+
   const agenticRetriever = useAgenticRetriever({
     tenantSlug: tenant.slug,
+    onStart: handleAgenticStart,
+    onDone: handleAgenticDone,
+    onError: handleAgenticError,
   });
 
+  const retrievalMode: any = "agentic";
+  const setRetrievalMode = (mode: any) => {
+    return;
+  };
   // Get initial settings from localStorage if they exist
-  const [retrievalMode, setRetrievalMode] = useState(() => {
-    if (typeof window !== "undefined") {
-      const saved = localStorage.getItem("initialSettings");
-      if (saved && tenant.overrideBreadth) {
-        const settings = JSON.parse(saved);
-        if (settings.retrievalMode) {
-          return settings.retrievalMode;
-        }
-        return settings.isBreadth ? "breadth" : "depth";
-      }
-    }
-    if (tenant.retrievalMode) {
-      return tenant.retrievalMode;
-    }
-    return tenant.isBreadth ? "breadth" : "depth";
-  });
+  // const [retrievalMode, setRetrievalMode] = useState(() => {
+  //   if (typeof window !== "undefined") {
+  //     const saved = localStorage.getItem("initialSettings");
+  //     if (saved && tenant.overrideBreadth) {
+  //       const settings = JSON.parse(saved);
+  //       if (settings.retrievalMode) {
+  //         return settings.retrievalMode;
+  //       }
+  //       return settings.isBreadth ? "breadth" : "depth";
+  //     }
+  //   }
+  //   if (tenant.retrievalMode) {
+  //     return tenant.retrievalMode;
+  //   }
+  //   return tenant.isBreadth ? "breadth" : "depth";
+  // });
 
   const [rerankEnabled, setRerankEnabled] = useState(() => {
     if (typeof window !== "undefined") {
@@ -179,7 +225,7 @@ export default function Chatbot({ tenant, conversationId, initMessage, onSelecte
     const settingsToSave = {
       selectedModel,
       ...(tenant?.overrideBreadth ? { isBreadth: retrievalMode === "breadth" } : {}),
-      ...(tenant?.overrideRetrievalMode ? { retrievalMode } : {}),
+      // ...(tenant?.overrideRetrievalMode ? { retrievalMode } : {}),
       ...(tenant?.overrideRerank ? { rerankEnabled } : {}),
       ...(tenant?.overridePrioritizeRecent ? { prioritizeRecent } : {}),
     };
@@ -234,6 +280,7 @@ export default function Chatbot({ tenant, conversationId, initMessage, onSelecte
     } else {
       console.log("Submitting to agentic retrieval mode:", content);
       // TODO: Implement agentic mode submission
+      setAgenticMessages((prev) => [...prev, { content, role: "user", id: createRandomId(), sources: [] }]);
       agenticRetriever.submit({
         query: content,
       });
@@ -304,7 +351,7 @@ export default function Chatbot({ tenant, conversationId, initMessage, onSelecte
     <div className="flex h-full w-full items-center flex-col">
       <div ref={container} className="flex flex-col h-full w-full items-center overflow-y-auto">
         <div className="flex flex-col h-full w-full p-4 max-w-[717px]">
-          {messagesWithSources.map((message, i) =>
+          {agenticMessages.map((message, i) =>
             message.role === "user" ? (
               <UserMessage key={i} content={message.content} />
             ) : (
@@ -363,4 +410,8 @@ export default function Chatbot({ tenant, conversationId, initMessage, onSelecte
       </div>
     </div>
   );
+}
+
+function createRandomId() {
+  return Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
 }

@@ -159,7 +159,7 @@ const linkSchema = z.object({
   type: z.string(),
 });
 
-const ragieEvidenceSchema = baseEvidenceSchema.extend({
+export const ragieEvidenceSchema = baseEvidenceSchema.extend({
   type: z.literal("ragie"),
   id: z.string(),
   document_id: z.string(),

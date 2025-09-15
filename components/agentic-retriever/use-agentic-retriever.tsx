@@ -14,16 +14,23 @@ import {
   resultSchema,
   runItemSchema,
   stepResultSchema,
+  finalAnswerSchema,
 } from "./types";
 
 type StepType = "think" | "search" | "code" | "answer" | "plan" | "citation" | "surrender";
+
+type Run = {
+  timestamp: string;
+  query: string;
+  result: z.infer<typeof finalAnswerSchema>;
+};
 
 // TODO: test surrender step
 type AgenticRetrieverState = {
   query: string;
   runId: string | null;
-  pastResults: Array<{ timestamp: string; runId: string; query: string; result: z.infer<typeof resultSchema> }>;
-  result: null | z.infer<typeof resultSchema>;
+  pastRuns: Record<string, Run>;
+  result: null | z.infer<typeof finalAnswerSchema>;
   status: "idle" | "loading" | "error" | "success";
   currentStepType: StepType | null;
   accumulatedText: string;
@@ -51,6 +58,7 @@ export type AgenticRetriever = {
   result: AgenticRetrieverState["result"];
   evidence: EvidenceCollection;
   submit: (payload: { query: string }) => void;
+  getRun: (id: string) => Run | null;
   reset: () => void;
 };
 
@@ -74,7 +82,7 @@ type TakeRawResponseEventAction = {
 
 type TakeDoneEvent = {
   type: "TAKE_DONE_EVENT";
-  payload: any;
+  payload: z.infer<typeof finalAnswerSchema>;
 };
 type SetRunIdAction = {
   type: "SET_RUN_ID";
@@ -126,7 +134,6 @@ function agenticRetrieverReducer(state: AgenticRetrieverState, action: AgenticRe
     case "TAKE_RUN_ITEM_STREAM_EVENT": {
       let steps = state.steps;
       let currentStepType = state.currentStepType;
-      console.log("TAKE_RUN_ITEM_STREAM_EVENT", action.payload);
       if ("output" in action.payload) {
         steps = [...steps, stepResultSchema.parse(action.payload.output)];
         currentStepType = "think";
@@ -194,10 +201,12 @@ function agenticRetrieverReducer(state: AgenticRetrieverState, action: AgenticRe
           break;
         case "response.function_call_arguments.done":
           console.log("Function call arguments done:", parsed);
-          _streamedResponses = [
-            ..._streamedResponses,
-            { type: currentStepType || "think", data: JSON.parse(state._inprogressResponse) },
-          ];
+          try {
+            const parsed = JSON.parse(state._inprogressResponse);
+            _streamedResponses = [..._streamedResponses, { type: currentStepType || "think", data: parsed }];
+          } catch (err) {
+            console.error("Failed to parse function call arguments done:", state._inprogressResponse, err);
+          }
           break;
         case "response.completed":
           console.log("Response completed:", parsed);
@@ -222,11 +231,11 @@ function agenticRetrieverReducer(state: AgenticRetrieverState, action: AgenticRe
       }
       return {
         ...state,
-        pastResults: [
-          ...state.pastResults,
-          { timestamp: new Date().toISOString(), query: state.query, runId: state.runId || "", result: action.payload },
-        ],
-        status: action.payload.type,
+        pastRuns: {
+          ...state.pastRuns,
+          [state.runId || ""]: { timestamp: new Date().toISOString(), query: state.query, result: action.payload },
+        },
+        status: "success",
         result: action.payload,
       };
     }
@@ -256,18 +265,19 @@ export default function useAgenticRetriever({
   tenantSlug,
   onDone,
   onError,
+  onStart,
 }: {
   tenantSlug: string;
-  onDone: (payload: z.infer<typeof resultSchema>) => Promise<void>;
+  onStart: (runId: string) => Promise<void>;
+  onDone: (payload: z.infer<typeof finalAnswerSchema>) => Promise<void>;
   onError: (payload: string) => Promise<void>;
 }): AgenticRetriever {
   const abortControllerRef = useRef<AbortController | null>(null);
-  const eventDebugRef = useRef<string>("");
   const [state, dispatch] = useReducer(agenticRetrieverReducer, {
     query: "",
     runId: null,
     status: "idle",
-    pastResults: [],
+    pastRuns: {},
     result: null,
     currentStepType: null,
     accumulatedText: "",
@@ -339,8 +349,12 @@ export default function useAgenticRetriever({
         dispatch({ type: "SET_ERROR", payload: "Failed to parse done event" });
         return;
       }
-      dispatch({ type: "TAKE_DONE_EVENT", payload: doneEvent.data });
-      await onDone(doneEvent.data);
+      if (doneEvent.data.type !== "success") {
+        dispatch({ type: "SET_ERROR", payload: doneEvent.data.data.message });
+        return;
+      }
+      dispatch({ type: "TAKE_DONE_EVENT", payload: doneEvent.data.data });
+      await onDone(doneEvent.data.data);
       console.log("Stream closed", e.data);
     };
 
@@ -350,7 +364,6 @@ export default function useAgenticRetriever({
       method: "POST",
       async onmessage(event) {
         console.debug("Event:", event);
-        eventDebugRef.current += `event: ${event.event}\n${JSON.stringify(JSON.parse(event.data), null, 2)}\n\n`;
         if (event.event === "message") {
           handleEvent(event);
         } else if (event.event === "done") {
@@ -361,7 +374,12 @@ export default function useAgenticRetriever({
       },
       async onopen(response) {
         console.log("Stream opened");
-        dispatch({ type: "SET_RUN_ID", payload: response.headers.get("run-id") || null });
+        const runId = response.headers.get("run-id");
+        if (!runId) {
+          throw new Error("Run ID is required");
+        }
+        dispatch({ type: "SET_RUN_ID", payload: runId });
+        await onStart(runId);
       },
       async onclose() {
         console.log("Stream closed");
@@ -377,7 +395,7 @@ export default function useAgenticRetriever({
       }),
       signal: abortControllerRef.current?.signal,
     });
-  }, [dispatch, abortControllerRef, state.query, tenantSlug, onDone, onError]);
+  }, [dispatch, abortControllerRef, state.query, tenantSlug, onDone, onError, onStart]);
 
   useEffect(() => {
     if (state.query) {
@@ -409,7 +427,7 @@ export default function useAgenticRetriever({
     } else {
       console.error("Failed to parse in progress citation step schema", safeParse.error);
     }
-  } else if (partialJson) {
+  } else if (partialJson && Object.keys(partialJson).length > 0) {
     const safeParse = orchestratorToolCallSchema.safeParse({
       type: state.currentStepType,
       arguments: partialJson,
@@ -453,17 +471,40 @@ export default function useAgenticRetriever({
     return evidence;
   }, [state._runItemStreamEvent]);
 
+  const getRun = useCallback(
+    (runId: string) => {
+      return state.pastRuns[runId] || null;
+    },
+    [state.pastRuns],
+  );
+
   console.log("state", state, new Set(state._rawResponseEvent.map((e) => e.type)));
 
-  return {
-    query: state.query,
-    result: state.result,
-    status: state.status,
-    steps: state.steps,
+  const hookRes = useMemo(() => {
+    return {
+      query: state.query,
+      result: state.result,
+      status: state.status,
+      steps: state.steps,
+      currentResponse,
+      currentStepType: state.currentStepType,
+      evidence,
+      submit,
+      getRun,
+      reset,
+    };
+  }, [
+    state.query,
+    state.result,
+    state.status,
+    state.steps,
     currentResponse,
-    currentStepType: state.currentStepType,
+    state.currentStepType,
     evidence,
     submit,
+    getRun,
     reset,
-  };
+  ]);
+
+  return hookRes;
 }

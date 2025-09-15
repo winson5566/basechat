@@ -5,6 +5,7 @@ import rehypeHighlight from "rehype-highlight";
 import remarkGfm from "remark-gfm";
 import { z } from "zod";
 
+import Logo from "../tenant/logo/logo";
 import { Alert, AlertDescription, AlertTitle } from "../ui/alert";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "../ui/dialog";
@@ -624,13 +625,7 @@ function EvidenceList({ evidence }: { evidence: AgenticRetriever["evidence"] }) 
                   <PopoverContent className="w-auto max-w-xs p-2" side="top">
                     <div className="text-xs">
                       <p className="font-medium mb-1">Evidence:</p>
-                      <Markdown
-                        className="markdown mt-[10px]"
-                        rehypePlugins={[rehypeHighlight, remarkGfm]}
-                        // components={{
-                        //   pre: CodeBlock,
-                        // }}
-                      >
+                      <Markdown className="markdown mt-[10px]" rehypePlugins={[rehypeHighlight, remarkGfm]}>
                         {evidence.text}
                       </Markdown>
                     </div>
@@ -647,54 +642,68 @@ function EvidenceList({ evidence }: { evidence: AgenticRetriever["evidence"] }) 
 
 function SuccessfulResponse({ result }: { result: AgenticRetriever["result"] }) {
   if (!result) return null;
-  if (result.type === "error") {
-    return (
-      <div className="text-red-600">
-        <XCircle className="inline h-5 w-5 mr-2" />
-        <span>Error: {result.data.message}</span>
-      </div>
-    );
-  }
   return (
     <div>
       <Markdown className="markdown mt-[10px]" rehypePlugins={[rehypeHighlight, remarkGfm]}>
-        {result.data.text}
+        {result.text}
       </Markdown>
-      <EvidenceList evidence={{ "0": result.data.evidence }} />
+      <EvidenceList evidence={{ "0": result.evidence }} />
     </div>
   );
 }
 
-export default function AgenticResponse({ agenticRetriever }: { agenticRetriever: AgenticRetriever }) {
+export default function AgenticResponse({
+  agenticRetriever,
+  avatarName,
+  avatarLogoUrl,
+  tenantId,
+}: {
+  agenticRetriever: AgenticRetriever;
+  avatarName: string;
+  avatarLogoUrl?: string;
+  tenantId: string;
+}) {
   const stepInfo = getStepTypeInfo(agenticRetriever.currentStepType || "think");
   if (agenticRetriever.status === "success") {
     return <SuccessfulResponse result={agenticRetriever.result} />;
   }
 
   return (
-    <div>
-      <StepNavigation steps={agenticRetriever.steps} currentStepType={agenticRetriever.currentStepType} />
-      <Alert variant="default">
-        {stepInfo.icon && <stepInfo.icon className={`h-5 w-5 ${stepInfo.color}`} />}
-        <AlertTitle>
-          <div className="flex items-center gap-2">
-            <span
-              className="inline-block font-semibold text-lg
+    <div className="flex">
+      <div className="mb-8 shrink-0">
+        <Logo
+          name={avatarName}
+          url={avatarLogoUrl}
+          width={40}
+          height={40}
+          className="text-[13px] h-[40px] w-[40px]"
+          tenantId={tenantId}
+        />
+      </div>
+      <div className="self-start mb-6 rounded-md ml-7 max-w-[calc(100%-60px)]">
+        <StepNavigation steps={agenticRetriever.steps} currentStepType={agenticRetriever.currentStepType} />
+        <Alert variant="default">
+          {stepInfo.icon && <stepInfo.icon className={`h-5 w-5 ${stepInfo.color}`} />}
+          <AlertTitle>
+            <div className="flex items-center gap-2">
+              <span
+                className="inline-block font-semibold text-lg
          bg-[linear-gradient(100deg,theme(colors.slate.700)_10%,white_35%,theme(colors.slate.700)_60%)]
          bg-clip-text text-transparent [background-size:200%_100%] [-webkit-background-clip:text]
          motion-safe:animate-shimmer"
-            >
-              {stepInfo.activeLabel}
-            </span>
-          </div>
-        </AlertTitle>
-        <AlertDescription>
-          <div className="mt-4">
-            <StreamingResponse currentResponse={agenticRetriever.currentResponse} />
-          </div>
-          <EvidenceList evidence={agenticRetriever.evidence} />
-        </AlertDescription>
-      </Alert>
+              >
+                {stepInfo.activeLabel}
+              </span>
+            </div>
+          </AlertTitle>
+          <AlertDescription>
+            <div className="mt-4">
+              <StreamingResponse currentResponse={agenticRetriever.currentResponse} />
+            </div>
+            <EvidenceList evidence={agenticRetriever.evidence} />
+          </AlertDescription>
+        </Alert>
+      </div>
     </div>
   );
 }

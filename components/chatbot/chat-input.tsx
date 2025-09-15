@@ -98,10 +98,13 @@ export default function ChatInput(props: ChatInputProps) {
   const { profile } = useProfile();
   const [value, setValue] = useState("");
 
-  const { isBreadth, rerankEnabled, prioritizeRecent } = props;
+  const { retrievalMode, rerankEnabled, prioritizeRecent } = props;
+  const isBreadth = retrievalMode === "breadth";
   const ref = useRef<AutosizeTextAreaRef>(null);
-  const canOverrideSomething = props.canSetIsBreadth || props.canSetRerankEnabled || props.canSetPrioritizeRecent;
-  const canSwitchModel = props.enabledModels.length > 1;
+  const canOverrideSomething = false;
+  // const canOverrideSomething = props.canSetIsBreadth || props.canSetRerankEnabled || props.canSetPrioritizeRecent;
+  const canSwitchModel = false;
+  // const canSwitchModel = props.enabledModels.length > 1;
 
   const handleSubmit = (value: string) => {
     if (props.tenantPaidStatus === "expired") return;
@@ -166,7 +169,8 @@ export default function ChatInput(props: ChatInputProps) {
         {(canOverrideSomething || canSwitchModel) && (
           <PopoverTrigger className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
             {canOverrideSomething && <Image src={GearIcon} alt="settings" className="h-4 w-4" />}
-            {canSwitchModel && LLM_DISPLAY_NAMES[props.selectedModel]}
+            {/* {canSwitchModel && LLM_DISPLAY_NAMES[props.selectedModel]} */}
+            <>Deep Search</>
             {(canOverrideSomething || canSwitchModel) && <ChevronDown className="h-4 w-4" />}
           </PopoverTrigger>
         )}
@@ -179,7 +183,7 @@ export default function ChatInput(props: ChatInputProps) {
                   <RadioGroup
                     value={props.retrievalMode}
                     onValueChange={(value) => {
-                      props.onRetrievalModeChange(value);
+                      props.onRetrievalModeChange(value as "breadth" | "depth" | "agentic");
                     }}
                   >
                     <div className="flex flex-col space-y-1">

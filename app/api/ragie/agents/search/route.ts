@@ -15,6 +15,8 @@ const reqBodySchema = z.object({
 // so we need to use the Node.js runtime to preserve them.
 export const runtime = "nodejs";
 
+const PARTITION_OVERIDE = "goog10k";
+
 export async function POST(request: NextRequest) {
   const params = reqBodySchema.parse(await request.json());
 
@@ -28,7 +30,6 @@ export async function POST(request: NextRequest) {
     const upstreamResponse = await fetch(`${RAGIE_API_BASE_URL}/agents/search`, {
       headers: {
         authorization: `Bearer ${ragieApiKey}`,
-        partition: tenant.ragiePartition || tenant.id,
         "Content-Type": "application/json",
       },
       signal: controller.signal,
@@ -36,7 +37,7 @@ export async function POST(request: NextRequest) {
       body: JSON.stringify({
         query: params.query,
         effort: params.effort,
-        partitions: [tenant.ragiePartition || tenant.id],
+        partitions: [PARTITION_OVERIDE || tenant.ragiePartition || tenant.id],
         stream: true,
       }),
     });
