@@ -15,8 +15,6 @@ const reqBodySchema = z.object({
 // so we need to use the Node.js runtime to preserve them.
 export const runtime = "nodejs";
 
-const PARTITION_OVERIDE = "goog10k";
-
 export async function POST(request: NextRequest) {
   const params = reqBodySchema.parse(await request.json());
 
@@ -37,7 +35,7 @@ export async function POST(request: NextRequest) {
       body: JSON.stringify({
         query: params.query,
         effort: params.effort,
-        partitions: [PARTITION_OVERIDE || tenant.ragiePartition || tenant.id],
+        partitions: [tenant.ragiePartition || tenant.id],
         stream: true,
       }),
     });
