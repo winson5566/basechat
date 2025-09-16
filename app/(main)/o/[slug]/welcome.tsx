@@ -189,8 +189,10 @@ export default function Welcome({ tenant, className, profile }: Props) {
                 handleSubmit={handleSubmit}
                 selectedModel={selectedModel}
                 onModelChange={setSelectedModel}
-                isBreadth={isBreadth}
-                onBreadthChange={setIsBreadth}
+                retrievalMode={isBreadth ? "breadth" : "depth"}
+                onRetrievalModeChange={(mode) => setIsBreadth(mode === "breadth")}
+                // isBreadth={isBreadth}
+                // onBreadthChange={setIsBreadth}
                 rerankEnabled={rerankEnabled}
                 onRerankChange={setRerankEnabled}
                 prioritizeRecent={prioritizeRecent}
