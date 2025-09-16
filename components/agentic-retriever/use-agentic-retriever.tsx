@@ -1,3 +1,5 @@
+import assert from "assert";
+
 import { EventSourceMessage, fetchEventSource } from "@microsoft/fetch-event-source";
 import { parse, OBJ, ARR, STR } from "partial-json";
 import { useCallback, useEffect, useMemo, useReducer, useRef } from "react";
@@ -21,6 +23,8 @@ type StepType = "think" | "search" | "code" | "answer" | "plan" | "citation" | "
 
 type Run = {
   timestamp: string;
+  stepTiming: Array<number>;
+  steps: Array<z.infer<typeof stepResultSchema>>;
   query: string;
   result: z.infer<typeof finalAnswerSchema>;
 };
@@ -141,9 +145,11 @@ function agenticRetrieverReducer(state: AgenticRetrieverState, action: AgenticRe
 
     case "TAKE_RUN_ITEM_STREAM_EVENT": {
       let steps = state.steps;
+      let _stepTiming = state._stepTiming;
       let currentStepType = state.currentStepType;
       if ("output" in action.payload.runItem) {
         steps = [...steps, stepResultSchema.parse(action.payload.runItem.output)];
+        _stepTiming = [..._stepTiming, action.payload.stepDoneTime];
         currentStepType = "think";
       }
       return {
@@ -151,7 +157,7 @@ function agenticRetrieverReducer(state: AgenticRetrieverState, action: AgenticRe
         steps,
         currentStepType,
         _runItemStreamEvent: [...state._runItemStreamEvent, action.payload.runItem],
-        _stepTiming: [...state._stepTiming, action.payload.stepDoneTime],
+        _stepTiming,
         _allEvents: [...state._allEvents, action.payload],
       };
     }
@@ -246,6 +252,8 @@ function agenticRetrieverReducer(state: AgenticRetrieverState, action: AgenticRe
             timestamp: new Date().toISOString(),
             query: state.query,
             result: action.payload,
+            stepTiming: state._stepTiming,
+            steps: state.steps,
           },
         },
         status: "idle",
@@ -295,7 +303,7 @@ export default function useAgenticRetriever({
 }: {
   tenantSlug: string;
   onStart: (runId: string) => Promise<void>;
-  onDone: (payload: z.infer<typeof finalAnswerSchema>) => Promise<void>;
+  onDone: (payload: { result: z.infer<typeof finalAnswerSchema>; runId: string }) => Promise<void>;
   onError: (payload: string) => Promise<void>;
 }): AgenticRetriever {
   const abortControllerRef = useRef<AbortController | null>(null);
@@ -387,9 +395,12 @@ export default function useAgenticRetriever({
         return;
       }
       dispatch({ type: "TAKE_DONE_EVENT", payload: doneEvent.data.data });
-      await onDone(doneEvent.data.data);
+      assert(runId, "Run ID is required");
+      await onDone({ result: doneEvent.data.data, runId });
       console.log("Stream closed", e.data);
     };
+
+    let runId = "";
 
     // TODO: Obv stop hardcoding here and PROXY to the actual API
     await fetchEventSource(getRagieAgentsSearchPath(), {
@@ -413,7 +424,7 @@ export default function useAgenticRetriever({
       },
       async onopen(response) {
         console.log("Stream opened");
-        const runId = response.headers.get("run-id");
+        runId = response.headers.get("run-id")!;
         if (!runId) {
           throw new Error("Run ID is required");
         }
@@ -506,6 +517,7 @@ export default function useAgenticRetriever({
 
   const getRun = useCallback(
     (runId: string) => {
+      console.log("getRun", runId, state.pastRuns[runId], state.pastRuns);
       return state.pastRuns[runId] || null;
     },
     [state.pastRuns],

@@ -22,7 +22,7 @@ import {
 import { SourceMetadata } from "../../lib/types";
 import AgenticResponse from "../agentic-retriever/agentic-response-redesign";
 import { finalAnswerSchema, resultSchema } from "../agentic-retriever/types";
-import useAgenticRetriever from "../agentic-retriever/use-agentic-retriever";
+import useAgenticRetriever, { AgenticRetriever } from "../agentic-retriever/use-agentic-retriever";
 
 import AssistantMessage from "./assistant-message";
 import ChatInput from "./chat-input";
@@ -62,6 +62,7 @@ export default function Chatbot({ tenant, conversationId, initMessage, onSelecte
   const [localInitMessage, setLocalInitMessage] = useState(initMessage);
   const [messages, setMessages] = useState<Message[]>([]);
   const [agenticMessages, setAgenticMessages] = useState<Array<AiMessage | UserMessage>>([]);
+  const [agenticRunId, setAgenticRunId] = useState<string | null>(null);
   const [sourceCache, setSourceCache] = useState<Record<string, SourceMetadata[]>>({});
   const [pendingMessage, setPendingMessage] = useState<null | { id: string; model: LLMModel }>(null);
   const pendingMessageRef = useRef<null | { id: string; model: LLMModel }>(null);
@@ -71,18 +72,19 @@ export default function Chatbot({ tenant, conversationId, initMessage, onSelecte
 
   const handleAgenticStart = useCallback((runId: string) => {
     console.log("Agentic retrieval mode started with run ID:", runId);
+    setAgenticRunId(runId);
     return Promise.resolve();
   }, []);
 
-  const handleAgenticDone = useCallback((payload: z.infer<typeof finalAnswerSchema>) => {
+  const handleAgenticDone = useCallback((payload: { result: z.infer<typeof finalAnswerSchema>; runId: string }) => {
     console.log("Agentic retrieval mode done with payload:", payload);
     setAgenticMessages((prev) => [
       ...prev,
       {
-        content: payload.text,
+        content: payload.result.text,
         role: "assistant",
-        id: createRandomId(),
-        sources: payload.evidence
+        id: payload.runId,
+        sources: payload.result.evidence
           .filter((e) => e.type === "ragie")
           .map(
             (e) =>
@@ -97,6 +99,7 @@ export default function Chatbot({ tenant, conversationId, initMessage, onSelecte
         model: "Deep Search",
       },
     ]);
+    setAgenticRunId(null);
     return Promise.resolve();
   }, []);
 
@@ -356,7 +359,8 @@ export default function Chatbot({ tenant, conversationId, initMessage, onSelecte
               <UserMessage key={i} content={message.content} />
             ) : (
               <Fragment key={i}>
-                <AssistantMessage
+                <AgenticResponseContainer runId={message.id!} agenticRetriever={agenticRetriever} tenant={tenant} />
+                {/* <AssistantMessage
                   name={tenant.name}
                   logoUrl={tenant.logoUrl}
                   content={message.content}
@@ -366,7 +370,7 @@ export default function Chatbot({ tenant, conversationId, initMessage, onSelecte
                   model={message.model || selectedModel}
                   isGenerating={false}
                   tenantId={tenant.id}
-                />
+                /> */}
               </Fragment>
             ),
           )}
@@ -385,10 +389,14 @@ export default function Chatbot({ tenant, conversationId, initMessage, onSelecte
           )}
           {agenticRetriever.status !== "idle" && (
             <AgenticResponse
-              agenticRetriever={agenticRetriever}
               avatarName={tenant.name}
               avatarLogoUrl={tenant.logoUrl}
               tenantId={tenant.id}
+              currentStepType={agenticRetriever.currentStepType}
+              currentResponse={agenticRetriever.currentResponse}
+              steps={agenticRetriever.steps}
+              stepTiming={agenticRetriever.stepTiming}
+              result={agenticRetriever.result}
             />
           )}
         </div>
@@ -414,6 +422,36 @@ export default function Chatbot({ tenant, conversationId, initMessage, onSelecte
         </div>
       </div>
     </div>
+  );
+}
+
+function AgenticResponseContainer({
+  runId,
+  agenticRetriever,
+  tenant,
+}: {
+  runId: string;
+  agenticRetriever: AgenticRetriever;
+  tenant: {
+    name: string;
+    logoUrl?: string | null;
+    slug: string;
+    id: string;
+  };
+}) {
+  const run = agenticRetriever.getRun(runId);
+  assert(run);
+  return (
+    <AgenticResponse
+      currentStepType={null}
+      currentResponse={null}
+      steps={run.steps}
+      stepTiming={run.stepTiming}
+      result={run.result}
+      avatarName={tenant.name}
+      avatarLogoUrl={tenant.logoUrl}
+      tenantId={tenant.id}
+    />
   );
 }
 
