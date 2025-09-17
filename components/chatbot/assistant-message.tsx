@@ -15,7 +15,7 @@ import Logo from "../tenant/logo/logo";
 
 const MAX_CITATION_LENGTH = 30;
 
-const Citation = ({ source, onClick = () => {} }: { source: SourceMetadata; onClick?: () => void }) => {
+export const Citation = ({ source, onClick = () => {} }: { source: SourceMetadata; onClick?: () => void }) => {
   const connector = CONNECTOR_MAP[source.source_type];
   const isAudio =
     source.documentName?.toLowerCase() &&

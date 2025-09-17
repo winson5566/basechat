@@ -46,7 +46,6 @@ type AgenticRetrieverState = {
   _rawResponseEvent: Array<z.infer<typeof rawResponseEventSchema>>;
   _inprogressResponse: string;
   _allEvents: Array<any>;
-  _evidence: Record<string, z.infer<typeof evidenceSchema>>;
 };
 
 type EvidenceCollection = Record<string, Array<z.infer<typeof evidenceSchema>>>;
@@ -65,6 +64,7 @@ export type AgenticRetriever = {
   stepTiming: Array<number>;
   submit: (payload: { query: string }) => void;
   getRun: (id: string) => Run | null;
+  getEvidence: (runId: string, evidenceId: string) => z.infer<typeof evidenceSchema> | null;
   reset: () => void;
 };
 
@@ -268,7 +268,6 @@ function agenticRetrieverReducer(state: AgenticRetrieverState, action: AgenticRe
         _rawResponseEvent: [],
         _allEvents: [],
         _inprogressResponse: "",
-        _evidence: {},
         _stepTiming: [],
         result: action.payload,
       };
@@ -323,7 +322,6 @@ export default function useAgenticRetriever({
     _rawResponseEvent: [],
     _allEvents: [],
     _inprogressResponse: "",
-    _evidence: {},
   });
 
   const submit = useCallback((payload: { query: string }) => {
@@ -537,6 +535,17 @@ export default function useAgenticRetriever({
     [state],
   );
 
+  const getEvidence = useCallback(
+    (runId: string, evidenceId: string) => {
+      const run = getRun(runId);
+      if (!run) {
+        return null;
+      }
+      return run.result!.evidence.filter((e) => e.type === "ragie").find((e) => e.id === evidenceId) || null;
+    },
+    [getRun],
+  );
+
   console.log("state", state, new Set(state._rawResponseEvent.map((e) => e.type)));
 
   const hookRes = useMemo(() => {
@@ -552,6 +561,7 @@ export default function useAgenticRetriever({
       submit,
       getRun,
       reset,
+      getEvidence,
     };
   }, [
     state.query,
@@ -565,6 +575,7 @@ export default function useAgenticRetriever({
     submit,
     getRun,
     reset,
+    getEvidence,
   ]);
 
   return hookRes;

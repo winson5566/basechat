@@ -8,12 +8,17 @@ import {
   SurrenderStep,
   getStepTypeInfo,
   EvaluatedAnswerStep,
+  StepTimer,
 } from "@/components/agentic-retriever/agentic-response";
 import { useAgenticRetrieverContext } from "@/components/agentic-retriever/agentic-retriever-context";
 
 export default function StepDetails({ runId, stepIndex }: { runId: string; stepIndex: string }) {
   const agenticRetrival = useAgenticRetrieverContext();
-  const step = agenticRetrival.getRun(runId)?.steps[Number(stepIndex)];
+  const run = agenticRetrival.getRun(runId);
+  if (!run) {
+    return <div>Run not found</div>;
+  }
+  const step = run.steps[Number(stepIndex)];
   if (!step) {
     return <div>Step not found</div>;
   }
@@ -38,7 +43,8 @@ export default function StepDetails({ runId, stepIndex }: { runId: string; stepI
       break;
   }
   const Icon = stepInfo.icon;
-  const stepTime = 0;
+  const stepStartTime = run.stepTiming[Number(stepIndex)];
+  const stepEndTime = run.stepTiming[Number(stepIndex) + 1];
   return (
     <div>
       <div className="flex items-center gap-3 pt-6">
@@ -49,7 +55,7 @@ export default function StepDetails({ runId, stepIndex }: { runId: string; stepI
       </div>
       <div className="h-3" />
       <div className="text-[#74747A]">
-        Step {Number(stepIndex) + 1} &middot; {stepTime}
+        Step {Number(stepIndex) + 1} &middot; <StepTimer startTime={stepStartTime} endTime={stepEndTime} />
       </div>
       <div className="h-4" />
       <hr />

@@ -21,11 +21,13 @@ import rehypeHighlight from "rehype-highlight";
 import remarkGfm from "remark-gfm";
 import { z } from "zod";
 
-import Logo from "../tenant/logo/logo";
-import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "../ui/dialog";
+import { SourceMetadata } from "@/lib/types";
 
-import { stepResultSchema } from "./types";
+import { Citation } from "../chatbot/assistant-message";
+import Logo from "../tenant/logo/logo";
+
+import { renderWithCitations } from "./citation-tokenizer";
+import { ragieEvidenceSchema, stepResultSchema } from "./types";
 import { AgenticRetriever } from "./use-agentic-retriever";
 
 type Step = z.infer<typeof stepResultSchema>;
@@ -131,70 +133,6 @@ function StepListItem({
         </div>
       </Link>
     );
-  }
-
-  return (
-    <Dialog>
-      <DialogTrigger asChild>
-        <div
-          className={`flex items-center gap-2 px-3 py-2 rounded-md transition-colors hover:bg-[#F5F5F7]  cursor-pointer`}
-        >
-          <div className={`rounded ${stepInfo.iconColor} p-1`}>
-            <Icon className="h-4 w-4 text-white" />
-          </div>
-          <span className="text-sm font-medium">{stepInfo.label}</span>
-          <div className="ml-auto">
-            <StepTimer startTime={startTime} endTime={endTime} />
-          </div>
-        </div>
-      </DialogTrigger>
-      <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <div className={`rounded ${stepInfo.iconColor} p-1`}>
-              <Icon className={`h-6 w-6 text-white`} />
-            </div>
-            {stepInfo.label} Step {index + 1}
-          </DialogTitle>
-        </DialogHeader>
-        <div className="mt-4">
-          <StepResult step={step} index={index} />
-        </div>
-      </DialogContent>
-    </Dialog>
-  );
-}
-
-function StepResult({ step, index }: { step: Step; index: number }) {
-  const stepNumber = index + 1;
-
-  switch (step.type) {
-    case "answer":
-      return <AnswerStep key={stepNumber} step={step} />;
-    case "evaluated_answer":
-      return <EvaluatedAnswerStep key={stepNumber} step={step} />;
-    case "search":
-      return <SearchStep key={stepNumber} step={step} />;
-    case "plan":
-      return <PlanStep key={stepNumber} step={step} />;
-    case "code":
-      return <CodingStep key={stepNumber} step={step} />;
-    case "citation":
-      return <div>Citation Step</div>;
-    case "surrender":
-      return <SurrenderStep key={stepNumber} step={step} />;
-    default:
-      // Fallback for unknown step types
-      return (
-        <Card key={stepNumber} className="mb-4">
-          <CardHeader>
-            <CardTitle>Unknown Step Type: {(step as any).type}</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <pre className="text-sm bg-gray-50 p-2 rounded overflow-x-auto">{JSON.stringify(step, null, 2)}</pre>
-          </CardContent>
-        </Card>
-      );
   }
 }
 
@@ -587,9 +525,7 @@ export default function AgenticResponse({
         <StepNavigation steps={steps} stepTiming={stepTiming} isCompleted={!!result} runId={runId} />
         {result ? (
           <>
-            <Markdown className="markdown mt-[10px]" rehypePlugins={[rehypeHighlight, remarkGfm]}>
-              {result.text}
-            </Markdown>
+            <FinalAnswer answer={result} runId={runId} />
           </>
         ) : (
           <>
@@ -621,7 +557,7 @@ function formatElapsedTime(startTime: number, endTime: number) {
   return parts.slice(0, 2).join(" ") || "0s";
 }
 
-function StepTimer({ startTime, endTime }: { startTime: number; endTime: number | null }) {
+export function StepTimer({ startTime, endTime }: { startTime: number; endTime: number | null }) {
   const [time, setTime] = useState(endTime || Date.now());
   useEffect(() => {
     if (endTime) {
@@ -637,4 +573,61 @@ function StepTimer({ startTime, endTime }: { startTime: number; endTime: number 
   const displayTime = formatElapsedTime(startTime, time);
 
   return <p className="text-xs text-muted-foreground">{displayTime}</p>;
+}
+
+function FinalAnswer({ answer, runId }: { answer: AgenticRetriever["result"]; runId: string }) {
+  const params = useParams();
+  const router = useRouter();
+  const { slug, id } = params;
+  if (!answer) return null;
+
+  const linkFormatter = (idx: number) => {
+    const source = answer.evidence[idx];
+    if (source?.type === "ragie") {
+      return `/o/${slug}/conversations/${id}/details/agentic/${runId}/sources/${source.id}`;
+    }
+    return "";
+  };
+
+  // TODO: Handle external links
+  return (
+    <div>
+      <Markdown
+        className="markdown mt-[10px]"
+        rehypePlugins={[rehypeHighlight, remarkGfm]}
+        components={{
+          a: (props) => (
+            <>
+              [<Link href={props.href!}>{props.children}</Link>]
+            </>
+          ),
+        }}
+      >
+        {renderWithCitations(answer.text, linkFormatter)}
+      </Markdown>
+      <div className="flex flex-wrap">
+        {answer.evidence
+          .filter((e) => e.type === "ragie")
+          .map((evidence, idx) => (
+            <Citation
+              key={idx}
+              source={evidenceToSourceMetadata(evidence)}
+              onClick={() => {
+                router.push(linkFormatter(idx));
+              }}
+            />
+          ))}
+      </div>
+    </div>
+  );
+}
+
+function evidenceToSourceMetadata(evidence: z.infer<typeof ragieEvidenceSchema>): SourceMetadata {
+  return {
+    source_type: evidence.document_metadata.source_type,
+    file_path: evidence.document_metadata.file_path,
+    source_url: evidence.document_metadata.source_url,
+    documentId: evidence.document_id,
+    documentName: evidence.document_name,
+  };
 }
