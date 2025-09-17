@@ -63,8 +63,8 @@ export const ResetPasswordHtml = ({ name, link }: { name: string | null; link: s
   return (
     <Layout preview={`Reset your ${settings.APP_NAME} password`}>
       <Section>
-        <Text className="text-[#1D1D1F] text-[18px] mb-8">Hi{name ? ` ${name}` : ""},</Text>
-        <Text className="text-[#1D1D1F] text-[18px]">
+        <Text className="text-[#1D1D1F] text-lg mb-8">Hi{name ? ` ${name}` : ""},</Text>
+        <Text className="text-[#1D1D1F] text-lg">
           A request was made to change your {settings.APP_NAME} account password. If this was you, you can set a new
           password here:
         </Text>
@@ -76,7 +76,7 @@ export const ResetPasswordHtml = ({ name, link }: { name: string | null; link: s
           Reset password
         </Button>
 
-        <Text className="text-[#1D1D1F] text-[18px]">
+        <Text className="text-[#1D1D1F] text-lg">
           If you don&apos;t want to reset your password or didn&apos;t request this, just ignore and delete this
           message.
         </Text>
@@ -85,14 +85,23 @@ export const ResetPasswordHtml = ({ name, link }: { name: string | null; link: s
   );
 };
 
-export const InviteHtml = ({ name, link }: { name: string | null; link: string }) => {
+export const InviteHtml = ({
+  name,
+  link,
+  tenantName,
+}: {
+  name: string | null;
+  link: string;
+  tenantName: string | null;
+}) => {
   return (
     <Layout preview={`You have been invite to join ${settings.APP_NAME}`}>
       <Section>
-        <Text className="text-[#1D1D1F] text-[24px] mb-8 font-bold">
-          {name ? `${name} has` : "You have been"} invited to join {settings.APP_NAME}!
+        <Text className="text-[#1D1D1F] text-2xl mb-8 font-bold">
+          {name ? `${name} has` : "You have been"} invited to join{" "}
+          {tenantName ? `"${tenantName}" chatbot` : settings.APP_NAME}!
         </Text>
-        <Text className="text-[#1D1D1F] text-[18px]">Accept your invitation to start your chat experience.</Text>
+        <Text className="text-[#1D1D1F] text-lg">Accept your invitation to start your chat experience.</Text>
 
         <Button
           href={link}
@@ -109,14 +118,12 @@ export const PagesLimitReachedHtml = ({ tenantName, link }: { tenantName: string
   return (
     <Layout preview={`You have reached your ${settings.APP_NAME} page processing limit`}>
       <Section>
-        <Text className="text-[#1D1D1F] text-[24px] mb-8 font-bold">
-          You&apos;ve reached your page processing limit
-        </Text>
-        <Text className="text-[#1D1D1F] text-[18px] mb-6">
+        <Text className="text-[#1D1D1F] text- mb-8 font-bold">You&apos;ve reached your page processing limit</Text>
+        <Text className="text-[#1D1D1F] text-lg mb-6">
           You&apos;ve reached the page limit for your current plan
           {tenantName ? ` on the chatbot "${tenantName}."` : "."}
         </Text>
-        <Text className="text-[#1D1D1F] text-[18px] mb-8">
+        <Text className="text-[#1D1D1F] text-lg mb-8">
           Upgrade your plan to get immediate access to more pages and keep the conversation going.
         </Text>
 
@@ -127,7 +134,7 @@ export const PagesLimitReachedHtml = ({ tenantName, link }: { tenantName: string
           Upgrade Plan
         </Button>
 
-        <Text className="text-[#1D1D1F] text-[18px]">
+        <Text className="text-[#1D1D1F] text-lg">
           Have questions about your usage or plan?{" "}
           <a href="mailto:sales@ragie.ai" className="underline text-[#D946EF]">
             Contact us
@@ -142,8 +149,8 @@ export const VerifyEmailHtml = ({ name, link }: { name: string | null; link: str
   return (
     <Layout preview={`Verify your ${settings.APP_NAME} email address`}>
       <Section>
-        <Text className="text-[#1D1D1F] text-[18px] mb-8">Hi{name ? ` ${name}` : ""},</Text>
-        <Text className="text-[#1D1D1F] text-[18px]">
+        <Text className="text-[#1D1D1F] text-lg mb-8">Hi{name ? ` ${name}` : ""},</Text>
+        <Text className="text-[#1D1D1F] text-lg">
           Welcome to {settings.APP_NAME}! Please verify your email address by clicking the button below:
         </Text>
 
@@ -154,7 +161,7 @@ export const VerifyEmailHtml = ({ name, link }: { name: string | null; link: str
           Verify Email
         </Button>
 
-        <Text className="text-[#1D1D1F] text-[18px]">
+        <Text className="text-[#1D1D1F] text-lg">
           If you didn&apos;t create an account with {settings.APP_NAME}, you can safely ignore this email.
         </Text>
       </Section>

@@ -259,6 +259,12 @@ export async function createInvites(tenantId: string, invitedBy: string, emails:
       ),
   );
 
+  // Get tenant name from database
+  const tenant = await db.query.tenants.findFirst({
+    where: eq(schema.tenants.id, tenantId),
+    columns: { name: true },
+  });
+
   const options: SMTPConnection.Options = {
     host: settings.SMTP_HOST,
     port: settings.SMTP_PORT,
@@ -276,7 +282,7 @@ export async function createInvites(tenantId: string, invitedBy: string, emails:
       from: settings.SMTP_FROM,
       subject: `You have been invited to ${settings.APP_NAME}`,
       text: `Click the link below to accept the invite:\n\n${inviteLink}`,
-      html: await render(<InviteHtml name={null} link={inviteLink} />),
+      html: await render(<InviteHtml name={null} link={inviteLink} tenantName={tenant?.name || null} />),
     });
   });
 
