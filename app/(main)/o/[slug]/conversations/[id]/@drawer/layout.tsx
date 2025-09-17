@@ -40,32 +40,13 @@ export default function DrawerLayout({ children }: DrawerLayoutProps) {
     }, 300);
   };
 
-  const handleBackdropClick = (e: React.MouseEvent) => {
-    if (e.target === e.currentTarget) {
-      handleClose();
-    }
-  };
-
   if (!isDrawerRoute) {
     return null;
   }
 
   return (
-    <>
-      {/* Backdrop */}
-      <div
-        className={`fixed inset-0 bg-black transition-opacity duration-300 z-40 ${
-          isOpen ? "opacity-50" : "opacity-0"
-        } ${isAnimating ? "pointer-events-auto" : isOpen ? "pointer-events-auto" : "pointer-events-none"}`}
-        onClick={handleBackdropClick}
-      />
-
-      {/* Drawer */}
-      <div
-        className={`fixed right-0 top-0 h-full w-full max-w-2xl bg-white shadow-2xl transform transition-transform duration-300 ease-in-out z-50 ${
-          isOpen ? "translate-x-0" : "translate-x-full"
-        }`}
-      >
+    <div className="absolute top-0 left-0 right-0 lg:static lg:h-full">
+      <div className="flex-1 w-full h-full lg:min-w-[400px] lg:w-[400px] rounded-[24px] p-8 mr-6 mb-4 bg-[#F5F5F7] max-h-[calc(100vh-155px)] overflow-y-auto relative">
         {/* Close button */}
         <button
           onClick={handleClose}
@@ -78,8 +59,8 @@ export default function DrawerLayout({ children }: DrawerLayoutProps) {
         </button>
 
         {/* Drawer content */}
-        <div className="h-full overflow-y-auto">{children}</div>
+        {children}
       </div>
-    </>
+    </div>
   );
 }

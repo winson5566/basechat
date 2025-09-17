@@ -26,7 +26,7 @@ type Run = {
   stepTiming: Array<number>;
   steps: Array<z.infer<typeof stepResultSchema>>;
   query: string;
-  result: z.infer<typeof finalAnswerSchema>;
+  result: z.infer<typeof finalAnswerSchema> | null;
 };
 
 // TODO: test surrender step
@@ -518,9 +518,23 @@ export default function useAgenticRetriever({
   const getRun = useCallback(
     (runId: string) => {
       console.log("getRun", runId, state.pastRuns[runId], state.pastRuns);
-      return state.pastRuns[runId] || null;
+      if (runId in state.pastRuns) {
+        return state.pastRuns[runId];
+      }
+      if (state.runId === runId) {
+        // Construct run from current run in state
+        return {
+          runId,
+          timestamp: new Date().toISOString(),
+          query: state.query,
+          result: state.result,
+          stepTiming: state._stepTiming,
+          steps: state.steps,
+        };
+      }
+      return null;
     },
-    [state.pastRuns],
+    [state],
   );
 
   console.log("state", state, new Set(state._rawResponseEvent.map((e) => e.type)));

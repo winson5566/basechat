@@ -1,226 +1,171 @@
-import { Terminal, Search, Code, Brain, MessageSquare, CheckCircle, XCircle, List, BookOpenCheck } from "lucide-react";
-import { useState } from "react";
+import { intervalToDuration, Duration } from "date-fns";
+import {
+  Terminal,
+  Search,
+  Code,
+  Brain,
+  MessageSquare,
+  CheckCircle,
+  XCircle,
+  List,
+  BookOpenCheck,
+  ChevronDown,
+  ChevronUp,
+} from "lucide-react";
+import Link from "next/link";
+import { useParams, useRouter } from "next/navigation";
+import pluralize from "pluralize";
+import { useEffect, useState } from "react";
 import Markdown from "react-markdown";
 import rehypeHighlight from "rehype-highlight";
 import remarkGfm from "remark-gfm";
 import { z } from "zod";
 
 import Logo from "../tenant/logo/logo";
-import { Alert, AlertDescription, AlertTitle } from "../ui/alert";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "../ui/dialog";
-import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
-import { Skeleton } from "../ui/skeleton";
 
 import { stepResultSchema } from "./types";
 import { AgenticRetriever } from "./use-agentic-retriever";
 
 type Step = z.infer<typeof stepResultSchema>;
 
-// Helper function to get step type information
-function getStepTypeInfo(stepType: Step["type"] | "think") {
+export function getStepTypeInfo(stepType: Step["type"] | "think") {
   switch (stepType) {
     case "think":
       return {
         icon: Brain,
-        color: "text-yellow-600",
-        bgColor: "bg-yellow-100",
+        iconColor: "bg-yellow-600",
         label: "Think",
         activeLabel: "Thinking",
       };
     case "answer":
       return {
         icon: MessageSquare,
-        color: "text-green-600",
-        bgColor: "bg-green-100",
+        iconColor: "bg-green-600",
         label: "Answer",
         activeLabel: "Answering",
       };
     case "evaluated_answer":
       return {
         icon: CheckCircle,
-        color: "text-green-600",
-        bgColor: "bg-green-100",
-        label: "Evaluated Answer",
+        iconColor: "bg-green-600",
+        label: "Answer",
         activeLabel: "Evaluating Answer",
       };
     case "search":
       return {
         icon: Search,
-        color: "text-blue-600",
-        bgColor: "bg-blue-100",
+        iconColor: "bg-blue-600",
         label: "Search",
         activeLabel: "Searching",
       };
     case "plan":
       return {
         icon: List,
-        color: "text-purple-600",
-        bgColor: "bg-purple-100",
+        iconColor: "bg-purple-600",
         label: "Plan",
         activeLabel: "Planning",
       };
     case "code":
-      return { icon: Code, color: "text-green-600", bgColor: "bg-green-100", label: "Code", activeLabel: "Coding" };
+      return {
+        icon: Code,
+        iconColor: "bg-green-600",
+        label: "Code",
+        activeLabel: "Coding",
+      };
     case "surrender":
       return {
         icon: XCircle,
-        color: "text-orange-600",
-        bgColor: "bg-orange-100",
+        iconColor: "bg-orange-600",
         label: "Answer",
         activeLabel: "Answering",
       };
     case "citation":
       return {
         icon: BookOpenCheck,
-        color: "text-purple-600",
-        bgColor: "bg-purple-100",
+        iconColor: "bg-purple-600",
         label: "Citation",
         activeLabel: "Citing",
       };
     default:
       return {
         icon: Terminal,
-        color: "text-gray-600",
-        bgColor: "bg-gray-100",
+        iconColor: "bg-gray-600",
         label: `Unknown (${stepType})`,
         activeLabel: `Unknown (${stepType})`,
       };
   }
 }
 
-// HoverCard component for individual steps
-function StepHoverCard({ step, index }: { step: Step; index: number }) {
+function StepListItem({
+  step,
+  index,
+  startTime,
+  endTime,
+  runId,
+}: {
+  step: Step;
+  index: number;
+  startTime: number;
+  endTime: number | null;
+  runId: string;
+}) {
+  const params = useParams();
   const stepInfo = getStepTypeInfo(step.type);
   const Icon = stepInfo.icon;
-  const [isHovered, setIsHovered] = useState(false);
+  // TODO: Move into getUrls
+  if (true) {
+    return (
+      <Link href={`/o/${params.slug}/conversations/${params.id}/details/agentic/${runId}/steps/${index}`}>
+        <div
+          className={`flex items-center gap-2 px-3 py-2 rounded-md transition-colors hover:bg-[#F5F5F7]  cursor-pointer`}
+        >
+          <div className={`rounded ${stepInfo.iconColor} p-1`}>
+            <Icon className="h-4 w-4 text-white" />
+          </div>
+          <span className="text-sm font-medium">{stepInfo.label}</span>
+          <div className="ml-auto">
+            <StepTimer startTime={startTime} endTime={endTime} />
+          </div>
+        </div>
+      </Link>
+    );
+  }
 
   return (
     <Dialog>
-      <Popover open={isHovered} onOpenChange={setIsHovered}>
-        <PopoverTrigger asChild>
-          <DialogTrigger asChild>
-            <button
-              className={`flex items-center gap-2 px-3 py-2 rounded-md transition-colors hover:${stepInfo.bgColor} ${stepInfo.bgColor} ${stepInfo.color} cursor-pointer`}
-              onMouseEnter={() => setIsHovered(true)}
-              onMouseLeave={() => setIsHovered(false)}
-              onClick={() => setIsHovered(false)} // Close popover when clicked
-            >
-              <Icon className="h-4 w-4" />
-              <span className="text-sm font-medium">{index + 1}</span>
-            </button>
-          </DialogTrigger>
-        </PopoverTrigger>
-        <PopoverContent className="w-96 p-0" side="bottom" align="start">
-          <div className="p-4">
-            <div className="flex items-center gap-2 mb-3">
-              <Icon className={`h-5 w-5 ${stepInfo.color}`} />
-              <h3 className="font-semibold text-lg">
-                {stepInfo.label} Step {index + 1}
-              </h3>
-            </div>
-
-            <div className="space-y-3 text-sm">
-              <div>
-                <h4 className="font-medium text-gray-600 mb-1">Current Question:</h4>
-                <p className="text-gray-900">{"current_question" in step ? step.current_question : ""}</p>
-              </div>
-
-              {"think" in step && (
-                <div>
-                  <h4 className="font-medium text-gray-600 mb-1">Thought Process:</h4>
-                  <p className="text-gray-700 bg-gray-50 p-2 rounded text-xs max-h-20 overflow-y-auto">{step.think}</p>
-                </div>
-              )}
-
-              {/* Type-specific content preview */}
-              {step.type === "answer" && (
-                <div>
-                  <h4 className="font-medium text-gray-600 mb-1">Answer:</h4>
-                  <p className="text-gray-900 text-xs max-h-16 overflow-y-auto">
-                    {step.answer.text.substring(0, 150)}
-                    {step.answer.text.length > 150 ? "..." : ""}
-                  </p>
-                </div>
-              )}
-
-              {step.type === "evaluated_answer" && (
-                <div>
-                  <h4 className="font-medium text-gray-600 mb-1">Evaluation:</h4>
-                  <span
-                    className={`px-2 py-1 rounded text-xs ${
-                      step.eval_passed ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"
-                    }`}
-                  >
-                    {step.eval_passed ? "PASSED" : "FAILED"}
-                  </span>
-                </div>
-              )}
-
-              {step.type === "search" && (
-                <div>
-                  <h4 className="font-medium text-gray-600 mb-1">Search Requests:</h4>
-                  <p className="text-xs text-gray-700">{step.search.search_requests.length} search request(s)</p>
-                </div>
-              )}
-
-              {step.type === "plan" && (
-                <div>
-                  <h4 className="font-medium text-gray-600 mb-1">Questions to Answer:</h4>
-                  <p className="text-xs text-gray-700">{step.questions_to_answer.length} question(s) to reflect on</p>
-                </div>
-              )}
-
-              {step.type === "code" && (
-                <div>
-                  <h4 className="font-medium text-gray-600 mb-1">Code Issue:</h4>
-                  <p className="text-xs text-red-700 bg-red-50 p-1 rounded">
-                    {step.code_issue.substring(0, 100)}
-                    {step.code_issue.length > 100 ? "..." : ""}
-                  </p>
-                </div>
-              )}
-
-              {step.type === "surrender" && (
-                <div>
-                  <h4 className="font-medium text-gray-600 mb-1">Partial Answer:</h4>
-                  <p className="text-xs text-orange-700 bg-orange-50 p-1 rounded">
-                    {step.partial_answer.text.substring(0, 100)}
-                    {step.partial_answer.text.length > 100 ? "..." : ""}
-                  </p>
-                </div>
-              )}
-
-              {step.type === "citation" && (
-                <div>
-                  <h4 className="font-medium text-gray-600 mb-1">Citation:</h4>
-                  <p className="text-xs text-gray-700">{step.answer}</p>
-                </div>
-              )}
-
-              <div className="pt-2 border-t">
-                <p className="text-xs text-gray-500 italic">Click for full details</p>
-              </div>
-            </div>
+      <DialogTrigger asChild>
+        <div
+          className={`flex items-center gap-2 px-3 py-2 rounded-md transition-colors hover:bg-[#F5F5F7]  cursor-pointer`}
+        >
+          <div className={`rounded ${stepInfo.iconColor} p-1`}>
+            <Icon className="h-4 w-4 text-white" />
           </div>
-        </PopoverContent>
-      </Popover>
-
+          <span className="text-sm font-medium">{stepInfo.label}</span>
+          <div className="ml-auto">
+            <StepTimer startTime={startTime} endTime={endTime} />
+          </div>
+        </div>
+      </DialogTrigger>
       <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <Icon className={`h-6 w-6 ${stepInfo.color}`} />
-            {stepInfo.label} Step {index + 1} - Full Details
+            <div className={`rounded ${stepInfo.iconColor} p-1`}>
+              <Icon className={`h-6 w-6 text-white`} />
+            </div>
+            {stepInfo.label} Step {index + 1}
           </DialogTitle>
         </DialogHeader>
-        <div className="mt-4">{renderStep(step, index)}</div>
+        <div className="mt-4">
+          <StepResult step={step} index={index} />
+        </div>
       </DialogContent>
     </Dialog>
   );
 }
 
-// Render function that switches based on step type
-function renderStep(step: Step, index: number) {
+function StepResult({ step, index }: { step: Step; index: number }) {
   const stepNumber = index + 1;
 
   switch (step.type) {
@@ -253,98 +198,105 @@ function renderStep(step: Step, index: number) {
   }
 }
 
-// Step navigation component
 function StepNavigation({
   steps,
-  currentStepType,
+  stepTiming,
+  isCompleted,
+  runId,
 }: {
   steps: AgenticRetriever["steps"];
-  currentStepType: AgenticRetriever["currentStepType"];
+  stepTiming: AgenticRetriever["stepTiming"];
+  isCompleted: boolean;
+  runId: string;
 }) {
-  if (steps.length === 0) return null;
-  const stepInfo = getStepTypeInfo(currentStepType || "think");
+  const [isOpen, setIsOpen] = useState(false);
 
+  if (steps.length === 0) return null;
   return (
-    <div className="flex flex-wrap gap-2 mb-4 p-3 bg-gray-50 rounded-lg">
-      <>
-        {steps.map((step, index) => (
-          <StepHoverCard key={index} step={step} index={index} />
-        ))}
-      </>
-      <button
-        disabled
-        className={`flex items-center gap-2 px-3 py-2 rounded-md transition-colors hover:${stepInfo.bgColor} ${stepInfo.bgColor} ${stepInfo.color} cursor-pointer opacity-50`}
-      >
-        <stepInfo.icon className="h-4 w-4" />
-        <span className="text-sm font-medium">{steps.length + 1}</span>
-      </button>
+    <div className="flex flex-col px-4 py-2 mb-4 rounded-lg border border-[#D7D7D7]">
+      <div className="flex w-full items-center" onClick={() => setIsOpen(!isOpen)}>
+        <span className="flex-grow">{pluralize("step", steps.length, true)} completed</span>
+        <StepTimer startTime={stepTiming[0]} endTime={isCompleted ? stepTiming[stepTiming.length - 1] : null} />
+        <div className="pl-4 shrink-0">
+          {isOpen ? <ChevronUp className="h-5 w-5 min-w-5" /> : <ChevronDown className="h-5 w-5 min-w-5" />}
+        </div>
+      </div>
+      {isOpen && (
+        <ul className="flex flex-col gap-3 pt-4 pb-1">
+          {steps.map((step, index) => (
+            <li key={index} className="rounded-lg border border-[#D7D7D7]">
+              <StepListItem
+                step={step}
+                index={index}
+                runId={runId}
+                startTime={stepTiming[index]}
+                endTime={stepTiming[index + 1] || null}
+              />
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   );
 }
 
-// Individual step components for each branch of the union
-function AnswerStep({ step }: { step: Step & { type: "answer" } }) {
+function StepSection({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <Card className="mb-4">
-      <CardHeader className="pb-2">
-        <CardTitle className="flex items-center gap-2 text-lg">
-          <MessageSquare className="h-5 w-5 text-green-600" />
-          Answer Step
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-3">
-        <div>
-          <h4 className="font-medium text-sm text-gray-600 mb-1">Current Question:</h4>
-          <p className="text-sm">{step.current_question}</p>
-        </div>
-        <div>
-          <h4 className="font-medium text-sm text-gray-600 mb-1">Thought Process:</h4>
-          <p className="text-sm bg-gray-50 p-2 rounded">{step.think}</p>
-        </div>
-        <div>
-          <h4 className="font-medium text-sm text-gray-600 mb-1">Answer:</h4>
-          <p className="text-sm">{step.answer.text}</p>
-        </div>
-        {step.answer.evidence.length > 0 && (
-          <div>
-            <h4 className="font-medium text-sm text-gray-600 mb-1">Evidence:</h4>
-            <ul className="text-sm space-y-1">
-              {step.answer.evidence.map((evidence, idx) => (
-                <li key={idx} className="bg-blue-50 p-2 rounded text-blue-800">
-                  {evidence}
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
-        {step.other_resolved_question_ids.length > 0 && (
-          <div>
-            <h4 className="font-medium text-sm text-gray-600 mb-1">Other Resolved Questions:</h4>
-            <div className="flex flex-wrap gap-1">
-              {step.other_resolved_question_ids.map((id, idx) => (
-                <span key={idx} className="bg-gray-200 text-gray-700 px-2 py-1 rounded text-xs">
-                  {id}
-                </span>
-              ))}
-            </div>
-          </div>
-        )}
-      </CardContent>
-    </Card>
+    <div className="pb-6">
+      <h4 className="pb-4 text-gray-800 font-semibold">{title}</h4>
+      {children}
+    </div>
   );
 }
 
-function EvaluatedAnswerStep({ step }: { step: Step & { type: "evaluated_answer" } }) {
+export function AnswerStep({ step }: { step: Step & { type: "answer" } }) {
   return (
-    <Card className="mb-4">
-      <CardHeader className="pb-2">
-        <CardTitle className="flex items-center gap-2 text-lg">
-          {step.eval_passed ? (
-            <CheckCircle className="h-5 w-5 text-green-600" />
-          ) : (
-            <XCircle className="h-5 w-5 text-red-600" />
-          )}
-          Evaluated Answer Step
+    <div>
+      <div>
+        <h4 className="font-medium text-sm text-gray-600 mb-1">Current Question:</h4>
+        <p className="text-sm">{step.current_question}</p>
+      </div>
+      <div>
+        <h4 className="font-medium text-sm text-gray-600 mb-1">Thought Process:</h4>
+        <p className="text-sm bg-gray-50 p-2 rounded">{step.think}</p>
+      </div>
+      <div>
+        <h4 className="font-medium text-sm text-gray-600 mb-1">Answer:</h4>
+        <p className="text-sm">{step.answer.text}</p>
+      </div>
+      {step.answer.evidence.length > 0 && (
+        <div>
+          <h4 className="font-medium text-sm text-gray-600 mb-1">Evidence:</h4>
+          <ul className="text-sm space-y-1">
+            {step.answer.evidence.map((evidence, idx) => (
+              <li key={idx} className="bg-blue-50 p-2 rounded text-blue-800">
+                {evidence}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+      {step.other_resolved_question_ids.length > 0 && (
+        <div>
+          <h4 className="font-medium text-sm text-gray-600 mb-1">Other Resolved Questions:</h4>
+          <div className="flex flex-wrap gap-1">
+            {step.other_resolved_question_ids.map((id, idx) => (
+              <span key={idx} className="bg-gray-200 text-gray-700 px-2 py-1 rounded text-xs">
+                {id}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+export function EvaluatedAnswerStep({ step }: { step: Step & { type: "evaluated_answer" } }) {
+  return (
+    <div>
+      <div className="flex mb-2">
+        {step.eval_reason && (
           <span
             className={`px-2 py-1 rounded text-xs ${
               step.eval_passed ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"
@@ -352,211 +304,167 @@ function EvaluatedAnswerStep({ step }: { step: Step & { type: "evaluated_answer"
           >
             {step.eval_passed ? "PASSED" : "FAILED"}
           </span>
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-3">
-        <div>
-          <h4 className="font-medium text-sm text-gray-600 mb-1">Current Question:</h4>
-          <p className="text-sm">{step.current_question}</p>
-        </div>
-        <div>
-          <h4 className="font-medium text-sm text-gray-600 mb-1">Thought Process:</h4>
-          <p className="text-sm bg-gray-50 p-2 rounded">{step.think}</p>
-        </div>
-        <div>
-          <h4 className="font-medium text-sm text-gray-600 mb-1">Answer:</h4>
-          <p className="text-sm">{step.answer.text}</p>
-        </div>
-        <div>
-          <h4 className="font-medium text-sm text-gray-600 mb-1">Evaluation Reason:</h4>
-          <p
-            className={`text-sm p-2 rounded ${
-              step.eval_passed ? "bg-green-50 text-green-800" : "bg-red-50 text-red-800"
-            }`}
-          >
-            {step.eval_reason}
-          </p>
-        </div>
-        {step.answer.evidence.length > 0 && (
-          <div>
-            <h4 className="font-medium text-sm text-gray-600 mb-1">Evidence:</h4>
-            <ul className="text-sm space-y-1">
-              {step.answer.evidence.map((evidence, idx) => (
-                <li key={idx} className="bg-blue-50 p-2 rounded text-blue-800">
-                  {evidence}
-                </li>
-              ))}
-            </ul>
-          </div>
         )}
-      </CardContent>
-    </Card>
+      </div>
+      <StepSection title="Current Question">
+        <p>{step.current_question}</p>
+      </StepSection>
+      <StepSection title="Thought Process">
+        <p>{step.think}</p>
+      </StepSection>
+      <StepSection title="Answer">
+        <div className="border border-[#D7D7D7] p-2 rounded">
+          <Markdown className="markdown" rehypePlugins={[rehypeHighlight, remarkGfm]}>
+            {step.answer.text}
+          </Markdown>
+        </div>
+      </StepSection>
+      {step.eval_reason && (
+        <StepSection title="Evaluation Reason">
+          <p>{step.eval_reason}</p>
+        </StepSection>
+      )}
+      {step.answer.evidence.length > 0 && (
+        <StepSection title="Evidence">
+          <ul className="space-y-1">
+            {step.answer.evidence.map((evidence, idx) => (
+              <li key={idx} className="list-disc list-outside ml-4">
+                {evidence}
+              </li>
+            ))}
+          </ul>
+        </StepSection>
+      )}
+    </div>
   );
 }
 
-function SearchStep({ step }: { step: Step & { type: "search" } }) {
+export function SearchStep({ step }: { step: Step & { type: "search" } }) {
   return (
-    <Card className="mb-4">
-      <CardHeader className="pb-2">
-        <CardTitle className="flex items-center gap-2 text-lg">
-          <Search className="h-5 w-5 text-blue-600" />
-          Search Step
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-3">
+    <div>
+      <StepSection title="Current Question">
+        <p>{step.current_question}</p>
+      </StepSection>
+      <StepSection title="Thought Process">
+        <p>{step.think}</p>
+      </StepSection>
+      <StepSection title="Search Requests">
+        <ul className="space-y-1">
+          {step.search.search_requests.map((request, idx) => (
+            <li key={idx} className="list-disc list-outside ml-4">
+              {request}
+            </li>
+          ))}
+        </ul>
+      </StepSection>
+      {step.query_details.length > 0 && (
+        <StepSection title="Query Details">
+          <div className="space-y-2">
+            {step.query_details.map((query, idx) => (
+              <div key={idx} className="border border-[#D7D7D7] p-2 rounded">
+                <p className="font-medium text-sm">Query: {query.query}</p>
+                <p className="text-xs text-gray-600">
+                  {query.search_effort} effort &middot; {query.search_results.length} results
+                </p>
+              </div>
+            ))}
+          </div>
+        </StepSection>
+      )}
+      {step.search_log && (
+        <StepSection title="Search Log">
+          <pre className="text-xs border border-[#D7D7D7] p-2 rounded overflow-x-auto whitespace-pre-line">
+            {step.search_log}
+          </pre>
+        </StepSection>
+      )}
+    </div>
+  );
+}
+
+export function PlanStep({ step }: { step: Step & { type: "plan" } }) {
+  return (
+    <div>
+      <StepSection title="Current Question">
+        <p>{step.current_question}</p>
+      </StepSection>
+      <StepSection title="Thought Process">
+        <p>{step.think}</p>
+      </StepSection>
+      <StepSection title="Questions to Answer">
+        <ul className="space-y-1">
+          {step.questions_to_answer.map((question, idx) => (
+            <li key={idx} className="list-disc list-outside ml-4">
+              {question}
+            </li>
+          ))}
+        </ul>
+      </StepSection>
+    </div>
+  );
+}
+
+export function CodingStep({ step }: { step: Step & { type: "code" } }) {
+  return (
+    <div>
+      <StepSection title="Current Question">
+        <p>{step.current_question}</p>
+      </StepSection>
+
+      <div>
+        <h4 className="font-medium text-sm text-gray-600 mb-1">Thought Process:</h4>
+        <p className="text-sm bg-gray-50 p-2 rounded">{step.think}</p>
+      </div>
+      <div>
+        <h4 className="font-medium text-sm text-gray-600 mb-1">Code Issue:</h4>
+        <p className="text-sm bg-red-50 p-2 rounded text-red-800">{step.code_issue}</p>
+      </div>
+      {step.code && (
         <div>
-          <h4 className="font-medium text-sm text-gray-600 mb-1">Current Question:</h4>
-          <p className="text-sm">{step.current_question}</p>
+          <h4 className="font-medium text-sm text-gray-600 mb-1">Code:</h4>
+          <pre className="text-sm bg-gray-900 text-green-400 p-3 rounded overflow-x-auto">
+            <code>{step.code}</code>
+          </pre>
         </div>
+      )}
+      {step.code_result && (
         <div>
-          <h4 className="font-medium text-sm text-gray-600 mb-1">Thought Process:</h4>
-          <p className="text-sm bg-gray-50 p-2 rounded">{step.think}</p>
+          <h4 className="font-medium text-sm text-gray-600 mb-1">Code Result:</h4>
+          <pre className="text-sm bg-blue-50 p-2 rounded overflow-x-auto">{step.code_result}</pre>
         </div>
+      )}
+    </div>
+  );
+}
+
+export function SurrenderStep({ step }: { step: Step & { type: "surrender" } }) {
+  return (
+    <div>
+      <div>
+        <h4 className="font-medium text-sm text-gray-600 mb-1">Current Question:</h4>
+        <p className="text-sm">{step.current_question}</p>
+      </div>
+      <div>
+        <h4 className="font-medium text-sm text-gray-600 mb-1">Thought Process:</h4>
+        <p className="text-sm bg-gray-50 p-2 rounded">{step.think}</p>
+      </div>
+      <div>
+        <h4 className="font-medium text-sm text-gray-600 mb-1">Partial Answer:</h4>
+        <p className="text-sm bg-orange-50 p-2 rounded text-orange-800">{step.partial_answer.text}</p>
+      </div>
+      {step.partial_answer.evidence.length > 0 && (
         <div>
-          <h4 className="font-medium text-sm text-gray-600 mb-1">Search Requests:</h4>
+          <h4 className="font-medium text-sm text-gray-600 mb-1">Evidence:</h4>
           <ul className="text-sm space-y-1">
-            {step.search.search_requests.map((request, idx) => (
-              <li key={idx} className="bg-blue-50 p-2 rounded">
-                {request}
+            {step.partial_answer.evidence.map((evidence, idx) => (
+              <li key={idx} className="bg-blue-50 p-2 rounded text-blue-800">
+                {evidence}
               </li>
             ))}
           </ul>
         </div>
-        {step.query_details.length > 0 && (
-          <div>
-            <h4 className="font-medium text-sm text-gray-600 mb-1">Query Details:</h4>
-            <div className="space-y-2">
-              {step.query_details.map((query, idx) => (
-                <div key={idx} className="bg-gray-50 p-2 rounded">
-                  <p className="font-medium text-sm">Query: {query.query}</p>
-                  <p className="text-xs text-gray-600">Effort: {query.search_effort}</p>
-                  <p className="text-xs text-gray-600">Results: {query.search_results.length}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-        {step.search_log && (
-          <div>
-            <h4 className="font-medium text-sm text-gray-600 mb-1">Search Log:</h4>
-            <pre className="text-xs bg-gray-50 p-2 rounded overflow-x-auto whitespace-pre-line">{step.search_log}</pre>
-          </div>
-        )}
-      </CardContent>
-    </Card>
-  );
-}
-
-function PlanStep({ step }: { step: Step & { type: "plan" } }) {
-  return (
-    <Card className="mb-4">
-      <CardHeader className="pb-2">
-        <CardTitle className="flex items-center gap-2 text-lg">
-          <Brain className="h-5 w-5 text-purple-600" />
-          Plan Step
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-3">
-        <div>
-          <h4 className="font-medium text-sm text-gray-600 mb-1">Current Question:</h4>
-          <p className="text-sm">{step.current_question}</p>
-        </div>
-        <div>
-          <h4 className="font-medium text-sm text-gray-600 mb-1">Thought Process:</h4>
-          <p className="text-sm bg-gray-50 p-2 rounded">{step.think}</p>
-        </div>
-        <div>
-          <h4 className="font-medium text-sm text-gray-600 mb-1">Questions to Answer:</h4>
-          <ul className="text-sm space-y-1">
-            {step.questions_to_answer.map((question, idx) => (
-              <li key={idx} className="bg-purple-50 p-2 rounded text-purple-800">
-                {question}
-              </li>
-            ))}
-          </ul>
-        </div>
-      </CardContent>
-    </Card>
-  );
-}
-
-function CodingStep({ step }: { step: Step & { type: "code" } }) {
-  return (
-    <Card className="mb-4">
-      <CardHeader className="pb-2">
-        <CardTitle className="flex items-center gap-2 text-lg">
-          <Code className="h-5 w-5 text-green-600" />
-          Coding Step
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-3">
-        <div>
-          <h4 className="font-medium text-sm text-gray-600 mb-1">Current Question:</h4>
-          <p className="text-sm">{step.current_question}</p>
-        </div>
-        <div>
-          <h4 className="font-medium text-sm text-gray-600 mb-1">Thought Process:</h4>
-          <p className="text-sm bg-gray-50 p-2 rounded">{step.think}</p>
-        </div>
-        <div>
-          <h4 className="font-medium text-sm text-gray-600 mb-1">Code Issue:</h4>
-          <p className="text-sm bg-red-50 p-2 rounded text-red-800">{step.code_issue}</p>
-        </div>
-        {step.code && (
-          <div>
-            <h4 className="font-medium text-sm text-gray-600 mb-1">Code:</h4>
-            <pre className="text-sm bg-gray-900 text-green-400 p-3 rounded overflow-x-auto">
-              <code>{step.code}</code>
-            </pre>
-          </div>
-        )}
-        {step.code_result && (
-          <div>
-            <h4 className="font-medium text-sm text-gray-600 mb-1">Code Result:</h4>
-            <pre className="text-sm bg-blue-50 p-2 rounded overflow-x-auto">{step.code_result}</pre>
-          </div>
-        )}
-      </CardContent>
-    </Card>
-  );
-}
-
-function SurrenderStep({ step }: { step: Step & { type: "surrender" } }) {
-  return (
-    <Card className="mb-4">
-      <CardHeader className="pb-2">
-        <CardTitle className="flex items-center gap-2 text-lg">
-          <XCircle className="h-5 w-5 text-orange-600" />
-          Surrender Step
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-3">
-        <div>
-          <h4 className="font-medium text-sm text-gray-600 mb-1">Current Question:</h4>
-          <p className="text-sm">{step.current_question}</p>
-        </div>
-        <div>
-          <h4 className="font-medium text-sm text-gray-600 mb-1">Thought Process:</h4>
-          <p className="text-sm bg-gray-50 p-2 rounded">{step.think}</p>
-        </div>
-        <div>
-          <h4 className="font-medium text-sm text-gray-600 mb-1">Partial Answer:</h4>
-          <p className="text-sm bg-orange-50 p-2 rounded text-orange-800">{step.partial_answer.text}</p>
-        </div>
-        {step.partial_answer.evidence.length > 0 && (
-          <div>
-            <h4 className="font-medium text-sm text-gray-600 mb-1">Evidence:</h4>
-            <ul className="text-sm space-y-1">
-              {step.partial_answer.evidence.map((evidence, idx) => (
-                <li key={idx} className="bg-blue-50 p-2 rounded text-blue-800">
-                  {evidence}
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
-      </CardContent>
-    </Card>
+      )}
+    </div>
   );
 }
 
@@ -599,77 +507,72 @@ function StreamingResponse({ currentResponse }: { currentResponse: AgenticRetrie
   );
 }
 
-function EvidenceList({ evidence }: { evidence: AgenticRetriever["evidence"] }) {
-  console.log("Evidence List", evidence);
-  if (Object.keys(evidence).length === 0) return null;
+// function EvidenceList({ evidence }: { evidence: AgenticRetriever["evidence"] }) {
+//   console.log("Evidence List", evidence);
+//   if (Object.keys(evidence).length === 0) return null;
 
-  const truncateText = (text: string, maxLength: number = 20) => {
-    return text.length > maxLength ? text.substring(0, maxLength) + "..." : text;
-  };
+//   const truncateText = (text: string, maxLength: number = 20) => {
+//     return text.length > maxLength ? text.substring(0, maxLength) + "..." : text;
+//   };
 
-  return (
-    <div className="mt-4">
-      <div className="flex flex-wrap gap-2">
-        {Object.entries(evidence).map(([stepCount, e]) => (
-          <div key={stepCount}>
-            <h5 className="font-medium text-sm text-gray-600 mb-1">Step {Number(stepCount) + 1}:</h5>
-            {e.map((evidence, itemIdx) => {
-              const displayText = evidence.type === "ragie" ? evidence.document_name : evidence.type;
-              return (
-                <Popover key={itemIdx}>
-                  <PopoverTrigger asChild>
-                    <button className="bg-blue-100 hover:bg-blue-200 text-blue-800 px-3 py-1 rounded-full text-xs font-medium transition-colors cursor-pointer">
-                      {truncateText(displayText)}
-                    </button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto max-w-xs p-2" side="top">
-                    <div className="text-xs">
-                      <p className="font-medium mb-1">Evidence:</p>
-                      <Markdown className="markdown mt-[10px]" rehypePlugins={[rehypeHighlight, remarkGfm]}>
-                        {evidence.text}
-                      </Markdown>
-                    </div>
-                  </PopoverContent>
-                </Popover>
-              );
-            })}
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-function SuccessfulResponse({ result }: { result: AgenticRetriever["result"] }) {
-  if (!result) return null;
-  return (
-    <div>
-      <Markdown className="markdown mt-[10px]" rehypePlugins={[rehypeHighlight, remarkGfm]}>
-        {result.text}
-      </Markdown>
-      <EvidenceList evidence={{ "0": result.evidence }} />
-    </div>
-  );
-}
+//   return (
+//     <div className="mt-4">
+//       <div className="flex flex-col gap-2">
+//         {Object.entries(evidence).map(([stepCount, e]) => (
+//           <div key={stepCount}>
+//             <h5 className="font-medium text-sm text-gray-600 mb-1">Step {Number(stepCount) + 1}:</h5>
+//             {e.map((evidence, itemIdx) => {
+//               const displayText = evidence.type === "ragie" ? evidence.document_name : evidence.type;
+//               return (
+//                 <Popover key={itemIdx}>
+//                   <PopoverTrigger asChild>
+//                     <button className="bg-blue-100 hover:bg-blue-200 text-blue-800 px-3 py-1 rounded-full text-xs font-medium transition-colors cursor-pointer">
+//                       {truncateText(displayText)}
+//                     </button>
+//                   </PopoverTrigger>
+//                   <PopoverContent className="w-auto max-w-xs p-2" side="top">
+//                     <div className="text-xs">
+//                       <p className="font-medium mb-1">Evidence:</p>
+//                       <Markdown className="markdown mt-[10px]" rehypePlugins={[rehypeHighlight, remarkGfm]}>
+//                         {evidence.text}
+//                       </Markdown>
+//                     </div>
+//                   </PopoverContent>
+//                 </Popover>
+//               );
+//             })}
+//           </div>
+//         ))}
+//       </div>
+//     </div>
+//   );
+// }
 
 export default function AgenticResponse({
-  agenticRetriever,
+  currentStepType,
+  currentResponse,
+  result,
+  steps,
+  stepTiming,
   avatarName,
   avatarLogoUrl,
   tenantId,
+  runId,
 }: {
-  agenticRetriever: AgenticRetriever;
+  currentStepType: AgenticRetriever["currentStepType"];
+  currentResponse: AgenticRetriever["currentResponse"] | null;
+  result: AgenticRetriever["result"] | null;
+  steps: AgenticRetriever["steps"];
+  stepTiming: AgenticRetriever["stepTiming"];
   avatarName: string;
   avatarLogoUrl?: string | null;
   tenantId: string;
+  runId: string;
 }) {
-  const stepInfo = getStepTypeInfo(agenticRetriever.currentStepType || "think");
-  if (agenticRetriever.status === "success") {
-    return <SuccessfulResponse result={agenticRetriever.result} />;
-  }
+  const stepInfo = getStepTypeInfo(currentStepType || "think");
 
   return (
-    <div className="flex">
+    <div className="flex w-full">
       <div className="mb-8 shrink-0">
         <Logo
           name={avatarName}
@@ -680,30 +583,58 @@ export default function AgenticResponse({
           tenantId={tenantId}
         />
       </div>
-      <div className="self-start mb-6 rounded-md ml-7 max-w-[calc(100%-60px)]">
-        <StepNavigation steps={agenticRetriever.steps} currentStepType={agenticRetriever.currentStepType} />
-        <Alert variant="default">
-          {stepInfo.icon && <stepInfo.icon className={`h-5 w-5 ${stepInfo.color}`} />}
-          <AlertTitle>
-            <div className="flex items-center gap-2">
-              <span
-                className="inline-block font-semibold text-lg
-         bg-[linear-gradient(100deg,theme(colors.slate.700)_10%,white_35%,theme(colors.slate.700)_60%)]
-         bg-clip-text text-transparent [background-size:200%_100%] [-webkit-background-clip:text]
-         motion-safe:animate-shimmer"
-              >
-                {stepInfo.activeLabel}
-              </span>
-            </div>
-          </AlertTitle>
-          <AlertDescription>
-            <div className="mt-4">
-              <StreamingResponse currentResponse={agenticRetriever.currentResponse} />
-            </div>
-            <EvidenceList evidence={agenticRetriever.evidence} />
-          </AlertDescription>
-        </Alert>
+      <div className="self-start flex-grow mb-6 rounded-md ml-7 max-w-[calc(100%-60px)]">
+        <StepNavigation steps={steps} stepTiming={stepTiming} isCompleted={!!result} runId={runId} />
+        {result ? (
+          <>
+            <Markdown className="markdown mt-[10px]" rehypePlugins={[rehypeHighlight, remarkGfm]}>
+              {result.text}
+            </Markdown>
+          </>
+        ) : (
+          <>
+            <strong>{stepInfo.activeLabel}…</strong>
+            <StreamingResponse currentResponse={currentResponse} />
+            <StepTimer startTime={stepTiming[stepTiming.length - 1]} endTime={null} />
+          </>
+        )}
       </div>
     </div>
   );
+}
+
+function formatElapsedTime(startTime: number, endTime: number) {
+  const d = intervalToDuration({ start: new Date(startTime), end: new Date(endTime) });
+  const units = [
+    ["days", "d"],
+    ["hours", "h"],
+    ["minutes", "m"],
+    ["seconds", "s"],
+  ];
+
+  // Collect nonzero parts in order
+  const parts = units
+    .map(([key, suffix]) => (d[key as keyof Duration] ? `${d[key as keyof Duration]}${suffix}` : null))
+    .filter(Boolean);
+
+  // Take the first two significant parts
+  return parts.slice(0, 2).join(" ") || "0s";
+}
+
+function StepTimer({ startTime, endTime }: { startTime: number; endTime: number | null }) {
+  const [time, setTime] = useState(endTime || Date.now());
+  useEffect(() => {
+    if (endTime) {
+      setTime(endTime);
+      return;
+    }
+    const interval = setInterval(() => {
+      setTime(Date.now());
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [endTime]);
+
+  const displayTime = formatElapsedTime(startTime, time);
+
+  return <p className="text-xs text-muted-foreground">{displayTime}</p>;
 }

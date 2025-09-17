@@ -20,9 +20,9 @@ import {
 } from "@/lib/llm/types";
 
 import { SourceMetadata } from "../../lib/types";
-import AgenticResponse from "../agentic-retriever/agentic-response-redesign";
+import AgenticResponse from "../agentic-retriever/agentic-response";
+import { useAgenticRetrieverContext } from "../agentic-retriever/agentic-retriever-context";
 import { finalAnswerSchema, resultSchema } from "../agentic-retriever/types";
-import useAgenticRetriever, { AgenticRetriever } from "../agentic-retriever/use-agentic-retriever";
 
 import AssistantMessage from "./assistant-message";
 import ChatInput from "./chat-input";
@@ -108,12 +108,17 @@ export default function Chatbot({ tenant, conversationId, initMessage, onSelecte
     return Promise.resolve();
   }, []);
 
-  const agenticRetriever = useAgenticRetriever({
-    tenantSlug: tenant.slug,
-    onStart: handleAgenticStart,
-    onDone: handleAgenticDone,
-    onError: handleAgenticError,
-  });
+  const { registerCallbacks, ...agenticRetriever } = useAgenticRetrieverContext();
+
+  useEffect(() => {
+    const unregister = registerCallbacks({
+      onStart: handleAgenticStart,
+      onDone: handleAgenticDone,
+      onError: handleAgenticError,
+    });
+
+    return unregister;
+  }, [registerCallbacks, handleAgenticStart, handleAgenticDone, handleAgenticError]);
 
   const retrievalMode: any = "agentic";
   const setRetrievalMode = (mode: any) => {
@@ -359,7 +364,7 @@ export default function Chatbot({ tenant, conversationId, initMessage, onSelecte
               <UserMessage key={i} content={message.content} />
             ) : (
               <Fragment key={i}>
-                <AgenticResponseContainer runId={message.id!} agenticRetriever={agenticRetriever} tenant={tenant} />
+                <AgenticResponseContainer runId={message.id!} tenant={tenant} />
                 {/* <AssistantMessage
                   name={tenant.name}
                   logoUrl={tenant.logoUrl}
@@ -387,8 +392,9 @@ export default function Chatbot({ tenant, conversationId, initMessage, onSelecte
               tenantId={tenant.id}
             />
           )}
-          {agenticRetriever.status !== "idle" && (
+          {agenticRetriever.status !== "idle" && agenticRunId && (
             <AgenticResponse
+              runId={agenticRunId}
               avatarName={tenant.name}
               avatarLogoUrl={tenant.logoUrl}
               tenantId={tenant.id}
@@ -427,11 +433,9 @@ export default function Chatbot({ tenant, conversationId, initMessage, onSelecte
 
 function AgenticResponseContainer({
   runId,
-  agenticRetriever,
   tenant,
 }: {
   runId: string;
-  agenticRetriever: AgenticRetriever;
   tenant: {
     name: string;
     logoUrl?: string | null;
@@ -439,10 +443,12 @@ function AgenticResponseContainer({
     id: string;
   };
 }) {
-  const run = agenticRetriever.getRun(runId);
+  const { getRun } = useAgenticRetrieverContext();
+  const run = getRun(runId);
   assert(run);
   return (
     <AgenticResponse
+      runId={runId}
       currentStepType={null}
       currentResponse={null}
       steps={run.steps}
