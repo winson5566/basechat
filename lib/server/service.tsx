@@ -259,6 +259,22 @@ export async function createInvites(tenantId: string, invitedBy: string, emails:
       ),
   );
 
+  // Get tenant name and inviter name from database
+  const [tenant, inviterData] = await Promise.all([
+    db.query.tenants.findFirst({
+      where: eq(schema.tenants.id, tenantId),
+      columns: { name: true },
+    }),
+    db
+      .select({
+        name: schema.users.name,
+      })
+      .from(schema.profiles)
+      .innerJoin(schema.users, eq(schema.profiles.userId, schema.users.id))
+      .where(eq(schema.profiles.id, invitedBy))
+      .limit(1),
+  ]);
+
   const options: SMTPConnection.Options = {
     host: settings.SMTP_HOST,
     port: settings.SMTP_PORT,
@@ -276,7 +292,9 @@ export async function createInvites(tenantId: string, invitedBy: string, emails:
       from: settings.SMTP_FROM,
       subject: `You have been invited to ${settings.APP_NAME}`,
       text: `Click the link below to accept the invite:\n\n${inviteLink}`,
-      html: await render(<InviteHtml name={null} link={inviteLink} />),
+      html: await render(
+        <InviteHtml name={inviterData[0]?.name || null} link={inviteLink} tenantName={tenant?.name || null} />,
+      ),
     });
   });
 
@@ -611,8 +629,9 @@ export async function sendMail({
   if (settings.SMTP_USER && settings.SMTP_PASSWORD) {
     options.auth = { type: "login", user: settings.SMTP_USER, pass: settings.SMTP_PASSWORD };
   }
+  const fromWithDisplayName = from ? `"${settings.APP_NAME}" <${from}>` : settings.SMTP_FROM;
   const transporter = nodemailer.createTransport(options);
-  return transporter.sendMail({ to, from, subject, html, text });
+  return transporter.sendMail({ to, from: fromWithDisplayName, subject, html, text });
 }
 
 export function getAdminProfiles(tenantId: string) {
