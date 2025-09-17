@@ -26,6 +26,7 @@ import { SourceMetadata } from "@/lib/types";
 import { Citation } from "../chatbot/assistant-message";
 import Logo from "../tenant/logo/logo";
 
+import { useAgenticRetrieverContext } from "./agentic-retriever-context";
 import { renderWithCitations } from "./citation-tokenizer";
 import { ragieEvidenceSchema, stepResultSchema } from "./types";
 import { AgenticRetriever } from "./use-agentic-retriever";
@@ -127,7 +128,7 @@ function StepListItem({
             <Icon className="h-4 w-4 text-white" />
           </div>
           <span className="text-sm font-medium">{stepInfo.label}</span>
-          <div className="ml-auto">
+          <div className="ml-auto text-xs text-muted-foreground">
             <StepTimer startTime={startTime} endTime={endTime} />
           </div>
         </div>
@@ -136,7 +137,7 @@ function StepListItem({
   }
 }
 
-function StepNavigation({
+function StepList({
   steps,
   stepTiming,
   isCompleted,
@@ -152,7 +153,7 @@ function StepNavigation({
   if (steps.length === 0) return null;
   return (
     <div className="flex flex-col px-4 py-2 mb-4 rounded-lg border border-[#D7D7D7]">
-      <div className="flex w-full items-center" onClick={() => setIsOpen(!isOpen)}>
+      <div className="flex w-full items-center cursor-pointer" onClick={() => setIsOpen(!isOpen)}>
         <span className="flex-grow">{pluralize("step", steps.length, true)} completed</span>
         <StepTimer startTime={stepTiming[0]} endTime={isCompleted ? stepTiming[stepTiming.length - 1] : null} />
         <div className="pl-4 shrink-0">
@@ -266,14 +267,41 @@ export function EvaluatedAnswerStep({ step }: { step: Step & { type: "evaluated_
         <StepSection title="Evidence">
           <ul className="space-y-1">
             {step.answer.evidence.map((evidence, idx) => (
-              <li key={idx} className="list-disc list-outside ml-4">
-                {evidence}
-              </li>
+              <StepDetailEvidenceItem key={idx} evidenceId={evidence} />
             ))}
           </ul>
         </StepSection>
       )}
     </div>
+  );
+}
+
+function StepDetailEvidenceItem({ evidenceId }: { evidenceId: string }) {
+  const agenticRetriever = useAgenticRetrieverContext();
+  const { runId, id, slug } = useParams();
+  const ragieEvidence = agenticRetriever.getEvidence(runId as string, evidenceId);
+  if (!ragieEvidence || ragieEvidence.type !== "ragie") {
+    return null;
+  }
+  let pageNote = null;
+  if (ragieEvidence.metadata.start_page && ragieEvidence.metadata.start_page === ragieEvidence.metadata.end_page) {
+    pageNote = <span className="text-xs text-gray-600">{`(p. ${ragieEvidence.metadata.start_page})`}</span>;
+  } else if (ragieEvidence.metadata.start_page && ragieEvidence.metadata.end_page) {
+    pageNote = (
+      <span className="text-xs text-gray-600">{`(p. ${ragieEvidence.metadata.start_page}-${ragieEvidence.metadata.end_page})`}</span>
+    );
+  } else if (ragieEvidence.metadata.start_page) {
+    pageNote = <span className="text-xs text-gray-600">{`(p. ${ragieEvidence.metadata.start_page})`}</span>;
+  }
+  return (
+    <li className="list-disc list-outside ml-4">
+      <Link
+        className="hover:underline cursor-pointer"
+        href={getSourceLink(ragieEvidence.id, runId as string, id as string, slug as string)}
+      >
+        {ragieEvidence.document_name} {pageNote}
+      </Link>
+    </li>
   );
 }
 
@@ -304,6 +332,13 @@ export function SearchStep({ step }: { step: Step & { type: "search" } }) {
                 <p className="text-xs text-gray-600">
                   {query.search_effort} effort &middot; {query.search_results.length} results
                 </p>
+                {query.search_results.length > 0 && (
+                  <ul className="space-y-1 py-2">
+                    {query.search_results.map((result, idx) => (
+                      <StepDetailEvidenceItem key={idx} evidenceId={result.id} />
+                    ))}
+                  </ul>
+                )}
               </div>
             ))}
           </div>
@@ -431,7 +466,6 @@ function StreamingResponse({ currentResponse }: { currentResponse: AgenticRetrie
     default:
       console.warn("Unknown tool call type:", (currentResponse as any).type);
   }
-  console.log("Streaming Response", response, currentResponse);
   return (
     <div>
       {response ? (
@@ -444,47 +478,6 @@ function StreamingResponse({ currentResponse }: { currentResponse: AgenticRetrie
     </div>
   );
 }
-
-// function EvidenceList({ evidence }: { evidence: AgenticRetriever["evidence"] }) {
-//   console.log("Evidence List", evidence);
-//   if (Object.keys(evidence).length === 0) return null;
-
-//   const truncateText = (text: string, maxLength: number = 20) => {
-//     return text.length > maxLength ? text.substring(0, maxLength) + "..." : text;
-//   };
-
-//   return (
-//     <div className="mt-4">
-//       <div className="flex flex-col gap-2">
-//         {Object.entries(evidence).map(([stepCount, e]) => (
-//           <div key={stepCount}>
-//             <h5 className="font-medium text-sm text-gray-600 mb-1">Step {Number(stepCount) + 1}:</h5>
-//             {e.map((evidence, itemIdx) => {
-//               const displayText = evidence.type === "ragie" ? evidence.document_name : evidence.type;
-//               return (
-//                 <Popover key={itemIdx}>
-//                   <PopoverTrigger asChild>
-//                     <button className="bg-blue-100 hover:bg-blue-200 text-blue-800 px-3 py-1 rounded-full text-xs font-medium transition-colors cursor-pointer">
-//                       {truncateText(displayText)}
-//                     </button>
-//                   </PopoverTrigger>
-//                   <PopoverContent className="w-auto max-w-xs p-2" side="top">
-//                     <div className="text-xs">
-//                       <p className="font-medium mb-1">Evidence:</p>
-//                       <Markdown className="markdown mt-[10px]" rehypePlugins={[rehypeHighlight, remarkGfm]}>
-//                         {evidence.text}
-//                       </Markdown>
-//                     </div>
-//                   </PopoverContent>
-//                 </Popover>
-//               );
-//             })}
-//           </div>
-//         ))}
-//       </div>
-//     </div>
-//   );
-// }
 
 export default function AgenticResponse({
   currentStepType,
@@ -522,7 +515,7 @@ export default function AgenticResponse({
         />
       </div>
       <div className="self-start flex-grow mb-6 rounded-md ml-7 max-w-[calc(100%-60px)]">
-        <StepNavigation steps={steps} stepTiming={stepTiming} isCompleted={!!result} runId={runId} />
+        <StepList steps={steps} stepTiming={stepTiming} isCompleted={!!result} runId={runId} />
         {result ? (
           <>
             <FinalAnswer answer={result} runId={runId} />
@@ -531,7 +524,9 @@ export default function AgenticResponse({
           <>
             <strong>{stepInfo.activeLabel}…</strong>
             <StreamingResponse currentResponse={currentResponse} />
-            <StepTimer startTime={stepTiming[stepTiming.length - 1]} endTime={null} />
+            <p className="text-xs text-muted-foreground">
+              <StepTimer startTime={stepTiming[stepTiming.length - 1]} endTime={null} />
+            </p>
           </>
         )}
       </div>
@@ -572,7 +567,7 @@ export function StepTimer({ startTime, endTime }: { startTime: number; endTime: 
 
   const displayTime = formatElapsedTime(startTime, time);
 
-  return <p className="text-xs text-muted-foreground">{displayTime}</p>;
+  return <>{displayTime}</>;
 }
 
 function FinalAnswer({ answer, runId }: { answer: AgenticRetriever["result"]; runId: string }) {
@@ -584,7 +579,7 @@ function FinalAnswer({ answer, runId }: { answer: AgenticRetriever["result"]; ru
   const linkFormatter = (idx: number) => {
     const source = answer.evidence[idx];
     if (source?.type === "ragie") {
-      return `/o/${slug}/conversations/${id}/details/agentic/${runId}/sources/${source.id}`;
+      return getSourceLink(source.id, runId, id as string, slug as string);
     }
     return "";
   };
@@ -605,7 +600,7 @@ function FinalAnswer({ answer, runId }: { answer: AgenticRetriever["result"]; ru
       >
         {renderWithCitations(answer.text, linkFormatter)}
       </Markdown>
-      <div className="flex flex-wrap">
+      <div className="flex flex-wrap py-3">
         {answer.evidence
           .filter((e) => e.type === "ragie")
           .map((evidence, idx) => (
@@ -630,4 +625,8 @@ function evidenceToSourceMetadata(evidence: z.infer<typeof ragieEvidenceSchema>)
     documentId: evidence.document_id,
     documentName: evidence.document_name,
   };
+}
+
+function getSourceLink(evidenceId: string, runId: string, id: string, slug: string) {
+  return `/o/${slug}/conversations/${id}/details/agentic/${runId}/sources/${evidenceId}`;
 }

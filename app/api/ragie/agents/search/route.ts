@@ -5,6 +5,8 @@ import { getRagieApiKey } from "@/lib/server/ragie";
 import { RAGIE_API_BASE_URL } from "@/lib/server/settings";
 import { requireAuthContext } from "@/lib/server/utils";
 
+const PARTITION_OVERIDE = "goog10k";
+
 const reqBodySchema = z.object({
   query: z.string(),
   effort: z.string(),
@@ -35,7 +37,7 @@ export async function POST(request: NextRequest) {
       body: JSON.stringify({
         query: params.query,
         effort: params.effort,
-        partitions: [tenant.ragiePartition || tenant.id],
+        partitions: [PARTITION_OVERIDE || tenant.ragiePartition || tenant.id],
         stream: true,
       }),
     });

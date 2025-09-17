@@ -55,7 +55,10 @@ export default function StepDetails({ runId, stepIndex }: { runId: string; stepI
       </div>
       <div className="h-3" />
       <div className="text-[#74747A]">
-        Step {Number(stepIndex) + 1} &middot; <StepTimer startTime={stepStartTime} endTime={stepEndTime} />
+        Step {Number(stepIndex) + 1} &middot;{" "}
+        <div className="inline-block">
+          <StepTimer startTime={stepStartTime} endTime={stepEndTime} />
+        </div>
       </div>
       <div className="h-4" />
       <hr />

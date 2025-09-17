@@ -17,6 +17,7 @@ import {
   runItemSchema,
   stepResultSchema,
   finalAnswerSchema,
+  ragieEvidenceSchema,
 } from "./types";
 
 type StepType = "think" | "search" | "code" | "answer" | "plan" | "citation" | "surrender";
@@ -241,9 +242,6 @@ function agenticRetrieverReducer(state: AgenticRetrieverState, action: AgenticRe
     }
 
     case "TAKE_DONE_EVENT": {
-      if (state.status !== "loading") {
-        return state;
-      }
       return {
         ...state,
         pastRuns: {
@@ -262,6 +260,7 @@ function agenticRetrieverReducer(state: AgenticRetrieverState, action: AgenticRe
         accumulatedText: "",
         runId: null,
         query: "",
+        result: null,
         _streamedResponses: [],
         _agentUpdatedStreamEvent: [],
         _runItemStreamEvent: [],
@@ -269,7 +268,6 @@ function agenticRetrieverReducer(state: AgenticRetrieverState, action: AgenticRe
         _allEvents: [],
         _inprogressResponse: "",
         _stepTiming: [],
-        result: action.payload,
       };
     }
     case "RESET": {
@@ -426,8 +424,8 @@ export default function useAgenticRetriever({
         if (!runId) {
           throw new Error("Run ID is required");
         }
-        dispatch({ type: "START_RUN", payload: { runId, startTime: Date.now() } });
         await onStart(runId);
+        dispatch({ type: "START_RUN", payload: { runId, startTime: Date.now() } });
       },
       async onclose() {
         console.log("Stream closed");
@@ -536,12 +534,36 @@ export default function useAgenticRetriever({
   );
 
   const getEvidence = useCallback(
-    (runId: string, evidenceId: string) => {
+    (runId: string, evidenceId: string): z.infer<typeof evidenceSchema> | null => {
       const run = getRun(runId);
       if (!run) {
         return null;
       }
-      return run.result!.evidence.filter((e) => e.type === "ragie").find((e) => e.id === evidenceId) || null;
+
+      if (run.result?.evidence) {
+        const evidence = run.result.evidence.find((e) => {
+          return e.type === "ragie" && "id" in e && e.id === evidenceId;
+        });
+        if (evidence) {
+          return evidence;
+        }
+      }
+
+      // If not found in final result, search in the stream events
+      const searchStep = run.steps
+        .filter((item) => item.type === "search")
+        .find((item) => item.query_details.flatMap((q: any) => q.search_results).find((e: any) => e.id === evidenceId));
+
+      if (searchStep) {
+        const evidence = searchStep.query_details
+          .flatMap((q: any) => q.search_results)
+          .find((e: any) => e.id === evidenceId);
+
+        if (evidence) {
+          return evidence;
+        }
+      }
+      return null;
     },
     [getRun],
   );
