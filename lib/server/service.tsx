@@ -611,8 +611,9 @@ export async function sendMail({
   if (settings.SMTP_USER && settings.SMTP_PASSWORD) {
     options.auth = { type: "login", user: settings.SMTP_USER, pass: settings.SMTP_PASSWORD };
   }
+  const fromWithDisplayName = from ? `"${settings.APP_NAME}" <${from}>` : settings.SMTP_FROM;
   const transporter = nodemailer.createTransport(options);
-  return transporter.sendMail({ to, from, subject, html, text });
+  return transporter.sendMail({ to, from: fromWithDisplayName, subject, html, text });
 }
 
 export function getAdminProfiles(tenantId: string) {
