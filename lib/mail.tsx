@@ -98,7 +98,7 @@ export const InviteHtml = ({
     <Layout preview={`You have been invite to join ${settings.APP_NAME}`}>
       <Section>
         <Text className="text-[#1D1D1F] text-2xl mb-8 font-bold">
-          {name ? `${name} has` : "You have been"} invited to join{" "}
+          {name ? `${name} has invited you` : "You have been invited"} to join{" "}
           {tenantName ? `"${tenantName}" chatbot` : settings.APP_NAME}!
         </Text>
         <Text className="text-[#1D1D1F] text-lg">Accept your invitation to start your chat experience.</Text>
