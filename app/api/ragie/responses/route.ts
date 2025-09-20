@@ -8,8 +8,10 @@ import { requireAuthContext } from "@/lib/server/utils";
 const PARTITION_OVERIDE = null;
 
 const reqBodySchema = z.object({
-  query: z.string(),
-  effort: z.string(),
+  input: z.string(),
+  reasoning: z.object({
+    effort: z.enum(["low", "medium", "high"]),
+  }),
   tenantSlug: z.string(),
 });
 
@@ -27,7 +29,7 @@ export async function POST(request: NextRequest) {
     const controller = new AbortController();
     request.signal.addEventListener("abort", () => controller.abort());
 
-    const upstreamResponse = await fetch(`${RAGIE_API_BASE_URL}/agents/search`, {
+    const upstreamResponse = await fetch(`${RAGIE_API_BASE_URL}/responses`, {
       headers: {
         authorization: `Bearer ${ragieApiKey}`,
         "Content-Type": "application/json",
@@ -35,9 +37,14 @@ export async function POST(request: NextRequest) {
       signal: controller.signal,
       method: "POST",
       body: JSON.stringify({
-        query: params.query,
-        effort: params.effort,
-        partitions: [PARTITION_OVERIDE || tenant.ragiePartition || tenant.id],
+        input: params.input,
+        tools: [
+          {
+            type: "retrieve",
+            partitions: [PARTITION_OVERIDE || tenant.ragiePartition || tenant.id],
+          },
+        ],
+        reasoning: params.reasoning,
         stream: true,
       }),
     });

@@ -1,5 +1,3 @@
-import assert from "assert";
-
 import { EventSourceMessage, fetchEventSource } from "@microsoft/fetch-event-source";
 import { parse, OBJ, ARR, STR } from "partial-json";
 import { useCallback, useEffect, useMemo, useReducer, useRef } from "react";
@@ -13,11 +11,9 @@ import {
   orchestratorThinkSchema,
   orchestratorToolCallSchema,
   rawResponseEventSchema,
-  resultSchema,
   runItemSchema,
   stepResultSchema,
   finalAnswerSchema,
-  ragieEvidenceSchema,
 } from "./types";
 
 type StepType = "think" | "search" | "code" | "answer" | "plan" | "citation" | "surrender";
@@ -39,6 +35,7 @@ type AgenticRetrieverState = {
   status: "idle" | "loading" | "error" | "success";
   currentStepType: StepType | null;
   accumulatedText: string;
+  error: string | null;
   steps: Array<z.infer<typeof stepResultSchema>>;
   _stepTiming: Array<number>;
   _streamedResponses: Array<any>;
@@ -87,19 +84,19 @@ type TakeRunItemStreamEventAction = {
 };
 type TakeRawResponseEventAction = {
   type: "TAKE_RAW_RESPONSE_EVENT";
-  payload: string; // raw JSON string from the event
+  payload: z.infer<typeof rawResponseEventSchema>;
 };
 
-type TakeDoneEvent = {
-  type: "TAKE_DONE_EVENT";
-  payload: z.infer<typeof finalAnswerSchema>;
-};
 type StartRun = {
   type: "START_RUN";
   payload: {
     runId: string;
     startTime: number;
   };
+};
+
+type CloseStreamAction = {
+  type: "TAKE_CLOSE_STREAM";
 };
 
 type ResetAction = {
@@ -118,13 +115,20 @@ type SetErrorAction = {
 type AgenticRetrieverAction =
   | SetQueryAction
   | StartRun
-  | TakeDoneEvent
   | ResetAction
   | RetryAction
   | SetErrorAction
   | TakeAgentUpdatedStreamEventAction
   | TakeRunItemStreamEventAction
-  | TakeRawResponseEventAction;
+  | TakeRawResponseEventAction
+  | CloseStreamAction;
+
+const IGNORED_RAW_EVENT_TYPES = [
+  "response.output_item.done",
+  "response.output_text.done",
+  "response.content_part.added",
+  "response.content_part.done",
+];
 
 function agenticRetrieverReducer(state: AgenticRetrieverState, action: AgenticRetrieverAction): AgenticRetrieverState {
   switch (action.type) {
@@ -166,10 +170,10 @@ function agenticRetrieverReducer(state: AgenticRetrieverState, action: AgenticRe
     case "TAKE_RAW_RESPONSE_EVENT": {
       let _inprogressResponse = state._inprogressResponse;
       let currentStepType = state.currentStepType;
-      // console.log("Current in-progress response:", _inprogressResponse);
-      // console.log("Current event:", parse(action.payload, OBJ | ARR | STR));
-      // const parsed = rawResponseEventSchema.parse(parse(action.payload, OBJ | ARR | STR));
       console.debug("Raw event payload:", action.payload);
+      if (IGNORED_RAW_EVENT_TYPES.includes(action.payload.type)) {
+        return state;
+      }
       const parsedRes = rawResponseEventSchema.safeParse(action.payload);
       if (!parsedRes.success) {
         console.error("Failed to parse raw response event:", action.payload, parsedRes.error);
@@ -179,13 +183,13 @@ function agenticRetrieverReducer(state: AgenticRetrieverState, action: AgenticRe
       let _streamedResponses = state._streamedResponses;
       switch (parsed.type) {
         case "response.created":
-          console.log("Response created:", parsed);
+          console.debug("Response created:", parsed);
           break;
         case "response.in_progress":
-          console.log("In-progress response:", parsed);
+          console.debug("In-progress response:", parsed);
           break;
         case "response.output_item.added":
-          console.log("Output item added:", parsed);
+          console.debug("Output item added:", parsed);
           _inprogressResponse = "";
           // Check if the item is a function call (which has a name property)
           if (parsed.item.type === "function_call") {
@@ -203,20 +207,20 @@ function agenticRetrieverReducer(state: AgenticRetrieverState, action: AgenticRe
           }
           break;
         case "handoff_call_item":
-          console.log("Handoff call item:", parsed);
+          console.debug("Handoff call item:", parsed);
           _inprogressResponse = "";
           break;
         case "response.output_text.delta":
-          console.log("Output text delta:", parsed);
+          console.debug("Output text delta:", parsed);
           _inprogressResponse += parsed.delta;
           break;
         case "response.function_call_arguments.delta":
-          console.log("Function call arguments delta:", parsed);
+          console.debug("Function call arguments delta:", parsed);
           // TypeScript now knows parsed.delta exists because of discriminated union
           _inprogressResponse += parsed.delta;
           break;
         case "response.function_call_arguments.done":
-          console.log("Function call arguments done:", parsed);
+          console.debug("Function call arguments done:", parsed);
           try {
             const parsed = JSON.parse(state._inprogressResponse);
             _streamedResponses = [..._streamedResponses, { type: currentStepType || "think", data: parsed }];
@@ -225,10 +229,10 @@ function agenticRetrieverReducer(state: AgenticRetrieverState, action: AgenticRe
           }
           break;
         case "response.completed":
-          console.log("Response completed:", parsed);
+          console.debug("Response completed:", parsed);
           break;
         default:
-          console.log("Parsed response:", parsed);
+          console.warn("Unhandled raw response event:", parsed);
       }
 
       return {
@@ -241,19 +245,60 @@ function agenticRetrieverReducer(state: AgenticRetrieverState, action: AgenticRe
       };
     }
 
-    case "TAKE_DONE_EVENT": {
+    case "SET_ERROR": {
       return {
         ...state,
-        pastRuns: {
-          ...state.pastRuns,
-          [state.runId || ""]: {
-            timestamp: new Date().toISOString(),
-            query: state.query,
-            result: action.payload,
-            stepTiming: state._stepTiming,
-            steps: state.steps,
-          },
-        },
+        error: action.payload,
+      };
+    }
+
+    case "TAKE_CLOSE_STREAM": {
+      // Inspect the last stream event and determine status
+      if (state.error) {
+        return {
+          ...state,
+          status: "error",
+        };
+      }
+      const lastEvent = state._runItemStreamEvent[state._runItemStreamEvent.length - 1];
+      if (lastEvent.type !== "message_output_item" || lastEvent.raw_item.content[0].type !== "output_text") {
+        return {
+          ...state,
+          status: "error",
+          error: "Unexpected terminal event",
+        };
+      }
+      const finalAnswer = finalAnswerSchema.safeParse(JSON.parse(lastEvent.raw_item.content[0].text));
+      if (!finalAnswer.success) {
+        console.error("Failed to parse final answer:", lastEvent.raw_item.content[0].text, finalAnswer.error);
+        return {
+          ...state,
+          error: "Failed to parse final answer",
+          status: "error",
+        };
+      }
+      return {
+        ...state,
+        result: finalAnswer.data,
+        status: "success",
+      };
+    }
+
+    case "RESET": {
+      // TODO: Need to handle runs that errored
+      return {
+        pastRuns: state.result
+          ? {
+              ...state.pastRuns,
+              [state.runId || ""]: {
+                timestamp: new Date().toISOString(),
+                query: state.query,
+                result: state.result,
+                stepTiming: state._stepTiming,
+                steps: state.steps,
+              },
+            }
+          : state.pastRuns,
         status: "idle",
         currentStepType: null,
         steps: [],
@@ -261,6 +306,7 @@ function agenticRetrieverReducer(state: AgenticRetrieverState, action: AgenticRe
         runId: null,
         query: "",
         result: null,
+        error: null,
         _streamedResponses: [],
         _agentUpdatedStreamEvent: [],
         _runItemStreamEvent: [],
@@ -268,19 +314,6 @@ function agenticRetrieverReducer(state: AgenticRetrieverState, action: AgenticRe
         _allEvents: [],
         _inprogressResponse: "",
         _stepTiming: [],
-      };
-    }
-    case "RESET": {
-      if (state.status !== "loading") {
-        return state;
-      }
-      return {
-        ...state,
-        status: "idle",
-        query: "",
-        result: null,
-        accumulatedText: "",
-        steps: [],
       };
     }
     case "RETRY": {
@@ -312,6 +345,7 @@ export default function useAgenticRetriever({
     result: null,
     currentStepType: null,
     accumulatedText: "",
+    error: null,
     steps: [],
     _stepTiming: [],
     _streamedResponses: [],
@@ -326,31 +360,18 @@ export default function useAgenticRetriever({
     dispatch({ type: "SET_QUERY", payload: payload.query });
   }, []);
 
-  const close = useCallback(() => {
-    console.log("Closing EventSource");
-  }, []);
-
   const reset = useCallback(() => {
     console.log("Resetting agentic retrieval state");
     abortControllerRef.current?.abort();
-    close();
     dispatch({ type: "RESET" });
-  }, [close]);
+  }, []);
 
   const start = useCallback(async () => {
     if (typeof window === "undefined") return;
     abortControllerRef.current = new AbortController();
 
-    const handleError = async (e: EventSourceMessage) => {
-      // Browsers fire 'error' on transient disconnects too; the stream may auto-retry.
-      // You can inspect (e as any).data if your server sends a body with errors.
-      console.error("Stream error:", e);
-      dispatch({ type: "SET_ERROR", payload: e instanceof Error ? e.message : "Unknown error" });
-      await onError(e instanceof Error ? e.message : "Unknown error");
-    };
-
     const handleEvent = (e: EventSourceMessage) => {
-      // Attempt to parse and handle different event types
+      // Parse and handle protocol event types
       try {
         const parsed = JSON.parse(e.data);
         console.debug("Parsed generic event:", parsed);
@@ -378,64 +399,46 @@ export default function useAgenticRetriever({
       }
     };
 
-    const handleDone = async (e: EventSourceMessage) => {
-      console.log("Stream done event:", e.data);
-      let doneEvent = resultSchema.safeParse(JSON.parse(e.data));
-      if (!doneEvent.success) {
-        console.error("Failed to parse done event:", e.data, doneEvent.error);
-        dispatch({ type: "SET_ERROR", payload: "Failed to parse done event" });
-        return;
-      }
-      if (doneEvent.data.type !== "success") {
-        dispatch({ type: "SET_ERROR", payload: doneEvent.data.data.message });
-        return;
-      }
-      dispatch({ type: "TAKE_DONE_EVENT", payload: doneEvent.data.data });
-      assert(runId, "Run ID is required");
-      await onDone({ result: doneEvent.data.data, runId });
-      console.log("Stream closed", e.data);
-    };
-
     let runId = "";
 
-    // TODO: Obv stop hardcoding here and PROXY to the actual API
     await fetchEventSource(getRagieAgentsSearchPath(), {
       openWhenHidden: true,
       method: "POST",
       body: JSON.stringify({
-        query: state.query,
-        effort: "medium",
-        stream: true,
+        input: state.query,
+        reasoning: {
+          effort: "low",
+        },
         tenantSlug,
       }),
       async onmessage(event) {
         console.debug("Event:", event);
         if (event.event === "message") {
           handleEvent(event);
-        } else if (event.event === "done") {
-          await handleDone(event);
         } else if (event.event === "error") {
-          await handleError(event);
+          dispatch({ type: "SET_ERROR", payload: event.data });
         }
       },
       async onopen(response) {
         console.log("Stream opened");
-        runId = response.headers.get("run-id")!;
+        runId = response.headers.get("Response-Id")!;
         if (!runId) {
-          throw new Error("Run ID is required");
+          throw new Error("Response ID is required");
         }
         await onStart(runId);
         dispatch({ type: "START_RUN", payload: { runId, startTime: Date.now() } });
       },
       async onclose() {
-        console.log("Stream closed");
+        console.debug("Stream closed");
+        dispatch({ type: "TAKE_CLOSE_STREAM" });
       },
       onerror(event) {
         console.error("Stream error:", event);
+        dispatch({ type: "SET_ERROR", payload: event instanceof Error ? event.message : "Unknown error" });
       },
       signal: abortControllerRef.current?.signal,
     });
-  }, [dispatch, abortControllerRef, state.query, tenantSlug, onDone, onError, onStart]);
+  }, [dispatch, abortControllerRef, state.query, tenantSlug, onStart]);
 
   useEffect(() => {
     if (state.query) {
@@ -481,7 +484,7 @@ export default function useAgenticRetriever({
     }
   }
 
-  console.log("currentResponse", currentResponse, state.currentStepType, partialJson);
+  console.debug("currentResponse", currentResponse, state.currentStepType, partialJson);
 
   const evidence = useMemo(() => {
     const toolCallOutputs = state._runItemStreamEvent.filter((item) => item.type === "tool_call_output_item");
@@ -491,7 +494,6 @@ export default function useAgenticRetriever({
         const searchResultMap = item.output.query_details
           .flatMap((q) => q.search_results)
           .reduce<Record<string, z.infer<typeof evidenceSchema>>>((searchAcc, searchItem) => {
-            console.log("searchItem", searchItem.id);
             searchAcc[searchItem.id] = searchItem;
             return searchAcc;
           }, {});
@@ -513,7 +515,7 @@ export default function useAgenticRetriever({
 
   const getRun = useCallback(
     (runId: string) => {
-      console.log("getRun", runId, state.pastRuns[runId], state.pastRuns);
+      console.debug("getRun", runId, state.pastRuns[runId], state.pastRuns);
       if (runId in state.pastRuns) {
         return state.pastRuns[runId];
       }
@@ -567,6 +569,24 @@ export default function useAgenticRetriever({
     },
     [getRun],
   );
+
+  // Invoke onDone or onError when a run completes
+  useEffect(() => {
+    async function handleDone() {
+      if (state.result) {
+        await onDone({ result: state.result, runId: state.runId || "" });
+        dispatch({ type: "RESET" });
+        return;
+      }
+
+      if (state.error) {
+        await onError(state.error);
+        dispatch({ type: "RESET" });
+        return;
+      }
+    }
+    handleDone();
+  }, [state.result, state.error, state.runId, onDone, onError]);
 
   console.log("state", state, new Set(state._rawResponseEvent.map((e) => e.type)));
 

@@ -558,17 +558,3 @@ export const orchestratorToolCallSchema = z.union([
 export const orchestratorThinkSchema = z.object({
   type: z.literal("think"),
 });
-
-const successfulResultSchema = z.object({
-  type: z.literal("success"),
-  data: finalAnswerSchema,
-});
-
-const errorResultSchema = z.object({
-  type: z.literal("error"),
-  data: z.object({
-    message: z.string(),
-  }),
-});
-
-export const resultSchema = z.union([successfulResultSchema, errorResultSchema]);

@@ -49,4 +49,4 @@ export const getPricingPlanChangePath = (slug: string) => `/pricing/${slug}/plan
 
 export const getPricingPlansPath = (slug: string) => `/pricing/${slug}/plans`;
 
-export const getRagieAgentsSearchPath = () => `/api/ragie/agents/search`;
+export const getRagieAgentsSearchPath = () => `/api/ragie/responses`;
