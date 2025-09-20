@@ -18,7 +18,7 @@ import {
 
 type StepType = "think" | "search" | "code" | "answer" | "plan" | "citation" | "surrender";
 
-type Run = {
+export type Run = {
   timestamp: string;
   stepTiming: Array<number>;
   steps: Array<z.infer<typeof stepResultSchema>>;
@@ -64,6 +64,7 @@ export type AgenticRetriever = {
   submit: (payload: { query: string; effort?: string }) => void;
   getRun: (id: string) => Run | null;
   getEvidence: (runId: string, evidenceId: string) => z.infer<typeof evidenceSchema> | null;
+  setPastRuns: (runs: Record<string, Run>) => void;
   reset: () => void;
 };
 
@@ -118,6 +119,11 @@ type SetErrorAction = {
   payload: string;
 };
 
+type SetPastRunsAction = {
+  type: "SET_PAST_RUNS";
+  payload: Record<string, Run>;
+};
+
 type AgenticRetrieverAction =
   | SetQueryAction
   | SetEffortAction
@@ -128,7 +134,8 @@ type AgenticRetrieverAction =
   | TakeAgentUpdatedStreamEventAction
   | TakeRunItemStreamEventAction
   | TakeRawResponseEventAction
-  | CloseStreamAction;
+  | CloseStreamAction
+  | SetPastRunsAction;
 
 const IGNORED_RAW_EVENT_TYPES = [
   "response.output_item.done",
@@ -300,6 +307,7 @@ function agenticRetrieverReducer(state: AgenticRetrieverState, action: AgenticRe
     case "RESET": {
       // TODO: Need to handle runs that errored
       return {
+        effort: state.effort,
         pastRuns: state.result
           ? {
             ...state.pastRuns,
@@ -332,6 +340,12 @@ function agenticRetrieverReducer(state: AgenticRetrieverState, action: AgenticRe
     case "RETRY": {
       // TODO: Implement retry logic
       return state;
+    }
+    case "SET_PAST_RUNS": {
+      return {
+        ...state,
+        pastRuns: action.payload,
+      };
     }
     default:
       return state;
@@ -376,7 +390,7 @@ export default function useAgenticRetriever({
   }, []);
 
   const reset = useCallback(() => {
-    console.log("Resetting agentic retrieval state");
+    //console.log("Resetting agentic retrieval state");
     abortControllerRef.current?.abort();
     dispatch({ type: "RESET" });
   }, []);
@@ -603,6 +617,10 @@ export default function useAgenticRetriever({
     handleDone();
   }, [state.result, state.error, state.runId, onDone, onError]);
 
+  const setPastRuns = useCallback((runs: Record<string, Run>) => {
+    dispatch({ type: "SET_PAST_RUNS", payload: runs });
+  }, []);
+
   console.log("state", state, new Set(state._rawResponseEvent.map((e) => e.type)));
 
   const hookRes = useMemo(() => {
@@ -619,6 +637,7 @@ export default function useAgenticRetriever({
       getRun,
       reset,
       getEvidence,
+      setPastRuns,
     };
   }, [
     state.query,
@@ -633,6 +652,7 @@ export default function useAgenticRetriever({
     getRun,
     reset,
     getEvidence,
+    setPastRuns,
   ]);
 
   return hookRes;
