@@ -79,7 +79,6 @@ export default function Chatbot({ tenant, conversationId, initMessage, onSelecte
     canUseAgentic,
   } = useSearchSettings({
     tenant,
-    enableGlobalState: false,
   });
 
   const {

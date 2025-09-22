@@ -358,9 +358,7 @@ const AgenticField = (form: UseFormReturn<FormValues>) => {
         <FormItem className="flex flex-row items-center justify-between">
           <div className="space-y-0.5">
             <FormLabel className="font-semibold text-base text-[#343A40]">Enable Agentic Retrieval</FormLabel>
-            <p className="text-sm text-muted-foreground">
-              Use advanced AI-powered retrieval for more intelligent document search
-            </p>
+            <p className="text-sm text-muted-foreground">Use an advanced AI agent to answer complex questions</p>
           </div>
           <div className="flex-shrink-0 ml-4">
             <FormControl>
@@ -403,9 +401,7 @@ const AgenticField = (form: UseFormReturn<FormValues>) => {
                             Fast
                           </label>
                         </div>
-                        <span className="text-xs text-muted-foreground ml-6">
-                          Basic agentic retrieval with minimal AI intervention
-                        </span>
+                        <span className="text-xs text-muted-foreground ml-6">Quick results, uses fewer resources</span>
                       </div>
                       <div className="flex flex-col space-y-1">
                         <div className="flex items-center space-x-2">
@@ -418,9 +414,7 @@ const AgenticField = (form: UseFormReturn<FormValues>) => {
                             Balanced
                           </label>
                         </div>
-                        <span className="text-xs text-muted-foreground ml-6">
-                          Balanced agentic retrieval with moderate AI assistance
-                        </span>
+                        <span className="text-xs text-muted-foreground ml-6">Good accuracy, moderate speed</span>
                       </div>
                       <div className="flex flex-col space-y-1">
                         <div className="flex items-center space-x-2">
@@ -433,9 +427,7 @@ const AgenticField = (form: UseFormReturn<FormValues>) => {
                             Thorough
                           </label>
                         </div>
-                        <span className="text-xs text-muted-foreground ml-6">
-                          Advanced agentic retrieval with maximum AI intelligence
-                        </span>
+                        <span className="text-xs text-muted-foreground ml-6">Most accurate, uses more resources</span>
                       </div>
                     </RadioGroup>
                   </FormControl>

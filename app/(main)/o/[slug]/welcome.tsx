@@ -54,7 +54,6 @@ export default function Welcome({ tenant, className, profile }: Props) {
     canUseAgentic,
   } = useSearchSettings({
     tenant,
-    enableGlobalState: true,
   });
 
   // Set isMounted after initial mount
@@ -63,9 +62,6 @@ export default function Welcome({ tenant, className, profile }: Props) {
   }, []);
 
   const handleSubmit = async (content: string, model: LLMModel = DEFAULT_MODEL) => {
-    console.log("welcome page handleSubmit");
-    console.log("content", content);
-    console.log("model", model);
     const res = await fetch("/api/conversations", {
       method: "POST",
       body: JSON.stringify({

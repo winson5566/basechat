@@ -26,7 +26,6 @@ interface SearchSettingsActions {
 
 interface UseSearchSettingsOptions {
   tenant: typeof schema.tenants.$inferSelect;
-  enableGlobalState?: boolean;
 }
 
 interface UseSearchSettingsReturn extends SearchSettings, SearchSettingsActions {
@@ -39,10 +38,7 @@ interface UseSearchSettingsReturn extends SearchSettings, SearchSettingsActions 
   canUseAgentic: boolean;
 }
 
-export function useSearchSettings({
-  tenant,
-  enableGlobalState = false,
-}: UseSearchSettingsOptions): UseSearchSettingsReturn {
+export function useSearchSettings({ tenant }: UseSearchSettingsOptions): UseSearchSettingsReturn {
   const enabledModels = useMemo(() => getEnabledModelsFromDisabled(tenant.disabledModels), [tenant.disabledModels]);
 
   // State variables
