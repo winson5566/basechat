@@ -1,5 +1,5 @@
 {
-  "id": "79e541cf-7bf5-4449-bbdb-ac4af3158ea4",
+  "id": "152cb0b5-3ae1-4fcc-8f20-45f8bf6eab1d",
   "prevId": "b5f6389a-259b-40f8-b439-4166d1180ba1",
   "version": "7",
   "dialect": "postgresql",
@@ -1060,12 +1060,20 @@
           "notNull": false,
           "default": true
         },
-        "agentic_enabled": {
-          "name": "agentic_enabled",
+        "override_agentic_level": {
+          "name": "override_agentic_level",
           "type": "boolean",
           "primaryKey": false,
           "notNull": false,
           "default": true
+        },
+        "agentic_level": {
+          "name": "agentic_level",
+          "type": "agentic_level",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "'medium'"
         },
         "ragie_api_key": {
           "name": "ragie_api_key",
@@ -1358,6 +1366,16 @@
     }
   },
   "enums": {
+    "public.agentic_level": {
+      "name": "agentic_level",
+      "schema": "public",
+      "values": [
+        "low",
+        "medium",
+        "high",
+        "disabled"
+      ]
+    },
     "public.message_retrieval_types": {
       "name": "message_retrieval_types",
       "schema": "public",

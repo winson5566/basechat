@@ -67,6 +67,8 @@ export const conversations = pgTable(
 
 export const paidStatusEnum = pgEnum("paid_status", ["trial", "active", "expired", "legacy"]);
 
+export const agenticLevelEnum = pgEnum("agentic_level", ["low", "medium", "high", "disabled"]);
+
 export const tenants = pgTable(
   "tenants",
   {
@@ -91,8 +93,8 @@ export const tenants = pgTable(
     overrideBreadth: boolean("override_breadth").default(true),
     overrideRerank: boolean("override_rerank").default(true),
     overridePrioritizeRecent: boolean("override_prioritize_recent").default(true),
-    //overrideAgenticLevel: boolean("override_agentic_level").default(true), // for now it is true for all always
-    agenticEnabled: boolean("agentic_enabled").default(true),
+    overrideAgenticLevel: boolean("override_agentic_level").default(true),
+    agenticLevel: agenticLevelEnum("agentic_level").default("medium"),
     ragieApiKey: text("ragie_api_key"),
     ragiePartition: text("ragie_partition"),
     slackEnabled: boolean("slack_enabled").default(false),

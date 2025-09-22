@@ -20,8 +20,8 @@ import * as schema from "@/lib/server/db/schema";
 import { SourceMetadata } from "../../lib/types";
 import AgenticResponse from "../agentic-retriever/agentic-response";
 import { useAgenticRetrieverContext } from "../agentic-retriever/agentic-retriever-context";
-import { finalAnswerSchema, resultSchema, evidenceSchema } from "../agentic-retriever/types";
-import { AgenticRetriever, Run } from "../agentic-retriever/use-agentic-retriever";
+import { finalAnswerSchema, evidenceSchema } from "../agentic-retriever/types";
+import { Run } from "../agentic-retriever/use-agentic-retriever";
 
 import AssistantMessage from "./assistant-message";
 import ChatInput from "./chat-input";
@@ -256,16 +256,9 @@ export default function Chatbot({ tenant, conversationId, initMessage, onSelecte
       agenticQueryRef.current = content;
       setMessages((prev) => [...prev, { content, role: "user" } as UserMessage]);
 
-      // Map agentic level to effort parameter
-      const effortMap = {
-        fast: "low",
-        balanced: "medium",
-        thorough: "high",
-      } as const;
-
       agenticSubmit({
         query: content,
-        effort: effortMap[agenticLevel],
+        effort: agenticLevel,
       });
     }
   };

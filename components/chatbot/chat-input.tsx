@@ -25,8 +25,8 @@ interface ChatInputProps {
   onRerankChange?: (enabled: boolean) => void;
   prioritizeRecent?: boolean;
   onPrioritizeRecentChange?: (enabled: boolean) => void;
-  agenticLevel?: "fast" | "balanced" | "thorough";
-  onAgenticLevelChange?: (level: "fast" | "balanced" | "thorough") => void;
+  agenticLevel?: "low" | "medium" | "high";
+  onAgenticLevelChange?: (level: "low" | "medium" | "high") => void;
   agenticEnabled?: boolean;
   enabledModels: LLMModel[];
   canSetIsBreadth: boolean;
@@ -81,6 +81,7 @@ const useIsDesktop = () => {
 const SettingsPopoverContent = ({ children }: { children: React.ReactNode }) => (
   <PopoverContent
     align="start"
+    side="top"
     sideOffset={4}
     className={cn("bg-[#F5F5F7] w-[300px] border border-[#D7D7D7] shadow-none rounded-[6px] p-6")}
   >
@@ -332,19 +333,19 @@ export default function ChatInput(props: ChatInputProps) {
                   <div className="flex flex-col gap-2">
                     <span className="text-sm font-medium text-muted-foreground">Level</span>
                     <RadioGroup
-                      value={agenticLevel || "balanced"}
+                      value={agenticLevel || "medium"}
                       onValueChange={(value) => {
-                        props.onAgenticLevelChange?.(value as "fast" | "balanced" | "thorough");
+                        props.onAgenticLevelChange?.(value as "low" | "medium" | "high");
                       }}
                     >
                       <div className="flex flex-col space-y-1">
                         <div className="flex items-center space-x-2">
                           <RadioGroupItem
-                            value="fast"
-                            id="fast"
+                            value="low"
+                            id="low"
                             className="text-[#D946EF] border-[#D7D7D7] data-[state=checked]:bg-[#D946EF]"
                           />
-                          <label htmlFor="fast" className="text-sm">
+                          <label htmlFor="low" className="text-sm">
                             Fast
                           </label>
                         </div>
@@ -353,11 +354,11 @@ export default function ChatInput(props: ChatInputProps) {
                       <div className="flex flex-col space-y-1">
                         <div className="flex items-center space-x-2">
                           <RadioGroupItem
-                            value="balanced"
-                            id="balanced"
+                            value="medium"
+                            id="medium"
                             className="text-[#D946EF] border-[#D7D7D7] data-[state=checked]:bg-[#D946EF]"
                           />
-                          <label htmlFor="balanced" className="text-sm">
+                          <label htmlFor="medium" className="text-sm">
                             Balanced
                           </label>
                         </div>
@@ -366,11 +367,11 @@ export default function ChatInput(props: ChatInputProps) {
                       <div className="flex flex-col space-y-1">
                         <div className="flex items-center space-x-2">
                           <RadioGroupItem
-                            value="thorough"
-                            id="thorough"
+                            value="high"
+                            id="high"
                             className="text-[#D946EF] border-[#D7D7D7] data-[state=checked]:bg-[#D946EF]"
                           />
-                          <label htmlFor="thorough" className="text-sm">
+                          <label htmlFor="high" className="text-sm">
                             Thorough
                           </label>
                         </div>

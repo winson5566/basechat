@@ -6,7 +6,7 @@ import { LLMModel, modelSchema, getEnabledModelsFromDisabled, DEFAULT_MODEL } fr
 import * as schema from "@/lib/server/db/schema";
 
 type RetrievalMode = "breadth" | "depth" | "agentic";
-type AgenticLevel = "fast" | "balanced" | "thorough";
+type AgenticLevel = "low" | "medium" | "high";
 
 interface SearchSettings {
   retrievalMode: RetrievalMode;
@@ -111,10 +111,10 @@ export function useSearchSettings({
       const saved = localStorage.getItem("chatSettings");
       if (saved) {
         const settings = JSON.parse(saved);
-        return settings.agenticLevel || "balanced";
+        return settings.agenticLevel || "medium";
       }
     }
-    return "balanced";
+    return "medium";
   });
 
   const [isSettingsLoaded, setIsSettingsLoaded] = useState(false);
@@ -123,9 +123,8 @@ export function useSearchSettings({
   const canSetIsBreadth = tenant.overrideBreadth ?? true;
   const canSetRerankEnabled = tenant.overrideRerank ?? true;
   const canSetPrioritizeRecent = tenant.overridePrioritizeRecent ?? true;
-  //const canSetAgenticLevel = tenant.overrideAgenticLevel ?? true; // TODO: new DB column
-  const canSetAgenticLevel = true;
-  const canUseAgentic = tenant.agenticEnabled ?? true;
+  const canSetAgenticLevel = tenant.overrideAgenticLevel ?? true;
+  const canUseAgentic = tenant.agenticLevel !== "disabled";
 
   // Load settings from localStorage after initial render
   useEffect(() => {
@@ -153,7 +152,7 @@ export function useSearchSettings({
         }
 
         if (canSetAgenticLevel) {
-          setAgenticLevel(settings.agenticLevel || "balanced");
+          setAgenticLevel(settings.agenticLevel || "medium");
         }
 
         // Model selection is always allowed

@@ -3,7 +3,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2 } from "lucide-react";
 import Image from "next/image";
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { useForm, UseFormReturn } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
@@ -33,6 +33,8 @@ const formSchema = z.object({
   overrideRerank: z.boolean().default(true),
   prioritizeRecent: z.boolean().default(false),
   overridePrioritizeRecent: z.boolean().default(true),
+  agenticLevel: z.enum(["low", "medium", "high", "disabled"]).default("disabled"),
+  overrideAgenticLevel: z.boolean().default(true),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -155,9 +157,9 @@ const ModelsField = (form: UseFormReturn<FormValues>) => {
 const SearchSettingsField = (form: UseFormReturn<FormValues>) => {
   return (
     <Form {...form}>
-      <div className="flex flex-col gap-6">
+      <div className="flex flex-col gap-6 mb-6">
         <div>
-          <FormLabel className="font-semibold text-base">Additional Options</FormLabel>
+          <FormLabel className="font-semibold text-base text-[#343A40]">Additional Options</FormLabel>
         </div>
 
         {/* Breadth/Depth Setting */}
@@ -236,7 +238,7 @@ const SearchSettingsField = (form: UseFormReturn<FormValues>) => {
           render={({ field }) => (
             <FormItem className="flex flex-row items-center justify-between">
               <div className="space-y-0.5">
-                <FormLabel className="font-semibold text-base">Rerank</FormLabel>
+                <FormLabel className="font-semibold text-base text-[#343A40]">Rerank</FormLabel>
                 <p className="text-sm text-muted-foreground">Reorder search results for better relevance</p>
               </div>
               <div className="flex-shrink-0 ml-4">
@@ -276,7 +278,7 @@ const SearchSettingsField = (form: UseFormReturn<FormValues>) => {
           render={({ field }) => (
             <FormItem className="flex flex-row items-center justify-between">
               <div className="space-y-0.5">
-                <FormLabel className="font-semibold text-base">Prioritize recent data</FormLabel>
+                <FormLabel className="font-semibold text-base text-[#343A40]">Prioritize recent data</FormLabel>
                 <p className="text-sm text-muted-foreground">
                   Give preference to more recent documents in search results
                 </p>
@@ -298,7 +300,7 @@ const SearchSettingsField = (form: UseFormReturn<FormValues>) => {
           control={form.control}
           name="overridePrioritizeRecent"
           render={({ field }) => (
-            <FormItem className="flex flex-row items-start space-x-3 space-y-0 pb-8">
+            <FormItem className="flex flex-row items-start space-x-3 space-y-0">
               <FormControl>
                 <Checkbox checked={field.value} onCheckedChange={field.onChange} />
               </FormControl>
@@ -308,6 +310,156 @@ const SearchSettingsField = (form: UseFormReturn<FormValues>) => {
             </FormItem>
           )}
         />
+      </div>
+    </Form>
+  );
+};
+
+const AgenticField = (form: UseFormReturn<FormValues>) => {
+  const agenticLevel = form.watch("agenticLevel");
+  const isAgenticEnabled = agenticLevel !== "disabled";
+  const [isAnimating, setIsAnimating] = useState(false);
+
+  const handleAgenticToggle = (enabled: boolean) => {
+    if (enabled) {
+      setIsAnimating(true);
+      form.setValue("agenticLevel", "medium", {
+        shouldDirty: true,
+        shouldValidate: true,
+      });
+    } else {
+      setIsAnimating(true);
+      form.setValue("agenticLevel", "disabled", {
+        shouldDirty: true,
+        shouldValidate: true,
+      });
+    }
+  };
+
+  // Reset animation state after transition completes
+  useEffect(() => {
+    if (isAnimating) {
+      const timer = setTimeout(() => {
+        setIsAnimating(false);
+      }, 300); // Match the CSS transition duration
+      return () => clearTimeout(timer);
+    }
+  }, [isAnimating]);
+
+  return (
+    <Form {...form}>
+      <div className="flex flex-col gap-6">
+        <div>
+          <FormLabel className="font-semibold text-base text-[#343A40]">Agentic Retrieval</FormLabel>
+          <span className="bg-[#D946EF] text-white rounded-lg px-3 py-1 text-sm font-semibold ml-2">Early Access</span>
+        </div>
+
+        {/* Agentic Enabled Switch */}
+        <FormItem className="flex flex-row items-center justify-between">
+          <div className="space-y-0.5">
+            <FormLabel className="font-semibold text-base text-[#343A40]">Enable Agentic Retrieval</FormLabel>
+            <p className="text-sm text-muted-foreground">
+              Use advanced AI-powered retrieval for more intelligent document search
+            </p>
+          </div>
+          <div className="flex-shrink-0 ml-4">
+            <FormControl>
+              <Switch
+                checked={isAgenticEnabled}
+                onCheckedChange={handleAgenticToggle}
+                className="data-[state=checked]:bg-[#D946EF]"
+              />
+            </FormControl>
+          </div>
+        </FormItem>
+
+        {/* Agentic Level Settings - Only show when agentic is enabled */}
+        <div
+          className={`overflow-hidden transition-all duration-300 ease-in-out ${
+            isAgenticEnabled ? "max-h-[500px] opacity-100 translate-y-0" : "max-h-0 opacity-0 -translate-y-2"
+          }`}
+        >
+          <div
+            className={`space-y-6 transition-transform duration-300 ease-in-out ${
+              isAgenticEnabled ? "translate-y-0" : "-translate-y-2"
+            }`}
+          >
+            <FormField
+              control={form.control}
+              name="agenticLevel"
+              render={({ field }) => (
+                <FormItem className="space-y-3">
+                  <FormLabel className="font-semibold text-base text-[#343A40]">Agentic Level</FormLabel>
+                  <FormControl>
+                    <RadioGroup onValueChange={field.onChange} value={field.value} className="flex flex-col space-y-1">
+                      <div className="flex flex-col space-y-1">
+                        <div className="flex items-center space-x-2">
+                          <RadioGroupItem
+                            value="low"
+                            id="agentic-low"
+                            className="text-[#D946EF] border-[#D7D7D7] data-[state=checked]:bg-[#D946EF]"
+                          />
+                          <label htmlFor="agentic-low" className="text-sm">
+                            Fast
+                          </label>
+                        </div>
+                        <span className="text-xs text-muted-foreground ml-6">
+                          Basic agentic retrieval with minimal AI intervention
+                        </span>
+                      </div>
+                      <div className="flex flex-col space-y-1">
+                        <div className="flex items-center space-x-2">
+                          <RadioGroupItem
+                            value="medium"
+                            id="agentic-medium"
+                            className="text-[#D946EF] border-[#D7D7D7] data-[state=checked]:bg-[#D946EF]"
+                          />
+                          <label htmlFor="agentic-medium" className="text-sm">
+                            Balanced
+                          </label>
+                        </div>
+                        <span className="text-xs text-muted-foreground ml-6">
+                          Balanced agentic retrieval with moderate AI assistance
+                        </span>
+                      </div>
+                      <div className="flex flex-col space-y-1">
+                        <div className="flex items-center space-x-2">
+                          <RadioGroupItem
+                            value="high"
+                            id="agentic-high"
+                            className="text-[#D946EF] border-[#D7D7D7] data-[state=checked]:bg-[#D946EF]"
+                          />
+                          <label htmlFor="agentic-high" className="text-sm">
+                            Thorough
+                          </label>
+                        </div>
+                        <span className="text-xs text-muted-foreground ml-6">
+                          Advanced agentic retrieval with maximum AI intelligence
+                        </span>
+                      </div>
+                    </RadioGroup>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="overrideAgenticLevel"
+              render={({ field }) => (
+                <FormItem className="flex flex-row items-start space-x-3 space-y-0 pb-8">
+                  <FormControl>
+                    <Checkbox checked={field.value} onCheckedChange={field.onChange} />
+                  </FormControl>
+                  <div className="space-y-1 leading-none">
+                    <FormLabel>Allow users to change default setting</FormLabel>
+                  </div>
+                </FormItem>
+              )}
+            />
+          </div>
+        </div>
       </div>
     </Form>
   );
@@ -330,6 +482,8 @@ export default function ModelSettings({ tenant }: Props) {
       overrideRerank,
       prioritizeRecent,
       overridePrioritizeRecent,
+      agenticLevel,
+      overrideAgenticLevel,
       ...otherFields
     } = tenant;
 
@@ -344,6 +498,8 @@ export default function ModelSettings({ tenant }: Props) {
       overrideRerank: overrideRerank ?? undefined,
       prioritizeRecent: prioritizeRecent ?? undefined,
       overridePrioritizeRecent: overridePrioritizeRecent ?? undefined,
+      agenticLevel: agenticLevel ?? undefined,
+      overrideAgenticLevel: overrideAgenticLevel ?? undefined,
       ...otherFields,
     };
   }, [tenant]);
@@ -374,6 +530,8 @@ export default function ModelSettings({ tenant }: Props) {
         overrideRerank: values.overrideRerank,
         prioritizeRecent: values.prioritizeRecent,
         overridePrioritizeRecent: values.overridePrioritizeRecent,
+        agenticLevel: values.agenticLevel,
+        overrideAgenticLevel: values.overrideAgenticLevel,
       });
 
       const res = await fetch("/api/tenants/current", {
@@ -425,6 +583,8 @@ export default function ModelSettings({ tenant }: Props) {
       <Form {...form}>
         <form onSubmit={form.handleSubmit(() => {})}>
           <div>{ModelsField(form)}</div>
+          <div className="h-16" />
+          {AgenticField(form)}
           <div className="h-16" />
           {SearchSettingsField(form)}
         </form>
