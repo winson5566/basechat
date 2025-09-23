@@ -29,34 +29,42 @@ export async function saveAgenticUserMessage({
   conversationId,
   tenantId,
   userMessage,
-  runId,
 }: {
   conversationId: string;
   tenantId: string;
   userMessage: string;
-  runId: string;
 }) {
-  // Create user message
-  const userMessageResult = await db
-    .insert(schema.messages)
-    .values({
+  try {
+    // Create user message
+    const userMessageResult = await db
+      .insert(schema.messages)
+      .values({
+        conversationId,
+        tenantId,
+        content: userMessage,
+        role: "user",
+        sources: [],
+        model: "Deep Search", // Agentic mode uses "Deep Search" as the model
+        isBreadth: false, // Agentic mode doesn't use breadth/depth
+        rerankEnabled: false, // Agentic mode has its own retrieval logic
+        prioritizeRecent: false, // Agentic mode has its own retrieval logic
+        type: "agentic",
+        agenticInfo: null, // User messages don't have agentic info
+      })
+      .returning();
+
+    assert(userMessageResult.length === 1, "Expected 1 user message to be created");
+
+    return userMessageResult[0];
+  } catch (error) {
+    console.error("Error saving agentic user message:", {
+      error,
       conversationId,
       tenantId,
-      content: userMessage,
-      role: "user",
-      sources: [],
-      model: "Deep Search", // Agentic mode uses "Deep Search" as the model
-      isBreadth: false, // Agentic mode doesn't use breadth/depth
-      rerankEnabled: false, // Agentic mode has its own retrieval logic
-      prioritizeRecent: false, // Agentic mode has its own retrieval logic
-      type: "agentic",
-      agenticInfo: null, // User messages don't have agentic info
-    })
-    .returning();
-
-  assert(userMessageResult.length === 1, "Expected 1 user message to be created");
-
-  return userMessageResult[0];
+      userMessage: userMessage.substring(0, 100) + "...", // Log first 100 chars to avoid huge logs
+    });
+    throw error;
+  }
 }
 
 /**
@@ -80,27 +88,43 @@ export async function saveAgenticAssistantMessage({
     documentName: string;
   }>;
 }) {
-  const validatedAgenticInfo = agenticInfoSchema.parse(agenticInfo);
+  try {
+    const validatedAgenticInfo = agenticInfoSchema.parse(agenticInfo);
 
-  // Create assistant message with agentic info
-  const assistantMessageResult = await db
-    .insert(schema.messages)
-    .values({
+    // Create assistant message with agentic info
+    const assistantMessageResult = await db
+      .insert(schema.messages)
+      .values({
+        conversationId,
+        tenantId,
+        content: validatedAgenticInfo.result?.text || "",
+        role: "assistant",
+        sources: sources,
+        model: "Deep Search",
+        isBreadth: false,
+        rerankEnabled: false,
+        prioritizeRecent: false,
+        type: "agentic",
+        agenticInfo: validatedAgenticInfo,
+      })
+      .returning();
+
+    assert(assistantMessageResult.length === 1, "Expected 1 assistant message to be created");
+
+    return assistantMessageResult[0];
+  } catch (error) {
+    console.error("Error saving agentic assistant message:", {
+      error,
       conversationId,
       tenantId,
-      content: validatedAgenticInfo.result?.text || "",
-      role: "assistant",
-      sources: sources,
-      model: "Deep Search",
-      isBreadth: false,
-      rerankEnabled: false,
-      prioritizeRecent: false,
-      type: "agentic",
-      agenticInfo: validatedAgenticInfo,
-    })
-    .returning();
-
-  assert(assistantMessageResult.length === 1, "Expected 1 assistant message to be created");
-
-  return assistantMessageResult[0];
+      agenticInfo: {
+        runId: agenticInfo.runId,
+        timestamp: agenticInfo.timestamp,
+        stepCount: agenticInfo.steps.length,
+        hasResult: !!agenticInfo.result,
+      },
+      sourceCount: sources.length,
+    });
+    throw error;
+  }
 }

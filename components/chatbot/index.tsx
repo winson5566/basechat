@@ -111,17 +111,11 @@ export default function Chatbot({ tenant, conversationId, initMessage, onSelecte
         }
       }
 
-      try {
-        const userMessage = await saveAgenticUserMessage({
-          conversationId,
-          tenantId: tenant.id,
-          userMessage: originalQuery,
-          runId: payload.runId,
-        });
-        console.log("Saved user message to database:", userMessage.id);
-      } catch (error) {
-        console.error("Failed to save user message to database:", error);
-      }
+      await saveAgenticUserMessage({
+        conversationId,
+        tenantId: tenant.id,
+        userMessage: originalQuery,
+      });
 
       return Promise.resolve();
     },
@@ -170,19 +164,13 @@ export default function Chatbot({ tenant, conversationId, initMessage, onSelecte
         effort: payload.effort,
       };
 
-      try {
-        // Save the assistant message to the database
-        const assistantMessage = await saveAgenticAssistantMessage({
-          conversationId,
-          tenantId: tenant.id,
-          agenticInfo,
-          sources,
-        });
-
-        console.log("Saved agentic messages to database:", assistantMessage.id);
-      } catch (error) {
-        console.error("Failed to save agentic messages to database:", error);
-      }
+      // Save the assistant message to the database
+      await saveAgenticAssistantMessage({
+        conversationId,
+        tenantId: tenant.id,
+        agenticInfo,
+        sources,
+      });
 
       setAgenticRunId(null);
     },
