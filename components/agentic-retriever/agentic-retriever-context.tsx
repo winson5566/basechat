@@ -7,8 +7,13 @@ import { finalAnswerSchema } from "./types";
 import useAgenticRetriever, { AgenticRetriever } from "./use-agentic-retriever";
 
 export interface AgenticRetrieverCallbacks {
-  onStart: (runId: string) => Promise<void>;
-  onDone: (payload: { result: z.infer<typeof finalAnswerSchema>; runId: string }) => Promise<void>;
+  onStart: (payload: { runId: string; query: string; effort: string }) => Promise<void>;
+  onDone: (payload: {
+    result: z.infer<typeof finalAnswerSchema>;
+    runId: string;
+    query: string;
+    effort: string;
+  }) => Promise<void>;
   onError: (payload: string) => Promise<void>;
 }
 

@@ -16,6 +16,7 @@ const agenticInfoSchema = z.object({
   steps: z.array(stepResultSchema),
   query: z.string(),
   result: z.union([finalAnswerSchema, z.null()]),
+  effort: z.string(),
 });
 
 type AgenticInfo = z.infer<typeof agenticInfoSchema>;

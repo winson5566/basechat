@@ -53,6 +53,7 @@ export const conversationMessagesResponseSchema = z.array(
         steps: z.array(z.any()),
         query: z.string(),
         result: z.any().nullable(),
+        effort: z.string(),
       }),
     }),
     z.object({

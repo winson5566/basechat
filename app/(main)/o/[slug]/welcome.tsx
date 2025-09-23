@@ -76,7 +76,7 @@ export default function Welcome({ tenant, className, profile }: Props) {
     const json = await res.json();
     const conversation = conversationResponseSchema.parse(json);
     setInitialMessage(content);
-    setInitialModel(model); // TODO: need to handle "Deep Search" if agentic?
+    setInitialModel(model);
     // Settings are automatically saved by the useSearchSettings hook
 
     // Invalidate the conversations query to trigger a refetch

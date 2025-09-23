@@ -24,6 +24,7 @@ export type Run = {
   steps: Array<z.infer<typeof stepResultSchema>>;
   query: string;
   result: z.infer<typeof finalAnswerSchema> | null;
+  effort: string;
 };
 
 // TODO: test surrender step
@@ -54,13 +55,14 @@ export type AgenticRetriever = {
   currentStepType: AgenticRetrieverState["currentStepType"];
   query: string;
   currentResponse:
-  | z.infer<typeof orchestratorToolCallSchema>
-  | z.infer<typeof orchestratorThinkSchema>
-  | z.infer<typeof inProgressCitationStepSchema>
-  | null;
+    | z.infer<typeof orchestratorToolCallSchema>
+    | z.infer<typeof orchestratorThinkSchema>
+    | z.infer<typeof inProgressCitationStepSchema>
+    | null;
   result: AgenticRetrieverState["result"];
   evidence: EvidenceCollection;
   stepTiming: Array<number>;
+  effort: string;
   submit: (payload: { query: string; effort?: string }) => void;
   getRun: (id: string) => Run | null;
   getEvidence: (runId: string, evidenceId: string) => z.infer<typeof evidenceSchema> | null;
@@ -310,15 +312,16 @@ function agenticRetrieverReducer(state: AgenticRetrieverState, action: AgenticRe
         effort: state.effort,
         pastRuns: state.result
           ? {
-            ...state.pastRuns,
-            [state.runId || ""]: {
-              timestamp: new Date().toISOString(),
-              query: state.query,
-              result: state.result,
-              stepTiming: state._stepTiming,
-              steps: state.steps,
-            },
-          }
+              ...state.pastRuns,
+              [state.runId || ""]: {
+                timestamp: new Date().toISOString(),
+                query: state.query,
+                result: state.result,
+                stepTiming: state._stepTiming,
+                steps: state.steps,
+                effort: state.effort,
+              },
+            }
           : state.pastRuns,
         status: "idle",
         currentStepType: null,
@@ -359,8 +362,13 @@ export default function useAgenticRetriever({
   onStart,
 }: {
   tenantSlug: string;
-  onStart: (runId: string) => Promise<void>;
-  onDone: (payload: { result: z.infer<typeof finalAnswerSchema>; runId: string }) => Promise<void>;
+  onStart: (payload: { runId: string; query: string; effort: string }) => Promise<void>;
+  onDone: (payload: {
+    result: z.infer<typeof finalAnswerSchema>;
+    runId: string;
+    query: string;
+    effort: string;
+  }) => Promise<void>;
   onError: (payload: string) => Promise<void>;
 }): AgenticRetriever {
   const abortControllerRef = useRef<AbortController | null>(null);
@@ -390,7 +398,6 @@ export default function useAgenticRetriever({
   }, []);
 
   const reset = useCallback(() => {
-    //console.log("Resetting agentic retrieval state");
     abortControllerRef.current?.abort();
     dispatch({ type: "RESET" });
   }, []);
@@ -454,7 +461,7 @@ export default function useAgenticRetriever({
         if (!runId) {
           throw new Error("Response ID is required");
         }
-        await onStart(runId);
+        await onStart({ runId, query: state.query, effort: state.effort });
         dispatch({ type: "START_RUN", payload: { runId, startTime: Date.now() } });
       },
       async onclose() {
@@ -557,6 +564,7 @@ export default function useAgenticRetriever({
           result: state.result,
           stepTiming: state._stepTiming,
           steps: state.steps,
+          effort: state.effort,
         };
       }
       return null;
@@ -603,7 +611,12 @@ export default function useAgenticRetriever({
   useEffect(() => {
     async function handleDone() {
       if (state.result) {
-        await onDone({ result: state.result, runId: state.runId || "" });
+        await onDone({
+          result: state.result,
+          runId: state.runId || "",
+          query: state.query,
+          effort: state.effort,
+        });
         dispatch({ type: "RESET" });
         return;
       }
@@ -615,7 +628,7 @@ export default function useAgenticRetriever({
       }
     }
     handleDone();
-  }, [state.result, state.error, state.runId, onDone, onError]);
+  }, [state.result, state.error, state.runId, state.query, state.effort, onDone, onError]);
 
   const setPastRuns = useCallback((runs: Record<string, Run>) => {
     dispatch({ type: "SET_PAST_RUNS", payload: runs });
@@ -633,6 +646,7 @@ export default function useAgenticRetriever({
       currentResponse,
       currentStepType: state.currentStepType,
       evidence,
+      effort: state.effort,
       submit,
       getRun,
       reset,
@@ -648,6 +662,7 @@ export default function useAgenticRetriever({
     currentResponse,
     state.currentStepType,
     evidence,
+    state.effort,
     submit,
     getRun,
     reset,

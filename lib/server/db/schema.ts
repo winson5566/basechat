@@ -184,6 +184,7 @@ export const messages = pgTable(
       steps: Array<z.infer<typeof stepResultSchema>>;
       query: string;
       result: z.infer<typeof finalAnswerSchema> | null;
+      effort: string;
     }>(),
   },
   (t) => ({

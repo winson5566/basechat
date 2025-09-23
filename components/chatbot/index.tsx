@@ -26,6 +26,8 @@ import { Run } from "../agentic-retriever/use-agentic-retriever";
 import AssistantMessage from "./assistant-message";
 import ChatInput from "./chat-input";
 
+const CONTEXT_END_DELIMITER = "---CONTEXT_END---";
+
 type AiMessage = {
   content: string;
   role: "assistant";
@@ -54,7 +56,6 @@ export default function Chatbot({ tenant, conversationId, initMessage, onSelecte
   const [localInitMessage, setLocalInitMessage] = useState(initMessage);
   const [messages, setMessages] = useState<Message[]>([]);
   const [agenticRunId, setAgenticRunId] = useState<string | null>(null);
-  const agenticQueryRef = useRef<string | null>(null);
   const [sourceCache, setSourceCache] = useState<Record<string, SourceMetadata[]>>({});
   const [pendingMessage, setPendingMessage] = useState<null | { id: string; model: LLMModel }>(null);
   const pendingMessageRef = useRef<null | { id: string; model: LLMModel }>(null);
@@ -91,28 +92,35 @@ export default function Chatbot({ tenant, conversationId, initMessage, onSelecte
     stepTiming,
     result,
     setPastRuns,
-    getRun,
   } = useAgenticRetrieverContext();
 
   const handleAgenticStart = useCallback(
-    async (runId: string) => {
-      console.log("Agentic retrieval mode started with run ID:", runId);
-      setAgenticRunId(runId);
+    async (payload: { runId: string; query: string; effort: string }) => {
+      console.log("Agentic retrieval mode started with payload:", payload);
+      setAgenticRunId(payload.runId);
 
-      // Save the user message to the database immediately
-      const query = agenticQueryRef.current;
-      if (query) {
-        try {
-          const userMessage = await saveAgenticUserMessage({
-            conversationId,
-            tenantId: tenant.id,
-            userMessage: query,
-            runId,
-          });
-          console.log("Saved user message to database:", userMessage.id);
-        } catch (error) {
-          console.error("Failed to save user message to database:", error);
+      // Parse out the original user query from the context-rich query
+      let originalQuery = payload.query;
+      const contextEndIndex = payload.query.indexOf(CONTEXT_END_DELIMITER);
+      if (contextEndIndex !== -1) {
+        // Extract only the part after the context delimiter
+        const queryPart = payload.query.substring(contextEndIndex + CONTEXT_END_DELIMITER.length).trim();
+        // Remove the "userMessage: " prefix to get just the original content
+        if (queryPart.startsWith("userMessage: ")) {
+          originalQuery = queryPart.substring("userMessage: ".length);
         }
+      }
+
+      try {
+        const userMessage = await saveAgenticUserMessage({
+          conversationId,
+          tenantId: tenant.id,
+          userMessage: originalQuery,
+          runId: payload.runId,
+        });
+        console.log("Saved user message to database:", userMessage.id);
+      } catch (error) {
+        console.error("Failed to save user message to database:", error);
       }
 
       return Promise.resolve();
@@ -121,7 +129,7 @@ export default function Chatbot({ tenant, conversationId, initMessage, onSelecte
   );
 
   const handleAgenticDone = useCallback(
-    async (payload: { result: z.infer<typeof finalAnswerSchema>; runId: string }) => {
+    async (payload: { result: z.infer<typeof finalAnswerSchema>; runId: string; query: string; effort: string }) => {
       console.log("Agentic retrieval mode done with payload:", payload);
 
       // Prepare sources
@@ -137,13 +145,6 @@ export default function Chatbot({ tenant, conversationId, initMessage, onSelecte
               documentName: e.document_name,
             }) as SourceMetadata,
         );
-
-      // Prepare evidence for storage - we need to reconstruct the evidence collection
-      // from the result evidence since the context evidence might be cleared
-      const evidenceForStorage: Record<string, Array<z.infer<typeof evidenceSchema>>> = {};
-      if (payload.result.evidence.length > 0) {
-        evidenceForStorage["0"] = payload.result.evidence;
-      }
 
       // Update local state with the saved messages
       setMessages((prev) => [
@@ -164,8 +165,9 @@ export default function Chatbot({ tenant, conversationId, initMessage, onSelecte
         timestamp: new Date().toISOString(),
         stepTiming: stepTiming, // Use current state stepTiming (result doesn't have stepTiming)
         steps: payload.result.steps || steps, // Prefer result steps
-        query: agenticQueryRef.current || "", // Use the stored query from ref
+        query: payload.query,
         result: payload.result,
+        effort: payload.effort,
       };
 
       try {
@@ -183,14 +185,12 @@ export default function Chatbot({ tenant, conversationId, initMessage, onSelecte
       }
 
       setAgenticRunId(null);
-      agenticQueryRef.current = null; // Clear the ref
-      return Promise.resolve();
     },
     [],
-  ); //conversationId, tenant.id, getRun ?
+  );
 
   const handleAgenticError = useCallback((payload: string) => {
-    console.log("Agentic retrieval mode error with payload:", payload);
+    console.error("Agentic retrieval mode error with payload:", payload);
     return Promise.resolve();
   }, []);
 
@@ -251,12 +251,22 @@ export default function Chatbot({ tenant, conversationId, initMessage, onSelecte
       submit(payload);
     } else {
       console.log("Submitting to agentic retrieval mode:", content);
-      // Store the query in ref for later use in callbacks
-      agenticQueryRef.current = content;
       setMessages((prev) => [...prev, { content, role: "user" } as UserMessage]);
 
+      // HACK: Agentic currently does not have a construct for previous messages in a conversation,
+      // so shoe-horn in previous messages
+      const contextQuery = allMessages
+        .map((message) => {
+          const roleLabel = message.role === "user" ? "userMessage" : "assistantMessage";
+          return `${roleLabel}: ${message.content}`;
+        })
+        .join("\n");
+
+      // Add delimiters to separate context from new user query
+      const fullQuery = contextQuery + `\n${CONTEXT_END_DELIMITER}\nuserMessage: ${content}`;
+
       agenticSubmit({
-        query: content,
+        query: fullQuery,
         effort: agenticLevel,
       });
     }
@@ -316,6 +326,7 @@ export default function Chatbot({ tenant, conversationId, initMessage, onSelecte
               result: agenticInfo.result,
               stepTiming: agenticInfo.stepTiming,
               steps: agenticInfo.steps,
+              effort: agenticInfo.effort || "medium", // Default to medium if not present
             };
 
             // Add to past runs
