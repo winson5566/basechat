@@ -19,6 +19,7 @@ import * as schema from "@/lib/server/db/schema";
 
 import { SourceMetadata } from "../../lib/types";
 import AgenticResponse from "../agentic-retriever/agentic-response";
+import { CONTEXT_END_DELIMITER } from "../agentic-retriever/agentic-response";
 import { useAgenticRetrieverContext } from "../agentic-retriever/agentic-retriever-context";
 import { finalAnswerSchema } from "../agentic-retriever/types";
 import { Run } from "../agentic-retriever/use-agentic-retriever";
@@ -26,7 +27,6 @@ import { Run } from "../agentic-retriever/use-agentic-retriever";
 import AssistantMessage from "./assistant-message";
 import ChatInput from "./chat-input";
 
-const CONTEXT_END_DELIMITER = "---CONTEXT_END---";
 
 type AiMessage = {
   content: string;

@@ -34,6 +34,18 @@ import { AgenticRetriever } from "./use-agentic-retriever";
 
 type Step = z.infer<typeof stepResultSchema>;
 
+export const CONTEXT_END_DELIMITER = "---CONTEXT_END---";
+// HACK: this delimiter is used in chatbot/index.tsx to add prev messages to agentic queries
+
+function removeDelimiter(text: string) {
+  if (text.trim().startsWith(CONTEXT_END_DELIMITER)) {
+    // remove delimiter and 14 extra characters for the "userMessage:" prefix
+    return text.replace(CONTEXT_END_DELIMITER, "").substring(14);
+  }
+  console.warn("No delimiter found in text:", text);
+  return text;
+}
+
 export function getStepTypeInfo(stepType: Step["type"] | "think") {
   switch (stepType) {
     case "think":
@@ -194,7 +206,7 @@ export function AnswerStep({ step }: { step: Step & { type: "answer" } }) {
     <div>
       <div>
         <h4 className="font-medium text-sm text-gray-600 mb-1">Current Question:</h4>
-        <p className="text-sm">{step.current_question}</p>
+        <p className="text-sm">{removeDelimiter(step.current_question)}</p>
       </div>
       <div>
         <h4 className="font-medium text-sm text-gray-600 mb-1">Thought Process:</h4>
@@ -238,16 +250,15 @@ export function EvaluatedAnswerStep({ step }: { step: Step & { type: "evaluated_
       <div className="flex mb-2">
         {step.eval_reason && (
           <span
-            className={`px-2 py-1 rounded text-xs ${
-              step.eval_passed ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"
-            }`}
+            className={`px-2 py-1 rounded text-xs ${step.eval_passed ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"
+              }`}
           >
             {step.eval_passed ? "PASSED" : "FAILED"}
           </span>
         )}
       </div>
       <StepSection title="Current Question">
-        <p>{step.current_question}</p>
+        <p>{removeDelimiter(step.current_question)}</p>
       </StepSection>
       <StepSection title="Thought Process">
         <p>{step.think}</p>
@@ -310,7 +321,7 @@ export function SearchStep({ step }: { step: Step & { type: "search" } }) {
   return (
     <div>
       <StepSection title="Current Question">
-        <p>{step.current_question}</p>
+        <p>{removeDelimiter(step.current_question)}</p>
       </StepSection>
       <StepSection title="Thought Process">
         <p>{step.think}</p>
@@ -360,7 +371,7 @@ export function PlanStep({ step }: { step: Step & { type: "plan" } }) {
   return (
     <div>
       <StepSection title="Current Question">
-        <p>{step.current_question}</p>
+        <p>{removeDelimiter(step.current_question)}</p>
       </StepSection>
       <StepSection title="Thought Process">
         <p>{step.think}</p>
@@ -382,7 +393,7 @@ export function CodingStep({ step }: { step: Step & { type: "code" } }) {
   return (
     <div>
       <StepSection title="Current Question">
-        <p>{step.current_question}</p>
+        <p>{removeDelimiter(step.current_question)}</p>
       </StepSection>
 
       <div>
