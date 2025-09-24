@@ -127,6 +127,7 @@ export default function Welcome({ tenant, className, profile }: Props) {
                 onModelChange={setSelectedModel}
                 retrievalMode={retrievalMode}
                 onRetrievalModeChange={setRetrievalMode}
+                defaultStandardRetrievalMode={tenant.isBreadth ? "breadth" : "depth"}
                 rerankEnabled={rerankEnabled}
                 onRerankChange={setRerankEnabled}
                 prioritizeRecent={prioritizeRecent}

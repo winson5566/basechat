@@ -441,6 +441,7 @@ export default function Chatbot({ tenant, conversationId, initMessage, onSelecte
             onModelChange={setSelectedModel}
             retrievalMode={retrievalMode}
             onRetrievalModeChange={setRetrievalMode}
+            defaultStandardRetrievalMode={tenant.isBreadth ? "breadth" : "depth"}
             rerankEnabled={rerankEnabled}
             onRerankChange={setRerankEnabled}
             prioritizeRecent={prioritizeRecent}

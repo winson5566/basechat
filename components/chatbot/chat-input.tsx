@@ -15,11 +15,11 @@ import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../ui/tooltip";
 
 interface ChatInputProps {
+  defaultStandardRetrievalMode: "breadth" | "depth";
   handleSubmit?: (text: string, model: LLMModel) => void;
   selectedModel: LLMModel;
   onModelChange: (model: LLMModel) => void;
   retrievalMode: "breadth" | "depth" | "agentic";
-  // isBreadth: boolean;
   onRetrievalModeChange: (mode: "breadth" | "depth" | "agentic") => void;
   rerankEnabled?: boolean;
   onRerankChange?: (enabled: boolean) => void;
@@ -92,9 +92,11 @@ const SettingsPopoverContent = ({ children }: { children: React.ReactNode }) => 
 const ModelPopoverContent = ({
   children,
   isStandalone = false,
+  onClose,
 }: {
   children: React.ReactNode;
   isStandalone?: boolean;
+  onClose?: () => void;
 }) => {
   const isDesktop = useIsDesktop();
 
@@ -104,6 +106,7 @@ const ModelPopoverContent = ({
       alignOffset={isStandalone ? 4 : -24}
       {...(isDesktop && !isStandalone ? { side: "right", sideOffset: 30 } : {})}
       className={cn("bg-[#F5F5F7] w-[258px] border border-[#D7D7D7] shadow-none rounded-[8px] p-6")}
+      onInteractOutside={onClose}
     >
       {children}
     </PopoverContent>
@@ -113,9 +116,11 @@ const ModelPopoverContent = ({
 const RetrievalModePopoverContent = ({
   children,
   isStandalone = false,
+  onClose,
 }: {
   children: React.ReactNode;
   isStandalone?: boolean;
+  onClose?: () => void;
 }) => {
   const isDesktop = useIsDesktop();
 
@@ -125,6 +130,7 @@ const RetrievalModePopoverContent = ({
       alignOffset={isStandalone ? 4 : -255}
       {...(isDesktop && !isStandalone ? { side: "right", sideOffset: 30 } : {})}
       className={cn("bg-[#F5F5F7] w-[280px] border border-[#D7D7D7] shadow-none rounded-[8px] p-6")}
+      onInteractOutside={onClose}
     >
       {children}
     </PopoverContent>
@@ -134,15 +140,19 @@ const RetrievalModePopoverContent = ({
 export default function ChatInput(props: ChatInputProps) {
   const { profile } = useProfile();
   const [value, setValue] = useState("");
+  const [isMainPopoverOpen, setIsMainPopoverOpen] = useState(false);
+  const [isModelPopoverOpen, setIsModelPopoverOpen] = useState(false);
+  const [isRetrievalModePopoverOpen, setIsRetrievalModePopoverOpen] = useState(false);
 
   const { retrievalMode, rerankEnabled, prioritizeRecent, agenticLevel, agenticEnabled } = props;
   const ref = useRef<AutosizeTextAreaRef>(null);
-  // const canOverrideSomething = false;
-  // TODO: should prob separate out the breadth, rerank, and recency from the agentic
   const canOverrideSomething = props.canSetIsBreadth || props.canSetRerankEnabled || props.canSetPrioritizeRecent;
 
   // do not display options to switch models in agentic mode
   const canSwitchModel = props.enabledModels.length > 1 && retrievalMode !== "agentic";
+
+  // Show main popover if we can override settings OR if agentic is enabled (even without other overrides)
+  const shouldShowMainPopover = canOverrideSomething || agenticEnabled;
 
   const handleSubmit = (value: string) => {
     if (props.tenantPaidStatus === "expired") return;
@@ -203,22 +213,22 @@ export default function ChatInput(props: ChatInputProps) {
           </Tooltip>
         </TooltipProvider>
       </div>
-      <Popover>
-        {(canOverrideSomething || canSwitchModel) && (
+      <Popover open={isMainPopoverOpen} onOpenChange={setIsMainPopoverOpen}>
+        {(shouldShowMainPopover || canSwitchModel) && (
           <PopoverTrigger className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
-            {canOverrideSomething && <Image src={GearIcon} alt="settings" className="h-4 w-4" />}
+            {shouldShowMainPopover && <Image src={GearIcon} alt="settings" className="h-4 w-4" />}
             {retrievalMode === "agentic" ? "Deep Search" : canSwitchModel && LLM_DISPLAY_NAMES[props.selectedModel]}
-            {(canOverrideSomething || canSwitchModel) && <ChevronDown className="h-4 w-4" />}
+            {(shouldShowMainPopover || canSwitchModel) && <ChevronDown className="h-4 w-4" />}
           </PopoverTrigger>
         )}
-        {canOverrideSomething ? (
+        {shouldShowMainPopover ? (
           <SettingsPopoverContent>
             <div className="flex flex-col gap-4">
               <div className="flex flex-col gap-2">
-                {props.canSetIsBreadth && (
+                {(props.canSetIsBreadth || agenticEnabled) && (
                   <>
                     <span className="text-sm font-medium text-muted-foreground">Chat mode</span>
-                    <Popover>
+                    <Popover open={isRetrievalModePopoverOpen} onOpenChange={setIsRetrievalModePopoverOpen}>
                       <PopoverTrigger asChild>
                         <button className="flex items-center justify-between w-full text-sm text-black hover:text-foreground">
                           <span>{RETRIEVAL_MODE_DISPLAY_NAMES[props.retrievalMode]}</span>
@@ -226,43 +236,84 @@ export default function ChatInput(props: ChatInputProps) {
                         </button>
                       </PopoverTrigger>
 
-                      <RetrievalModePopoverContent isStandalone={false}>
+                      <RetrievalModePopoverContent
+                        isStandalone={false}
+                        onClose={() => setIsRetrievalModePopoverOpen(false)}
+                      >
                         <div className="flex flex-col gap-1">
-                          <button
-                            className="flex flex-col rounded-sm px-4 py-3 text-sm text-left hover:bg-black hover:bg-opacity-5"
-                            onClick={() => props.onRetrievalModeChange("breadth")}
-                          >
-                            <div className="flex items-center">
-                              <div className="w-4">
-                                {props.retrievalMode === "breadth" && <Image src={CheckIcon} alt="selected" />}
-                              </div>
-                              <span className="ml-3 font-medium">Breadth</span>
-                            </div>
-                            <span className="text-xs text-muted-foreground ml-7 mt-1">
-                              Searches a wider range of documents for a broader response (slower)
-                            </span>
-                          </button>
+                          {props.canSetIsBreadth ? (
+                            <>
+                              <button
+                                className="flex flex-col rounded-sm px-4 py-3 text-sm text-left hover:bg-black hover:bg-opacity-5"
+                                onClick={() => {
+                                  props.onRetrievalModeChange("breadth");
+                                  setIsRetrievalModePopoverOpen(false);
+                                }}
+                              >
+                                <div className="flex items-center">
+                                  <div className="w-4">
+                                    {props.retrievalMode === "breadth" && <Image src={CheckIcon} alt="selected" />}
+                                  </div>
+                                  <span className="ml-3 font-medium">Breadth</span>
+                                </div>
+                                <span className="text-xs text-muted-foreground ml-7 mt-1">
+                                  Searches a wider range of documents for a broader response (slower)
+                                </span>
+                              </button>
 
-                          <button
-                            className="flex flex-col rounded-sm px-4 py-3 text-sm text-left hover:bg-black hover:bg-opacity-5"
-                            onClick={() => props.onRetrievalModeChange("depth")}
-                          >
-                            <div className="flex items-center">
-                              <div className="w-4">
-                                {props.retrievalMode === "depth" && <Image src={CheckIcon} alt="selected" />}
+                              <button
+                                className="flex flex-col rounded-sm px-4 py-3 text-sm text-left hover:bg-black hover:bg-opacity-5"
+                                onClick={() => {
+                                  props.onRetrievalModeChange("depth");
+                                  setIsRetrievalModePopoverOpen(false);
+                                }}
+                              >
+                                <div className="flex items-center">
+                                  <div className="w-4">
+                                    {props.retrievalMode === "depth" && <Image src={CheckIcon} alt="selected" />}
+                                  </div>
+                                  <span className="ml-3 font-medium">Depth</span>
+                                </div>
+                                <span className="text-xs text-muted-foreground ml-7 mt-1">
+                                  Retrieves results from a smaller range of documents for more depth (faster)
+                                </span>
+                              </button>
+                            </>
+                          ) : (
+                            <button
+                              className="flex flex-col rounded-sm px-4 py-3 text-sm text-left hover:bg-black hover:bg-opacity-5"
+                              onClick={() => {
+                                props.onRetrievalModeChange(props.defaultStandardRetrievalMode);
+                                setIsRetrievalModePopoverOpen(false);
+                              }}
+                            >
+                              <div className="flex items-center">
+                                <div className="w-4">
+                                  {props.retrievalMode === props.defaultStandardRetrievalMode && (
+                                    <Image src={CheckIcon} alt="selected" />
+                                  )}
+                                </div>
+                                <span className="ml-3 font-medium">
+                                  {props.defaultStandardRetrievalMode.charAt(0).toUpperCase() +
+                                    props.defaultStandardRetrievalMode.slice(1)}
+                                </span>
                               </div>
-                              <span className="ml-3 font-medium">Depth</span>
-                            </div>
-                            <span className="text-xs text-muted-foreground ml-7 mt-1">
-                              Retrieves results from a smaller range of documents for more depth (faster)
-                            </span>
-                          </button>
+                              <span className="text-xs text-muted-foreground ml-7 mt-1">
+                                {props.defaultStandardRetrievalMode === "breadth"
+                                  ? "Searches a wider range of documents for a broader response (slower)"
+                                  : "Retrieves results from a smaller range of documents for more depth (faster)"}
+                              </span>
+                            </button>
+                          )}
 
                           {/* Agentic mode only visible if enabled */}
                           {agenticEnabled && (
                             <button
                               className="flex flex-col rounded-sm px-4 py-3 text-sm text-left hover:bg-black hover:bg-opacity-5"
-                              onClick={() => props.onRetrievalModeChange("agentic")}
+                              onClick={() => {
+                                props.onRetrievalModeChange("agentic");
+                                setIsRetrievalModePopoverOpen(false);
+                              }}
                             >
                               <div className="flex items-center">
                                 <div className="w-4">
@@ -284,47 +335,46 @@ export default function ChatInput(props: ChatInputProps) {
               </div>
 
               {/* Options for breadth/depth modes */}
-              {(retrievalMode === "breadth" || retrievalMode === "depth") &&
-                (props.canSetRerankEnabled || props.canSetPrioritizeRecent) && (
-                  <>
-                    <div className="h-[1px] w-full bg-[#D7D7D7] my-4" />
-                    <div className="flex flex-col gap-2">
-                      <span className="text-sm font-medium text-muted-foreground">Options</span>
-                      {props.canSetRerankEnabled && (
-                        <div className="flex items-center justify-between">
+              {retrievalMode !== "agentic" && (props.canSetRerankEnabled || props.canSetPrioritizeRecent) && (
+                <>
+                  <div className="h-[1px] w-full bg-[#D7D7D7] my-4" />
+                  <div className="flex flex-col gap-2">
+                    <span className="text-sm font-medium text-muted-foreground">Options</span>
+                    {props.canSetRerankEnabled && (
+                      <div className="flex items-center justify-between">
+                        <div className="flex flex-col">
+                          <span className="text-sm font-medium">Rerank</span>
+                          <span className="text-xs text-muted-foreground mt-1">Choose top matches</span>
+                        </div>
+                        <Switch
+                          checked={rerankEnabled}
+                          onCheckedChange={(checked: boolean) => {
+                            props.onRerankChange?.(checked);
+                          }}
+                          className="data-[state=checked]:bg-[#D946EF]"
+                        />
+                      </div>
+                    )}
+                    {props.canSetPrioritizeRecent && (
+                      <div className="flex items-center justify-between mt-4">
+                        <>
                           <div className="flex flex-col">
-                            <span className="text-sm font-medium">Rerank</span>
-                            <span className="text-xs text-muted-foreground mt-1">Choose top matches</span>
+                            <span className="text-sm font-medium">Prioritize recent data</span>
+                            <span className="text-xs text-muted-foreground mt-1">Favors newer sources</span>
                           </div>
                           <Switch
-                            checked={rerankEnabled}
+                            checked={prioritizeRecent}
                             onCheckedChange={(checked: boolean) => {
-                              props.onRerankChange?.(checked);
+                              props.onPrioritizeRecentChange?.(checked);
                             }}
                             className="data-[state=checked]:bg-[#D946EF]"
                           />
-                        </div>
-                      )}
-                      {props.canSetPrioritizeRecent && (
-                        <div className="flex items-center justify-between mt-4">
-                          <>
-                            <div className="flex flex-col">
-                              <span className="text-sm font-medium">Prioritize recent data</span>
-                              <span className="text-xs text-muted-foreground mt-1">Favors newer sources</span>
-                            </div>
-                            <Switch
-                              checked={prioritizeRecent}
-                              onCheckedChange={(checked: boolean) => {
-                                props.onPrioritizeRecentChange?.(checked);
-                              }}
-                              className="data-[state=checked]:bg-[#D946EF]"
-                            />
-                          </>
-                        </div>
-                      )}
-                    </div>
-                  </>
-                )}
+                        </>
+                      </div>
+                    )}
+                  </div>
+                </>
+              )}
 
               {/* Level selection for agentic mode */}
               {retrievalMode === "agentic" && props.canSetAgenticLevel && agenticEnabled && (
@@ -387,7 +437,7 @@ export default function ChatInput(props: ChatInputProps) {
                   <div className="h-[1px] w-full bg-[#D7D7D7] my-4" />
                   <div className="flex flex-col gap-2">
                     <span className="text-sm font-medium text-muted-foreground">Switch model</span>
-                    <Popover>
+                    <Popover open={isModelPopoverOpen} onOpenChange={setIsModelPopoverOpen}>
                       <PopoverTrigger asChild>
                         <button className="flex items-center justify-between w-full text-sm text-black hover:text-foreground">
                           <span>{LLM_DISPLAY_NAMES[props.selectedModel]}</span>
@@ -395,7 +445,7 @@ export default function ChatInput(props: ChatInputProps) {
                         </button>
                       </PopoverTrigger>
 
-                      <ModelPopoverContent isStandalone={false}>
+                      <ModelPopoverContent isStandalone={false} onClose={() => setIsModelPopoverOpen(false)}>
                         <div className="flex flex-col gap-1">
                           {props.enabledModels.map((model) => {
                             const [_, logoPath] = LLM_LOGO_MAP[model];
@@ -403,7 +453,10 @@ export default function ChatInput(props: ChatInputProps) {
                               <button
                                 key={model}
                                 className="flex items-center rounded-sm px-4 py-3 text-sm text-left hover:bg-black hover:bg-opacity-5"
-                                onClick={() => props.onModelChange(model)}
+                                onClick={() => {
+                                  props.onModelChange(model);
+                                  setIsModelPopoverOpen(false);
+                                }}
                               >
                                 <div className="w-4">
                                   {props.selectedModel === model && <Image src={CheckIcon} alt="selected" />}
@@ -473,7 +526,7 @@ export default function ChatInput(props: ChatInputProps) {
             </div>
           </SettingsPopoverContent>
         ) : canSwitchModel ? (
-          <ModelPopoverContent isStandalone={true}>
+          <ModelPopoverContent isStandalone={true} onClose={() => setIsMainPopoverOpen(false)}>
             <div className="flex flex-col gap-1">
               {props.enabledModels.map((model) => {
                 const [_, logoPath] = LLM_LOGO_MAP[model];
@@ -481,7 +534,10 @@ export default function ChatInput(props: ChatInputProps) {
                   <button
                     key={model}
                     className="flex items-center rounded-sm px-4 py-3 text-sm text-left hover:bg-black hover:bg-opacity-5"
-                    onClick={() => props.onModelChange(model)}
+                    onClick={() => {
+                      props.onModelChange(model);
+                      setIsMainPopoverOpen(false);
+                    }}
                   >
                     <div className="w-4">
                       {props.selectedModel === model && <Image src={CheckIcon} alt="selected" />}
