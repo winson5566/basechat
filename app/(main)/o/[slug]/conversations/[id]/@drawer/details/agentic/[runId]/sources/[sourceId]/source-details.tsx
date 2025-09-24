@@ -14,7 +14,7 @@ export default function SourceDetails({ sourceId, runId }: { sourceId: string; r
     return <div>Source not found</div>;
   }
   if (source.type !== "ragie") {
-    return <div>TODO implement non ragie source</div>;
+    return <div>Non ragie source</div>;
   }
   return (
     <div>
