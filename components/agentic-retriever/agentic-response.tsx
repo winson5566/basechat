@@ -11,6 +11,7 @@ import {
   BookOpenCheck,
   ChevronDown,
   ChevronUp,
+  FileWarning,
 } from "lucide-react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
@@ -79,9 +80,9 @@ export function getStepTypeInfo(stepType: Step["type"] | "think") {
       };
     case "surrender":
       return {
-        icon: XCircle,
+        icon: FileWarning,
         iconColor: "bg-orange-600",
-        label: "Answer",
+        label: "Partial Answer",
         activeLabel: "Answering",
       };
     case "citation":
@@ -413,21 +414,14 @@ export function CodingStep({ step }: { step: Step & { type: "code" } }) {
 export function SurrenderStep({ step }: { step: Step & { type: "surrender" } }) {
   return (
     <div>
-      <div>
-        <h4 className="font-medium text-sm text-gray-600 mb-1">Current Question:</h4>
-        <p className="text-sm">{step.current_question}</p>
-      </div>
-      <div>
-        <h4 className="font-medium text-sm text-gray-600 mb-1">Thought Process:</h4>
-        <p className="text-sm bg-gray-50 p-2 rounded">{step.think}</p>
-      </div>
-      <div>
-        <h4 className="font-medium text-sm text-gray-600 mb-1">Partial Answer:</h4>
-        <p className="text-sm bg-orange-50 p-2 rounded text-orange-800">{step.partial_answer.text}</p>
-      </div>
+      <StepSection title="Reason">
+        <p>{step.think}</p>
+      </StepSection>
+      <StepSection title="Partial Answer">
+        <p>{step.partial_answer.text}</p>
+      </StepSection>
       {step.partial_answer.evidence.length > 0 && (
-        <div>
-          <h4 className="font-medium text-sm text-gray-600 mb-1">Evidence:</h4>
+        <StepSection title="Evidence">
           <ul className="text-sm space-y-1">
             {step.partial_answer.evidence.map((evidence, idx) => (
               <li key={idx} className="bg-blue-50 p-2 rounded text-blue-800">
@@ -435,7 +429,7 @@ export function SurrenderStep({ step }: { step: Step & { type: "surrender" } }) 
               </li>
             ))}
           </ul>
-        </div>
+        </StepSection>
       )}
     </div>
   );

@@ -1,7 +1,6 @@
-import { object } from "better-auth";
 import { z } from "zod";
 
-const toolNames = z.enum(["plan", "search", "code", "answer", "transfer_to_citation", "transfer_to_surrender"]);
+const toolNames = z.enum(["plan", "search", "code", "answer", "transfer_to_citation", "surrender"]);
 
 const responseCreatedSchema = z.object({
   type: z.literal("response.created"),
