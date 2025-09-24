@@ -27,7 +27,6 @@ import { Run } from "../agentic-retriever/use-agentic-retriever";
 import AssistantMessage from "./assistant-message";
 import ChatInput from "./chat-input";
 
-
 type AiMessage = {
   content: string;
   role: "assistant";
@@ -488,7 +487,7 @@ function AgenticResponseContainer({
   const { getRun } = useAgenticRetrieverContext();
   const run = getRun(runId);
 
-  // If no run is available yet, show a loading state
+  // If no run is available yet, show failed state
   if (!run) {
     return (
       <div className="flex w-full">
@@ -496,13 +495,13 @@ function AgenticResponseContainer({
           <div className="h-[40px] w-[40px] rounded-full bg-gray-200 animate-pulse" />
         </div>
         <div className="self-start flex-grow mb-6 rounded-md ml-7 max-w-[calc(100%-60px)]">
-          <div className="text-sm text-gray-500">Loading agentic response...</div>
+          <div className="text-sm text-gray-500">Failed to load agentic response</div>
         </div>
       </div>
     );
   }
 
-  //assert(run) was here instead of the loading state
+  //assert(run) was here instead of failed state
 
   return (
     <AgenticResponse
@@ -517,8 +516,4 @@ function AgenticResponseContainer({
       tenantId={tenant.id}
     />
   );
-}
-
-function createRandomId() {
-  return Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
 }

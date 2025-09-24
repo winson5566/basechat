@@ -38,12 +38,23 @@ export const CONTEXT_END_DELIMITER = "---CONTEXT_END---";
 // HACK: this delimiter is used in chatbot/index.tsx to add prev messages to agentic queries
 
 function removeDelimiter(text: string) {
-  if (text.trim().startsWith(CONTEXT_END_DELIMITER)) {
-    // remove delimiter and 14 extra characters for the "userMessage:" prefix
-    return text.replace(CONTEXT_END_DELIMITER, "").substring(14);
+  const delimiterIndex = text.indexOf(CONTEXT_END_DELIMITER);
+
+  if (delimiterIndex === -1) {
+    return text;
   }
-  console.warn("No delimiter found in text:", text);
-  return text;
+
+  // Find the start of the user message after the delimiter
+  const afterDelimiter = text.substring(delimiterIndex + CONTEXT_END_DELIMITER.length);
+  const userMessageStart = afterDelimiter.indexOf("userMessage:");
+
+  if (userMessageStart === -1) {
+    console.warn("No 'userMessage:' found after delimiter in text:", text);
+    return text;
+  }
+
+  // Extract the user message (skip "userMessage:" prefix which is 12 characters)
+  return afterDelimiter.substring(userMessageStart + 12).trim();
 }
 
 export function getStepTypeInfo(stepType: Step["type"] | "think") {
@@ -168,7 +179,7 @@ function StepList({
     <div className="flex flex-col px-4 py-2 mb-4 rounded-lg border border-[#D7D7D7]">
       <div className="flex w-full items-center cursor-pointer" onClick={() => setIsOpen(!isOpen)}>
         <span className="flex-grow">{pluralize("step", steps.length, true)} completed</span>
-        <StepTimer startTime={stepTiming[0]} endTime={isCompleted ? stepTiming[stepTiming.length - 1] : null} />
+        <StepTimer startTime={stepTiming[0]} endTime={stepTiming[stepTiming.length - 1] || null} />
         <div className="pl-4 shrink-0">
           {isOpen ? <ChevronUp className="h-5 w-5 min-w-5" /> : <ChevronDown className="h-5 w-5 min-w-5" />}
         </div>
