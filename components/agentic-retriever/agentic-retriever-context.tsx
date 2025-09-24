@@ -13,6 +13,7 @@ export interface AgenticRetrieverCallbacks {
     runId: string;
     query: string;
     effort: string;
+    stepTiming: Array<number>;
   }) => Promise<void>;
   onError: (payload: string) => Promise<void>;
 }

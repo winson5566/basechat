@@ -130,7 +130,7 @@ export function useSearchSettings({ tenant }: UseSearchSettingsOptions): UseSear
         const settings = JSON.parse(saved);
 
         // Apply user settings only if overrides are allowed
-        if (canSetIsBreadth) {
+        if (canSetIsBreadth || canUseAgentic) {
           if (settings.retrievalMode) {
             setRetrievalMode(settings.retrievalMode);
           } else if (settings.isBreadth !== undefined) {
@@ -177,7 +177,7 @@ export function useSearchSettings({ tenant }: UseSearchSettingsOptions): UseSear
 
     const settingsToSave = {
       selectedModel,
-      ...(canSetIsBreadth
+      ...(canSetIsBreadth || canUseAgentic
         ? {
             isBreadth: retrievalMode === "breadth",
             retrievalMode: retrievalMode,

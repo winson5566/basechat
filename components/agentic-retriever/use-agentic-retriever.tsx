@@ -368,6 +368,7 @@ export default function useAgenticRetriever({
     runId: string;
     query: string;
     effort: string;
+    stepTiming: Array<number>;
   }) => Promise<void>;
   onError: (payload: string) => Promise<void>;
 }): AgenticRetriever {
@@ -616,6 +617,7 @@ export default function useAgenticRetriever({
           runId: state.runId || "",
           query: state.query,
           effort: state.effort,
+          stepTiming: state._stepTiming,
         });
         dispatch({ type: "RESET" });
         return;
@@ -628,13 +630,11 @@ export default function useAgenticRetriever({
       }
     }
     handleDone();
-  }, [state.result, state.error, state.runId, state.query, state.effort, onDone, onError]);
+  }, [state.result, state.error, state.runId, state.query, state.effort, state._stepTiming, onDone, onError]);
 
   const setPastRuns = useCallback((runs: Record<string, Run>) => {
     dispatch({ type: "SET_PAST_RUNS", payload: runs });
   }, []);
-
-  console.log("state", state, new Set(state._rawResponseEvent.map((e) => e.type)));
 
   const hookRes = useMemo(() => {
     return {

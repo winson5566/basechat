@@ -337,7 +337,7 @@ export default function ChatInput(props: ChatInputProps) {
               {/* Options for breadth/depth modes */}
               {retrievalMode !== "agentic" && (props.canSetRerankEnabled || props.canSetPrioritizeRecent) && (
                 <>
-                  <div className="h-[1px] w-full bg-[#D7D7D7] my-4" />
+                  <div className="h-[1px] w-full bg-[#D7D7D7] my-2" />
                   <div className="flex flex-col gap-2">
                     <span className="text-sm font-medium text-muted-foreground">Options</span>
                     {props.canSetRerankEnabled && (
@@ -379,7 +379,7 @@ export default function ChatInput(props: ChatInputProps) {
               {/* Level selection for agentic mode */}
               {retrievalMode === "agentic" && props.canSetAgenticLevel && agenticEnabled && (
                 <>
-                  <div className="h-[1px] w-full bg-[#D7D7D7] my-4" />
+                  <div className="h-[1px] w-full bg-[#D7D7D7] my-2" />
                   <div className="flex flex-col gap-2">
                     <span className="text-sm font-medium text-muted-foreground">Level</span>
                     <RadioGroup
@@ -434,7 +434,7 @@ export default function ChatInput(props: ChatInputProps) {
 
               {canSwitchModel && (
                 <>
-                  <div className="h-[1px] w-full bg-[#D7D7D7] my-4" />
+                  <div className="h-[1px] w-full bg-[#D7D7D7] my-2" />
                   <div className="flex flex-col gap-2">
                     <span className="text-sm font-medium text-muted-foreground">Switch model</span>
                     <Popover open={isModelPopoverOpen} onOpenChange={setIsModelPopoverOpen}>
@@ -486,7 +486,7 @@ export default function ChatInput(props: ChatInputProps) {
                 false && // TODO: remove false when tokens ready
                 (props.remainingTokens !== undefined || props.tokenBudget !== undefined) && (
                   <>
-                    <div className="h-[1px] w-full bg-[#D7D7D7] my-4" />
+                    <div className="h-[1px] w-full bg-[#D7D7D7] my-2" />
                     <div className="flex flex-col gap-3">
                       <span className="text-sm font-medium text-muted-foreground">Tokens</span>
 

@@ -20,7 +20,7 @@ import * as schema from "@/lib/server/db/schema";
 import { SourceMetadata } from "../../lib/types";
 import AgenticResponse from "../agentic-retriever/agentic-response";
 import { useAgenticRetrieverContext } from "../agentic-retriever/agentic-retriever-context";
-import { finalAnswerSchema, evidenceSchema } from "../agentic-retriever/types";
+import { finalAnswerSchema } from "../agentic-retriever/types";
 import { Run } from "../agentic-retriever/use-agentic-retriever";
 
 import AssistantMessage from "./assistant-message";
@@ -123,7 +123,13 @@ export default function Chatbot({ tenant, conversationId, initMessage, onSelecte
   );
 
   const handleAgenticDone = useCallback(
-    async (payload: { result: z.infer<typeof finalAnswerSchema>; runId: string; query: string; effort: string }) => {
+    async (payload: {
+      result: z.infer<typeof finalAnswerSchema>;
+      runId: string;
+      query: string;
+      effort: string;
+      stepTiming: Array<number>;
+    }) => {
       console.log("Agentic retrieval mode done with payload:", payload);
 
       // Prepare sources
@@ -153,11 +159,11 @@ export default function Chatbot({ tenant, conversationId, initMessage, onSelecte
         } as AiMessage,
       ]);
 
-      // Prepare agentic info for database storage using current state data
+      // Prepare agentic info for database storage using payload data
       const agenticInfo = {
         runId: payload.runId,
         timestamp: new Date().toISOString(),
-        stepTiming: stepTiming, // Use current state stepTiming (result doesn't have stepTiming)
+        stepTiming: payload.stepTiming, // Use stepTiming from payload
         steps: payload.result.steps || steps, // Prefer result steps
         query: payload.query,
         result: payload.result,
