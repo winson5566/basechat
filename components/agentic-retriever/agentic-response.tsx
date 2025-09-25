@@ -600,6 +600,17 @@ function FinalAnswer({ answer, runId }: { answer: AgenticRetriever["result"]; ru
     return "";
   };
 
+  // Deduplicate evidence by document_id
+  const ragieEvidence = answer.evidence.filter((e) => e.type === "ragie");
+  const seenDocumentIds = new Set<string>();
+  const dedupedEvidence = ragieEvidence.filter((evidence) => {
+    if (seenDocumentIds.has(evidence.document_id)) {
+      return false;
+    }
+    seenDocumentIds.add(evidence.document_id);
+    return true;
+  });
+
   // TODO: Handle external links
   return (
     <div>
@@ -617,17 +628,17 @@ function FinalAnswer({ answer, runId }: { answer: AgenticRetriever["result"]; ru
         {renderWithCitations(answer.text, linkFormatter)}
       </Markdown>
       <div className="flex flex-wrap py-3">
-        {answer.evidence
-          .filter((e) => e.type === "ragie")
-          .map((evidence, idx) => (
-            <Citation
-              key={idx}
-              source={evidenceToSourceMetadata(evidence)}
-              onClick={() => {
-                router.push(linkFormatter(idx));
-              }}
-            />
-          ))}
+        {dedupedEvidence.map((evidence, idx) => (
+          <Citation
+            key={evidence.id}
+            source={evidenceToSourceMetadata(evidence)}
+            onClick={() => {
+              // Find the original index in the full evidence array for the link
+              const originalIdx = answer.evidence.findIndex((e) => e.type === "ragie" && e.id === evidence.id);
+              router.push(linkFormatter(originalIdx));
+            }}
+          />
+        ))}
       </div>
     </div>
   );
