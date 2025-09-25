@@ -460,6 +460,7 @@ export default function useAgenticRetriever({
         console.log("Stream opened");
         runId = response.headers.get("Response-Id")!;
         if (!runId) {
+          dispatch({ type: "SET_ERROR", payload: "Response ID is required" });
           throw new Error("Response ID is required");
         }
         await onStart({ runId, query: state.query, effort: state.effort });

@@ -91,6 +91,7 @@ export default function Chatbot({ tenant, conversationId, initMessage, onSelecte
     stepTiming,
     result,
     setPastRuns,
+    reset: agenticReset,
   } = useAgenticRetrieverContext();
 
   const handleAgenticStart = useCallback(
@@ -182,8 +183,18 @@ export default function Chatbot({ tenant, conversationId, initMessage, onSelecte
     [],
   );
 
-  const handleAgenticError = useCallback((payload: string) => {
-    console.error("Agentic retrieval mode error with payload:", payload);
+  const handleAgenticError = useCallback(async (payload: string) => {
+    const myMessage: AiMessage = {
+      content: `Agentic response failed: ${payload}`,
+      role: "assistant",
+      id: "123", // run won't be found by id, will show failed state
+      sources: [],
+      model: "Deep Search",
+      type: "agentic",
+    };
+
+    setMessages((prev) => [...prev, myMessage]);
+    agenticReset();
     return Promise.resolve();
   }, []);
 
@@ -224,7 +235,6 @@ export default function Chatbot({ tenant, conversationId, initMessage, onSelecte
   });
 
   const handleSubmit = (content: string, model: LLMModel) => {
-    console.log("Submitting message:", content, "with model:", model);
     const provider = getProviderForModel(model);
     if (!provider) {
       return;
@@ -240,6 +250,7 @@ export default function Chatbot({ tenant, conversationId, initMessage, onSelecte
     };
 
     if (retrievalMode !== "agentic") {
+      console.log("Submitting message:", content, "with model:", model);
       setMessages([...messages, { content, role: "user" }]);
       submit(payload);
     } else {
@@ -490,12 +501,12 @@ function AgenticResponseContainer({
   // If no run is available yet, show failed state
   if (!run) {
     return (
-      <div className="flex w-full">
-        <div className="mb-8 shrink-0">
-          <div className="h-[40px] w-[40px] rounded-full bg-gray-200 animate-pulse" />
+      <div className="flex w-full items-center">
+        <div className="shrink-0">
+          <div className="h-[40px] w-[40px] rounded-full bg-gray-200" />
         </div>
-        <div className="self-start flex-grow mb-6 rounded-md ml-7 max-w-[calc(100%-60px)]">
-          <div className="text-sm text-gray-500">Failed to load agentic response</div>
+        <div className="flex-grow rounded-md ml-7 max-w-[calc(100%-60px)]">
+          <div className="text-sm text-gray-500">Failed to load Deep Search response</div>
         </div>
       </div>
     );
