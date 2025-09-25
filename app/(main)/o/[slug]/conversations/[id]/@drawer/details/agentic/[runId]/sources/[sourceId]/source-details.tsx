@@ -30,11 +30,12 @@ export default function SourceDetails({
     return <div>Non ragie source</div>;
   }
   const imageUrl = source.links.self_image?.href;
-  let sourceUrl = source.links.document?.href;
-  if (sourceUrl) {
-    sourceUrl = `${apiBaseUrl}/documents/${source.document_id}/source`;
+  // look for connector source first
+  let sourceUrl = source.document_metadata.source_url;
+  if (!sourceUrl) {
+    const page = source.metadata.start_page;
+    sourceUrl = getRagieSourcePath(slug, `${apiBaseUrl}/documents/${source.document_id}/source`, page);
   }
-  let page = source.metadata.start_page;
 
   return (
     <div>
@@ -48,11 +49,7 @@ export default function SourceDetails({
       <div className="flex items-center justify-between mb-6">
         <div className="text-[#74747A]">{buildMetadataText(source.document_metadata, source.metadata)}</div>
         {sourceUrl && (
-          <a
-            href={getRagieSourcePath(slug, sourceUrl, page)}
-            target="_blank"
-            className="text-[#7749F8] flex items-center gap-1"
-          >
+          <a href={sourceUrl} target="_blank" className="text-[#7749F8] flex items-center gap-1">
             View in source
             <Image src={ExternalLinkIcon} alt="Open in new window" />
           </a>
