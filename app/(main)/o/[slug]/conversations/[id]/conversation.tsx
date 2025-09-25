@@ -1,5 +1,6 @@
 "use client";
 
+import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
 import { useGlobalState } from "@/app/(main)/o/[slug]/context";
@@ -7,6 +8,7 @@ import Chatbot from "@/components/chatbot";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Profile } from "@/lib/api";
 import { getEnabledModelsFromDisabled } from "@/lib/llm/types";
+import { getConversationPath } from "@/lib/paths";
 import * as schema from "@/lib/server/db/schema";
 import { SourceMetadata } from "@/lib/types";
 
@@ -23,6 +25,8 @@ interface Props {
 export default function Conversation({ id, tenant, profile }: Props) {
   const [source, setSource] = useState<SourceMetadata | null>(null);
   const [isMounted, setIsMounted] = useState(false);
+  const pathname = usePathname();
+  const router = useRouter();
   const {
     initialMessage,
     setInitialMessage,
@@ -32,6 +36,16 @@ export default function Conversation({ id, tenant, profile }: Props) {
     setMessageConsumed,
     clearInitialMessage,
   } = useGlobalState();
+
+  // Check if we're on a drawer route (parallel route is active)
+  const isDrawerRoute = pathname.includes("/details/");
+
+  // Clear source state when drawer route becomes active
+  useEffect(() => {
+    if (isDrawerRoute) {
+      setSource(null);
+    }
+  }, [isDrawerRoute]);
 
   // Move the default model logic outside useEffect
   const enabledModels = getEnabledModelsFromDisabled(tenant.disabledModels);
@@ -58,6 +72,9 @@ export default function Conversation({ id, tenant, profile }: Props) {
   }, []);
 
   const handleSelectedSource = async (source: SourceMetadata) => {
+    if (isDrawerRoute) {
+      router.replace(getConversationPath(tenant.slug, id));
+    }
     setSource(source);
   };
 
