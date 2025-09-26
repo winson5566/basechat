@@ -286,26 +286,40 @@ export function EvaluatedAnswerStep({ step }: { step: Step & { type: "evaluated_
           <p>{step.eval_reason}</p>
         </StepSection>
       )}
-      {step.answer.evidence.length > 0 && (
-        <StepSection title="Evidence">
-          <ul className="space-y-1">
-            {step.answer.evidence.map((evidence, idx) => (
-              <StepDetailEvidenceItem key={idx} evidenceId={evidence} />
-            ))}
-          </ul>
-        </StepSection>
-      )}
+      <StepDetailEvidenceItemWrapper evidenceList={step.answer.evidence} />
     </div>
   );
 }
 
-function StepDetailEvidenceItem({ evidenceId }: { evidenceId: string }) {
+function StepDetailEvidenceItemWrapper({ evidenceList }: { evidenceList: string[] }) {
   const agenticRetriever = useAgenticRetrieverContext();
-  const { runId, id, slug } = useParams();
-  const ragieEvidence = agenticRetriever.getEvidence(runId as string, evidenceId);
-  if (!ragieEvidence || ragieEvidence.type !== "ragie") {
+  const { runId } = useParams();
+  const ragieEvidence = [];
+
+  for (const evidenceId of evidenceList) {
+    const retrievedEvidence = agenticRetriever.getEvidence(runId as string, evidenceId);
+    if (retrievedEvidence && retrievedEvidence.type === "ragie") {
+      ragieEvidence.push(retrievedEvidence);
+    }
+  }
+  if (ragieEvidence.length === 0) {
     return null;
   }
+
+  return (
+    <StepSection title="Evidence">
+      <ul className="space-y-1">
+        {ragieEvidence.map((item, idx) => (
+          <StepDetailEvidenceItem key={idx} ragieEvidence={item} />
+        ))}
+      </ul>
+    </StepSection>
+  );
+}
+
+function StepDetailEvidenceItem({ ragieEvidence }: { ragieEvidence: z.infer<typeof ragieEvidenceSchema> }) {
+  const { runId, id, slug } = useParams();
+
   let pageNote = null;
   if (ragieEvidence.metadata.start_page && ragieEvidence.metadata.start_page === ragieEvidence.metadata.end_page) {
     pageNote = <span className="text-xs text-gray-600">{`(p. ${ragieEvidence.metadata.start_page})`}</span>;
@@ -317,9 +331,9 @@ function StepDetailEvidenceItem({ evidenceId }: { evidenceId: string }) {
     pageNote = <span className="text-xs text-gray-600">{`(p. ${ragieEvidence.metadata.start_page})`}</span>;
   }
   return (
-    <li className="list-disc list-outside ml-4">
+    <li className="list-none">
       <Link
-        className="hover:underline cursor-pointer"
+        className="block px-3 py-2 rounded-md hover:bg-gray-200 transition-colors cursor-pointer"
         href={getSourceLink(ragieEvidence.id, runId as string, id as string, slug as string)}
       >
         {ragieEvidence.document_name} {pageNote}
