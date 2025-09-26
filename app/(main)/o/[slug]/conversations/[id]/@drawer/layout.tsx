@@ -3,6 +3,8 @@
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
+import { getConversationPath } from "@/lib/paths";
+
 interface DrawerLayoutProps {
   children: React.ReactNode;
 }
@@ -12,6 +14,10 @@ export default function DrawerLayout({ children }: DrawerLayoutProps) {
   const [isAnimating, setIsAnimating] = useState(false);
   const pathname = usePathname();
   const router = useRouter();
+
+  // Extract conversation ID from pathname
+  const conversationId = pathname.match(/\/conversations\/([^\/]+)/)?.[1];
+  const slug = pathname.match(/\/o\/([^\/]+)/)?.[1];
 
   // Check if we're on a drawer route
   const isDrawerRoute = pathname.includes("/details/");
@@ -35,7 +41,11 @@ export default function DrawerLayout({ children }: DrawerLayoutProps) {
     setIsOpen(false);
     // Navigate back after animation
     setTimeout(() => {
-      router.back();
+      if (conversationId && slug) {
+        router.replace(getConversationPath(slug, conversationId));
+      } else {
+        router.back();
+      }
       setIsAnimating(false);
     }, 300);
   };
@@ -47,6 +57,31 @@ export default function DrawerLayout({ children }: DrawerLayoutProps) {
   return (
     <div className="absolute top-0 left-0 right-0 lg:static lg:h-full">
       <div className="flex-1 w-full h-full lg:min-w-[400px] lg:w-[400px] rounded-[24px] p-8 mr-6 mb-4 bg-[#F5F5F7] max-h-[calc(100vh-155px)] overflow-y-auto relative">
+        {/* Navigation buttons */}
+        <div className="absolute top-4 left-4 z-10 flex">
+          {/* Left chevron */}
+          <button
+            onClick={() => router.back()}
+            className="p-2 rounded-full hover:bg-gray-100 transition-colors"
+            aria-label="Go back"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            </svg>
+          </button>
+
+          {/* Right chevron */}
+          {/* <button
+            onClick={() => console.log("Right chevron clicked")}
+            className="p-2 rounded-full hover:bg-gray-100 transition-colors"
+            aria-label="Go forward"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            </svg>
+          </button> */}
+        </div>
+
         {/* Close button */}
         <button
           onClick={handleClose}
@@ -59,7 +94,7 @@ export default function DrawerLayout({ children }: DrawerLayoutProps) {
         </button>
 
         {/* Drawer content */}
-        {children}
+        <div className="pt-6">{children}</div>
       </div>
     </div>
   );

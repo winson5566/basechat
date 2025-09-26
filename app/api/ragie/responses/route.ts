@@ -1,11 +1,9 @@
 import { NextRequest } from "next/server";
 import { z } from "zod";
 
-import { getRagieApiKey } from "@/lib/server/ragie";
+import { getRagieApiKeyAndPartition } from "@/lib/server/ragie";
 import { RAGIE_API_BASE_URL } from "@/lib/server/settings";
 import { requireAuthContext } from "@/lib/server/utils";
-
-const PARTITION_OVERIDE = null;
 
 const reqBodySchema = z.object({
   input: z.string(),
@@ -25,13 +23,13 @@ export async function POST(request: NextRequest) {
   const { tenant } = await requireAuthContext(params.tenantSlug);
 
   try {
-    const ragieApiKey = await getRagieApiKey(tenant);
+    const { apiKey, partition } = await getRagieApiKeyAndPartition(tenant.id);
     const controller = new AbortController();
     request.signal.addEventListener("abort", () => controller.abort());
 
     const upstreamResponse = await fetch(`${RAGIE_API_BASE_URL}/responses`, {
       headers: {
-        authorization: `Bearer ${ragieApiKey}`,
+        authorization: `Bearer ${apiKey}`,
         "Content-Type": "application/json",
       },
       signal: controller.signal,
@@ -41,7 +39,7 @@ export async function POST(request: NextRequest) {
         tools: [
           {
             type: "retrieve",
-            partitions: [PARTITION_OVERIDE || tenant.ragiePartition || tenant.id],
+            partitions: [partition],
           },
         ],
         reasoning: params.reasoning,

@@ -18,17 +18,19 @@ import {
 
 type StepType = "think" | "search" | "code" | "answer" | "plan" | "citation" | "surrender";
 
-type Run = {
+export type Run = {
   timestamp: string;
   stepTiming: Array<number>;
   steps: Array<z.infer<typeof stepResultSchema>>;
   query: string;
   result: z.infer<typeof finalAnswerSchema> | null;
+  effort: string;
 };
 
 // TODO: test surrender step
 type AgenticRetrieverState = {
   query: string;
+  effort: string;
   runId: string | null;
   pastRuns: Record<string, Run>;
   result: null | z.infer<typeof finalAnswerSchema>;
@@ -60,14 +62,21 @@ export type AgenticRetriever = {
   result: AgenticRetrieverState["result"];
   evidence: EvidenceCollection;
   stepTiming: Array<number>;
-  submit: (payload: { query: string }) => void;
+  effort: string;
+  submit: (payload: { query: string; effort?: string }) => void;
   getRun: (id: string) => Run | null;
   getEvidence: (runId: string, evidenceId: string) => z.infer<typeof evidenceSchema> | null;
+  setPastRuns: (runs: Record<string, Run>) => void;
   reset: () => void;
 };
 
 type SetQueryAction = {
   type: "SET_QUERY";
+  payload: string;
+};
+
+type SetEffortAction = {
+  type: "SET_EFFORT";
   payload: string;
 };
 
@@ -112,8 +121,14 @@ type SetErrorAction = {
   payload: string;
 };
 
+type SetPastRunsAction = {
+  type: "SET_PAST_RUNS";
+  payload: Record<string, Run>;
+};
+
 type AgenticRetrieverAction =
   | SetQueryAction
+  | SetEffortAction
   | StartRun
   | ResetAction
   | RetryAction
@@ -121,7 +136,8 @@ type AgenticRetrieverAction =
   | TakeAgentUpdatedStreamEventAction
   | TakeRunItemStreamEventAction
   | TakeRawResponseEventAction
-  | CloseStreamAction;
+  | CloseStreamAction
+  | SetPastRunsAction;
 
 const IGNORED_RAW_EVENT_TYPES = [
   "response.output_item.done",
@@ -137,6 +153,12 @@ function agenticRetrieverReducer(state: AgenticRetrieverState, action: AgenticRe
         return state;
       }
       return { ...state, status: "loading", query: action.payload };
+
+    case "SET_EFFORT":
+      return {
+        ...state,
+        effort: action.payload,
+      };
 
     case "START_RUN":
       return { ...state, runId: action.payload.runId, _stepTiming: [action.payload.startTime] };
@@ -287,6 +309,7 @@ function agenticRetrieverReducer(state: AgenticRetrieverState, action: AgenticRe
     case "RESET": {
       // TODO: Need to handle runs that errored
       return {
+        effort: state.effort,
         pastRuns: state.result
           ? {
               ...state.pastRuns,
@@ -296,6 +319,7 @@ function agenticRetrieverReducer(state: AgenticRetrieverState, action: AgenticRe
                 result: state.result,
                 stepTiming: state._stepTiming,
                 steps: state.steps,
+                effort: state.effort,
               },
             }
           : state.pastRuns,
@@ -320,6 +344,12 @@ function agenticRetrieverReducer(state: AgenticRetrieverState, action: AgenticRe
       // TODO: Implement retry logic
       return state;
     }
+    case "SET_PAST_RUNS": {
+      return {
+        ...state,
+        pastRuns: action.payload,
+      };
+    }
     default:
       return state;
   }
@@ -332,13 +362,20 @@ export default function useAgenticRetriever({
   onStart,
 }: {
   tenantSlug: string;
-  onStart: (runId: string) => Promise<void>;
-  onDone: (payload: { result: z.infer<typeof finalAnswerSchema>; runId: string }) => Promise<void>;
+  onStart: (payload: { runId: string; query: string; effort: string }) => Promise<void>;
+  onDone: (payload: {
+    result: z.infer<typeof finalAnswerSchema>;
+    runId: string;
+    query: string;
+    effort: string;
+    stepTiming: Array<number>;
+  }) => Promise<void>;
   onError: (payload: string) => Promise<void>;
 }): AgenticRetriever {
   const abortControllerRef = useRef<AbortController | null>(null);
   const [state, dispatch] = useReducer(agenticRetrieverReducer, {
     query: "",
+    effort: "medium",
     runId: null,
     status: "idle",
     pastRuns: {},
@@ -356,12 +393,12 @@ export default function useAgenticRetriever({
     _inprogressResponse: "",
   });
 
-  const submit = useCallback((payload: { query: string }) => {
+  const submit = useCallback((payload: { query: string; effort?: string }) => {
     dispatch({ type: "SET_QUERY", payload: payload.query });
+    dispatch({ type: "SET_EFFORT", payload: payload.effort || "medium" });
   }, []);
 
   const reset = useCallback(() => {
-    console.log("Resetting agentic retrieval state");
     abortControllerRef.current?.abort();
     dispatch({ type: "RESET" });
   }, []);
@@ -407,7 +444,7 @@ export default function useAgenticRetriever({
       body: JSON.stringify({
         input: state.query,
         reasoning: {
-          effort: "low",
+          effort: state.effort,
         },
         tenantSlug,
       }),
@@ -423,9 +460,10 @@ export default function useAgenticRetriever({
         console.log("Stream opened");
         runId = response.headers.get("Response-Id")!;
         if (!runId) {
+          dispatch({ type: "SET_ERROR", payload: "Response ID is required" });
           throw new Error("Response ID is required");
         }
-        await onStart(runId);
+        await onStart({ runId, query: state.query, effort: state.effort });
         dispatch({ type: "START_RUN", payload: { runId, startTime: Date.now() } });
       },
       async onclose() {
@@ -528,6 +566,7 @@ export default function useAgenticRetriever({
           result: state.result,
           stepTiming: state._stepTiming,
           steps: state.steps,
+          effort: state.effort,
         };
       }
       return null;
@@ -574,7 +613,13 @@ export default function useAgenticRetriever({
   useEffect(() => {
     async function handleDone() {
       if (state.result) {
-        await onDone({ result: state.result, runId: state.runId || "" });
+        await onDone({
+          result: state.result,
+          runId: state.runId || "",
+          query: state.query,
+          effort: state.effort,
+          stepTiming: state._stepTiming,
+        });
         dispatch({ type: "RESET" });
         return;
       }
@@ -586,9 +631,11 @@ export default function useAgenticRetriever({
       }
     }
     handleDone();
-  }, [state.result, state.error, state.runId, onDone, onError]);
+  }, [state.result, state.error, state.runId, state.query, state.effort, state._stepTiming, onDone, onError]);
 
-  console.log("state", state, new Set(state._rawResponseEvent.map((e) => e.type)));
+  const setPastRuns = useCallback((runs: Record<string, Run>) => {
+    dispatch({ type: "SET_PAST_RUNS", payload: runs });
+  }, []);
 
   const hookRes = useMemo(() => {
     return {
@@ -600,10 +647,12 @@ export default function useAgenticRetriever({
       currentResponse,
       currentStepType: state.currentStepType,
       evidence,
+      effort: state.effort,
       submit,
       getRun,
       reset,
       getEvidence,
+      setPastRuns,
     };
   }, [
     state.query,
@@ -614,10 +663,12 @@ export default function useAgenticRetriever({
     currentResponse,
     state.currentStepType,
     evidence,
+    state.effort,
     submit,
     getRun,
     reset,
     getEvidence,
+    setPastRuns,
   ]);
 
   return hookRes;

@@ -330,6 +330,13 @@
       "when": 1754523157474,
       "tag": "0046_special_gressill",
       "breakpoints": true
+    },
+    {
+      "idx": 47,
+      "version": "7",
+      "when": 1758562002504,
+      "tag": "0047_confused_naoko",
+      "breakpoints": true
     }
   ]
 }

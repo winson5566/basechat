@@ -34,6 +34,29 @@ import { AgenticRetriever } from "./use-agentic-retriever";
 
 type Step = z.infer<typeof stepResultSchema>;
 
+export const CONTEXT_END_DELIMITER = "---CONTEXT_END---";
+// HACK: this delimiter is used in chatbot/index.tsx to add prev messages to agentic queries
+
+function removeDelimiter(text: string) {
+  const delimiterIndex = text.indexOf(CONTEXT_END_DELIMITER);
+
+  if (delimiterIndex === -1) {
+    return text;
+  }
+
+  // Find the start of the user message after the delimiter
+  const afterDelimiter = text.substring(delimiterIndex + CONTEXT_END_DELIMITER.length);
+  const userMessageStart = afterDelimiter.indexOf("userMessage:");
+
+  if (userMessageStart === -1) {
+    console.warn("No 'userMessage:' found after delimiter in text:", text);
+    return text;
+  }
+
+  // Extract the user message (skip "userMessage:" prefix which is 12 characters)
+  return afterDelimiter.substring(userMessageStart + 12).trim();
+}
+
 export function getStepTypeInfo(stepType: Step["type"] | "think") {
   switch (stepType) {
     case "think":
@@ -156,7 +179,7 @@ function StepList({
     <div className="flex flex-col px-4 py-2 mb-4 rounded-lg border border-[#D7D7D7]">
       <div className="flex w-full items-center cursor-pointer" onClick={() => setIsOpen(!isOpen)}>
         <span className="flex-grow">{pluralize("step", steps.length, true)} completed</span>
-        <StepTimer startTime={stepTiming[0]} endTime={isCompleted ? stepTiming[stepTiming.length - 1] : null} />
+        <StepTimer startTime={stepTiming[0]} endTime={stepTiming[stepTiming.length - 1] || null} />
         <div className="pl-4 shrink-0">
           {isOpen ? <ChevronUp className="h-5 w-5 min-w-5" /> : <ChevronDown className="h-5 w-5 min-w-5" />}
         </div>
@@ -194,7 +217,7 @@ export function AnswerStep({ step }: { step: Step & { type: "answer" } }) {
     <div>
       <div>
         <h4 className="font-medium text-sm text-gray-600 mb-1">Current Question:</h4>
-        <p className="text-sm">{step.current_question}</p>
+        <p className="text-sm">{removeDelimiter(step.current_question)}</p>
       </div>
       <div>
         <h4 className="font-medium text-sm text-gray-600 mb-1">Thought Process:</h4>
@@ -238,16 +261,15 @@ export function EvaluatedAnswerStep({ step }: { step: Step & { type: "evaluated_
       <div className="flex mb-2">
         {step.eval_reason && (
           <span
-            className={`px-2 py-1 rounded text-xs ${
-              step.eval_passed ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"
-            }`}
+            className={`px-2 py-1 rounded text-xs ${step.eval_passed ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"
+              }`}
           >
             {step.eval_passed ? "PASSED" : "FAILED"}
           </span>
         )}
       </div>
       <StepSection title="Current Question">
-        <p>{step.current_question}</p>
+        <p>{removeDelimiter(step.current_question)}</p>
       </StepSection>
       <StepSection title="Thought Process">
         <p>{step.think}</p>
@@ -264,41 +286,69 @@ export function EvaluatedAnswerStep({ step }: { step: Step & { type: "evaluated_
           <p>{step.eval_reason}</p>
         </StepSection>
       )}
-      {step.answer.evidence.length > 0 && (
-        <StepSection title="Evidence">
-          <ul className="space-y-1">
-            {step.answer.evidence.map((evidence, idx) => (
-              <StepDetailEvidenceItem key={idx} evidenceId={evidence} />
-            ))}
-          </ul>
-        </StepSection>
-      )}
+      <StepDetailEvidenceSectionWrapper evidenceList={step.answer.evidence} />
     </div>
   );
 }
 
-function StepDetailEvidenceItem({ evidenceId }: { evidenceId: string }) {
+function StepDetailEvidenceSectionWrapper({ evidenceList }: { evidenceList: string[] }) {
   const agenticRetriever = useAgenticRetrieverContext();
-  const { runId, id, slug } = useParams();
-  const ragieEvidence = agenticRetriever.getEvidence(runId as string, evidenceId);
-  if (!ragieEvidence || ragieEvidence.type !== "ragie") {
+  const { runId } = useParams();
+  const ragieEvidence = [];
+
+  for (const evidenceId of evidenceList) {
+    const retrievedEvidence = agenticRetriever.getEvidence(runId as string, evidenceId);
+    // TODO: handle non ragie sources
+    if (retrievedEvidence && retrievedEvidence.type === "ragie") {
+      ragieEvidence.push(retrievedEvidence);
+    }
+  }
+  if (ragieEvidence.length === 0) {
     return null;
   }
-  let pageNote = null;
-  if (ragieEvidence.metadata.start_page && ragieEvidence.metadata.start_page === ragieEvidence.metadata.end_page) {
-    pageNote = <span className="text-xs text-gray-600">{`(p. ${ragieEvidence.metadata.start_page})`}</span>;
-  } else if (ragieEvidence.metadata.start_page && ragieEvidence.metadata.end_page) {
-    pageNote = (
-      <span className="text-xs text-gray-600">{`(p. ${ragieEvidence.metadata.start_page}-${ragieEvidence.metadata.end_page})`}</span>
-    );
-  } else if (ragieEvidence.metadata.start_page) {
-    pageNote = <span className="text-xs text-gray-600">{`(p. ${ragieEvidence.metadata.start_page})`}</span>;
-  }
+
   return (
-    <li className="list-disc list-outside ml-4">
+    <StepSection title="Evidence">
+      <ul className="space-y-1">
+        {ragieEvidence.map((item, idx) => (
+          <StepDetailEvidenceSectionItem key={idx} ragieEvidence={item} />
+        ))}
+      </ul>
+    </StepSection>
+  );
+}
+
+// Helper function to render page note based on metadata
+function renderPageNote(metadata: { start_page?: number; end_page?: number }) {
+  if (metadata.start_page && metadata.start_page === metadata.end_page) {
+    return <span className="text-xs text-gray-600">{`(p. ${metadata.start_page})`}</span>;
+  } else if (metadata.start_page && metadata.end_page) {
+    return <span className="text-xs text-gray-600">{`(p. ${metadata.start_page}-${metadata.end_page})`}</span>;
+  } else if (metadata.start_page) {
+    return <span className="text-xs text-gray-600">{`(p. ${metadata.start_page})`}</span>;
+  }
+  return null;
+}
+
+// Shared component for rendering evidence items
+function EvidenceItem({
+  ragieEvidence,
+  runId,
+  id,
+  slug,
+}: {
+  ragieEvidence: z.infer<typeof ragieEvidenceSchema>;
+  runId: string;
+  id: string;
+  slug: string;
+}) {
+  const pageNote = renderPageNote(ragieEvidence.metadata);
+
+  return (
+    <li className="list-none">
       <Link
-        className="hover:underline cursor-pointer"
-        href={getSourceLink(ragieEvidence.id, runId as string, id as string, slug as string)}
+        className="block px-3 py-2 rounded-md hover:bg-gray-200 transition-colors cursor-pointer"
+        href={getSourceLink(ragieEvidence.id, runId, id, slug)}
       >
         {ragieEvidence.document_name} {pageNote}
       </Link>
@@ -306,11 +356,29 @@ function StepDetailEvidenceItem({ evidenceId }: { evidenceId: string }) {
   );
 }
 
+function StepDetailEvidenceItem({ evidenceId }: { evidenceId: string }) {
+  const agenticRetriever = useAgenticRetrieverContext();
+  const { runId, id, slug } = useParams();
+  const ragieEvidence = agenticRetriever.getEvidence(runId as string, evidenceId);
+
+  if (!ragieEvidence || ragieEvidence.type !== "ragie") {
+    return null;
+  }
+
+  return <EvidenceItem ragieEvidence={ragieEvidence} runId={runId as string} id={id as string} slug={slug as string} />;
+}
+
+function StepDetailEvidenceSectionItem({ ragieEvidence }: { ragieEvidence: z.infer<typeof ragieEvidenceSchema> }) {
+  const { runId, id, slug } = useParams();
+
+  return <EvidenceItem ragieEvidence={ragieEvidence} runId={runId as string} id={id as string} slug={slug as string} />;
+}
+
 export function SearchStep({ step }: { step: Step & { type: "search" } }) {
   return (
     <div>
       <StepSection title="Current Question">
-        <p>{step.current_question}</p>
+        <p>{removeDelimiter(step.current_question)}</p>
       </StepSection>
       <StepSection title="Thought Process">
         <p>{step.think}</p>
@@ -360,7 +428,7 @@ export function PlanStep({ step }: { step: Step & { type: "plan" } }) {
   return (
     <div>
       <StepSection title="Current Question">
-        <p>{step.current_question}</p>
+        <p>{removeDelimiter(step.current_question)}</p>
       </StepSection>
       <StepSection title="Thought Process">
         <p>{step.think}</p>
@@ -382,7 +450,7 @@ export function CodingStep({ step }: { step: Step & { type: "code" } }) {
   return (
     <div>
       <StepSection title="Current Question">
-        <p>{step.current_question}</p>
+        <p>{removeDelimiter(step.current_question)}</p>
       </StepSection>
 
       <div>
@@ -578,6 +646,17 @@ function FinalAnswer({ answer, runId }: { answer: AgenticRetriever["result"]; ru
     return "";
   };
 
+  // Deduplicate evidence by document_id
+  const ragieEvidence = answer.evidence.filter((e) => e.type === "ragie");
+  const seenDocumentIds = new Set<string>();
+  const dedupedEvidence = ragieEvidence.filter((evidence) => {
+    if (seenDocumentIds.has(evidence.document_id)) {
+      return false;
+    }
+    seenDocumentIds.add(evidence.document_id);
+    return true;
+  });
+
   // TODO: Handle external links
   return (
     <div>
@@ -595,17 +674,17 @@ function FinalAnswer({ answer, runId }: { answer: AgenticRetriever["result"]; ru
         {renderWithCitations(answer.text, linkFormatter)}
       </Markdown>
       <div className="flex flex-wrap py-3">
-        {answer.evidence
-          .filter((e) => e.type === "ragie")
-          .map((evidence, idx) => (
-            <Citation
-              key={idx}
-              source={evidenceToSourceMetadata(evidence)}
-              onClick={() => {
-                router.push(linkFormatter(idx));
-              }}
-            />
-          ))}
+        {dedupedEvidence.map((evidence, idx) => (
+          <Citation
+            key={evidence.id}
+            source={evidenceToSourceMetadata(evidence)}
+            onClick={() => {
+              // Find the original index in the full evidence array for the link
+              const originalIdx = answer.evidence.findIndex((e) => e.type === "ragie" && e.id === evidence.id);
+              router.push(linkFormatter(originalIdx));
+            }}
+          />
+        ))}
       </div>
     </div>
   );

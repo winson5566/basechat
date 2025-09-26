@@ -134,12 +134,18 @@ export const PROVIDER_CONFIG = {
 export const DEFAULT_MODEL = "claude-sonnet-4-20250514";
 export const DEFAULT_PROVIDER = "anthropic";
 export const DEFAULT_NAMING_MODEL = "gpt-4o-mini";
+export const AGENTIC_MOCK_MODEL = "Deep Search";
 
 // Derive types from the config
 export type LLMProvider = keyof typeof PROVIDER_CONFIG;
 
 // List of all currently valid model names for validation
-export const ALL_VALID_MODELS = Object.values(PROVIDER_CONFIG).flatMap((config) => config.models) as string[];
+export const ALL_VALID_MODELS = [
+  ...Object.values(PROVIDER_CONFIG).flatMap((config) => config.models),
+  AGENTIC_MOCK_MODEL,
+] as string[];
+
+export const NON_AGENTIC_MODELS = [...Object.values(PROVIDER_CONFIG).flatMap((config) => config.models)] as string[];
 
 // Create Zod schema for model validation
 export const modelSchema = z.enum(ALL_VALID_MODELS as [string, ...string[]]);
@@ -156,16 +162,16 @@ export function getDisabledModels(disabledModels: string[] | null): string[] {
     return [];
   }
   // Filter out any models that aren't in ALL_VALID_MODELS
-  return disabledModels.filter((model) => ALL_VALID_MODELS.includes(model));
+  return disabledModels.filter((model) => NON_AGENTIC_MODELS.includes(model));
 }
 
 // Helper function to get enabled models from disabled models
 export function getEnabledModelsFromDisabled(disabledModels: string[] | null): string[] {
   if (!disabledModels?.length) {
-    return ALL_VALID_MODELS;
+    return NON_AGENTIC_MODELS;
   }
   // Return all valid models except the disabled ones
-  return ALL_VALID_MODELS.filter((model) => !disabledModels.includes(model));
+  return NON_AGENTIC_MODELS.filter((model) => !disabledModels.includes(model));
 }
 
 export function getProviderForModel(model: string): LLMProvider | null {
@@ -199,7 +205,7 @@ export function getModelConfig(model: string): { temperature: number; systemProm
 
 // Logo and display name mappings
 export const LLM_LOGO_MAP = Object.fromEntries(
-  ALL_VALID_MODELS.map((model) => {
+  NON_AGENTIC_MODELS.map((model) => {
     const provider = getProviderForModel(model);
     if (!provider) return [model, [model, ""]];
 
@@ -211,7 +217,7 @@ export const LLM_LOGO_MAP = Object.fromEntries(
 ) as Record<LLMModel, [string, string]>;
 
 export const LLM_DISPLAY_NAMES = Object.fromEntries(
-  ALL_VALID_MODELS.map((model) => {
+  NON_AGENTIC_MODELS.map((model) => {
     const provider = getProviderForModel(model);
     return [
       model,
