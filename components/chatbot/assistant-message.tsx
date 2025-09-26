@@ -15,7 +15,7 @@ import Logo from "../tenant/logo/logo";
 
 const MAX_CITATION_LENGTH = 30;
 
-const Citation = ({ source, onClick = () => {} }: { source: SourceMetadata; onClick?: () => void }) => {
+export const Citation = ({ source, onClick = () => {} }: { source: SourceMetadata; onClick?: () => void }) => {
   const connector = CONNECTOR_MAP[source.source_type];
   const isAudio =
     source.documentName?.toLowerCase() &&
@@ -29,11 +29,16 @@ const Citation = ({ source, onClick = () => {} }: { source: SourceMetadata; onCl
 
   const formatSourceName = (input: string) => {
     if (input.length <= MAX_CITATION_LENGTH) return input;
-    return "..." + input.slice(-1 * MAX_CITATION_LENGTH);
+    const startLength = Math.floor((MAX_CITATION_LENGTH - 1) / 2);
+    const endLength = Math.ceil((MAX_CITATION_LENGTH - 1) / 2);
+    return input.slice(0, startLength) + "…" + input.slice(-endLength);
   };
 
   return (
-    <button className="rounded-[20px] flex items-center border px-3 py-1.5 mr-3 mb-3" onClick={onClick}>
+    <button
+      className="rounded-[20px] flex items-center border px-3 py-1.5 mr-3 mb-3 hover:bg-gray-100"
+      onClick={onClick}
+    >
       {connector && <Image src={connector[1]} alt={connector[0]} width={24} height={24} className="mr-1" />}
       {(!source.source_type || source.source_type === "manual") && (
         <>
