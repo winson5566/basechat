@@ -134,7 +134,7 @@ export const PROVIDER_CONFIG = {
 export const DEFAULT_MODEL = "claude-sonnet-4-20250514";
 export const DEFAULT_PROVIDER = "anthropic";
 export const DEFAULT_NAMING_MODEL = "gpt-4o-mini";
-export const AGENTIC_MOCK_MODEL = "Deep Search"; // TODO
+export const AGENTIC_MOCK_MODEL = "Deep Search";
 
 // Derive types from the config
 export type LLMProvider = keyof typeof PROVIDER_CONFIG;
