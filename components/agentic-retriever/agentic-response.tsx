@@ -298,6 +298,7 @@ function StepDetailEvidenceItemWrapper({ evidenceList }: { evidenceList: string[
 
   for (const evidenceId of evidenceList) {
     const retrievedEvidence = agenticRetriever.getEvidence(runId as string, evidenceId);
+    // TODO: handle non ragie sources
     if (retrievedEvidence && retrievedEvidence.type === "ragie") {
       ragieEvidence.push(retrievedEvidence);
     }
