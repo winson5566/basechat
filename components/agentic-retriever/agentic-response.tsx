@@ -286,12 +286,12 @@ export function EvaluatedAnswerStep({ step }: { step: Step & { type: "evaluated_
           <p>{step.eval_reason}</p>
         </StepSection>
       )}
-      <StepDetailEvidenceItemWrapper evidenceList={step.answer.evidence} />
+      <StepDetailEvidenceSectionWrapper evidenceList={step.answer.evidence} />
     </div>
   );
 }
 
-function StepDetailEvidenceItemWrapper({ evidenceList }: { evidenceList: string[] }) {
+function StepDetailEvidenceSectionWrapper({ evidenceList }: { evidenceList: string[] }) {
   const agenticRetriever = useAgenticRetrieverContext();
   const { runId } = useParams();
   const ragieEvidence = [];
@@ -311,36 +311,67 @@ function StepDetailEvidenceItemWrapper({ evidenceList }: { evidenceList: string[
     <StepSection title="Evidence">
       <ul className="space-y-1">
         {ragieEvidence.map((item, idx) => (
-          <StepDetailEvidenceItem key={idx} ragieEvidence={item} />
+          <StepDetailEvidenceSectionItem key={idx} ragieEvidence={item} />
         ))}
       </ul>
     </StepSection>
   );
 }
 
-function StepDetailEvidenceItem({ ragieEvidence }: { ragieEvidence: z.infer<typeof ragieEvidenceSchema> }) {
-  const { runId, id, slug } = useParams();
-
-  let pageNote = null;
-  if (ragieEvidence.metadata.start_page && ragieEvidence.metadata.start_page === ragieEvidence.metadata.end_page) {
-    pageNote = <span className="text-xs text-gray-600">{`(p. ${ragieEvidence.metadata.start_page})`}</span>;
-  } else if (ragieEvidence.metadata.start_page && ragieEvidence.metadata.end_page) {
-    pageNote = (
-      <span className="text-xs text-gray-600">{`(p. ${ragieEvidence.metadata.start_page}-${ragieEvidence.metadata.end_page})`}</span>
-    );
-  } else if (ragieEvidence.metadata.start_page) {
-    pageNote = <span className="text-xs text-gray-600">{`(p. ${ragieEvidence.metadata.start_page})`}</span>;
+// Helper function to render page note based on metadata
+function renderPageNote(metadata: { start_page?: number; end_page?: number }) {
+  if (metadata.start_page && metadata.start_page === metadata.end_page) {
+    return <span className="text-xs text-gray-600">{`(p. ${metadata.start_page})`}</span>;
+  } else if (metadata.start_page && metadata.end_page) {
+    return <span className="text-xs text-gray-600">{`(p. ${metadata.start_page}-${metadata.end_page})`}</span>;
+  } else if (metadata.start_page) {
+    return <span className="text-xs text-gray-600">{`(p. ${metadata.start_page})`}</span>;
   }
+  return null;
+}
+
+// Shared component for rendering evidence items
+function EvidenceItem({
+  ragieEvidence,
+  runId,
+  id,
+  slug,
+}: {
+  ragieEvidence: z.infer<typeof ragieEvidenceSchema>;
+  runId: string;
+  id: string;
+  slug: string;
+}) {
+  const pageNote = renderPageNote(ragieEvidence.metadata);
+
   return (
     <li className="list-none">
       <Link
         className="block px-3 py-2 rounded-md hover:bg-gray-200 transition-colors cursor-pointer"
-        href={getSourceLink(ragieEvidence.id, runId as string, id as string, slug as string)}
+        href={getSourceLink(ragieEvidence.id, runId, id, slug)}
       >
         {ragieEvidence.document_name} {pageNote}
       </Link>
     </li>
   );
+}
+
+function StepDetailEvidenceItem({ evidenceId }: { evidenceId: string }) {
+  const agenticRetriever = useAgenticRetrieverContext();
+  const { runId, id, slug } = useParams();
+  const ragieEvidence = agenticRetriever.getEvidence(runId as string, evidenceId);
+
+  if (!ragieEvidence || ragieEvidence.type !== "ragie") {
+    return null;
+  }
+
+  return <EvidenceItem ragieEvidence={ragieEvidence} runId={runId as string} id={id as string} slug={slug as string} />;
+}
+
+function StepDetailEvidenceSectionItem({ ragieEvidence }: { ragieEvidence: z.infer<typeof ragieEvidenceSchema> }) {
+  const { runId, id, slug } = useParams();
+
+  return <EvidenceItem ragieEvidence={ragieEvidence} runId={runId as string} id={id as string} slug={slug as string} />;
 }
 
 export function SearchStep({ step }: { step: Step & { type: "search" } }) {
