@@ -75,6 +75,7 @@ export const PROVIDER_CONFIG = {
       "claude-3-5-haiku-latest",
       "claude-opus-4-20250514",
       "claude-sonnet-4-20250514",
+      "claude-sonnet-4-5-20250929",
     ] as const,
     logo: "/anthropic.svg",
     modelLogos: {
@@ -82,18 +83,21 @@ export const PROVIDER_CONFIG = {
       "claude-3-5-haiku-latest": "/anthropic.svg",
       "claude-opus-4-20250514": "/anthropic.svg",
       "claude-sonnet-4-20250514": "/anthropic.svg",
+      "claude-sonnet-4-5-20250929": "/anthropic.svg",
     } as const,
     displayNames: {
       "claude-3-7-sonnet-latest": "Claude 3.7 Sonnet",
       "claude-3-5-haiku-latest": "Claude 3.5 Haiku",
       "claude-opus-4-20250514": "Claude 4 Opus",
       "claude-sonnet-4-20250514": "Claude 4 Sonnet",
+      "claude-sonnet-4-5-20250929": "Claude 4.5 Sonnet",
     } as const,
     modelConfigs: {
       "claude-3-7-sonnet-latest": { temperature: DEFAULT_TEMPERATURE },
       "claude-3-5-haiku-latest": { temperature: DEFAULT_TEMPERATURE },
       "claude-opus-4-20250514": { temperature: DEFAULT_TEMPERATURE },
       "claude-sonnet-4-20250514": { temperature: DEFAULT_TEMPERATURE },
+      "claude-sonnet-4-5-20250929": { temperature: DEFAULT_TEMPERATURE },
     } as const,
   },
   groq: {
