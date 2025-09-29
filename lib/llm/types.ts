@@ -114,7 +114,7 @@ export const PROVIDER_CONFIG = {
       "meta-llama/llama-4-scout-17b-16e-instruct": "Llama 4 Scout",
       "openai/gpt-oss-20b": "GPT-OSS 20B",
       "openai/gpt-oss-120b": "GPT-OSS 120B",
-      "moonshotai/kimi-k2-instruct-0905": "Kimi K2 0905",
+      "moonshotai/kimi-k2-instruct-0905": "Kimi K2",
     } as const,
     modelConfigs: {
       "meta-llama/llama-4-scout-17b-16e-instruct": {

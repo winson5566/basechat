@@ -35,7 +35,7 @@ export const conversationMessagesResponseSchema = z.array(
       role: z.literal("assistant"),
       sources: z.array(z.any()).default([]),
       expanded: z.boolean().default(false),
-      model: modelSchema,
+      model: z.string(), // z.string() instead of modelSchema to allow reading unsupported legacy models
       type: z.literal("standard").optional(),
     }),
     z.object({
@@ -44,7 +44,7 @@ export const conversationMessagesResponseSchema = z.array(
       role: z.literal("assistant"),
       sources: z.array(z.any()).default([]),
       expanded: z.boolean().default(false),
-      model: modelSchema,
+      model: z.string(), // z.string() instead of modelSchema to allow reading unsupported legacy models
       type: z.literal("agentic"),
       agenticInfo: z.object({
         runId: z.string(),
