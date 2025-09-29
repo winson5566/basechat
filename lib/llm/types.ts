@@ -75,6 +75,7 @@ export const PROVIDER_CONFIG = {
       "claude-3-5-haiku-latest",
       "claude-opus-4-20250514",
       "claude-sonnet-4-20250514",
+      "claude-sonnet-4-5-20250929",
     ] as const,
     logo: "/anthropic.svg",
     modelLogos: {
@@ -82,18 +83,21 @@ export const PROVIDER_CONFIG = {
       "claude-3-5-haiku-latest": "/anthropic.svg",
       "claude-opus-4-20250514": "/anthropic.svg",
       "claude-sonnet-4-20250514": "/anthropic.svg",
+      "claude-sonnet-4-5-20250929": "/anthropic.svg",
     } as const,
     displayNames: {
       "claude-3-7-sonnet-latest": "Claude 3.7 Sonnet",
       "claude-3-5-haiku-latest": "Claude 3.5 Haiku",
       "claude-opus-4-20250514": "Claude 4 Opus",
       "claude-sonnet-4-20250514": "Claude 4 Sonnet",
+      "claude-sonnet-4-5-20250929": "Claude 4.5 Sonnet",
     } as const,
     modelConfigs: {
       "claude-3-7-sonnet-latest": { temperature: DEFAULT_TEMPERATURE },
       "claude-3-5-haiku-latest": { temperature: DEFAULT_TEMPERATURE },
       "claude-opus-4-20250514": { temperature: DEFAULT_TEMPERATURE },
       "claude-sonnet-4-20250514": { temperature: DEFAULT_TEMPERATURE },
+      "claude-sonnet-4-5-20250929": { temperature: DEFAULT_TEMPERATURE },
     } as const,
   },
   groq: {
@@ -101,20 +105,20 @@ export const PROVIDER_CONFIG = {
       "meta-llama/llama-4-scout-17b-16e-instruct",
       "openai/gpt-oss-20b",
       "openai/gpt-oss-120b",
-      "moonshotai/kimi-k2-instruct",
+      "moonshotai/kimi-k2-instruct-0905",
     ] as const,
     logo: "/meta.svg",
     modelLogos: {
       "meta-llama/llama-4-scout-17b-16e-instruct": "/meta.svg",
       "openai/gpt-oss-20b": "/openai.svg",
       "openai/gpt-oss-120b": "/openai.svg",
-      "moonshotai/kimi-k2-instruct": "/moonshot.svg",
+      "moonshotai/kimi-k2-instruct-0905": "/moonshot.svg",
     } as const,
     displayNames: {
       "meta-llama/llama-4-scout-17b-16e-instruct": "Llama 4 Scout",
       "openai/gpt-oss-20b": "GPT-OSS 20B",
       "openai/gpt-oss-120b": "GPT-OSS 120B",
-      "moonshotai/kimi-k2-instruct": "Kimi K2",
+      "moonshotai/kimi-k2-instruct-0905": "Kimi K2",
     } as const,
     modelConfigs: {
       "meta-llama/llama-4-scout-17b-16e-instruct": {
@@ -123,7 +127,7 @@ export const PROVIDER_CONFIG = {
       },
       "openai/gpt-oss-20b": { temperature: DEFAULT_TEMPERATURE },
       "openai/gpt-oss-120b": { temperature: DEFAULT_TEMPERATURE },
-      "moonshotai/kimi-k2-instruct": { temperature: DEFAULT_TEMPERATURE, systemPrompt: KIMI_K2_PROMPT },
+      "moonshotai/kimi-k2-instruct-0905": { temperature: DEFAULT_TEMPERATURE, systemPrompt: KIMI_K2_PROMPT },
     } as const,
   },
 } as const;

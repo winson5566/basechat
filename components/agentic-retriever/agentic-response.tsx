@@ -6,7 +6,6 @@ import {
   Brain,
   MessageSquare,
   CheckCircle,
-  XCircle,
   List,
   BookOpenCheck,
   ChevronDown,
@@ -261,8 +260,9 @@ export function EvaluatedAnswerStep({ step }: { step: Step & { type: "evaluated_
       <div className="flex mb-2">
         {step.eval_reason && (
           <span
-            className={`px-2 py-1 rounded text-xs ${step.eval_passed ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"
-              }`}
+            className={`px-2 py-1 rounded text-xs ${
+              step.eval_passed ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"
+            }`}
           >
             {step.eval_passed ? "PASSED" : "FAILED"}
           </span>
