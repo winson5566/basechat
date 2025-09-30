@@ -32,7 +32,7 @@ export default function DocumentHeader({ documentData, downloadUrl, mediaType, s
           </a>
         )}
         {downloadUrl && (
-          <a href={downloadUrl} download target="_blank" className="text-[#7749F8] flex items-center mt-2">
+          <a href={downloadUrl} download target="_blank" className="text-[#7749F8] flex items-center">
             Download {mediaType}
             <Image src={ExternalLinkIcon} alt="Download" className="ml-1" />
           </a>

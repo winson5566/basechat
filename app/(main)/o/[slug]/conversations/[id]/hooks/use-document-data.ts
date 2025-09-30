@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
 
+import { getRagieSourcePath } from "@/lib/paths";
+
 import { DocumentDisplayData } from "../shared-types";
 import { DocumentResponse } from "../types";
 
@@ -56,7 +58,7 @@ export function useDocumentData({ documentId, slug, source }: UseDocumentDataPro
           updatedAt: json.metadata._source_updated_at
             ? new Date(json.metadata._source_updated_at * 1000).toISOString()
             : json.updatedAt,
-          sourceUrl: json.metadata.source_url || source.ragieSourceUrl,
+          sourceUrl: json.metadata.source_url || getRagieSourcePath(slug, source.ragieSourceUrl || ""),
           downloadUrl: source.downloadUrl,
           metadata: json.metadata,
         };

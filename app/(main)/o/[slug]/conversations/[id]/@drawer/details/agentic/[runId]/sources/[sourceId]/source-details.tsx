@@ -1,12 +1,11 @@
 "use client";
 
-import { FileText } from "lucide-react";
-
-
+import CitedRanges from "../../../../../../cited-ranges";
 import DocumentHeader from "../../../../../../components/document-header";
 import DocumentSummary from "../../../../../../components/document-summary";
 import MediaDisplay from "../../../../../../components/media-display";
 import { useAgenticSourceData } from "../../../../../../hooks/use-agentic-source-data";
+import { useMediaPlayer } from "../../../../../../hooks/use-media-player";
 
 export default function SourceDetails({
   slug,
@@ -26,6 +25,23 @@ export default function SourceDetails({
     apiBaseUrl,
   });
 
+  // Use media player hook for proper state management
+  const {
+    videoRef,
+    audioRef,
+    state: mediaState,
+    actions: mediaActions,
+    handleCanPlay,
+    handleLoadedMetadata,
+    handleTimeUpdate,
+  } = useMediaPlayer({
+    mediaType: mediaData?.type || null,
+    streamUrl: mediaData?.streamUrl,
+    startTime: mediaData?.startTime,
+    mergedTimeRanges: mediaData?.mergedTimeRanges,
+    slug,
+  });
+
   if (error) {
     return <div>{error}</div>;
   }
@@ -36,45 +52,23 @@ export default function SourceDetails({
 
   return (
     <div>
-      <div className="flex items-center gap-3 pt-6">
-        <div className={`rounded bg-blue-600 p-1`}>
-          <FileText className={`h-5 w-5 text-white`} />
-        </div>
-        <h2 className="text-lg font-bold">{documentData.name}</h2>
-      </div>
-      <div className="h-3" />
-
       <DocumentHeader documentData={documentData} slug={slug} />
 
       {mediaData && (
         <MediaDisplay
           mediaData={mediaData}
-          state={{
-            isPlaying: false,
-            isMuted: false,
-            currentTime: 0,
-            duration: 0,
-            isMediaLoaded: true,
-            isDragging: false,
-            didInitialSeek: false,
-          }}
-          actions={{
-            onPlayPause: () => {},
-            onMute: () => {},
-            onForward: () => {},
-            onReplay: () => {},
-            onFullscreen: () => {},
-            onProgressClick: () => {},
-            onDragStateChange: () => {},
-          }}
-          videoRef={{ current: null }}
-          audioRef={{ current: null }}
+          state={mediaState}
+          actions={mediaActions}
+          videoRef={videoRef}
+          audioRef={audioRef}
           slug={slug}
-          onCanPlay={() => {}}
-          onLoadedMetadata={() => {}}
-          onTimeUpdate={() => {}}
+          onCanPlay={handleCanPlay}
+          onLoadedMetadata={handleLoadedMetadata}
+          onTimeUpdate={handleTimeUpdate}
         />
       )}
+
+      <CitedRanges source={sourceMetadata} slug={slug} />
 
       <DocumentSummary summary={documentData.summary} />
     </div>

@@ -53,8 +53,8 @@ export default function Summary({ className, source, slug, onCloseClick = () => 
     },
   });
 
-  // Only use media player for audio/video, not images
-  const shouldUseMediaPlayer = mediaType === "audio" || mediaType === "video";
+  // Use documentStreamUrl (full document) when available, fallback to streamUrl (chunk) for older messages
+  const effectiveStreamUrl = source.documentStreamUrl || source.streamUrl;
 
   const {
     videoRef,
@@ -65,8 +65,8 @@ export default function Summary({ className, source, slug, onCloseClick = () => 
     handleLoadedMetadata,
     handleTimeUpdate,
   } = useMediaPlayer({
-    mediaType: shouldUseMediaPlayer ? mediaType : null,
-    streamUrl: source.streamUrl,
+    mediaType,
+    streamUrl: effectiveStreamUrl,
     startTime: source.startTime,
     mergedTimeRanges: source.mergedTimeRanges,
     slug,
@@ -75,7 +75,7 @@ export default function Summary({ className, source, slug, onCloseClick = () => 
   // Prepare media data
   const mediaData: MediaDisplayData = {
     type: mediaType,
-    streamUrl: source.streamUrl,
+    streamUrl: effectiveStreamUrl,
     imageUrl: source.imageUrl,
     downloadUrl: source.downloadUrl,
     startTime: source.startTime,
