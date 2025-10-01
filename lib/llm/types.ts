@@ -29,74 +29,59 @@ Do not include any other fields or text outside the JSON object.`;
 // Single source of truth for providers and their models
 export const PROVIDER_CONFIG = {
   openai: {
-    models: ["gpt-4o", "gpt-3.5-turbo", "gpt-4.1-2025-04-14", "o3-2025-04-16", "gpt-5"] as const,
+    models: ["gpt-4o", "gpt-4.1-2025-04-14", "o3-2025-04-16", "gpt-5"] as const,
     logo: "/openai.svg",
     modelLogos: {
       "gpt-4o": "/openai.svg",
-      "gpt-3.5-turbo": "/openai.svg",
       "gpt-4.1-2025-04-14": "/openai.svg",
       "o3-2025-04-16": "/openai.svg",
       "gpt-5": "/openai.svg",
     } as const,
     displayNames: {
       "gpt-4o": "GPT-4o",
-      "gpt-3.5-turbo": "GPT-3.5 Turbo",
       "gpt-4.1-2025-04-14": "GPT-4.1",
       "o3-2025-04-16": "o3",
       "gpt-5": "GPT-5",
     } as const,
     modelConfigs: {
       "gpt-4o": { temperature: DEFAULT_TEMPERATURE },
-      "gpt-3.5-turbo": { temperature: DEFAULT_TEMPERATURE },
       "gpt-4.1-2025-04-14": { temperature: DEFAULT_TEMPERATURE },
       "o3-2025-04-16": { temperature: DEFAULT_TEMPERATURE },
       "gpt-5": { temperature: 1, systemPrompt: GPT_5_PROMPT },
     } as const,
   },
   google: {
-    models: ["gemini-2.0-flash", "gemini-1.5-pro"] as const,
+    models: ["gemini-2.5-flash", "gemini-2.5-pro"] as const,
     logo: "/gemini.svg",
     modelLogos: {
-      "gemini-2.0-flash": "/gemini.svg",
-      "gemini-1.5-pro": "/gemini.svg",
+      "gemini-2.5-flash": "/gemini.svg",
+      "gemini-2.5-pro": "/gemini.svg",
     } as const,
     displayNames: {
-      "gemini-2.0-flash": "Gemini 2.0 Flash",
-      "gemini-1.5-pro": "Gemini 1.5 Pro",
+      "gemini-2.5-flash": "Gemini 2.5 Flash",
+      "gemini-2.5-pro": "Gemini 2.5 Pro",
     } as const,
     modelConfigs: {
-      "gemini-2.0-flash": { temperature: DEFAULT_TEMPERATURE },
-      "gemini-1.5-pro": { temperature: DEFAULT_TEMPERATURE },
+      "gemini-2.5-flash": { temperature: DEFAULT_TEMPERATURE },
+      "gemini-2.5-pro": { temperature: DEFAULT_TEMPERATURE },
     } as const,
   },
   anthropic: {
-    models: [
-      "claude-3-7-sonnet-latest",
-      "claude-3-5-haiku-latest",
-      "claude-opus-4-20250514",
-      "claude-sonnet-4-20250514",
-      "claude-sonnet-4-5-20250929",
-    ] as const,
+    models: ["claude-3-5-haiku-latest", "claude-opus-4-20250514", "claude-sonnet-4-5-20250929"] as const,
     logo: "/anthropic.svg",
     modelLogos: {
-      "claude-3-7-sonnet-latest": "/anthropic.svg",
       "claude-3-5-haiku-latest": "/anthropic.svg",
       "claude-opus-4-20250514": "/anthropic.svg",
-      "claude-sonnet-4-20250514": "/anthropic.svg",
       "claude-sonnet-4-5-20250929": "/anthropic.svg",
     } as const,
     displayNames: {
-      "claude-3-7-sonnet-latest": "Claude 3.7 Sonnet",
       "claude-3-5-haiku-latest": "Claude 3.5 Haiku",
       "claude-opus-4-20250514": "Claude 4 Opus",
-      "claude-sonnet-4-20250514": "Claude 4 Sonnet",
       "claude-sonnet-4-5-20250929": "Claude 4.5 Sonnet",
     } as const,
     modelConfigs: {
-      "claude-3-7-sonnet-latest": { temperature: DEFAULT_TEMPERATURE },
       "claude-3-5-haiku-latest": { temperature: DEFAULT_TEMPERATURE },
       "claude-opus-4-20250514": { temperature: DEFAULT_TEMPERATURE },
-      "claude-sonnet-4-20250514": { temperature: DEFAULT_TEMPERATURE },
       "claude-sonnet-4-5-20250929": { temperature: DEFAULT_TEMPERATURE },
     } as const,
   },
@@ -135,7 +120,7 @@ export const PROVIDER_CONFIG = {
 // Default values
 // If adding a new provider, update app/api/conversations/[conversationId]/messages/utils.ts using the vercel ai-sdk
 // If changing the DEFAULT_NAMING_MODEL, update createConversationName in app/api/conversations/[conversationId]/messages/utils.ts to use appropriate provider
-export const DEFAULT_MODEL = "claude-sonnet-4-20250514";
+export const DEFAULT_MODEL = "claude-sonnet-4-5-20250929";
 export const DEFAULT_PROVIDER = "anthropic";
 export const DEFAULT_NAMING_MODEL = "gpt-4o-mini";
 export const AGENTIC_MOCK_MODEL = "Deep Search";

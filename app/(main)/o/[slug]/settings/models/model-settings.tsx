@@ -18,14 +18,13 @@ import {
   LLM_LOGO_MAP,
   LLMModel,
   getEnabledModelsFromDisabled,
-  modelSchema,
   NON_AGENTIC_MODELS,
 } from "@/lib/llm/types";
 import * as schema from "@/lib/server/db/schema";
 
 const formSchema = z.object({
   disabledModels: z.array(z.string()).nullable(),
-  defaultModel: modelSchema,
+  defaultModel: z.string(), // use z.string() instead of modelSchema to not blow up if default model becomes unsupported
   isBreadth: z.boolean().default(false),
   overrideBreadth: z.boolean().default(true),
   rerankEnabled: z.boolean().default(false),
