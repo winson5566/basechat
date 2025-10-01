@@ -1,7 +1,7 @@
 import { NextRequest } from "next/server";
 import { z } from "zod";
 
-import { getRagieApiKey } from "@/lib/server/ragie";
+import { getRagieApiKeyAndPartition } from "@/lib/server/ragie";
 import { RAGIE_API_BASE_URL } from "@/lib/server/settings";
 import { requireAuthContext } from "@/lib/server/utils";
 
@@ -27,12 +27,12 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const ragieApiKey = await getRagieApiKey(tenant);
+    const { apiKey, partition } = await getRagieApiKeyAndPartition(tenant.id);
 
     const upstreamResponse = await fetch(params.url, {
       headers: {
-        authorization: `Bearer ${ragieApiKey}`,
-        partition: tenant.ragiePartition || tenant.id,
+        authorization: `Bearer ${apiKey}`,
+        partition: partition,
       },
     });
 

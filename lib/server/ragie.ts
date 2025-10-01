@@ -41,11 +41,6 @@ export async function getRagieSettingsByTenantId(tenantId: string) {
   return tenant;
 }
 
-export async function getRagieApiKey(tenant: typeof tenants.$inferSelect) {
-  const { ragieApiKey } = await getRagieSettingsByTenantId(tenant.id);
-  return ragieApiKey ? decrypt(ragieApiKey) : settings.RAGIE_API_KEY;
-}
-
 export async function getRagieClientAndPartition(tenantId: string) {
   const { ragieApiKey, ragiePartition } = await getRagieSettingsByTenantId(tenantId);
 
@@ -64,7 +59,7 @@ export async function getRagieClientAndPartition(tenantId: string) {
   return { client, partition };
 }
 
-// we should use the client from the function above^ this is only while agentic is not in the SDK
+// we should use the client from the function above^ this is only for certain features not in the SDK (agentic, streaming)
 export async function getRagieApiKeyAndPartition(tenantId: string) {
   const { ragieApiKey, ragiePartition } = await getRagieSettingsByTenantId(tenantId);
 
