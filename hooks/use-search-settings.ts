@@ -75,7 +75,7 @@ export function useSearchSettings({ tenant }: UseSearchSettingsOptions): UseSear
     const firstModel = enabledModels[0];
     const parsed = modelSchema.safeParse(firstModel);
     if (parsed.success) {
-      return tenant.defaultModel || firstModel;
+      return firstModel;
     }
     return DEFAULT_MODEL;
   });
