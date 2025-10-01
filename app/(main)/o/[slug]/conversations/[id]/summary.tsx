@@ -1,6 +1,5 @@
 import "highlight.js/styles/github.css";
 import Image from "next/image";
-import { useEffect } from "react";
 
 import "@/components/chatbot/style.css";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -15,7 +14,7 @@ import DocumentSummary from "./components/document-summary";
 import MediaDisplay from "./components/media-display";
 import { useDocumentData } from "./hooks/use-document-data";
 import { useMediaPlayer } from "./hooks/use-media-player";
-import { DocumentDisplayProps, MediaDisplayData } from "./shared-types";
+import { MediaDisplayData } from "./shared-types";
 
 interface Props {
   className?: string;

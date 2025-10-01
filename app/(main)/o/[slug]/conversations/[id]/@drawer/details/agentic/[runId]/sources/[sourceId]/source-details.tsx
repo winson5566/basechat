@@ -1,11 +1,11 @@
 "use client";
 
-import CitedRanges from "../../../../../../cited-ranges";
-import DocumentHeader from "../../../../../../components/document-header";
-import DocumentSummary from "../../../../../../components/document-summary";
-import MediaDisplay from "../../../../../../components/media-display";
-import { useAgenticSourceData } from "../../../../../../hooks/use-agentic-source-data";
-import { useMediaPlayer } from "../../../../../../hooks/use-media-player";
+import CitedRanges from "@/app/(main)/o/[slug]/conversations/[id]/cited-ranges";
+import DocumentHeader from "@/app/(main)/o/[slug]/conversations/[id]/components/document-header";
+import DocumentSummary from "@/app/(main)/o/[slug]/conversations/[id]/components/document-summary";
+import MediaDisplay from "@/app/(main)/o/[slug]/conversations/[id]/components/media-display";
+import { useAgenticSourceData } from "@/app/(main)/o/[slug]/conversations/[id]/hooks/use-agentic-source-data";
+import { useMediaPlayer } from "@/app/(main)/o/[slug]/conversations/[id]/hooks/use-media-player";
 
 export default function SourceDetails({
   slug,
