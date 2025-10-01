@@ -8,8 +8,8 @@ export interface DocumentDisplayData {
   downloadUrl?: string;
   icon?: string;
   metadata: {
-    source_type: string;
-    source_url: string;
+    source_type?: string;
+    source_url?: string;
     _source_updated_at?: number;
   };
 }

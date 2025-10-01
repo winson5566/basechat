@@ -1,5 +1,5 @@
 import { Check, Copy } from "lucide-react";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import Markdown from "react-markdown";
 import rehypeHighlight from "rehype-highlight";
 
@@ -27,7 +27,7 @@ const CodeBlock = ({ children, className, ...props }: CodeBlockProps) => {
     return "";
   };
 
-  const code = getCodeContent(children).replace(/\n$/, "");
+  const code = useMemo(() => getCodeContent(children).replace(/\n$/, ""), [children]);
 
   const copyToClipboard = async () => {
     await navigator.clipboard.writeText(code);

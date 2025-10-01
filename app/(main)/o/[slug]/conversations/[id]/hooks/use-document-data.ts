@@ -1,9 +1,20 @@
 import { useEffect, useState } from "react";
+import { z } from "zod";
 
 import { getRagieSourcePath } from "@/lib/paths";
 
 import { DocumentDisplayData } from "../shared-types";
-import { DocumentResponse } from "../types";
+
+const DocumentResponseSchema = z.object({
+  name: z.string(),
+  metadata: z.object({
+    source_type: z.string().optional(),
+    source_url: z.string().optional(),
+    _source_updated_at: z.number().optional(), // Unix timestamp
+  }),
+  updatedAt: z.string(), // ISO string
+  summary: z.string(),
+});
 
 interface UseDocumentDataProps {
   documentId: string;
@@ -49,7 +60,16 @@ export function useDocumentData({ documentId, slug, source }: UseDocumentDataPro
           throw new Error("could not retrieve document with summary");
         }
 
-        const json = (await res.json()) as DocumentResponse;
+        const rawJson = await res.json();
+
+        // Validate the response with Zod
+        const parseResult = DocumentResponseSchema.safeParse(rawJson);
+        if (!parseResult.success) {
+          console.error("Invalid document response format:", parseResult.error);
+          throw new Error("Invalid document response format");
+        }
+
+        const json = parseResult.data;
 
         // Transform the API response to our display format
         const displayData: DocumentDisplayData = {
