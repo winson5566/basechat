@@ -369,7 +369,7 @@ export async function invalidateAuthContextCacheForTenant(tenantId: string) {
     await Promise.allSettled(invalidationPromises);
     console.log(`Cache invalidated for ${userProfiles.length} users in tenant: ${tenantId}`);
   } catch (error) {
-    console.error("Failed to invalidate auth context cache for tenant:", error);
+    console.error(`Failed to settle promises to invalidate auth context cache for tenant ${tenantId}:`, error);
   }
 }
 
