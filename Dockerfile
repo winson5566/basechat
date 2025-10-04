@@ -30,6 +30,9 @@ COPY . .
 # FIXME: import/order rule is currently failing in docker build
 ENV DISABLE_IMPORT_ORDER=true
 
+# Increase Node.js memory limit for build
+ENV NODE_OPTIONS="--max-old-space-size=4096"
+
 RUN \
   if [ -f yarn.lock ]; then yarn run build; \
   elif [ -f package-lock.json ]; then npm run build; \
