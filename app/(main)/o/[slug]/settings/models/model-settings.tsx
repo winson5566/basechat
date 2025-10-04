@@ -17,7 +17,9 @@ import {
   LLM_DISPLAY_NAMES,
   LLM_LOGO_MAP,
   LLMModel,
+  getDisabledModels,
   getEnabledModelsFromDisabled,
+  modelSchema,
   NON_AGENTIC_MODELS,
 } from "@/lib/llm/types";
 import * as schema from "@/lib/server/db/schema";
@@ -477,11 +479,17 @@ export default function ModelSettings({ tenant }: Props) {
       ...otherFields
     } = tenant;
 
+    const cleanedDisabledModels = getDisabledModels(disabledModels);
+    const normalizedDisabledModels = cleanedDisabledModels.length ? cleanedDisabledModels : null;
+    const parsedDefaultModel = modelSchema.safeParse(defaultModel);
+    const fallbackDefaultModel = getEnabledModelsFromDisabled(normalizedDisabledModels)[0] ?? NON_AGENTIC_MODELS[0];
+    const normalizedDefaultModel = parsedDefaultModel.success ? parsedDefaultModel.data : fallbackDefaultModel;
+
     // Zod only uses default values when the value is undefined. They come in as null
     // Change fields you want to have defaults to undefined.
     return {
-      disabledModels: disabledModels,
-      defaultModel: defaultModel ?? undefined,
+      disabledModels: normalizedDisabledModels,
+      defaultModel: normalizedDefaultModel ?? fallbackDefaultModel,
       isBreadth: isBreadth ?? undefined,
       overrideBreadth: overrideBreadth ?? undefined,
       rerankEnabled: rerankEnabled ?? undefined,
@@ -503,17 +511,29 @@ export default function ModelSettings({ tenant }: Props) {
     setLoading(true);
 
     try {
+      const cleanedDisabledModels = getDisabledModels(values.disabledModels);
+      const normalizedDisabledModels = cleanedDisabledModels.length ? cleanedDisabledModels : null;
+
       // Validate that at least one model is enabled
-      const enabledModels = getEnabledModelsFromDisabled(values.disabledModels);
+      const enabledModels = getEnabledModelsFromDisabled(normalizedDisabledModels);
       if (enabledModels.length === 0) {
         toast.error("Please enable at least one model before saving.");
         setLoading(false);
         return;
       }
 
-      const payload = updateTenantSchema.parse({
-        disabledModels: values.disabledModels,
-        defaultModel: values.defaultModel,
+      const parsedDefaultModel = modelSchema.safeParse(values.defaultModel);
+      const normalizedDefaultModel = parsedDefaultModel.success ? parsedDefaultModel.data : enabledModels[0];
+
+      if (!normalizedDefaultModel) {
+        toast.error("Please choose a default model before saving.");
+        setLoading(false);
+        return;
+      }
+
+      const payloadInput = {
+        disabledModels: normalizedDisabledModels,
+        defaultModel: normalizedDefaultModel,
         isBreadth: values.isBreadth,
         overrideBreadth: values.overrideBreadth,
         rerankEnabled: values.rerankEnabled,
@@ -522,7 +542,9 @@ export default function ModelSettings({ tenant }: Props) {
         overridePrioritizeRecent: values.overridePrioritizeRecent,
         agenticLevel: values.agenticLevel,
         overrideAgenticLevel: values.overrideAgenticLevel,
-      });
+      } as const;
+
+      const payload = updateTenantSchema.parse(payloadInput);
 
       const res = await fetch("/api/tenants/current", {
         method: "PATCH",
@@ -533,7 +555,11 @@ export default function ModelSettings({ tenant }: Props) {
       if (res.status !== 200) throw new Error("Failed to save settings");
 
       toast.success("Changes saved");
-      form.reset(values);
+      form.reset({
+        ...values,
+        disabledModels: normalizedDisabledModels,
+        defaultModel: normalizedDefaultModel,
+      });
     } catch (error) {
       toast.error("Failed to save changes");
     } finally {
