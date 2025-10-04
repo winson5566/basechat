@@ -32,7 +32,7 @@ export async function PATCH(request: NextRequest) {
   try {
     await invalidateAuthContextCacheForTenant(tenant.id);
   } catch (error) {
-    console.error("Failed to invalidate auth context cache for tenant:", error);
+    console.error(`Failed to invalidate auth context cache for tenant ${tenant.id}:`, error);
   }
 
   return new Response();
