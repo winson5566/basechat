@@ -24,9 +24,6 @@ services:
       - "3000:3000"
     env_file:
       - .env
-    environment:
-      # 覆盖 .env 中的数据库连接，使用容器内网络
-      DATABASE_URL: postgresql://postgres:123456@postgres:5432/basechat
     depends_on:
       - postgres
     networks:
