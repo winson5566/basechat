@@ -1,5 +1,3 @@
-
-
 services:
   # PostgreSQL 数据库
   postgres:
@@ -14,6 +12,23 @@ services:
       - "15432:5432"
     volumes:
       - /Users/winson/Project/pgdata15432:/var/lib/postgresql/data
+    networks:
+      - ai_stack
+
+  # BaseChat 应用
+  basechat:
+    image: basechat
+    container_name: basechat
+    restart: always
+    ports:
+      - "3000:3000"
+    env_file:
+      - .env
+    environment:
+      # 覆盖 .env 中的数据库连接，使用容器内网络
+      DATABASE_URL: postgresql://postgres:123456@postgres:5432/basechat
+    depends_on:
+      - postgres
     networks:
       - ai_stack
 

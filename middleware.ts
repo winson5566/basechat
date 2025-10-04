@@ -44,7 +44,7 @@ export async function middleware(request: NextRequest) {
 export const config = {
   //extensions
   // matcher: ["/((?!api|_next/static|_next/image|favicon.ico).*)"],
-  matcher: ["/((?!api|_next/static|_next/image|favicon.ico|.*\\.html).*)"],
+  matcher: ["/((?!api|_next/static|_next/image|favicon.ico|.*\\.html|.*\\.js|.*\\.css).*)"],
 };
 
 function getUnauthenticatedRedirectPath(pathname: string) {
