@@ -16,6 +16,9 @@ export async function middleware(request: NextRequest) {
       !pathname.startsWith("/check") &&
       !pathname.startsWith("/api/auth/callback") &&
       !pathname.startsWith("/api/admin") &&
+      //extensions
+      !pathname.startsWith("/api/extend_chatbot") &&
+      !pathname.startsWith("/chatbot/") &&
       !pathname.startsWith("/healthz") &&
       !pathname.startsWith("/images")
     ) {
@@ -39,7 +42,9 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/((?!api|_next/static|_next/image|favicon.ico).*)"],
+  //extensions
+  // matcher: ["/((?!api|_next/static|_next/image|favicon.ico).*)"],
+  matcher: ["/((?!api|_next/static|_next/image|favicon.ico|.*\\.html).*)"],
 };
 
 function getUnauthenticatedRedirectPath(pathname: string) {

@@ -1,0 +1,22 @@
+
+
+services:
+  # PostgreSQL 数据库
+  postgres:
+    image: postgres:15
+    container_name: pg
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 123456
+      POSTGRES_DB: basechat
+    ports:
+      - "15432:5432"
+    volumes:
+      - /Users/winson/Project/pgdata15432:/var/lib/postgresql/data
+    networks:
+      - ai_stack
+
+networks:
+  ai_stack:
+    driver: bridge

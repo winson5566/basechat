@@ -7,8 +7,8 @@ import { getConversationPath } from "@/lib/paths";
 
 interface Props {
   params: Promise<{ id: string; slug: string }>;
-  children?: ReactNode;
-  drawer?: ReactNode;
+  children: ReactNode;
+  drawer: ReactNode;
 }
 
 export default async function ConversationLayout({ children, drawer, params }: Props) {

@@ -1,0 +1,11 @@
+/* Chatbot widget embed styles - transparent background */
+html.chatbot-embed {
+  background: transparent !important;
+}
+
+body.chatbot-embed {
+  background: transparent !important;
+  overflow: hidden !important;
+  margin: 0;
+  padding: 0;
+}
