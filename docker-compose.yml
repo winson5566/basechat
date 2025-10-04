@@ -18,6 +18,7 @@ services:
   # BaseChat 应用
   basechat:
     image: basechat
+    platform: linux/amd64
     container_name: basechat
     restart: always
     ports:
