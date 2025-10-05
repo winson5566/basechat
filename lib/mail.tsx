@@ -26,7 +26,7 @@ const Layout = ({ children, preview }: { children: React.ReactElement; preview: 
           <div className="flex justify-center items-center">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
-              src={new URL("/images/title-logo.png", settings.BASE_URL).toString()}
+              src={new URL("/images/title-logo.svg", settings.BASE_URL).toString()}
               alt={settings.APP_NAME}
               style={{
                 width: "220px",
@@ -49,8 +49,8 @@ const Layout = ({ children, preview }: { children: React.ReactElement; preview: 
         <Section className="text-center mt-8">
           <Text className="text-[#74747A] text-[14px]">
             {settings.APP_NAME} is powered by&nbsp;
-            <Link href="https://www.ragie.ai/?utm_source=basechat-email" className="underline text-[#74747A]">
-              Ragie
+            <Link href="https://www.winsonwu.com" className="underline text-[#74747A]">
+              WinsonWu
             </Link>
           </Text>
         </Section>
@@ -136,7 +136,7 @@ export const PagesLimitReachedHtml = ({ tenantName, link }: { tenantName: string
 
         <Text className="text-[#1D1D1F] text-lg">
           Have questions about your usage or plan?{" "}
-          <a href="mailto:sales@ragie.ai" className="underline text-[#D946EF]">
+          <a href="mailto:awinsonwu@gmail.com" className="underline text-[#D946EF]">
             Contact us
           </a>
         </Text>

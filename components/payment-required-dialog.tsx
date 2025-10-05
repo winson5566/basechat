@@ -40,7 +40,7 @@ export function PaymentRequiredDialog({ tenant, profile }: PaymentRequiredDialog
         <div className="flex flex-col gap-4 text-surface-text-tertiary text-sm">
           <p>
             Your trial has ended, but exploring your knowledge base doesn&apos;t have to. Upgrade to a paid plan to
-            continue using Base Chat. It&apos;s just $18 per user/month, plus a data plan.
+            continue using Smart Chat. It&apos;s just $69 per user/month, plus a data plan.
           </p>
           <Link href={getPricingPlansPath(tenant.slug)}>
             <Button className="bg-[#D946EF] text-white hover:bg-[#D946EF]/90 w-fit">View plans</Button>

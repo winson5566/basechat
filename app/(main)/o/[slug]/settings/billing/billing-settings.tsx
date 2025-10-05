@@ -70,7 +70,7 @@ export default function BillingSettings({ tenant, partitionInfo, defaultPartitio
 
       {!isNaN(defaultPartitionLimit) && tenant.partitionLimitExceededAt && (
         <WarningMessage className="mb-4">
-          You have reached the page processing limit for this chatbot. Please contact support@ragie.ai if you need
+          You have reached the page processing limit for this chatbot. Please contact awinsonwu@gmail.com if you need
           assistance.
         </WarningMessage>
       )}

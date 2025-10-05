@@ -1,4 +1,4 @@
-export const APP_NAME = "Base Chat";
+export const APP_NAME = "Smart Chat";
 
 export const AUTH_SECRET = process.env.AUTH_SECRET!;
 

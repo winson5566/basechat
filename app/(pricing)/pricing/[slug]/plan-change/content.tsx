@@ -404,11 +404,11 @@ function FinePrint({
   }
   return (
     <p className="mt-6 text-xs text-muted-foreground">
-      By clicking &quot;Upgrade to {targetPlan.displayName}&quot;, you agree to Ragie&apos;s{" "}
-      <a href="https://www.ragie.ai/terms-of-service" target="_blank" className="underline">
+      By clicking &quot;Upgrade to {targetPlan.displayName}&quot;, you agree to WinsonWu&apos;s{" "}
+      <a href="https://www.winsonwu.com" target="_blank" className="underline">
         Terms of Use
       </a>
-      , and that Ragie will charge you the total amount due today. {invoicingTerms} starting{" "}
+      , and that WinsonWu will charge you the total amount due today. {invoicingTerms} starting{" "}
       {nextInvoice.due_date && format(new Date(nextInvoice.due_date), "LLLL d, yyyy")} until cancelled.
     </p>
   );

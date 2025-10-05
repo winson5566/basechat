@@ -1,5 +1,5 @@
 /**
- * BaseChat Widget Embed Script
+ * Smart Chat Widget Embed Script
  * 使用方法：<script src="http://localhost:3000/basechat-widget.js" data-chatbot-id="YOUR_CHATBOT_ID"></script>
  */
 (function() {
@@ -10,7 +10,7 @@
   const chatbotId = currentScript ? currentScript.getAttribute('data-chatbot-id') : null;
 
   if (!chatbotId) {
-    console.error('BaseChat Widget: data-chatbot-id attribute is required');
+    console.error('Smart Chat Widget: data-chatbot-id attribute is required');
     return;
   }
 

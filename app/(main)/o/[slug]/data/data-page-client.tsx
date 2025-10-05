@@ -75,7 +75,7 @@ export default function DataPageClient({
           <Link href={getPricingPlansPath(tenant.slug)} className={"underline"}>
             upgrade plans
           </Link>{" "}
-          to continue or contact support@ragie.ai if you need assistance.
+          to continue or contact awinsonwu@gmail.com if you need assistance.
         </WarningMessage>
       )}
       <Tabs defaultValue="files" className="flex flex-col h-full mt-8">

@@ -3,7 +3,7 @@ import assert from "assert";
 import Image from "next/image";
 import { redirect } from "next/navigation";
 
-import RagieLogo from "@/components/ragie-logo";
+import WinsonWuLogo from "@/components/winsonwu-logo";
 import { getTenantPath } from "@/lib/paths";
 import {
   acceptInvite,
@@ -43,8 +43,8 @@ function ErrorPage({ title, message }: { title: string; message: string }) {
       <div className="h-20 shrink-0 w-full bg-[#27272A] flex items-center justify-center">
         <div className="mr-2.5 text-md text-[#FEFEFE]">Powered by</div>
         <div>
-          <a href="https://ragie.ai/?utm_source=oss-chatbot" target="_blank">
-            <RagieLogo />
+          <a href="https://winsonwu.com/?utm_source=smart-chat" target="_blank">
+            <WinsonWuLogo />
           </a>
         </div>
       </div>

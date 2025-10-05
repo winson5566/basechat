@@ -52,7 +52,17 @@ export async function getSeatChangePreview(tenantId: string, nextCount: number) 
 export async function getBillingInfo(tenantSlug: string) {
   try {
     const { tenant, session } = await requireAdminContext(tenantSlug);
-    const metadata = tenant.metadata;
+    const metadata = (tenant.metadata || {}) as any;
+
+    const billingConfigured = Boolean(ORB_API_KEY);
+    if (!billingConfigured) {
+      return {
+        mustProvisionBillingCustomer: false,
+        billingData: null,
+        partitionInfo: null,
+        billingUnavailable: true,
+      };
+    }
     let stripeCustomerId;
     let orbCustomerId;
     let orbSubscriptionId;
@@ -75,9 +85,6 @@ export async function getBillingInfo(tenantSlug: string) {
       orbSubscriptionId = metadata.orbSubscriptionId;
     }
 
-    if (!metadata) {
-      throw new Error("Tenant metadata not found");
-    }
     assert(typeof stripeCustomerId === "string", "Stripe customer ID not found");
     assert(typeof orbCustomerId === "string", "Orb customer ID not found");
 
@@ -139,6 +146,7 @@ export async function getBillingInfo(tenantSlug: string) {
         userCount,
       },
       partitionInfo,
+      billingUnavailable: false,
     };
   } catch (error) {
     console.error("Error getting or provisioning billing information:", error);

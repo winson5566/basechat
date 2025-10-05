@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 
 import { Skeleton } from "@/components/ui/skeleton";
+import WarningMessage from "@/components/warning-message";
 import { getPricingPlansPath } from "@/lib/paths";
 
 import { getBillingInfo } from "./actions";
@@ -26,6 +27,7 @@ export default function BillingSettingsClient({ tenant, defaultPartitionLimit }:
   const [mustProvisionBillingCustomer, setMustProvisionBillingCustomer] = useState<boolean>(false);
   const [partitionInfo, setPartitionInfo] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
+  const [billingUnavailable, setBillingUnavailable] = useState<boolean>(false);
 
   useEffect(() => {
     let isMounted = true;
@@ -38,6 +40,7 @@ export default function BillingSettingsClient({ tenant, defaultPartitionLimit }:
           setBillingData(data.billingData);
           setMustProvisionBillingCustomer(data.mustProvisionBillingCustomer);
           setPartitionInfo(data.partitionInfo);
+          setBillingUnavailable(Boolean(data.billingUnavailable));
         }
       })
       .catch((err) => {
@@ -70,6 +73,20 @@ export default function BillingSettingsClient({ tenant, defaultPartitionLimit }:
           <h1 className="font-bold text-[32px] text-[#343A40]">Billing</h1>
         </div>
         <div className="text-red-500 text-lg">Error: {error}</div>
+      </div>
+    );
+  }
+
+  if (billingUnavailable) {
+    return (
+      <div className="w-full p-4 flex-grow flex flex-col relative">
+        <div className="flex w-full justify-between items-center mb-8">
+          <h1 className="font-bold text-[32px] text-[#343A40]">Billing</h1>
+        </div>
+        <WarningMessage>
+          Billing isn&apos;t configured yet for this environment. Add an `ORB_API_KEY` (and related Orb credentials) to
+          enable subscriptions, or hide the billing page until you&apos;re ready.
+        </WarningMessage>
       </div>
     );
   }

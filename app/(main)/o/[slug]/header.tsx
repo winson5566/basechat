@@ -139,16 +139,12 @@ export default function Header({
           {tenant.paidStatus === "trial" && role === "admin" && (
             <Banner bubble>
               You have {daysRemaining} {daysRemaining === 1 ? "day" : "days"} left of your free trial.{" "}
-              <BannerLink href={getPricingPlansPath(tenant.slug)}>View pricing</BannerLink> or{" "}
-              <BannerLink href="https://calendly.com/d/crhj-b4f-d4v/ragie-basechat-discussion" target="_blank">
-                contact sales
-              </BannerLink>{" "}
-              to upgrade.
+              <BannerLink href={getPricingPlansPath(tenant.slug)}>View pricing</BannerLink> to upgrade.
             </Banner>
           )}
           {tenant.paidStatus === "legacy" && role === "admin" && (
             <Banner>
-              We hope you enjoyed Base Chat Early Access!{" "}
+              We hope you enjoyed Smart Chat Early Access!{" "}
               <BannerLink href={getPricingPlansPath(tenant.slug)}>New pricing</BannerLink> starts June 5. To upgrade,{" "}
               <BannerLink href="https://calendly.com/d/crhj-b4f-d4v/ragie-basechat-discussion" target="_blank">
                 contact sales.
@@ -157,7 +153,7 @@ export default function Header({
           )}
           {tenant.paidStatus === "expired" && role === "admin" && (
             <Banner>
-              Your Base Chat trial has expired.{" "}
+              Your Smart Chat trial has expired.{" "}
               <BannerLink href={getPricingPlansPath(tenant.slug)}>Upgrade to a paid plan</BannerLink> or{" "}
               <BannerLink href="https://calendly.com/d/crhj-b4f-d4v/ragie-basechat-discussion" target="_blank">
                 contact sales

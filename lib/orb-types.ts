@@ -51,7 +51,7 @@ export const PLANS: Record<PlanType, PlanDef> = {
     tier: "developer",
     price: 0,
     displayName: "Free Trial",
-    description: "2-week free trial to explore Base Chat",
+    description: "2-week free trial to explore Smart Chat",
     partitionLimit: 10000,
     streamingLimit: 200,
     audioLimit: 20,
@@ -62,11 +62,11 @@ export const PLANS: Record<PlanType, PlanDef> = {
     planType: "starter",
     billingCycle: "monthly",
     tier: "starter",
-    price: 100,
+    price: 69,
     displayName: "Starter",
     description: "Perfect for smaller teams and knowledge bases",
-    partitionLimit: 10000,
-    streamingLimit: 200, // 200 GB
+    partitionLimit: 1000,
+    streamingLimit: 100, // 200 GB
     audioLimit: 20,
     videoLimit: 20,
     hostingLimit: 20, // 20 GB
@@ -75,14 +75,14 @@ export const PLANS: Record<PlanType, PlanDef> = {
     planType: "pro",
     billingCycle: "monthly",
     tier: "pro",
-    price: 500,
+    price: 399,
     displayName: "Pro",
     description: "Designed for growing teams and content",
-    partitionLimit: 60000,
+    partitionLimit: 10000,
     streamingLimit: 1, // 1 TB
-    audioLimit: 100,
-    videoLimit: 100,
-    hostingLimit: 100, // 100 GB
+    audioLimit: 200,
+    videoLimit: 200,
+    hostingLimit: 200, // 100 GB
     alternateCycleType: "proAnnual",
   },
   proAnnual: {

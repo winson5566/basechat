@@ -86,7 +86,7 @@ export async function createTenant(userId: string, name: string) {
       });
     }
 
-    if (settings.BILLING_ENABLED) {
+    if (settings.BILLING_ENABLED && settings.ORB_API_KEY) {
       const user = await getUserById(userId);
       const userName = user.name ?? user.id;
       const userEmail = user.email ?? user.id;

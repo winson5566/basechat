@@ -4,6 +4,8 @@ export const getConversationPath = (slug: string, id: string) => `${getTenantPat
 
 export const getDataPath = (slug: string) => `${getTenantPath(slug)}/data`;
 
+export const getPublishPath = (slug: string) => `${getTenantPath(slug)}/publish`;
+
 export const getSettingsPath = (slug: string) => `${getTenantPath(slug)}/settings`;
 
 export const getUserSettingsPath = (slug: string) => `${getSettingsPath(slug)}/users`;

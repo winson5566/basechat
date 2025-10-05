@@ -4,18 +4,21 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-import { getDataPath, getSettingsPath, getTenantPath } from "@/lib/paths";
+import { getDataPath, getPublishPath, getSettingsPath, getTenantPath } from "@/lib/paths";
 import { cn } from "@/lib/utils";
 import ChatIconOff from "@/public/icons/chat-off.svg";
 import ChatIconOn from "@/public/icons/chat-on.svg";
 import DataIconOff from "@/public/icons/data-off.svg";
 import DataIconOn from "@/public/icons/data-on.svg";
+import PublishIconOff from "@/public/icons/publish-off.svg";
+import PublishIconOn from "@/public/icons/publish-on.svg";
 import SettingsIconOff from "@/public/icons/settings-off.svg";
 import SettingsIconOn from "@/public/icons/settings-on.svg";
 
 export enum AppLocation {
   CHAT,
   DATA,
+  PUBLISH,
   SETTINGS,
   SETTINGS_USERS,
   SETTINGS_MODELS,
@@ -44,6 +47,8 @@ export default function Footer({ className, tenant }: Props) {
   let appLocation = AppLocation.CHAT;
   if (pathname.startsWith(getDataPath(tenant.slug))) {
     appLocation = AppLocation.DATA;
+  } else if (pathname.startsWith(getPublishPath(tenant.slug))) {
+    appLocation = AppLocation.PUBLISH;
   } else if (pathname.startsWith(getSettingsPath(tenant.slug))) {
     appLocation = AppLocation.SETTINGS;
   }
@@ -53,6 +58,9 @@ export default function Footer({ className, tenant }: Props) {
 
   const dataIcon = appLocation === AppLocation.DATA ? DataIconOn : DataIconOff;
   const dataClassName = appLocation === AppLocation.DATA ? "mr-5 font-semibold" : "mr-5";
+
+  const publishIcon = appLocation === AppLocation.PUBLISH ? PublishIconOn : PublishIconOff;
+  const publishClassName = appLocation === AppLocation.PUBLISH ? "mr-5 font-semibold" : "mr-5";
 
   const settingsIcon = appLocation === AppLocation.SETTINGS ? SettingsIconOn : SettingsIconOff;
   const settingsClassName = appLocation === AppLocation.SETTINGS ? "mr-5 font-semibold" : "mr-5";
@@ -65,6 +73,9 @@ export default function Footer({ className, tenant }: Props) {
         </Link>
         <Link href={getDataPath(tenant.slug)}>
           <NavButton alt="Data" src={dataIcon} className={dataClassName} />
+        </Link>
+        <Link href={getPublishPath(tenant.slug)}>
+          <NavButton alt="Publish" src={publishIcon} className={publishClassName} />
         </Link>
         <Link href={getSettingsPath(tenant.slug)}>
           <NavButton alt="Settings" src={settingsIcon} className={settingsClassName} />

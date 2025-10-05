@@ -1,7 +1,7 @@
 import { Inter, Inter_Tight } from "next/font/google";
 import Image from "next/image";
 
-import RagieLogo from "@/components/ragie-logo";
+import WinsonWuLogo from "@/components/winsonwu-logo";
 import * as settings from "@/lib/server/settings";
 
 const inter_tight = Inter_Tight({
@@ -32,8 +32,8 @@ export default function Layout({ children }: Readonly<{ children: React.ReactNod
       <div className="h-20 shrink-0 w-full bg-[#27272A] flex items-center justify-center">
         <div className={`mr-2.5 text-md text-[#FEFEFE] ${inter.className}`}>Powered by</div>
         <div>
-          <a href="https://ragie.ai/?utm_source=oss-chatbot" target="_blank">
-            <RagieLogo />
+          <a href="https://winsonwu.com/?utm_source=smart-chat" target="_blank" className="text-white">
+            @WinsonWu
           </a>
         </div>
       </div>

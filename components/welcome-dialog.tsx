@@ -94,7 +94,7 @@ export function WelcomeDialog({ displayWelcome, userId }: WelcomeDialogProps) {
         return (
           <>
             <DialogHeader>
-              <DialogTitle className="text-2xl font-bold">Welcome to Base Chat 👋</DialogTitle>
+              <DialogTitle className="text-2xl font-bold">Welcome to Smart Chat 👋</DialogTitle>
             </DialogHeader>
             <div className="flex flex-col gap-4 text-surface-text-tertiary text-base font-medium mb-16">
               <p>
@@ -137,7 +137,7 @@ export function WelcomeDialog({ displayWelcome, userId }: WelcomeDialogProps) {
             <div className="flex flex-col gap-4 text-surface-text-tertiary text-base font-medium">
               <p>
                 Upload files or connect your data sources—whatever works for you. You&apos;re always in control of what
-                data is shared with Base Chat and can manage it anytime. <br />
+                data is shared with Smart Chat and can manage it anytime. <br />
                 <br />
                 Click on the <span className="font-bold">Data</span> tab to get started.
               </p>
@@ -182,7 +182,7 @@ export function WelcomeDialog({ displayWelcome, userId }: WelcomeDialogProps) {
             </DialogHeader>
             <div className="flex flex-col gap-4 text-surface-text-tertiary text-base font-medium">
               <p>
-                After you&apos;ve added some data, invite your teammates so they can start chatting in Base Chat. You
+                After you&apos;ve added some data, invite your teammates so they can start chatting in Smart Chat. You
                 control who can access your chatbot and who&apos;s allowed to add or manage data. <br />
                 <br />
                 Head to <span className="font-bold">Settings &gt; Users</span> to invite your team.
@@ -224,11 +224,11 @@ export function WelcomeDialog({ displayWelcome, userId }: WelcomeDialogProps) {
               <ProgressDots currentPage={currentPage} />
             </div>
             <DialogHeader>
-              <DialogTitle className="text-2xl font-bold">Use Base Chat in Slack</DialogTitle>
+              <DialogTitle className="text-2xl font-bold">Use Smart Chat in Slack</DialogTitle>
             </DialogHeader>
             <div className="flex flex-col gap-4 text-surface-text-tertiary text-base font-medium">
               <p>
-                Add Base Chat to a channel and let your team ask questions without leaving Slack. Fast answers, right
+                Add Smart Chat to a channel and let your team ask questions without leaving Slack. Fast answers, right
                 where work happens. <br />
                 <br />
                 Head to <span className="font-bold">Settings &gt; Slack</span> to get started.
@@ -264,9 +264,9 @@ export function WelcomeDialog({ displayWelcome, userId }: WelcomeDialogProps) {
             </DialogHeader>
             <div className="flex flex-col gap-4 text-surface-text-tertiary text-base font-medium mb-16">
               <p>
-                Base Chat is ready when you are. Have questions or need help? You can always reach us at{" "}
-                <a href="mailto:support@ragie.ai" className="text-[#D946EF] hover:text-[#D946EF]/90">
-                  support@ragie.ai
+                Smart Chat is ready when you are. Have questions or need help? You can always reach us at{" "}
+                <a href="mailto:awinsonwu@gmail.com" className="text-[#D946EF] hover:text-[#D946EF]/90">
+                  awinsonwu@gmail.com
                 </a>
                 .
               </p>

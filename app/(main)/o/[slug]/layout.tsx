@@ -1,8 +1,8 @@
 import { ReactNode } from "react";
 
 import { PaymentRequiredDialog } from "@/components/payment-required-dialog";
-import RagieLogo from "@/components/ragie-logo";
 import { WelcomeDialog } from "@/components/welcome-dialog";
+import WinsonWuLogo from "@/components/winsonwu-logo";
 import { getUserById } from "@/lib/server/service";
 import { BILLING_ENABLED } from "@/lib/server/settings";
 import { authOrRedirect } from "@/lib/server/utils";
@@ -44,8 +44,8 @@ export default async function MainLayout({ children, params }: Props) {
         <div className="h-20 shrink-0 w-full bg-[#27272A] flex items-center justify-center">
           <div className={`mr-2.5 text-md text-[#FEFEFE]`}>Powered by</div>
           <div>
-            <a href="https://ragie.ai/?utm_source=oss-chatbot" target="_blank">
-              <RagieLogo />
+            <a href="https://winsonwu.com/?utm_source=smart-chat" target="_blank">
+              WinsonWu
             </a>
           </div>
         </div>
