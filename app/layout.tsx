@@ -20,14 +20,14 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <GlobalStateProvider>
-      <html lang="en" className="h-full w-full">
+    <html lang="en" className="h-full w-full">
+      <body className={`${inter.className} antialiased h-full w-full bg-white`}>
         <GaTags gaKey={process.env.GOOGLE_ANALYTICS_KEY} />
-        <body className={`${inter.className} antialiased h-full w-full bg-white`}>
+        <GlobalStateProvider>
           <QueryClientProvider>{children}</QueryClientProvider>
           <Toaster position="bottom-center" />
-        </body>
-      </html>
-    </GlobalStateProvider>
+        </GlobalStateProvider>
+      </body>
+    </html>
   );
 }

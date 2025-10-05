@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "BaseChat Widget",
+  "name": "SmartChat Widget",
   "version": "1.0.0",
-  "description": "Embed chatbot on any webpage",
+  "description": "SmartChat chatbot on any webpage",
   "permissions": ["storage", "activeTab"],
   "action": {
     "default_popup": "popup.html",

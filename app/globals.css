@@ -177,3 +177,77 @@ body {
   background: linear-gradient(90deg, #4393f4 0%, #ec609c 50%, #ef8482 100%) !important;
   border-radius: 80px !important;
 }
+
+/* Landing page enhancements */
+.bg-grid {
+  background-image:
+    linear-gradient(to right, rgba(255, 255, 255, 0.06) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.06) 1px, transparent 1px);
+  background-size: 40px 40px;
+  background-position: center center;
+}
+
+.mask-fade {
+  /* fade edges so grid is subtle toward edges */
+  -webkit-mask-image: radial-gradient(ellipse 90% 70% at 50% 30%, black 60%, transparent 100%);
+  mask-image: radial-gradient(ellipse 90% 70% at 50% 30%, black 60%, transparent 100%);
+}
+
+.bg-noise {
+  /* subtle dotted noise without an image asset */
+  background-image: radial-gradient(rgba(255, 255, 255, 0.18) 0.8px, transparent 0.8px);
+  background-size: 6px 6px;
+}
+
+.gradient-text {
+  background: linear-gradient(90deg, #e5e7eb 0%, #cfe6ff 30%, #c4b5fd 60%, #f9a8d4 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.btn-shine::after {
+  content: "";
+  position: absolute;
+  inset-block: 0;
+  left: -150%;
+  width: 140%;
+  background: linear-gradient(110deg, transparent 20%, rgba(255, 255, 255, 0.6) 45%, transparent 60%);
+  transform: skewX(-20deg);
+  animation: btn-shine-move 2.8s ease-in-out infinite;
+}
+
+@keyframes btn-shine-move {
+  0% {
+    transform: translateX(-200%) skewX(-20deg);
+  }
+  60% {
+    transform: translateX(200%) skewX(-20deg);
+  }
+  100% {
+    transform: translateX(200%) skewX(-20deg);
+  }
+}
+
+.aurora {
+  filter: blur(60px);
+  opacity: 0.55;
+}
+.aurora-blob {
+  position: absolute;
+  width: 48vw;
+  height: 48vw;
+  border-radius: 9999px;
+  animation: aurora-move 22s linear infinite alternate;
+}
+@keyframes aurora-move {
+  0% {
+    transform: translate(-8%, -6%) rotate(0deg);
+  }
+  50% {
+    transform: translate(6%, 8%) rotate(180deg);
+  }
+  100% {
+    transform: translate(-8%, -6%) rotate(360deg);
+  }
+}
