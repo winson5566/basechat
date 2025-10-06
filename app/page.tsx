@@ -25,12 +25,7 @@ export default function LandingPage() {
       <nav className="sticky top-0 z-50 backdrop-blur-md bg-black/30 border-b border-white/10">
         <div className="mx-auto w-full max-w-7xl px-6 md:px-8 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <Image src="/logo.svg" alt="SmartChat" width={32} height={32} />
-            <span
-              className={`hidden sm:inline text-white/90 text-xl md:text-3xl font-semibold tracking-wide bg-clip-text`}
-            >
-              SmartChat
-            </span>
+            <Image src="/images/title-logo-white.svg" alt="SmartChat" width={220} height={50} />
           </div>
           <div className="flex items-center gap-3">
             <Link href="/sign-in" className="text-white/70 hover:text-white">

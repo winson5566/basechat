@@ -11,10 +11,7 @@ export default function Layout({ children }: Readonly<{ children: React.ReactNod
         <div className="w-full max-w-[442px] px-4 pt-10 mx-auto h-full flex flex-col items-center justify-center max-[460px]:px-8 relative">
           <div className="flex items-center justify-center mb-16 w-full">
             <Link href="/" aria-label="Back to Home" className="inline-flex items-center gap-3">
-              <Image src="/logo.svg" alt="SmartChat" width={64} height={64} priority />
-              <span className={`hidden sm:inline text-black/90 text-4xl md:text-5xl font-semibold tracking-wide`}>
-                SmartChat
-              </span>
+              <Image src="/images/title-logo.svg" alt="SmartChat" width={332} height={48} priority />
             </Link>
           </div>
           <div className="flex flex-col items-center w-full">{children}</div>
