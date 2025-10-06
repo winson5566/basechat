@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "sonner";
 
@@ -8,8 +7,6 @@ import { GaTags } from "@/components/ga-tags";
 import { QueryClientProvider } from "../lib/query-client-provider";
 
 import { GlobalStateProvider } from "./(main)/o/[slug]/context";
-
-const inter = Inter({ subsets: ["latin"] });
 
 export const dynamic = "force-dynamic";
 
@@ -21,7 +18,7 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en" className="h-full w-full">
-      <body className={`${inter.className} antialiased h-full w-full bg-white`}>
+      <body className={`antialiased h-full w-full bg-white`}>
         <GaTags gaKey={process.env.GOOGLE_ANALYTICS_KEY} />
         <GlobalStateProvider>
           <QueryClientProvider>{children}</QueryClientProvider>

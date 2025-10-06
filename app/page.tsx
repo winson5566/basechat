@@ -1,6 +1,4 @@
 "use client";
-
-import { Inter_Tight } from "next/font/google";
 import Image from "next/image";
 import Link from "next/link";
 
@@ -8,8 +6,6 @@ import FAQ from "@/components/marketing/faq";
 import ParallaxText from "@/components/marketing/parallax-text";
 import RotatingWords from "@/components/marketing/rotating-words";
 import { Button } from "@/components/ui/button";
-
-const interTight = Inter_Tight({ subsets: ["latin"], weight: ["600", "700"], display: "swap" });
 
 export default function LandingPage() {
   return (
@@ -31,7 +27,7 @@ export default function LandingPage() {
           <div className="flex items-center gap-3">
             <Image src="/logo.svg" alt="SmartChat" width={32} height={32} />
             <span
-              className={`${interTight.className} hidden sm:inline text-white/90 text-xl md:text-3xl font-semibold tracking-wide bg-clip-text`}
+              className={`hidden sm:inline text-white/90 text-xl md:text-3xl font-semibold tracking-wide bg-clip-text`}
             >
               SmartChat
             </span>

@@ -1,13 +1,9 @@
 "use client";
-
 import { DropdownMenuTrigger } from "@radix-ui/react-dropdown-menu";
 import { MoreHorizontal, Trash } from "lucide-react";
-import { Inter } from "next/font/google";
 import { useRouter } from "next/navigation";
 
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem } from "@/components/ui/dropdown-menu";
-
-const inter = Inter({ subsets: ["latin"] });
 
 interface Props {
   id: string;
@@ -36,7 +32,7 @@ export default function ManageConnectionMenu({ id, tenant }: Props) {
           <MoreHorizontal />
         </button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className={inter.className}>
+      <DropdownMenuContent align="end">
         <DropdownMenuItem onSelect={deleteConnection}>
           <Trash />
           Delete

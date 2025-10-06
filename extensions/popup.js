@@ -44,16 +44,7 @@ document.addEventListener("DOMContentLoaded", function () {
         enabled: true, // 默认启用
       },
       function () {
-        showStatus("Settings saved successfully!", "success");
-
-        // Reload all tabs to apply changes
-        chrome.tabs.query({}, function (tabs) {
-          tabs.forEach(function (tab) {
-            if (tab.id) {
-              chrome.tabs.reload(tab.id);
-            }
-          });
-        });
+        showStatus("Settings saved. Please refresh the page.", "success");
       }
     );
   });

@@ -1,6 +1,4 @@
 "use client";
-
-import { Inter } from "next/font/google";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 
@@ -12,8 +10,6 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import CONNECTOR_MAP from "@/lib/connector-map";
-
-const inter = Inter({ subsets: ["latin"] });
 
 interface Props {
   tenant: {
@@ -106,7 +102,7 @@ export default function AddConnectionMenu({ tenant, disabled }: Props) {
                 onSelect={() => onSelect(sourceType)}
               >
                 <Image src={icon} alt={name} width={24} height={24} className="mr-3" />
-                <div className={inter.className}>{name}</div>
+                <div>{name}</div>
               </DropdownMenuItem>
             ))}
           </DropdownMenuContent>

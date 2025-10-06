@@ -1,6 +1,4 @@
 "use client";
-
-import { Inter } from "next/font/google";
 import Image from "next/image";
 
 import { signIn } from "@/lib/auth-client";
@@ -10,8 +8,6 @@ import GoogleMarkSVG from "../../../public/google-mark.svg";
 interface Props {
   redirectTo?: string;
 }
-
-const inter = Inter({ subsets: ["latin"] });
 
 export default function GoogleSignIn({ redirectTo }: Props) {
   async function handleClick() {
@@ -28,7 +24,7 @@ export default function GoogleSignIn({ redirectTo }: Props) {
       onClick={handleClick}
     >
       <Image src={GoogleMarkSVG} alt="Continue with Google" />
-      <div className={`ml-2.5 text-base drop-shadow-md ${inter.className}`}>Continue with Google</div>
+      <div className={`ml-2.5 text-base drop-shadow-md`}>Continue with Google</div>
     </button>
   );
 }

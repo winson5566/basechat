@@ -32,11 +32,19 @@
     container.appendChild(iframe);
     document.body.appendChild(container);
 
-    // 监听来自iframe的消息以调整大小
+    // 监听来自iframe的消息以调整大小（校验来源与来源窗口）
     window.addEventListener("message", function (event) {
+      // 安全校验：仅接受来自 chatbot 源站、且来源窗口为该 iframe 的消息
+      try {
+        if (event.origin !== baseUrl) return;
+        if (event.source !== iframe.contentWindow) return;
+      } catch (e) {
+        return;
+      }
+
       if (event.data && event.data.type === "basechat-resize") {
         const { isOpen, isMinimized } = event.data;
-        
+
         if (!isOpen) {
           // 只显示气泡
           iframe.style.width = "100px";

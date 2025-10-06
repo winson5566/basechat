@@ -1,7 +1,5 @@
 "use client";
-
 import { useQueryClient } from "@tanstack/react-query";
-import { Inter } from "next/font/google";
 import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import { z } from "zod";
@@ -18,8 +16,6 @@ import * as schema from "@/lib/server/db/schema";
 
 import { useGlobalState } from "./context";
 import { ProfileProvider } from "./profile-context";
-
-const inter = Inter({ subsets: ["latin"] });
 
 const conversationResponseSchema = z.object({ id: z.string() });
 
@@ -94,7 +90,7 @@ export default function Welcome({ tenant, className, profile }: Props) {
       <div className={className}>
         {isMounted ? (
           <>
-            <div className={`h-full flex flex-col justify-center ${inter.className}`}>
+            <div className={`h-full flex flex-col justify-center`}>
               <Logo
                 name={tenant.name}
                 url={tenant.logoUrl}

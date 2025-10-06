@@ -1,16 +1,8 @@
-import { Inter, Inter_Tight } from "next/font/google";
 import Image from "next/image";
 import Link from "next/link";
 
 import WinsonWuLogo from "@/components/winsonwu-logo";
 import * as settings from "@/lib/server/settings";
-
-const inter_tight = Inter_Tight({
-  subsets: ["latin"],
-  display: "swap",
-});
-
-const inter = Inter({ subsets: ["latin"] });
 
 export default function Layout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
@@ -20,9 +12,7 @@ export default function Layout({ children }: Readonly<{ children: React.ReactNod
           <div className="flex items-center justify-center mb-16 w-full">
             <Link href="/" aria-label="Back to Home" className="inline-flex items-center gap-3">
               <Image src="/logo.svg" alt="SmartChat" width={64} height={64} priority />
-              <span
-                className={`${inter_tight.className} hidden sm:inline text-black/90 text-4xl md:text-5xl font-semibold tracking-wide`}
-              >
+              <span className={`hidden sm:inline text-black/90 text-4xl md:text-5xl font-semibold tracking-wide`}>
                 SmartChat
               </span>
             </Link>
@@ -31,7 +21,7 @@ export default function Layout({ children }: Readonly<{ children: React.ReactNod
         </div>
       </div>
       <div className="h-20 shrink-0 w-full bg-[#27272A] flex items-center justify-center">
-        <div className={`mr-2.5 text-md text-[#FEFEFE] ${inter.className}`}>Powered by</div>
+        <div className={`mr-2.5 text-md text-[#FEFEFE]`}>Powered by</div>
         <div>
           <a href="https://winsonwu.com/?utm_source=smart-chat" target="_blank" className="text-white">
             @WinsonWu

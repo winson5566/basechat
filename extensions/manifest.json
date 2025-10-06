@@ -3,7 +3,7 @@
   "name": "SmartChat Widget",
   "version": "1.0.0",
   "description": "SmartChat chatbot on any webpage",
-  "permissions": ["storage", "activeTab"],
+  "permissions": ["storage"],
   "action": {
     "default_popup": "popup.html",
     "default_icon": {
@@ -24,6 +24,5 @@
       "css": ["content.css"],
       "run_at": "document_end"
     }
-  ],
-  "host_permissions": ["<all_urls>"]
+  ]
 }
