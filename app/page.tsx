@@ -139,7 +139,7 @@ export default function LandingPage() {
           <div className="relative py-32 md:py-48 flex items-center justify-center min-h-[600px] md:min-h-[760px]">
             <ParallaxText speed={0.01} baseOffset={-24}>
               <h3 className="text-center text-3xl md:text-5xl font-semibold max-w-4xl">
-                Seamlessly connect data to your application in minutes.
+                Seamlessly connect your data in minutes.
               </h3>
             </ParallaxText>
           </div>
