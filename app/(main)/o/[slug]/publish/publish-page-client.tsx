@@ -40,7 +40,7 @@ export default function PublishPageClient({
   };
 
   const handleInstallClick = () => {
-    toast.info("The Chrome extension is currently under review.");
+    window.open("https://chromewebstore.google.com/detail/smartchat-widget/bfhdfpmoohlijnhmeohjmlncjfmefdkc", "_blank");
   };
 
   return (
